@@ -22,7 +22,7 @@ from behavioral_portfolio_optimizer import (
 from scipy.stats import norm as _norm
 from scipy.optimize import brentq as _brentq
 
-def implied_lambda(H, alpha, means, cov_matrix, lam_lo=0.01, lam_hi=100):
+def implied_lambda(H, alpha, means, cov_matrix, lam_lo=0.01, lam_hi=500):
     """Find implied risk-aversion lambda such that VaR constraint binds at (H, alpha)."""
     def mv_w(lam):
         from scipy.optimize import minimize as _min
@@ -38,6 +38,16 @@ def implied_lambda(H, alpha, means, cov_matrix, lam_lo=0.01, lam_hi=100):
         ps = np.sqrt(max(w @ cov_matrix @ w, 1e-12))
         return _norm.cdf((H - pm) / ps) - alpha
     try:
+        f_lo = f(lam_lo)
+        f_hi = f(lam_hi)
+        if f_lo * f_hi > 0:
+            for hi in [1000, 5000]:
+                try:
+                    if f_lo * f(hi) < 0:
+                        return _brentq(f, lam_lo, hi)
+                except Exception:
+                    pass
+            return None
         return _brentq(f, lam_lo, lam_hi)
     except Exception:
         return None
@@ -1034,7 +1044,7 @@ with st.sidebar:
         else:
             st.markdown('<div style="background:#1a0a00;border:1px solid #f59e0b;border-radius:6px;'
                         'padding:.4rem 1rem;color:#f59e0b;font-size:.78rem;margin-top:.3rem">'
-                        'λ could not be computed for these parameters</div>',
+                        '⚠️ Implied λ not available — the VaR constraint may be too tight or too loose for the current portfolio.</div>',
                         unsafe_allow_html=True)
 
     st.markdown("---")
