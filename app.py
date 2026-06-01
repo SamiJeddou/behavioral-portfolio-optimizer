@@ -787,6 +787,10 @@ with tab2:
         "With over 20 years of experience in financial services transformation, I have delivered "
         "large-scale risk, regulatory, and front-to-back programs across tier-1 institutions "
         "including BNP Paribas CIB, Crédit Agricole, BIL Luxembourg, TMX Group, and Capgemini.")
+    st.markdown(
+        "**Education & certifications:** MEng and MSc Project & Program Management from École des Mines "
+        "de Saint-Étienne · Master in Finance from Università della Svizzera italiana (USI Lugano) · "
+        "CFA Level I · PRINCE2 Practitioner · SAFe Agilist · Prosci ADKAR · PMP (in progress)")
     st.markdown("""
 **Key achievements:**
 - Delivered €2M+ annual cost savings and reduced operational risk at BNP Paribas CIB
@@ -799,6 +803,10 @@ engagements — either freelance/contract or permanent — in France, Europe, or
 """)
 
     st.markdown("### Algorithm")
+    st.markdown(
+        "The full algorithm is described in Das, Markowitz, Scheid & Statman (2010). "
+        "The original R implementation is provided in the appendix of the thesis (Jeddou, 2012). "
+        "This app is a Python reimplementation of that algorithm.")
     st.markdown("""
 **Step 1 — State space construction**
 A discrete grid of return scenarios is built for all primary securities.
@@ -816,9 +824,12 @@ For each candidate weight vector, the portfolio return distribution is evaluated
     st.markdown("### MVT / MAT Equivalence")
     st.markdown(
         "When no derivatives are present, the mean-variance and behavioral frontiers converge exactly. "
-        "For H = -10% and α = 5%, the implied risk-aversion is λ = 3.795 — at which point both methods "
-        "yield identical optimal portfolios. Adding derivatives breaks this equivalence and reveals "
-        "the superiority of the behavioral approach.")
+        "For any choice of H and α, there exists a unique implied risk-aversion coefficient λ such that "
+        "the mean-variance optimal portfolio and the behavioral optimal portfolio are identical. "
+        "For example, at H = -10% and α = 5%, the implied λ = 3.795. "
+        "This app computes and displays the implied λ dynamically — simply adjust the H and α sliders "
+        "in the sidebar under the Mental-account constraint section to see the corresponding λ update in real time. "
+        "Adding derivatives breaks this equivalence and reveals the superiority of the behavioral approach.")
 
     st.markdown("### Supported derivatives & structured products")
     st.markdown("""
