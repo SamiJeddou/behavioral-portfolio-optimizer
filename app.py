@@ -252,7 +252,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             x=[mv_eq[0]], y=[mv_eq[1]], mode='markers',
             name='Equivalence point (λ=3.795)',
             marker=dict(size=13, color='#10b981', symbol='diamond'),
-            hovertemplate='<b>Equivalence point</b><br>λ=3.795 ↔ H=-10%, α=5%<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
+            hovertemplate='<b>Equivalence point</b><br>At this point, the mean-variance optimal portfolio<br>and the behavioral optimal portfolio are identical.<br>λ=3.795 ↔ H=-10%, α=5%<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
         ))
         fig.add_annotation(
             x=mv_eq[0], y=mv_eq[1],
@@ -715,11 +715,12 @@ Follow these steps in the sidebar:
 | **5 — Grid resolution** | Choose Fast for a quick preview, High precision for thesis-level accuracy |
 | **6 — Run** | Click **▶ Run optimizer** |
 
-The chart will show three curves:
+The chart will show three curves and two markers:
 - 🔘 **Grey dashed** — classical mean-variance efficient frontier (Markowitz)
 - 🔵 **Blue** — behavioral optimizer frontier without derivatives
 - 🟡 **Gold** — behavioral optimizer frontier including your selected derivative
 - ➡️ **White dotted arrow** — return gap between the behavioral frontier without and with the derivative, at the selected H and α constraint
+- 🟢 **Green diamond** — equivalence point: the unique portfolio where the mean-variance and behavioral approaches yield exactly the same result (here at λ=3.795, H=-10%, α=5%). To the right of this point, adding derivatives allows the behavioral approach to outperform mean-variance.
 
 At the equivalence point (λ=3.795, H=-10%, α=5%), the grey and blue curves meet exactly —
 confirming the MVT/MAT equivalence proven in Das, Markowitz, Scheid & Statman (2010).
