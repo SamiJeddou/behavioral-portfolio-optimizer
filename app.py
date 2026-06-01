@@ -305,6 +305,51 @@ GRID_OPTIONS = {
     "🎯 High precision (m=51, m'=99)": (51,99),
 }
 
+GRID_EXPLANATIONS = {
+    "⚡ Fast (m=21, m'=15)": (
+        "Uses a coarse grid of 21 return scenarios per security and 15 weight steps per dimension. "
+        "Runs in ~10-20 seconds. Results are directionally correct and useful for exploring "
+        "parameters, but weights and expected returns may differ from the precise solution by "
+        "a few percentage points. Recommended for initial exploration and parameter sensitivity testing."
+    ),
+    "⚖️  Standard (m=35, m'=50)": (
+        "Uses a medium grid with 35 return scenarios and 50 weight steps per dimension. "
+        "Runs in ~1-2 minutes. Provides a good balance between speed and accuracy — "
+        "results are close to the precise solution in most cases. "
+        "Recommended for most use cases once you have identified the right parameters."
+    ),
+    "🎯 High precision (m=51, m'=99)": (
+        "Matches the original thesis parameters exactly — 51 return scenarios and 99 weight steps, "
+        "the same values used in Das & Statman (2009) and Jeddou (2012). "
+        "Results are publication-quality and directly comparable to academic benchmarks. "
+        "May take 5-10 minutes depending on the number of securities. "
+        "Recommended for final results and for verifying the equivalence point."
+    ),
+}
+
+CONSTRAINT_EXPLANATIONS = {
+    "var": (
+        "The **Value at Risk (VaR) constraint** requires that the probability of the portfolio "
+        "return falling below the threshold H does not exceed α. "
+        "Formally: P(return < H) ≤ α. "
+        "For example, with H = -10% and α = 5%, the optimizer finds the highest expected return "
+        "portfolio where there is at most a 5% chance of losing more than 10%. "
+        "A key theoretical result: this constraint is equivalent to a Markowitz portfolio with "
+        "an implied risk-aversion coefficient λ — shown dynamically below the sliders."
+    ),
+    "es": (
+        "The **Expected Shortfall (ES) constraint** — also called Conditional VaR (CVaR) — "
+        "requires that the average portfolio return in the worst scenarios (those where return "
+        "falls below H) is at least L. "
+        "Formally: E[return | return < H] ≥ L. "
+        "ES captures the severity of losses beyond the threshold, not just their probability, "
+        "making it a more complete risk measure than VaR. "
+        "It is a coherent risk measure and is preferred by regulators under Basel III/IV. "
+        "For example, with H = -10% and L = -15%, the optimizer ensures that when losses exceed "
+        "10%, their average is no worse than 15%."
+    ),
+}
+
 PREDEFINED_DERIVATIVES = {
     "None — primary securities only":               None,
     "Put option":                                    "put",
@@ -952,6 +997,12 @@ with st.sidebar:
             'padding:.4rem 1rem;color:#8896a8;font-size:.78rem;margin-top:.3rem">'
             'VaR constraint: P(return &lt; H) ≤ α</div>',
             unsafe_allow_html=True)
+        with st.expander("✨ AI-powered: What is the VaR constraint?", expanded=False):
+            st.markdown(
+                f'<div style="background:#0f1923;border:1px solid #4a9eff;'
+                f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
+                f'{CONSTRAINT_EXPLANATIONS["var"]}</div>',
+                unsafe_allow_html=True)
     else:
         alpha_val = None
         L_val     = st.slider("ES lower bound L (%)", -50, -1, -15, 1) / 100
@@ -960,6 +1011,12 @@ with st.sidebar:
             'padding:.4rem 1rem;color:#8896a8;font-size:.78rem;margin-top:.3rem">'
             'ES constraint: E[return | return &lt; H] ≥ L</div>',
             unsafe_allow_html=True)
+        with st.expander("✨ AI-powered: What is the ES constraint?", expanded=False):
+            st.markdown(
+                f'<div style="background:#0f1923;border:1px solid #4a9eff;'
+                f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
+                f'{CONSTRAINT_EXPLANATIONS["es"]}</div>',
+                unsafe_allow_html=True)
 
     # Implied lambda — only for VaR
     if not use_es:
@@ -987,6 +1044,15 @@ with st.sidebar:
     grid_lbl=st.selectbox("Resolution",list(GRID_OPTIONS.keys()),
                            index=0,label_visibility="collapsed")
     m_val,mp_val=GRID_OPTIONS[grid_lbl]
+
+    # AI-powered grid explanation
+    with st.expander("✨ AI-powered: What does this resolution mean?", expanded=True):
+        st.markdown(
+            f'<div style="background:#0f1923;border:1px solid #4a9eff;'
+            f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
+            f'{GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")}</div>',
+            unsafe_allow_html=True)
+
     if "High" in grid_lbl:
         st.markdown('<div class="warn-box">⚠️ May take 5–10 min.</div>',
                     unsafe_allow_html=True)
