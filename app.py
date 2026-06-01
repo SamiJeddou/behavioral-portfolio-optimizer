@@ -632,7 +632,9 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         title=dict(
             text='Mean-Variance vs Behavioral Portfolio Efficient Frontier',
             font=dict(color='white', size=15),
-            x=0.5
+            x=0.5,
+            xanchor='center',
+            xref='paper'
         ),
         xaxis=dict(
             title='Portfolio Risk — Standard Deviation (%)',
