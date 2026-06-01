@@ -158,7 +158,7 @@ The baseline result (10.21%) matches the thesis mean-variance result (10.23%) to
 **Sami Jeddou**
 Senior Transformation & Risk Executive | Capital Markets · Front-to-Back Delivery · Asset Management · Financial Infrastructure
 
-- 🔗 [LinkedIn](https://www.linkedin.com/in/samijeddou)
+- 🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404)
 - 📧 sami.jeddou@protonmail.com
 
 ---
