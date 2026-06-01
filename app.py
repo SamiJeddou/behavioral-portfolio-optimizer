@@ -1138,7 +1138,7 @@ structured products, can unlock beyond what mean-variance can achieve.
         st.markdown("---")
 
         # Portfolio data
-        with st.expander("📋 Portfolio data used in this run", expanded=True):
+        with st.expander("📋 Portfolio data used in this simulation", expanded=True):
             # Stats table
             header_style = "background:#4a9eff;color:#ffffff;font-weight:bold;padding:6px 10px;text-align:left"
             cell_style   = "background:#ffffff;color:#111111;padding:5px 10px;border-bottom:1px solid #e0e0e0"
