@@ -1243,8 +1243,9 @@ with tab2:
     st.markdown("### Professional background")
     st.markdown(
         "With over 20 years of experience in financial services transformation, I have delivered "
-        "large-scale risk, regulatory, and front-to-back programs across tier-1 institutions "
-        "including BNP Paribas CIB, Crédit Agricole, BIL Luxembourg, TMX Group, and Capgemini.")
+        "large-scale risk, regulatory, and front-to-back programs at and for tier-1 institutions — "
+        "including BNP Paribas CIB, Crédit Agricole, BIL Luxembourg, and TMX Group — across roles "
+        "as senior consultant, program director, and independent transformation lead.")
     st.markdown(
         "**Education:** Engineering and finance background — MEng, MSc Project and Program Management, "
         "École des Mines de Saint-Étienne · Master in Finance, USI Lugano · CFA Level I")
