@@ -522,14 +522,18 @@ def run_opt(means,sigs,cov,der_config,H,alpha,m,mp,
 def build_frontier(means,sigs,cov,der_config,alpha,m,mp,
                    constraint_type='var',L=None):
     H_vals=[-0.05,-0.08,-0.10,-0.12,-0.15,-0.18,-0.20]
-    xs,ys,lbls=[],[],[]
+    pts=[]
     for H in H_vals:
         try:
             r,_=run_opt(means,sigs,cov,der_config,H,alpha,m,mp,
                         constraint_type=constraint_type,L=L)
-            xs.append(r["std_dev"]*100); ys.append(r["expected_return"]*100)
-            lbls.append(f"H={H:.0%}")
+            pts.append((r["std_dev"]*100, r["expected_return"]*100, f"H={H:.0%}"))
         except: pass
+    # Sort by std dev ascending so line draws left to right
+    pts.sort(key=lambda p: p[0])
+    xs  = [p[0] for p in pts]
+    ys  = [p[1] for p in pts]
+    lbls= [p[2] for p in pts]
     return xs,ys,lbls
 
 def plot_frontier_plotly(mv_x, mv_y, mv_eq,
