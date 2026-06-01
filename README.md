@@ -85,8 +85,12 @@ behavioral-portfolio-optimizer/
 
 Three modes are supported for portfolio data:
 
-ModeDescriptionDefaultDas & Statman (2009) base case — 3 securities with pre-calibrated means, std devs, and correlations. Works out of the box, reproduces thesis results exactly.Live market dataFetch any global ticker from Yahoo Finance (stocks, ETFs, indices). Select a date range and choose daily or monthly return frequency. Means and covariances are computed automatically.Manual entryEnter your own means, standard deviations, and correlation matrix directly. Supports 2–10 primary securities.CSV uploadUpload a CSV of historical prices (date column + one column per asset). Means and covariances are computed automatically from returns.
-
+| Mode | Description |
+|---|---|
+| **Default** | Das & Statman (2009) base case — 3 securities with pre-calibrated means, std devs, and correlations. Works out of the box, reproduces thesis results exactly. |
+| **Live market data** | Fetch any global ticker from Yahoo Finance (stocks, ETFs, indices). Select a date range and choose daily or monthly return frequency. Means and covariances are computed automatically. |
+| **Manual entry** | Enter your own means, standard deviations, and correlation matrix directly. Supports 2–10 primary securities. |
+| **CSV upload** | Upload a CSV of historical prices (date column + one column per asset). Means and covariances are computed automatically from returns. |
 
 
 ## Quickstart
