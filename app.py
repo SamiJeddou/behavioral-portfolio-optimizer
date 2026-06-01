@@ -548,12 +548,15 @@ with tab1:
             with open("profile.jpeg","rb") as _f:
                 _b64 = base64.b64encode(_f.read()).decode()
             st.markdown(
-                f'''<div style="position:relative;display:inline-block;width:90px">
-  <img src="data:image/jpeg;base64,{_b64}" style="width:90px;border-radius:6px;display:block"/>
-  <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);
-              color:#ffffff;font-size:.65rem;text-align:center;padding:3px 0;
-              border-radius:0 0 6px 6px">Sami Jeddou</div>
-</div>''',
+                f'''<a href="https://www.linkedin.com/in/sami-jeddou-25787a404" target="_blank"
+                   style="text-decoration:none">
+  <div style="position:relative;display:inline-block;width:90px">
+    <img src="data:image/jpeg;base64,{_b64}" style="width:90px;border-radius:6px;display:block"/>
+    <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);
+                color:#ffffff;font-size:.65rem;text-align:center;padding:3px 0;
+                border-radius:0 0 6px 6px">Sami Jeddou</div>
+  </div>
+</a>''',
                 unsafe_allow_html=True)
 
     if not run_btn:
@@ -637,9 +640,10 @@ I would be glad to hear from you.
                 else:
                     st.warning("Please fill in all fields before sending.")
 
-        st.stop()
+        pass  # welcome screen shown, About tab still renders
 
-    means_arr=np.array(means_in); sigs_arr=np.array(sigs_in)
+    if run_btn:
+      means_arr=np.array(means_in); sigs_arr=np.array(sigs_in)
     cov_mat=corr_to_cov(sigs_arr,corr_in)
 
     # Build derivative config
@@ -746,9 +750,16 @@ with tab2:
             with open("profile.jpeg","rb") as _f2:
                 _b64_2 = _b64mod.b64encode(_f2.read()).decode()
             st.markdown(
-                f'''<div style="position:relative;display:inline-block;width:160px">
-  <img src="data:image/jpeg;base64,{_b64_2}" style="width:160px;border-radius:8px;display:block"/>
-</div>''',
+                f'''<a href="https://www.linkedin.com/in/sami-jeddou-25787a404" target="_blank"
+                   style="text-decoration:none" title="Connect on LinkedIn">
+  <div style="position:relative;display:inline-block;width:160px">
+    <img src="data:image/jpeg;base64,{_b64_2}"
+         style="width:160px;border-radius:8px;display:block;cursor:pointer"/>
+    <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,91,181,0.75);
+                color:#ffffff;font-size:.72rem;text-align:center;padding:4px 0;
+                border-radius:0 0 8px 8px">🔗 LinkedIn</div>
+  </div>
+</a>''',
                 unsafe_allow_html=True)
     with col_b:
         st.markdown("""
