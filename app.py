@@ -1,4 +1,4 @@
-"""
+"""  # v4
 Behavioral Portfolio Optimizer — Streamlit Dashboard
 Full version with: live market data, manual input, CSV upload,
 custom structured product composer, and extended optimizer (5+ securities).
@@ -544,13 +544,16 @@ with tab1:
                     "**mental-accounting downside constraint**.")
     with col_photo:
         if os.path.exists("profile.jpeg"):
+            import base64
+            with open("profile.jpeg","rb") as _f:
+                _b64 = base64.b64encode(_f.read()).decode()
             st.markdown(
-                '<div style="text-align:center">',
-                unsafe_allow_html=True)
-            st.image("profile.jpeg", width=90)
-            st.markdown(
-                '<div style="font-size:.72rem;color:#8896a8;text-align:center;margin-top:-.5rem">'
-                'Sami Jeddou</div></div>',
+                f'''<div style="position:relative;display:inline-block;width:90px">
+  <img src="data:image/jpeg;base64,{_b64}" style="width:90px;border-radius:6px;display:block"/>
+  <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);
+              color:#ffffff;font-size:.65rem;text-align:center;padding:3px 0;
+              border-radius:0 0 6px 6px">Sami Jeddou</div>
+</div>''',
                 unsafe_allow_html=True)
 
     if not run_btn:
@@ -739,7 +742,14 @@ with tab2:
     col_a, col_b = st.columns([1, 3])
     with col_a:
         if _os.path.exists("profile.jpeg"):
-            st.image("profile.jpeg", width=160)
+            import base64 as _b64mod
+            with open("profile.jpeg","rb") as _f2:
+                _b64_2 = _b64mod.b64encode(_f2.read()).decode()
+            st.markdown(
+                f'''<div style="position:relative;display:inline-block;width:160px">
+  <img src="data:image/jpeg;base64,{_b64_2}" style="width:160px;border-radius:8px;display:block"/>
+</div>''',
+                unsafe_allow_html=True)
     with col_b:
         st.markdown("""
 <div style="color:#ffffff">
