@@ -763,32 +763,23 @@ with tab2:
 </a>''',
                 unsafe_allow_html=True)
     with col_b:
-        st.markdown("""
-<div style="color:#ffffff">
-
-## Sami Jeddou
-
-**Senior Financial Services Transformation Leader**
-Risk · Capital Markets · Regulatory Programs · Front-to-Back Delivery
-
-📍 Paris, France &nbsp;|&nbsp; 🇫🇷 French National
-
-🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;|&nbsp;
-🐙 [GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer) &nbsp;|&nbsp;
-📧 sami.jeddou@protonmail.com
-
-</div>
-""", unsafe_allow_html=True)
+        st.markdown("## Sami Jeddou")
+        st.markdown("**Senior Financial Services Transformation Leader**")
+        st.markdown("Risk · Capital Markets · Regulatory Programs · Front-to-Back Delivery")
+        st.markdown("📍 Paris, France &nbsp;|&nbsp; 🇫🇷 French National", unsafe_allow_html=True)
+        st.markdown("🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;|&nbsp; 🐙 [GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer) &nbsp;|&nbsp; 📧 sami.jeddou@protonmail.com", unsafe_allow_html=True)
 
     st.markdown("---")
 
-    st.markdown("### About this tool")
+    st.markdown("### About this app")
     st.markdown(
-        "This tool extends classical **Markowitz mean-variance theory** to portfolios that include "
+        "This app extends classical **Markowitz mean-variance theory** to portfolios that include "
         "**derivatives and structured products**, using a **mental-accounting framework** with a "
-        "downside risk constraint. It was built from the original R code developed as part of my "
-        "MSc Finance thesis at the Università della Svizzera italiana (USI Lugano, 2012), "
-        "supervised by Prof. Enrico De Giorgi, and is based on the foundational work of "
+        "downside risk constraint. It is a **Python** reimplementation and extension of the original "
+        "R code developed as part of my MSc Finance thesis at the Università della Svizzera italiana "
+        "(USI Lugano, 2012), supervised by Prof. Enrico De Giorgi. The Python version adds support "
+        "for live market data, a custom structured product composer, and an extended optimizer for "
+        "larger portfolios using differential evolution. It is based on the foundational work of "
         "Das, Markowitz, Scheid & Statman (2010).")
 
     st.markdown("### Professional background")
@@ -816,9 +807,10 @@ For each scenario, derivative returns are computed analytically using Black-Scho
 **Step 2 — Probability assignment**
 Each state is assigned a probability using a Gaussian copula, correctly capturing the dependence structure between assets.
 
-**Step 3 — Two-stage optimization**
-- *≤ 4 securities*: exhaustive grid search + COBYLA gradient refinement
-- *≥ 5 securities*: differential evolution (global stochastic optimizer) + COBYLA refinement
+**Step 3 — Optimization**
+For each candidate weight vector, the portfolio return distribution is evaluated against the mental-account constraint. The best eligible portfolio (highest expected return subject to P(return < H) ≤ α) is selected:
+- *≤ 4 securities*: exhaustive grid search over all weight combinations
+- *≥ 5 securities*: differential evolution — a global stochastic optimizer that scales to larger portfolios without exhaustive enumeration
 """)
 
     st.markdown("### MVT / MAT Equivalence")
