@@ -643,103 +643,104 @@ I would be glad to hear from you.
         pass  # welcome screen shown, About tab still renders
 
     if run_btn:
-      means_arr=np.array(means_in); sigs_arr=np.array(sigs_in)
-    cov_mat=corr_to_cov(sigs_arr,corr_in)
+        means_arr=np.array(means_in); sigs_arr=np.array(sigs_in)
+        cov_mat=corr_to_cov(sigs_arr,corr_in)
 
-    # Build derivative config
-    der_config=None
-    if der_type is not None:
-        ui=der_params.get("underlying_idx",len(means_in)-1)
-        sigs_for_config=sigs_arr.copy()
-        sigs_for_config[ui]=der_params.get("vol",sigs_arr[ui])
-        dc=build_der_config(der_type,der_params,sigs_for_config,ui)
-        if dc:
-            dc["r"]=der_params.get("r",0.03)
-            dc["T"]=der_params.get("T",1.0)
-            der_config=dc
+        # Build derivative config
+        der_config=None
+        if der_type is not None:
+            ui=der_params.get("underlying_idx",len(means_in)-1)
+            sigs_for_config=sigs_arr.copy()
+            sigs_for_config[ui]=der_params.get("vol",sigs_arr[ui])
+            dc=build_der_config(der_type,der_params,sigs_for_config,ui)
+            if dc:
+                dc["r"]=der_params.get("r",0.03)
+                dc["T"]=der_params.get("T",1.0)
+                der_config=dc
 
-    asset_labels=names_in+(["Derivative"] if der_config else [])
+        asset_labels=names_in+(["Derivative"] if der_config else [])
 
-    with st.spinner("Computing mean-variance frontier..."):
-        mv_x,mv_y,mv_eq=compute_mv_frontier(
-            tuple(means_in),tuple(map(tuple,cov_mat.tolist())))
+        with st.spinner("Computing mean-variance frontier..."):
+            mv_x,mv_y,mv_eq=compute_mv_frontier(
+                tuple(means_in),tuple(map(tuple,cov_mat.tolist())))
 
-    with st.spinner("Behavioral optimizer — no derivative..."):
-        try:
-            nd_xs,nd_ys,nd_lbls=build_frontier(
-                means_arr,sigs_arr,cov_mat,None,alpha_val,m_val,mp_val)
-        except Exception as e:
-            st.error(f"Optimizer failed: {e}"); st.stop()
-
-    der_xs,der_ys,der_lbls=[],[],[]
-    if der_config:
-        with st.spinner(f"Behavioral optimizer — {der_label_sel}..."):
+        with st.spinner("Behavioral optimizer — no derivative..."):
             try:
-                der_xs,der_ys,der_lbls=build_frontier(
-                    means_arr,sigs_arr,cov_mat,der_config,alpha_val,m_val,mp_val)
+                nd_xs,nd_ys,nd_lbls=build_frontier(
+                    means_arr,sigs_arr,cov_mat,None,alpha_val,m_val,mp_val)
             except Exception as e:
-                st.warning(f"Derivative frontier failed: {e}")
+                st.error(f"Optimizer failed: {e}")
+                nd_xs,nd_ys,nd_lbls=[],[],[]
 
-    with st.spinner("Rendering chart..."):
-        fig=plot_frontier(mv_x,mv_y,mv_eq,nd_xs,nd_ys,nd_lbls,
-                          der_xs,der_ys,der_lbls,der_label_sel,H_val,alpha_val)
-        st.pyplot(fig,use_container_width=True); plt.close(fig)
-
-    # ── Results ───────────────────────────────────────────────────────────────
-    st.markdown("---")
-    st.markdown(f"### Optimal portfolio — H={H_val:.0%}, α={alpha_val:.0%}")
-    c1,c2=st.columns(2)
-
-    nd_res=None
-    with c1:
-        st.markdown("**Without derivative**")
-        try:
-            nd_res,_=run_opt(means_arr,sigs_arr,cov_mat,None,H_val,alpha_val,m_val,mp_val)
-            m1,m2,m3,m4=st.columns(4)
-            m1.metric("Return",f"{nd_res['expected_return']*100:.2f}%")
-            m2.metric("Std dev",f"{nd_res['std_dev']*100:.2f}%")
-            m3.metric("Skewness",f"{nd_res['skewness']:.3f}")
-            m4.metric("Shortfall",f"{nd_res['shortfall_stat']*100:.2f}%")
-            st.markdown("**Weights**")
-            for i,w in enumerate(nd_res["weights"]):
-                lbl=names_in[i] if i<len(names_in) else f"Asset {i+1}"
-                st.progress(float(w),text=f"{lbl}: {w*100:.1f}%")
-            st.caption(f"Method: {nd_res.get('method_used','—')}")
-        except Exception as e:
-            st.warning(f"No eligible portfolio: {e}")
-
-    with c2:
+        der_xs,der_ys,der_lbls=[],[],[]
         if der_config:
-            st.markdown(f"**With {der_label_sel}**")
+            with st.spinner(f"Behavioral optimizer — {der_label_sel}..."):
+                try:
+                    der_xs,der_ys,der_lbls=build_frontier(
+                        means_arr,sigs_arr,cov_mat,der_config,alpha_val,m_val,mp_val)
+                except Exception as e:
+                    st.warning(f"Derivative frontier failed: {e}")
+
+        with st.spinner("Rendering chart..."):
+            fig=plot_frontier(mv_x,mv_y,mv_eq,nd_xs,nd_ys,nd_lbls,
+                              der_xs,der_ys,der_lbls,der_label_sel,H_val,alpha_val)
+            st.pyplot(fig,use_container_width=True); plt.close(fig)
+
+        # ── Results ───────────────────────────────────────────────────────────────
+        st.markdown("---")
+        st.markdown(f"### Optimal portfolio — H={H_val:.0%}, α={alpha_val:.0%}")
+        c1,c2=st.columns(2)
+
+        nd_res=None
+        with c1:
+            st.markdown("**Without derivative**")
             try:
-                dr_res,_=run_opt(means_arr,sigs_arr,cov_mat,der_config,
-                                  H_val,alpha_val,m_val,mp_val)
-                delta=(dr_res['expected_return']-(nd_res['expected_return'] if nd_res else 0))*100
+                nd_res,_=run_opt(means_arr,sigs_arr,cov_mat,None,H_val,alpha_val,m_val,mp_val)
                 m1,m2,m3,m4=st.columns(4)
-                m1.metric("Return",f"{dr_res['expected_return']*100:.2f}%",
-                           delta=f"+{delta:.2f}pp" if delta>0 else f"{delta:.2f}pp")
-                m2.metric("Std dev",f"{dr_res['std_dev']*100:.2f}%")
-                m3.metric("Skewness",f"{dr_res['skewness']:.3f}")
-                m4.metric("Shortfall",f"{dr_res['shortfall_stat']*100:.2f}%")
+                m1.metric("Return",f"{nd_res['expected_return']*100:.2f}%")
+                m2.metric("Std dev",f"{nd_res['std_dev']*100:.2f}%")
+                m3.metric("Skewness",f"{nd_res['skewness']:.3f}")
+                m4.metric("Shortfall",f"{nd_res['shortfall_stat']*100:.2f}%")
                 st.markdown("**Weights**")
-                for i,w in enumerate(dr_res["weights"]):
-                    lbl=asset_labels[i] if i<len(asset_labels) else f"Asset {i+1}"
+                for i,w in enumerate(nd_res["weights"]):
+                    lbl=names_in[i] if i<len(names_in) else f"Asset {i+1}"
                     st.progress(float(w),text=f"{lbl}: {w*100:.1f}%")
-                st.caption(f"Method: {dr_res.get('method_used','—')}")
+                st.caption(f"Method: {nd_res.get('method_used','—')}")
             except Exception as e:
                 st.warning(f"No eligible portfolio: {e}")
-        else:
-            st.info("Select a derivative to compare.")
 
-    with st.expander("📋 Portfolio data used in this run"):
-        st.dataframe(pd.DataFrame({
-            "Asset":names_in,
-            "Mean return":[f"{m*100:.2f}%" for m in means_in],
-            "Std deviation":[f"{s*100:.2f}%" for s in sigs_in],
-        }),hide_index=True)
-        st.markdown("**Correlation matrix**")
-        st.dataframe(pd.DataFrame(corr_in,index=names_in,
-                                   columns=names_in).round(3))
+        with c2:
+            if der_config:
+                st.markdown(f"**With {der_label_sel}**")
+                try:
+                    dr_res,_=run_opt(means_arr,sigs_arr,cov_mat,der_config,
+                                      H_val,alpha_val,m_val,mp_val)
+                    delta=(dr_res['expected_return']-(nd_res['expected_return'] if nd_res else 0))*100
+                    m1,m2,m3,m4=st.columns(4)
+                    m1.metric("Return",f"{dr_res['expected_return']*100:.2f}%",
+                               delta=f"+{delta:.2f}pp" if delta>0 else f"{delta:.2f}pp")
+                    m2.metric("Std dev",f"{dr_res['std_dev']*100:.2f}%")
+                    m3.metric("Skewness",f"{dr_res['skewness']:.3f}")
+                    m4.metric("Shortfall",f"{dr_res['shortfall_stat']*100:.2f}%")
+                    st.markdown("**Weights**")
+                    for i,w in enumerate(dr_res["weights"]):
+                        lbl=asset_labels[i] if i<len(asset_labels) else f"Asset {i+1}"
+                        st.progress(float(w),text=f"{lbl}: {w*100:.1f}%")
+                    st.caption(f"Method: {dr_res.get('method_used','—')}")
+                except Exception as e:
+                    st.warning(f"No eligible portfolio: {e}")
+            else:
+                st.info("Select a derivative to compare.")
+
+        with st.expander("📋 Portfolio data used in this run"):
+            st.dataframe(pd.DataFrame({
+                "Asset":names_in,
+                "Mean return":[f"{m*100:.2f}%" for m in means_in],
+                "Std deviation":[f"{s*100:.2f}%" for s in sigs_in],
+            }),hide_index=True)
+            st.markdown("**Correlation matrix**")
+            st.dataframe(pd.DataFrame(corr_in,index=names_in,
+                                       columns=names_in).round(3))
 
 with tab2:
     import os as _os
