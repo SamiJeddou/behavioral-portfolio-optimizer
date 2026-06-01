@@ -602,7 +602,7 @@ structured products, can unlock beyond what mean-variance can achieve.
 
 **👤 About the author**
 
-**Sami Jeddou** — Senior Financial Services Transformation Leader | Risk, Capital Markets & Front-to-Back Delivery
+**Sami Jeddou** — Senior Transformation & Risk Executive | Capital Markets · Front-to-Back Delivery · Asset Management · Financial Infrastructure
 
 🔗 [Connect on LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;&nbsp;|&nbsp;&nbsp;
 🐙 [View source on GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer)
