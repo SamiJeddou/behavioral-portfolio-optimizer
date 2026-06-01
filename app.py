@@ -5,7 +5,7 @@ Interactive dashboard for the behavioral portfolio optimizer.
 Based on Das, Markowitz, Scheid & Statman (2010) JFQA
 and original MSc thesis by Sami Jeddou, USI Lugano 2012.
 """
-
+ 
 import streamlit as st
 import numpy as np
 import matplotlib
@@ -17,7 +17,7 @@ from behavioral_portfolio_optimizer import (
     assign_probabilities,
     optimize_portfolio,
 )
-
+ 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
     page_title="Behavioral Portfolio Optimizer",
@@ -25,7 +25,7 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
 )
-
+ 
 # ── Custom CSS ────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
@@ -50,20 +50,20 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
-
+ 
 # ── Base parameters (Das & Statman base case) ─────────────────────────────────
 MEANS      = np.array([0.05, 0.10, 0.25])
 SIGS       = np.array([0.05, 0.20, 0.50])
 COV_MATRIX = np.array([0.0025, 0, 0,
                         0, 0.04, 0.02,
                         0, 0.02, 0.25]).reshape(3, 3)
-
+ 
 GRID_OPTIONS = {
     "⚡ Fast — preview  (m=21, m'=15)":          (21, 15),
     "⚖️ Standard  (m=35, m'=50)":                (35, 50),
     "🎯 High precision — thesis  (m=51, m'=99)": (51, 99),
 }
-
+ 
 DERIVATIVE_OPTIONS = {
     "None — primary securities only":       None,
     "Put option":                           "put",
@@ -76,11 +76,11 @@ DERIVATIVE_OPTIONS = {
     "Capital-guaranteed note — capped":     "cgn_capped",
     "Barrier-M note":                       "barrier_m",
 }
-
+ 
 ASSET_LABELS = ["Sec 1 — Low risk", "Sec 2 — Mid risk",
                 "Sec 3 — High risk", "Derivative"]
-
-
+ 
+ 
 # ── Helper: build derivative config ──────────────────────────────────────────
 def build_derivative_config(der_type, params):
     base = {"underlying_index": 2, "vol": SIGS[2],
@@ -112,8 +112,8 @@ def build_derivative_config(der_type, params):
         return {**base, "type": "barrier_m",
                 "M": params["M"], "premium_bm": params["premium_bm"]}
     return None
-
-
+ 
+ 
 # ── Helper: mean-variance frontier ───────────────────────────────────────────
 @st.cache_data
 def compute_mv_frontier():
@@ -134,16 +134,16 @@ def compute_mv_frontier():
     lambdas = np.linspace(0.5, 20, 120)
     pts = [mv_opt(l) for l in lambdas]
     return [p[0] for p in pts], [p[1] for p in pts], mv_opt(3.7950)
-
-
+ 
+ 
 # ── Helper: run optimizer ─────────────────────────────────────────────────────
 def run_optimizer(der_config, H, alpha, m, m_prime):
     U, dr = build_state_space(MEANS, SIGS, m=m, derivative_config=der_config)
     U = assign_probabilities(U, MEANS, SIGS, COV_MATRIX, dr)
     n_sec = U.shape[1] - 1
     return optimize_portfolio(U, n_sec, H=H, alpha=alpha, m_prime=m_prime), n_sec
-
-
+ 
+ 
 # ── Helper: build frontier data (sweep H) ────────────────────────────────────
 def build_behavioral_frontier(der_config, alpha, m, m_prime):
     H_values = [-0.05, -0.08, -0.10, -0.12, -0.15, -0.18, -0.20]
@@ -157,8 +157,8 @@ def build_behavioral_frontier(der_config, alpha, m, m_prime):
         except Exception:
             pass
     return xs, ys, labels
-
-
+ 
+ 
 # ── Helper: plot ──────────────────────────────────────────────────────────────
 def plot_frontier(mv_x, mv_y, mv_eq,
                   nd_x, nd_y, nd_labels,
@@ -169,11 +169,11 @@ def plot_frontier(mv_x, mv_y, mv_eq,
     ax.set_facecolor("#0d1117")
     ax.grid(True, color="#1e2130", linewidth=0.6, linestyle="--", alpha=0.8)
     ax.set_axisbelow(True)
-
+ 
     # MV frontier
     ax.plot(mv_x, mv_y, color="#6b7280", linewidth=2, linestyle="--",
             label="Mean-variance frontier (Markowitz)", zorder=2, alpha=0.9)
-
+ 
     # Behavioral — no derivative
     ax.plot(nd_x, nd_y, color="#4a9eff", linewidth=2.5, marker="o",
             markersize=7, markerfacecolor="#4a9eff",
@@ -181,7 +181,7 @@ def plot_frontier(mv_x, mv_y, mv_eq,
     for x, y, lbl in zip(nd_x, nd_y, nd_labels):
         ax.annotate(lbl, xy=(x, y), xytext=(x, y - 1.8),
                     color="#7fb3e8", fontsize=7.5, ha="center", zorder=4)
-
+ 
     # Behavioral — with derivative
     if cgn_x:
         ax.scatter(cgn_x, cgn_y, color="#f59e0b", s=65, marker="s", zorder=3,
@@ -215,7 +215,7 @@ def plot_frontier(mv_x, mv_y, mv_eq,
                               edgecolor="#ffffff", alpha=0.8))
         except (ValueError, IndexError):
             pass
-
+ 
     # Equivalence point
     ax.scatter(*mv_eq, color="#10b981", s=130, zorder=5, marker="D")
     ax.annotate(
@@ -225,15 +225,16 @@ def plot_frontier(mv_x, mv_y, mv_eq,
         arrowprops=dict(arrowstyle="->", color="#10b981", lw=1.2),
         bbox=dict(boxstyle="round,pad=0.3", facecolor="#0d1117",
                   edgecolor="#10b981", alpha=0.9), zorder=6)
-
-    # MVT/MAT note
-    ax.text(22, max(max(nd_y), max(cgn_y) if cgn_y else 0) + 2,
+ 
+    # MVT/MAT note — anchored to top centre of axes, always visible regardless of data range
+    ax.text(0.5, 0.97,
             "MV and behavioral frontiers converge without derivatives\n"
             "(MVT/MAT equivalence — Das, Markowitz, Scheid & Statman 2010)",
-            color="#6b7280", fontsize=7.5, ha="center", style="italic",
+            transform=ax.transAxes,
+            color="#6b7280", fontsize=7.5, ha="center", va="top", style="italic",
             bbox=dict(boxstyle="round,pad=0.3", facecolor="#0d1117",
-                      edgecolor="#3a3a5a", alpha=0.85))
-
+                      edgecolor="#3a3a5a", alpha=0.95), zorder=10)
+ 
     ax.set_xlabel("Portfolio Risk — Standard Deviation (%)",
                   color="#c0c8d8", fontsize=10, labelpad=6)
     ax.set_ylabel("Expected Return (%)",
@@ -257,22 +258,22 @@ def plot_frontier(mv_x, mv_y, mv_eq,
     ax.set_ylim(min(all_y) - 3, max(all_y) + 6)
     plt.tight_layout(rect=[0, 0.02, 1, 1])
     return fig
-
-
+ 
+ 
 # ═════════════════════════════════════════════════════════════════════════════
 # SIDEBAR
 # ═════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
     st.markdown("## ⚙️ Parameters")
     st.markdown("---")
-
+ 
     # Derivative selector
     st.markdown("### Derivative / Structured product")
     der_label_selected = st.selectbox(
         "Type", list(DERIVATIVE_OPTIONS.keys()), index=0,
         label_visibility="collapsed")
     der_type = DERIVATIVE_OPTIONS[der_label_selected]
-
+ 
     # Derivative-specific parameters
     der_params = {}
     if der_type in ("put", "call", "straddle"):
@@ -295,12 +296,12 @@ with st.sidebar:
     elif der_type == "barrier_m":
         der_params["M"]          = st.slider("Barrier M (%)", 10, 60, 40, 5) / 100
         der_params["premium_bm"] = st.slider("Premium (%)", 0.0, 20.0, 10.0, 1.0) / 100
-
+ 
     st.markdown("---")
     st.markdown("### Mental-account constraint")
     H_val     = st.slider("Threshold H (%)", -25, -3, -10, 1) / 100
     alpha_val = st.slider("Shortfall probability α (%)", 1, 15, 5, 1) / 100
-
+ 
     st.markdown("---")
     st.markdown("### Grid resolution")
     grid_label = st.selectbox("Resolution", list(GRID_OPTIONS.keys()), index=0,
@@ -315,34 +316,34 @@ with st.sidebar:
         st.markdown(
             '<div class="warning-box">⏱️ Standard resolution takes ~1–2 minutes.</div>',
             unsafe_allow_html=True)
-
+ 
     st.markdown("---")
     run_btn = st.button("▶ Run optimizer", type="primary", use_container_width=True)
-
-
+ 
+ 
 # ═════════════════════════════════════════════════════════════════════════════
 # MAIN PANEL
 # ═════════════════════════════════════════════════════════════════════════════
 tab_optimizer, tab_about = st.tabs(["📊 Optimizer", "📖 About"])
-
+ 
 with tab_optimizer:
     st.markdown("## Behavioral Portfolio Optimizer")
     st.markdown(
         "Extends Markowitz mean-variance theory to portfolios including **derivatives "
         "and structured products** using a **mental-accounting downside constraint**.")
-
+ 
     if not run_btn:
         st.info(
             "Configure parameters in the sidebar and click **▶ Run optimizer** to generate results.",
             icon="👈")
         st.stop()
-
+ 
     # ── Run ──────────────────────────────────────────────────────────────────
     der_config = build_derivative_config(der_type, der_params) if der_type else None
-
+ 
     with st.spinner("Step 1/4 — Building state space..."):
         mv_x, mv_y, mv_eq = compute_mv_frontier()
-
+ 
     with st.spinner("Step 2/4 — Running behavioral optimizer (no derivative)..."):
         try:
             nd_xs, nd_ys, nd_lbls = build_behavioral_frontier(
@@ -350,7 +351,7 @@ with tab_optimizer:
         except Exception as e:
             st.error(f"Optimizer failed (no derivative): {e}")
             st.stop()
-
+ 
     cgn_xs, cgn_ys, cgn_lbls = [], [], []
     if der_config is not None:
         with st.spinner(f"Step 3/4 — Running behavioral optimizer ({der_label_selected})..."):
@@ -359,7 +360,7 @@ with tab_optimizer:
                     der_config, alpha_val, m_val, mp_val)
             except Exception as e:
                 st.warning(f"Could not compute derivative frontier: {e}")
-
+ 
     with st.spinner("Step 4/4 — Rendering chart..."):
         fig = plot_frontier(
             mv_x, mv_y, mv_eq,
@@ -368,13 +369,13 @@ with tab_optimizer:
             der_label_selected, H_val, alpha_val)
         st.pyplot(fig, use_container_width=True)
         plt.close(fig)
-
+ 
     # ── Point results at selected H ──────────────────────────────────────────
     st.markdown("---")
     st.markdown(f"### Optimal portfolio at H = {H_val:.0%}, α = {alpha_val:.0%}")
-
+ 
     col1, col2 = st.columns(2)
-
+ 
     # No derivative
     with col1:
         st.markdown("**Without derivative**")
@@ -392,7 +393,7 @@ with tab_optimizer:
                 st.progress(float(w), text=f"{lbl}: {w*100:.1f}%")
         except Exception as e:
             st.warning(f"Could not retrieve result: {e}")
-
+ 
     # With derivative
     with col2:
         if der_config is not None:
@@ -415,66 +416,66 @@ with tab_optimizer:
                 st.warning(f"Could not retrieve result: {e}")
         else:
             st.info("Select a derivative in the sidebar to compare.")
-
-
+ 
+ 
 with tab_about:
     st.markdown("## About this tool")
     st.markdown("""
 <div class="info-box">
-
+ 
 ### Theoretical framework
-
+ 
 This optimizer extends **Markowitz mean-variance theory** to portfolios that include
 derivatives and structured products, using a **mental-accounting downside constraint**:
-
+ 
 > *The probability of the portfolio return falling below a threshold H must not exceed α.*
-
+ 
 This is equivalent to a **Value-at-Risk constraint** embedded directly in the objective function,
 allowing the optimizer to allocate to derivatives whose asymmetric payoffs provide downside
 protection while preserving upside participation.
-
+ 
 ### Algorithm — three steps
-
+ 
 **Step 1 — State space construction**
 A discrete grid of return scenarios is built for all primary securities (m grid steps each).
 For each scenario, derivative returns are computed analytically using Black-Scholes pricing.
-
+ 
 **Step 2 — Probability assignment**
 Each state is assigned a probability using a **Gaussian copula**, correctly capturing the
 dependence structure between assets and supporting non-normal marginal distributions.
-
+ 
 **Step 3 — Two-stage optimization**
 - *Grid search*: All weight combinations (m′ steps per weight) are evaluated against the
   mental-account constraint. The highest-return eligible portfolio becomes the starting point.
 - *Gradient refinement*: A COBYLA nonlinear optimizer refines the solution with the constraint
   embedded as a penalty term.
-
+ 
 ### MVT / MAT equivalence (Chapter 4)
-
+ 
 When **no derivatives** are present, the mean-variance and behavioral frontiers converge exactly.
 For H = -10% and α = 5%, the implied risk-aversion coefficient is **λ = 3.795**, at which point
 both methods yield the same optimal portfolio (return ≈ 10.2%, std ≈ 12.3%).
-
+ 
 Adding derivatives **breaks this equivalence** — the behavioral approach can exploit asymmetric
 payoff profiles that mean-variance optimization cannot capture.
-
+ 
 </div>
-
+ 
 ### Academic references
-
+ 
 - **Das, Sanjiv and Meir Statman (2004)** — *Beyond Mean-Variance: Portfolios with Derivatives
   and Non-Normal Returns in Mental Accounts*
-
+ 
 - **Das, Sanjiv, Harry Markowitz, Jonathan Scheid and Meir Statman (2010)** —
   *Portfolio Optimization with Mental Accounts*, Journal of Financial and Quantitative Analysis,
   Vol. 45, No. 2, pp. 311–334
-
+ 
 - **Sami Jeddou (2012)** — *Beyond Mean-Variance: Options and Structured Products in Behavioral
   Portfolios*, MSc Finance Thesis, Università della Svizzera italiana (USI Lugano),
   supervised by Prof. Enrico De Giorgi
-
+ 
 ### Author
-
+ 
 **Sami Jeddou** — Senior Financial Services Transformation Leader
 🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404)
 🐙 [GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer)
