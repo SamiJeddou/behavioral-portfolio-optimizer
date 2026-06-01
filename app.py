@@ -250,9 +250,11 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     if mv_eq:
         fig.add_trace(go.Scatter(
             x=[mv_eq[0]], y=[mv_eq[1]], mode='markers',
-            name='🟢 Equivalence point — MV = Behavioral (λ=3.795, H=-10%, α=5%)',
-            marker=dict(size=13, color='#10b981', symbol='diamond'),
+            name='◆ Equivalence point — MV = Behavioral (λ=3.795, H=-10%, α=5%)',
+            marker=dict(size=13, color='#10b981', symbol='diamond',
+                        line=dict(width=0)),
             showlegend=True,
+            legendrank=4,
             hovertemplate='<b>Equivalence point</b><br>At this point, the mean-variance optimal portfolio<br>and the behavioral optimal portfolio are identical.<br>λ=3.795 ↔ H=-10%, α=5%<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
         ))
         fig.add_annotation(
