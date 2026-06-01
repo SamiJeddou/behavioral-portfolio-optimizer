@@ -873,7 +873,7 @@ I would be glad to hear from you.
             else:
                 st.info("Select a derivative to compare.")
 
-with st.expander("📋 Portfolio data used in this run", expanded=False):
+with st.expander("📋 Portfolio data used in this run", expanded=True):
         st.dataframe(pd.DataFrame({
             "Asset":names_in,
             "Mean return":[f"{m*100:.2f}%" for m in means_in],
