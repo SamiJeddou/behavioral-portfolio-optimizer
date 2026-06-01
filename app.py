@@ -874,14 +874,38 @@ I would be glad to hear from you.
                 st.info("Select a derivative to compare.")
 
 with st.expander("📋 Portfolio data used in this run", expanded=True):
-        st.dataframe(pd.DataFrame({
-            "Asset":names_in,
-            "Mean return":[f"{m*100:.2f}%" for m in means_in],
-            "Std deviation":[f"{s*100:.2f}%" for s in sigs_in],
-        }),hide_index=True)
+        # Stats table
+        header_style = "background:#4a9eff;color:#ffffff;font-weight:bold;padding:6px 10px;text-align:left"
+        cell_style   = "background:#ffffff;color:#111111;padding:5px 10px;border-bottom:1px solid #e0e0e0"
+        rows = "".join(
+            f"<tr><td style='{cell_style}'>{names_in[i]}</td>"
+            f"<td style='{cell_style}'>{means_in[i]*100:.2f}%</td>"
+            f"<td style='{cell_style}'>{sigs_in[i]*100:.2f}%</td></tr>"
+            for i in range(len(names_in)))
+        st.markdown(
+            f"<table style='width:100%;border-collapse:collapse'>"
+            f"<tr><th style='{header_style}'>Asset</th>"
+            f"<th style='{header_style}'>Mean return</th>"
+            f"<th style='{header_style}'>Std deviation</th></tr>"
+            f"{rows}</table>",
+            unsafe_allow_html=True)
+        st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
+        # Correlation matrix
         st.markdown("**Correlation matrix**")
-        st.dataframe(pd.DataFrame(corr_in,index=names_in,
-                                   columns=names_in).round(3))
+        n = len(names_in)
+        corr_rows = "".join(
+            f"<tr><td style='{header_style}'>{names_in[i]}</td>"
+            + "".join(
+                f"<td style='{cell_style};text-align:center'>{corr_in[i][j]:.3f}</td>"
+                for j in range(n))
+            + "</tr>"
+            for i in range(n))
+        col_headers = "".join(f"<th style='{header_style};text-align:center'>{names_in[j]}</th>" for j in range(n))
+        st.markdown(
+            f"<table style='width:100%;border-collapse:collapse'>"
+            f"<tr><th style='{header_style}'></th>{col_headers}</tr>"
+            f"{corr_rows}</table>",
+            unsafe_allow_html=True)
 
 with tab2:
     import os as _os
