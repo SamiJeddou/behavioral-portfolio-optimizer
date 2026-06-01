@@ -11,6 +11,7 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
+import anthropic
 from scipy.optimize import minimize
 from io import StringIO
 from datetime import date, timedelta
@@ -57,6 +58,62 @@ h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
 </style>""", unsafe_allow_html=True)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
+# ── AI helper ────────────────────────────────────────────────────────────────
+SYSTEM_PROMPT = """You are a financial expert assistant embedded in a behavioral portfolio
+optimization app. Your role is to give clear, concise explanations of financial concepts,
+derivatives, and portfolio theory. Always relate explanations to portfolio optimization
+and the mental-accounting framework when relevant. Keep answers to 3-5 sentences unless
+more detail is explicitly requested. Use plain language accessible to finance professionals
+but not necessarily quants."""
+
+PAPER_CONTEXT = """The app is based on three key works:
+1. Das & Statman (2009) — Beyond Mean-Variance: introduces behavioral portfolio theory
+   with derivatives, mental-accounting constraints (VaR and ES), and non-normal distributions.
+2. Das, Markowitz, Scheid & Statman (2010) JFQA — proves MVT/MAT equivalence: for any
+   mental-account constraint (H, alpha), there exists an implied risk-aversion lambda such
+   that mean-variance and behavioral optimal portfolios are identical when no derivatives present.
+3. Jeddou (2012) MSc thesis USI Lugano — implements the full algorithm in R, extends to
+   all derivative types including CGNs and barrier notes."""
+
+@st.cache_data(show_spinner=False)
+def get_ai_explanation(term, context=""):
+    """Get AI explanation for a financial term. Cached per term."""
+    try:
+        client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
+        prompt = f"""Explain "{term}" in the context of portfolio optimization and behavioral finance.
+{f"Additional context: {context}" if context else ""}
+{PAPER_CONTEXT}
+Focus on: what it is, how its payoff/effect works, and when it is useful in a behavioral portfolio."""
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=300,
+            system=SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return message.content[0].text
+    except Exception as e:
+        return f"AI explanation unavailable: {str(e)}"
+
+def get_ai_chat_response(question, portfolio_context=""):
+    """Get AI response for a glossary question. Not cached."""
+    try:
+        client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
+        prompt = f"""{PAPER_CONTEXT}
+
+{f"Current portfolio context: {portfolio_context}" if portfolio_context else ""}
+
+User question: {question}"""
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=500,
+            system=SYSTEM_PROMPT,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        return message.content[0].text
+    except Exception as e:
+        return f"AI response unavailable: {str(e)}"
+
+
 DEFAULT_MEANS = [0.05, 0.10, 0.25]
 DEFAULT_SIGS  = [0.05, 0.20, 0.50]
 DEFAULT_CORR  = [[1.0,0.0,0.0],[0.0,1.0,0.4],[0.0,0.4,1.0]]
@@ -542,6 +599,18 @@ with st.sidebar:
     der_type=PREDEFINED_DERIVATIVES[der_label_sel]
     der_params={}
 
+    # AI tooltip for selected derivative
+    if der_type is not None and der_type != "custom":
+        with st.expander("🤖 AI explanation", expanded=True):
+            with st.spinner("Generating explanation..."):
+                explanation = get_ai_explanation(
+                    der_label_sel,
+                    context="behavioral portfolio optimization with mental-accounting constraints")
+            st.markdown(f'<div style="background:#0f1923;border:1px solid #4a9eff;'
+                       f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
+                       f'{explanation}</div>',
+                       unsafe_allow_html=True)
+
     # Underlying selector (shown for all non-None derivative types)
     if der_type is not None:
         underlying_idx=st.selectbox(
@@ -702,7 +771,7 @@ with st.sidebar:
 # MAIN
 # ═════════════════════════════════════════════════════════════════════════════
 st.markdown("<div style='margin-top:2.5rem'></div>", unsafe_allow_html=True)
-tab1,tab2=st.tabs(["📊 Optimizer","📖 About"])
+tab1,tab2,tab3=st.tabs(["📊 Optimizer","📖 About","📚 Glossary"])
 
 with tab1:
     # Header row: title left, photo right
@@ -1064,3 +1133,75 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
 - **Das, Sanjiv, Harry Markowitz, Jonathan Scheid and Meir Statman (2010)** — *Portfolio Optimization with Mental Accounts*, Journal of Financial and Quantitative Analysis, Vol. 45, No. 2, pp. 311–334
 - **Jeddou, Sami (2012)** — *Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios*, MSc Finance Thesis, Università della Svizzera italiana (USI Lugano), supervised by Prof. Enrico De Giorgi. Available on [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404)
 """)
+
+with tab3:
+    st.markdown("## 📚 AI Glossary & Reference")
+    st.markdown(
+        "Click any term below for an AI-generated explanation, or type your own question. "
+        "Answers are tailored to the context of behavioral portfolio optimization.")
+
+    GLOSSARY_TERMS = {
+        "Derivatives & structured products": [
+            "Put option", "Call option", "Safety collar", "Aggressive collar",
+            "Straddle", "Strangle", "Capital-guaranteed note (CGN)", "Barrier-M note",
+            "Digital option", "Zero-coupon bond"
+        ],
+        "Risk measures": [
+            "Value at Risk (VaR)", "Expected Shortfall (ES)",
+            "Shortfall probability", "Skewness", "Excess kurtosis"
+        ],
+        "Portfolio theory": [
+            "Mean-variance efficient frontier", "Markowitz optimization",
+            "Mental accounting", "Behavioral portfolio theory",
+            "MVT/MAT equivalence", "Implied risk aversion lambda",
+            "Gaussian copula", "Black-Scholes pricing"
+        ],
+        "Academic references": [
+            "Das & Statman (2009) — Beyond Mean-Variance",
+            "Das, Markowitz, Scheid & Statman (2010) JFQA",
+            "Jeddou (2012) MSc thesis USI Lugano"
+        ]
+    }
+
+    if "glossary_response" not in st.session_state:
+        st.session_state["glossary_response"] = ""
+    if "glossary_term" not in st.session_state:
+        st.session_state["glossary_term"] = ""
+
+    for category, terms in GLOSSARY_TERMS.items():
+        st.markdown(f"**{category}**")
+        cols = st.columns(3)
+        for i, term in enumerate(terms):
+            if cols[i % 3].button(term, key=f"gloss_{term}", use_container_width=True):
+                st.session_state["glossary_term"] = term
+                with st.spinner(f"Looking up: {term}..."):
+                    st.session_state["glossary_response"] = get_ai_chat_response(term)
+        st.markdown("")
+
+    st.markdown("---")
+    st.markdown("### Ask your own question")
+    custom_q = st.text_input(
+        "Type a term or question",
+        placeholder="e.g. What is the difference between VaR and ES?")
+    if st.button("🤖 Ask AI", type="primary"):
+        if custom_q.strip():
+            st.session_state["glossary_term"] = custom_q
+            with st.spinner("Thinking..."):
+                st.session_state["glossary_response"] = get_ai_chat_response(
+                    custom_q,
+                    portfolio_context=f"Portfolio has {len(means_in)} securities with means {[f'{m*100:.1f}%' for m in means_in]}")
+        else:
+            st.warning("Please enter a question first.")
+
+    if st.session_state["glossary_response"]:
+        st.markdown("---")
+        st.markdown(f"**{st.session_state['glossary_term']}**")
+        st.markdown(
+            f'<div style="background:#0f1923;border:1px solid #4a9eff;border-radius:8px;'
+            f'padding:1rem 1.2rem;color:#c0c8d8;font-size:.9rem;line-height:1.6">'
+            f'{st.session_state["glossary_response"]}</div>',
+            unsafe_allow_html=True)
+        if st.button("Clear response"):
+            st.session_state["glossary_response"] = ""
+            st.session_state["glossary_term"] = ""
+            st.rerun()
