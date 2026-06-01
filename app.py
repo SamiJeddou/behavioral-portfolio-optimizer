@@ -330,10 +330,55 @@ def corr_to_cov(sigs, corr):
     s = np.array(sigs); c = np.array(corr)
     return np.outer(s,s)*c
 
+def clean_returns(rets, outlier_threshold=5.0):
+    """
+    Clean a returns DataFrame:
+    1. Remove rows where ALL returns are exactly zero (stale prices)
+    2. Winsorise outliers beyond +/- outlier_threshold standard deviations
+    3. Return cleaned returns and a cleaning report dict
+    """
+    report = {}
+    n_before = len(rets)
+
+    # Step 1: remove all-zero rows (stale prices)
+    all_zero_mask = (rets.abs() < 1e-10).all(axis=1)
+    n_stale = all_zero_mask.sum()
+    rets = rets[~all_zero_mask]
+    if n_stale > 0:
+        report['stale_rows_removed'] = int(n_stale)
+
+    # Step 2: winsorise outliers per column
+    n_outliers = 0
+    for col in rets.columns:
+        mean = rets[col].mean()
+        std  = rets[col].std()
+        if std > 0:
+            lo = mean - outlier_threshold * std
+            hi = mean + outlier_threshold * std
+            mask = (rets[col] < lo) | (rets[col] > hi)
+            n_col = mask.sum()
+            if n_col > 0:
+                rets[col] = rets[col].clip(lo, hi)
+                n_outliers += n_col
+    if n_outliers > 0:
+        report['outliers_winsorised'] = int(n_outliers)
+
+    # Step 3: minimum data warning
+    n_after = len(rets)
+    report['observations'] = n_after
+    if n_after < 60:
+        report['warning'] = f'Only {n_after} observations after cleaning — results may be unreliable. Consider a longer date range.'
+    elif n_after < 252:
+        report['warning'] = f'{n_after} observations — less than 1 year of data. Consider extending the date range for more reliable estimates.'
+
+    report['removed_total'] = n_before - n_after
+    return rets, report
+
 def parse_csv(f):
     df = pd.read_csv(f, index_col=0, parse_dates=True)
     df = df.apply(pd.to_numeric, errors='coerce').dropna()
     rets = df.pct_change().dropna()
+    rets, _ = clean_returns(rets)
     return rets.mean().tolist(), rets.std().tolist(), rets.corr().values.tolist(), list(rets.columns)
 
 def fetch_tickers(tickers, start, end, freq):
@@ -346,15 +391,16 @@ def fetch_tickers(tickers, start, end, freq):
         if freq == "Monthly":
             raw = raw.resample('ME').last()
         rets = raw.pct_change().dropna()
+        rets, cleaning_report = clean_returns(rets.copy())
         factor = 252 if freq == "Daily" else 12
         means = (rets.mean() * factor).tolist()
         sigs  = (rets.std() * np.sqrt(factor)).tolist()
         corr  = rets.corr().values.tolist()
         names = list(rets.columns)
         last_prices = raw.iloc[-1].to_dict()
-        return means, sigs, corr, names, last_prices, None
+        return means, sigs, corr, names, last_prices, None, cleaning_report
     except Exception as e:
-        return None, None, None, None, None, str(e)
+        return None, None, None, None, None, str(e), {}
 
 def build_der_config(der_type, der_params, sigs, underlying_idx):
     base = {"underlying_index": underlying_idx,
@@ -695,13 +741,22 @@ with st.sidebar:
         if fetch_btn:
             tickers=[t.strip().upper() for t in ticker_str.split(",") if t.strip()]
             with st.spinner(f"Fetching {len(tickers)} tickers from Yahoo Finance..."):
-                m,s,c,n,lp,err=fetch_tickers(tickers,d_start,d_end,freq)
+                m,s,c,n,lp,err,cleaning=fetch_tickers(tickers,d_start,d_end,freq)
             if err:
                 st.error(f"Fetch failed: {err}"); data_valid=False
             else:
                 st.session_state["live_data"]=(m,s,c,n,lp)
-                st.markdown(f'<div class="ok-box">✓ Loaded: {", ".join(n)}</div>',
+                st.markdown(f'<div class="ok-box">✓ Loaded: {", ".join(n)} '                            f'({cleaning.get("observations","?")} observations after cleaning)</div>',
                             unsafe_allow_html=True)
+                if cleaning.get("stale_rows_removed"):
+                    st.markdown(f'<div class="warn-box">⚠️ {cleaning["stale_rows_removed"]} stale price rows removed.</div>',
+                                unsafe_allow_html=True)
+                if cleaning.get("outliers_winsorised"):
+                    st.markdown(f'<div class="warn-box">⚠️ {cleaning["outliers_winsorised"]} outlier returns winsorised (±5σ).</div>',
+                                unsafe_allow_html=True)
+                if cleaning.get("warning"):
+                    st.markdown(f'<div class="warn-box">⚠️ {cleaning["warning"]}</div>',
+                                unsafe_allow_html=True)
         if "live_data" in st.session_state:
             means_in,sigs_in,corr_in,names_in,last_prices=st.session_state["live_data"]
             factor_label="annualised" if freq=="Daily" else "annualised (monthly)"
@@ -1281,6 +1336,17 @@ For each candidate weight vector, the portfolio return distribution is evaluated
 The best eligible portfolio (highest expected return satisfying the constraint) is selected via:
 - *≤ 4 securities*: exhaustive grid search over all weight combinations
 - *≥ 5 securities*: differential evolution — a global stochastic optimizer that scales to larger portfolios without exhaustive enumeration
+""")
+
+    st.markdown("### Data input & cleaning")
+    st.markdown(
+        "Four data input modes are supported. For live market data and CSV uploads, "
+        "returns are automatically cleaned before being passed to the optimizer:")
+    st.markdown("""
+- **Default**: Das & Statman (2009) base case — 3 securities, pre-calibrated parameters, reproduces thesis results exactly
+- **Live market data**: any global ticker from Yahoo Finance, daily or monthly frequency, over a user-defined date range. Auto-adjusted for splits and dividends. Cleaned automatically: stale price rows (zero returns) are removed and outliers beyond ±5 standard deviations are winsorised
+- **Manual entry**: enter means, standard deviations, and correlations directly for 2–10 securities
+- **CSV upload**: upload historical prices — returns computed automatically with the same cleaning applied as for live data
 """)
 
     st.markdown("### MVT / MAT Equivalence")
