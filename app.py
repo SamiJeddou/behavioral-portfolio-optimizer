@@ -286,12 +286,15 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         xaxis=dict(
             title='Portfolio Risk — Standard Deviation (%)',
             gridcolor='#1e2130', gridwidth=0.5,
-            color='#c0c8d8', zerolinecolor='#2a2a3a'
+            color='#c0c8d8', zerolinecolor='#2a2a3a',
+            range=[0, max(max(mv_x), max(der_x) if der_x else 0) * 1.08]
         ),
         yaxis=dict(
             title='Expected Return (%)',
             gridcolor='#1e2130', gridwidth=0.5,
-            color='#c0c8d8', zerolinecolor='#2a2a3a'
+            color='#c0c8d8', zerolinecolor='#2a2a3a',
+            range=[min(min(mv_y), min(nd_y)) - 2,
+                   max(max(mv_y), max(der_y) if der_y else 0) * 1.08]
         ),
         legend=dict(
             bgcolor='rgba(26,26,46,0.9)',
