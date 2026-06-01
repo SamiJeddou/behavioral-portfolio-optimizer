@@ -804,7 +804,7 @@ engagements — either freelance/contract or permanent — in France, Europe, or
 
     st.markdown("### Algorithm")
     st.markdown(
-        "The full algorithm is described in Das, Markowitz, Scheid & Statman (2010). "
+        "The full algorithm is described in Das & Statman (2009) — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*. "
         "The original R implementation is provided in the appendix of the thesis (Jeddou, 2012). "
         "This app is a Python reimplementation of that algorithm.")
     st.markdown("""
@@ -846,7 +846,7 @@ For each candidate weight vector, the portfolio return distribution is evaluated
 
     st.markdown("### Academic references")
     st.markdown("""
-- **Das, Sanjiv and Meir Statman (2004)** — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*
+- **Das, Sanjiv and Meir Statman (2009)** — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*
 - **Das, Sanjiv, Harry Markowitz, Jonathan Scheid and Meir Statman (2010)** — *Portfolio Optimization with Mental Accounts*, Journal of Financial and Quantitative Analysis, Vol. 45, No. 2, pp. 311–334
 - **Jeddou, Sami (2012)** — *Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios*, MSc Finance Thesis, Università della Svizzera italiana (USI Lugano), supervised by Prof. Enrico De Giorgi
 """)
