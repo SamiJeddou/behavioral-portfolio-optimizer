@@ -806,7 +806,7 @@ engagements — either freelance/contract or permanent — in France, Europe, or
     st.markdown(
         "The full algorithm is described in Das & Statman (2009) — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*. "
         "The original R implementation is provided in the appendix of the thesis (Jeddou, 2012). "
-        "This app is a Python reimplementation of that algorithm.")
+        "This app is a Python reimplementation of that algorithm, with enhancements and extensions including support for live market data, a custom structured product composer, and an extended optimizer for larger portfolios.")
     st.markdown("""
 **Step 1 — State space construction**
 A discrete grid of return scenarios is built for all primary securities.
