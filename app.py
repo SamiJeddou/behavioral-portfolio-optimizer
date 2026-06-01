@@ -10,6 +10,7 @@ import pandas as pd
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import plotly.graph_objects as go
 from scipy.optimize import minimize
 from io import StringIO
 from datetime import date, timedelta
@@ -186,6 +187,138 @@ def build_frontier(means,sigs,cov,der_config,alpha,m,mp):
             lbls.append(f"H={H:.0%}")
         except: pass
     return xs,ys,lbls
+
+def plot_frontier_plotly(mv_x, mv_y, mv_eq,
+                         nd_x, nd_y, nd_lbls,
+                         der_x, der_y, der_lbls,
+                         der_label, H_sel, alpha):
+    """Interactive Plotly version of the frontier chart with hover tooltips."""
+    fig = go.Figure()
+
+    # ── Mean-variance frontier ────────────────────────────────────────────────
+    fig.add_trace(go.Scatter(
+        x=mv_x, y=mv_y, mode='lines',
+        name='Mean-variance frontier (Markowitz)',
+        line=dict(color='#6b7280', width=2, dash='dash'),
+        hovertemplate='<b>Mean-Variance (Markowitz)</b><br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
+    ))
+
+    # ── Behavioral — no derivative ────────────────────────────────────────────
+    fig.add_trace(go.Scatter(
+        x=nd_x, y=nd_y, mode='lines+markers',
+        name='Behavioral — no derivative',
+        line=dict(color='#4a9eff', width=2.5),
+        marker=dict(size=9, color='#4a9eff', symbol='circle'),
+        text=nd_lbls,
+        hovertemplate='<b>Behavioral (no derivative)</b><br>Threshold: %{text}<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
+    ))
+
+    # ── Behavioral — with derivative ──────────────────────────────────────────
+    if der_x:
+        fig.add_trace(go.Scatter(
+            x=der_x, y=der_y, mode='markers',
+            name=f'Behavioral — {der_label}',
+            marker=dict(size=10, color='#f59e0b', symbol='square'),
+            text=der_lbls,
+            hovertemplate=f'<b>Behavioral ({der_label})</b><br>Threshold: %{{text}}<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
+        ))
+
+        # Gain arrow at selected H
+        try:
+            i0 = nd_lbls.index(f'H={H_sel:.0%}')
+            i1 = der_lbls.index(f'H={H_sel:.0%}')
+            x0, y0 = nd_x[i0], nd_y[i0]
+            x1, y1 = der_x[i1], der_y[i1]
+            gain = y1 - y0
+            fig.add_annotation(
+                x=x1, y=y1, ax=x0, ay=y0,
+                xref='x', yref='y', axref='x', ayref='y',
+                showarrow=True, arrowhead=2, arrowsize=1.2,
+                arrowwidth=2, arrowcolor='#ffffff',
+                text=f'+{gain:.1f} pp<br>same constraint',
+                font=dict(color='#ffffff', size=10),
+                bgcolor='rgba(13,17,23,0.8)',
+                bordercolor='#ffffff', borderwidth=1,
+                xanchor='left'
+            )
+        except (ValueError, IndexError):
+            pass
+
+    # ── Equivalence point ─────────────────────────────────────────────────────
+    if mv_eq:
+        fig.add_trace(go.Scatter(
+            x=[mv_eq[0]], y=[mv_eq[1]], mode='markers',
+            name='Equivalence point (λ=3.795)',
+            marker=dict(size=13, color='#10b981', symbol='diamond'),
+            hovertemplate='<b>Equivalence point</b><br>λ=3.795 ↔ H=-10%, α=5%<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
+        ))
+        fig.add_annotation(
+            x=mv_eq[0], y=mv_eq[1],
+            text=f'Equivalence point<br>λ=3.795 ↔ H=-10%, α=5%<br>MV = Behavioral = {mv_eq[1]:.1f}%',
+            showarrow=True, arrowhead=2, arrowcolor='#10b981',
+            arrowwidth=1.5, ax=40, ay=60,
+            font=dict(color='#10b981', size=9),
+            bgcolor='rgba(13,17,23,0.9)',
+            bordercolor='#10b981', borderwidth=1
+        )
+
+    # ── MVT/MAT note ──────────────────────────────────────────────────────────
+    fig.add_annotation(
+        xref='paper', yref='paper', x=0.5, y=1.0,
+        text='MV and behavioral frontiers converge without derivatives (MVT/MAT equivalence — Das, Markowitz, Scheid & Statman 2010)',
+        showarrow=False,
+        font=dict(color='#6b7280', size=10, style='italic'),
+        bgcolor='rgba(13,17,23,0.85)',
+        bordercolor='#3a3a5a', borderwidth=1,
+        xanchor='center', yanchor='bottom'
+    )
+
+    # ── Layout ────────────────────────────────────────────────────────────────
+    fig.update_layout(
+        template='plotly_dark',
+        paper_bgcolor='#0d1117',
+        plot_bgcolor='#0d1117',
+        title=dict(
+            text='Mean-Variance vs Behavioral Portfolio Frontier',
+            font=dict(color='white', size=15),
+            x=0.5
+        ),
+        xaxis=dict(
+            title='Portfolio Risk — Standard Deviation (%)',
+            gridcolor='#1e2130', gridwidth=0.5,
+            color='#c0c8d8', zerolinecolor='#2a2a3a'
+        ),
+        yaxis=dict(
+            title='Expected Return (%)',
+            gridcolor='#1e2130', gridwidth=0.5,
+            color='#c0c8d8', zerolinecolor='#2a2a3a'
+        ),
+        legend=dict(
+            bgcolor='rgba(26,26,46,0.9)',
+            bordercolor='#3a3a5a', borderwidth=1,
+            font=dict(color='white', size=10),
+            x=0.01, y=0.99
+        ),
+        hoverlabel=dict(
+            bgcolor='#1a1a2e',
+            bordercolor='#4a9eff',
+            font=dict(color='white', size=11)
+        ),
+        margin=dict(t=80, b=60, l=60, r=20),
+        height=520
+    )
+
+    # Footer annotation
+    fig.add_annotation(
+        xref='paper', yref='paper', x=0.5, y=-0.1,
+        text='Das & Statman (2009)  |  Das, Markowitz, Scheid & Statman (2010) JFQA  |  Sami Jeddou, MSc Finance USI Lugano 2012',
+        showarrow=False,
+        font=dict(color='#4a5568', size=8, style='italic'),
+        xanchor='center'
+    )
+
+    return fig
+
 
 def plot_payoff(components, vol, S0, r, T, asset_name):
     returns = np.linspace(-0.8, 1.5, 300)
@@ -684,9 +817,9 @@ I would be glad to hear from you.
                     st.warning(f"Derivative frontier failed: {e}")
 
         with st.spinner("Rendering chart..."):
-            fig=plot_frontier(mv_x,mv_y,mv_eq,nd_xs,nd_ys,nd_lbls,
-                              der_xs,der_ys,der_lbls,der_label_sel,H_val,alpha_val)
-            st.pyplot(fig,use_container_width=True); plt.close(fig)
+            fig_plotly=plot_frontier_plotly(mv_x,mv_y,mv_eq,nd_xs,nd_ys,nd_lbls,
+                                            der_xs,der_ys,der_lbls,der_label_sel,H_val,alpha_val)
+            st.plotly_chart(fig_plotly, use_container_width=True)
 
         # ── Results ───────────────────────────────────────────────────────────────
         st.markdown("---")

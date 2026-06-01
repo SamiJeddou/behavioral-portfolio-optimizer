@@ -6,3 +6,4 @@ fastapi>=0.110
 uvicorn>=0.29
 pandas>=2.0
 yfinance>=0.2.36
+plotly>=5.18
