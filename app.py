@@ -616,7 +616,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     # ── MVT/MAT note ──────────────────────────────────────────────────────────
     fig.add_annotation(
         xref='paper', yref='paper', x=0.5, y=1.0,
-        text='MV and behavioral frontiers converge without derivatives (MVT/MAT equivalence)',
+        text='MV and behavioral frontiers converge without derivatives (MVT = Mean-Variance Theory / MAT = Mental Accounts Theory)',
         showarrow=False,
         font=dict(color='#6b7280', size=10, style='italic'),
         bgcolor='rgba(13,17,23,0.85)',
@@ -630,7 +630,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         paper_bgcolor='#0d1117',
         plot_bgcolor='#0d1117',
         title=dict(
-            text='Mean-Variance vs Behavioral Portfolio Frontier',
+            text='Mean-Variance vs Behavioral Portfolio Efficient Frontier',
             font=dict(color='white', size=15),
             x=0.5
         ),
