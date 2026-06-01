@@ -1312,7 +1312,10 @@ I would be glad to hear from you.
                     st.progress(float(w),text=f"{lbl}: {w*100:.1f}%")
                 st.caption(f"Method: {nd_res.get('method_used','—')}")
             except Exception as e:
-                st.warning(f"No eligible portfolio: {e}")
+                st.warning(
+                    "⚠️ No eligible portfolio found for these parameters. "
+                    "The constraint is too tight — try increasing H (e.g. -15% instead of -5%), "
+                    "increasing α, or switching to Fast resolution to explore parameters quickly.")
 
         with c2:
             if der_config:
@@ -1336,7 +1339,10 @@ I would be glad to hear from you.
                         st.progress(float(w),text=f"{lbl}: {w*100:.1f}%")
                     st.caption(f"Method: {dr_res.get('method_used','—')}")
                 except Exception as e:
-                    st.warning(f"No eligible portfolio: {e}")
+                    st.warning(
+                        "⚠️ No eligible portfolio found for these parameters. "
+                        "The constraint is too tight — try increasing H (e.g. -15% instead of -5%), "
+                        "increasing α, or switching to Fast resolution to explore parameters quickly.")
             else:
                 st.info("Select a derivative to compare.")
 
