@@ -560,11 +560,13 @@ with tab1:
                 unsafe_allow_html=True)
 
     if not run_btn:
-        # White box with blue border using native Streamlit container
-        with st.container(border=True):
-            st.markdown("### 👈 How to use this tool")
-            st.markdown("Follow these steps in the sidebar:")
-            st.markdown("""
+        st.markdown("""
+<div class="info-box" style="color:#ffffff !important">
+
+### 👈 How to use this tool
+
+Follow these steps in the sidebar:
+
 | Step | Action |
 |---|---|
 | **1 — Portfolio data** | Choose a data source: default base case, live market tickers, manual entry, or CSV upload |
@@ -573,19 +575,20 @@ with tab1:
 | **4 — Constraint** | Set the mental-account threshold H and shortfall probability α |
 | **5 — Grid resolution** | Choose Fast for a quick preview, High precision for thesis-level accuracy |
 | **6 — Run** | Click **▶ Run optimizer** |
-""")
-            st.markdown("The chart will show three curves:")
-            st.markdown("""
+
+The chart will show three curves:
 - 🔘 **Grey dashed** — classical mean-variance efficient frontier (Markowitz)
 - 🔵 **Blue** — behavioral optimizer frontier without derivatives
 - 🟡 **Gold** — behavioral optimizer frontier including your selected derivative
 - ➡️ **White dotted arrow** — return gap between the behavioral frontier without and with the derivative, at the selected H and α constraint
-""")
-            st.markdown(
-                "At the equivalence point (λ=3.795, H=-10%, α=5%), the grey and blue curves meet exactly — "
-                "confirming the MVT/MAT equivalence proven in Das, Markowitz, Scheid & Statman (2010). "
-                "The gold curve shows what the behavioral approach, with the right choice of "
-                "derivatives or structured products, can unlock beyond what mean-variance can achieve.")
+
+At the equivalence point (λ=3.795, H=-10%, α=5%), the grey and blue curves meet exactly —
+confirming the MVT/MAT equivalence proven in Das, Markowitz, Scheid & Statman (2010).
+The gold curve shows what the behavioral approach, with the right choice of derivatives or
+structured products, can unlock beyond what mean-variance can achieve.
+
+</div>
+""", unsafe_allow_html=True)
         # Sample chart
         import os
         if os.path.exists("sample_output.png"):
