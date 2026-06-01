@@ -1191,8 +1191,7 @@ Senior Financial Services Executive — Transformation, Risk & Capital Markets
 
         st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 
-        with st.form("contact_form"):
-            st.markdown("""
+        st.markdown("""
 <div style="color:#ffffff !important;margin-bottom:.8rem">
 
 **💬 Get in touch**
@@ -1203,6 +1202,7 @@ I would be glad to hear from you.
 
 </div>
 """, unsafe_allow_html=True)
+        with st.form("contact_form"):
             sender_name  = st.text_input("Your name")
             sender_email = st.text_input("Your email")
             message      = st.text_area("Message", height=100,
@@ -1210,14 +1210,24 @@ I would be glad to hear from you.
             submitted = st.form_submit_button("Send message")
             if submitted:
                 if sender_name and sender_email and message:
-                    import urllib.parse
-                    subject = urllib.parse.quote(f"Behavioral Portfolio Optimizer — message from {sender_name}")
-                    body    = urllib.parse.quote(f"From: {sender_name}\nEmail: {sender_email}\n\n{message}")
-                    mailto  = f"mailto:sami.jeddou@protonmail.com?subject={subject}&body={body}"
-                    st.markdown(
-                        f'<meta http-equiv="refresh" content="0;url={mailto}">',
-                        unsafe_allow_html=True)
-                    st.success("✓ Opening your email client to send the message.")
+                    import requests as _req
+                    try:
+                        resp = _req.post(
+                            "https://formspree.io/f/xvzyepoe",
+                            data={
+                                "name":    sender_name,
+                                "email":   sender_email,
+                                "message": message,
+                            },
+                            headers={"Accept": "application/json"},
+                            timeout=10
+                        )
+                        if resp.status_code == 200:
+                            st.success("✓ Message sent successfully. I will get back to you shortly.")
+                        else:
+                            st.error(f"Could not send message (status {resp.status_code}). Please try again or email sami.jeddou@protonmail.com directly.")
+                    except Exception as ex:
+                        st.error(f"Could not send message: {ex}. Please email sami.jeddou@protonmail.com directly.")
                 else:
                     st.warning("Please fill in all fields before sending.")
 
