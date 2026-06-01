@@ -491,7 +491,8 @@ with st.sidebar:
 # ═════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ═════════════════════════════════════════════════════════════════════════════
-tab1,tab2=st.tabs(["Optimizer","About"])
+st.markdown("<div style='margin-top:2.5rem'></div>", unsafe_allow_html=True)
+tab1,tab2=st.tabs(["📊 Optimizer","📖 About"])
 
 with tab1:
     st.markdown("## Behavioral Portfolio Optimizer")
