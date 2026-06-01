@@ -307,6 +307,9 @@ with st.sidebar:
                     f"Mean ({factor_label})":[f"{m*100:.2f}%" for m in means_in],
                     "Std dev":[f"{s*100:.2f}%" for s in sigs_in]})
                 st.dataframe(df_prev,hide_index=True)
+                st.markdown("**Correlation matrix**")
+                corr_df=pd.DataFrame(corr_in,index=names_in,columns=names_in)
+                st.dataframe(corr_df.round(3))
         else:
             data_valid=False
 
@@ -391,7 +394,7 @@ with st.sidebar:
 
         rf=st.number_input("Risk-free rate (%)",value=3.0,min_value=0.0,
                             max_value=20.0,format="%.1f",step=0.1)/100
-        mat=st.slider("Maturity (years)",0.25,3.0,1.0,0.25)
+        mat=st.slider("Maturity (years)",0.25,3.0,1.0,0.05)
         der_params["r"]=rf; der_params["T"]=mat
 
     if der_type in ("put","call","straddle"):
@@ -429,7 +432,7 @@ with st.sidebar:
                 k_val=1.0
             notional=st.number_input("Notional",0.01,10.0,1.0,0.1,key="n_inp")
             mat_c=st.number_input("Maturity (years)",0.25,3.0,
-                                    der_params.get("T",1.0),0.25,key="mc_inp")
+                                    der_params.get("T",1.0),0.05,key="mc_inp")
             if st.button("Add component"):
                 st.session_state["components"].append({
                     "type":ct,"strike":k_val,
@@ -488,7 +491,7 @@ with st.sidebar:
 # ═════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ═════════════════════════════════════════════════════════════════════════════
-tab1,tab2=st.tabs(["📊 Optimizer","📖 About"])
+tab1,tab2=st.tabs(["📊  Optimizer","📖  About"])
 
 with tab1:
     st.markdown("## Behavioral Portfolio Optimizer")
@@ -497,8 +500,33 @@ with tab1:
                 "**mental-accounting downside constraint**.")
 
     if not run_btn:
-        st.info("Configure parameters in the sidebar and click **▶ Run optimizer**.",
-                icon="👈")
+        st.markdown("""
+<div class="info-box">
+
+### 👈 How to use this tool
+
+Follow these steps in the sidebar:
+
+| Step | Action |
+|---|---|
+| **1 — Portfolio data** | Choose a data source: default base case, live market tickers, manual entry, or CSV upload |
+| **2 — Derivative** | Select a derivative or structured product type (or build a custom one) |
+| **3 — Product parameters** | Set the strike, maturity, floor, participation, or other characteristics |
+| **4 — Constraint** | Set the mental-account threshold H and shortfall probability α |
+| **5 — Grid resolution** | Choose Fast for a quick preview, High precision for thesis-level accuracy |
+| **6 — Run** | Click **▶ Run optimizer** |
+
+The chart will show three curves:
+- 🔘 **Grey dashed** — classical mean-variance efficient frontier (Markowitz)
+- 🔵 **Blue** — behavioral optimizer frontier without derivatives
+- 🟡 **Gold** — behavioral optimizer frontier including your selected derivative
+
+At the equivalence point (λ=3.795, H=-10%, α=5%), the grey and blue curves meet exactly —
+confirming the MVT/MAT equivalence proven in Das, Markowitz, Scheid & Statman (2010).
+The gold curve shows what the behavioral approach unlocks beyond what mean-variance can achieve.
+
+</div>
+""", unsafe_allow_html=True)
         st.stop()
 
     means_arr=np.array(means_in); sigs_arr=np.array(sigs_in)
