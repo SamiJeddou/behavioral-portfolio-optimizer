@@ -544,10 +544,13 @@ with tab1:
                     "**mental-accounting downside constraint**.")
     with col_photo:
         if os.path.exists("profile.jpeg"):
+            st.markdown(
+                '<div style="text-align:center">',
+                unsafe_allow_html=True)
             st.image("profile.jpeg", width=90)
             st.markdown(
-                '<div style="font-size:.72rem;color:#8896a8;text-align:center">'
-                'Sami Jeddou</div>',
+                '<div style="font-size:.72rem;color:#8896a8;text-align:center;margin-top:-.5rem">'
+                'Sami Jeddou</div></div>',
                 unsafe_allow_html=True)
 
     if not run_btn:
@@ -603,7 +606,7 @@ The gold curve shows what the behavioral approach unlocks beyond what mean-varia
 
         with st.form("contact_form"):
             st.markdown("""
-<div style="color:#c0c8d8;margin-bottom:.8rem">
+<div style="color:#ffffff !important;margin-bottom:.8rem">
 
 **💬 Get in touch**
 
@@ -757,57 +760,54 @@ Risk · Capital Markets · Regulatory Programs · Front-to-Back Delivery
 
     st.markdown("---")
 
+    st.markdown("### About this tool")
+    st.markdown(
+        "This tool extends classical **Markowitz mean-variance theory** to portfolios that include "
+        "**derivatives and structured products**, using a **mental-accounting framework** with a "
+        "downside risk constraint. It was built from the original R code developed as part of my "
+        "MSc Finance thesis at the Università della Svizzera italiana (USI Lugano, 2012), "
+        "supervised by Prof. Enrico De Giorgi, and is based on the foundational work of "
+        "Das, Markowitz, Scheid & Statman (2010).")
+
+    st.markdown("### Professional background")
+    st.markdown(
+        "With over 20 years of experience in financial services transformation, I have delivered "
+        "large-scale risk, regulatory, and front-to-back programs across tier-1 institutions "
+        "including BNP Paribas CIB, Crédit Agricole, BIL Luxembourg, TMX Group, and Capgemini.")
     st.markdown("""
-<div style="color:#c0c8d8">
-
-### About this tool
-
-This tool extends classical **Markowitz mean-variance theory** to portfolios that include
-**derivatives and structured products**, using a **mental-accounting framework** with a
-downside risk constraint. It was built from the original R code developed as part of my
-MSc Finance thesis at the Università della Svizzera italiana (USI Lugano, 2012),
-supervised by Prof. Enrico De Giorgi, and is based on the foundational work of
-Das, Markowitz, Scheid & Statman (2010).
-
-### Background
-
-With over 20 years of experience in financial services transformation, I have delivered
-large-scale risk, regulatory, and front-to-back programs across tier-1 institutions including
-BNP Paribas CIB, Crédit Agricole, BIL Luxembourg, TMX Group, and Capgemini.
-
-Key achievements include:
-
+**Key achievements:**
 - Delivered €2M+ annual cost savings and reduced operational risk at BNP Paribas CIB
 - Designed and delivered greenfield risk and clearing platforms for LCH CDSClear and NetOTC
 - Built and led a €25M+ portfolio of concurrent risk and finance transformation initiatives at BIL
-- Delivered major prudential, market, and enterprise regulatory programs across multiple jurisdictions (Basel IV, FRTB, IRRBB, IFRS 9, MiFID II, ISO 20022)
+- Delivered major regulatory programs across multiple jurisdictions (Basel IV, FRTB, IRRBB, IFRS 9, MiFID II, ISO 20022)
 
 I am currently available for senior transformation, program director, or portfolio management
 engagements — either freelance/contract or permanent — in France, Europe, or remote/hybrid.
+""")
 
-### Algorithm
-
+    st.markdown("### Algorithm")
+    st.markdown("""
 **Step 1 — State space construction**
 A discrete grid of return scenarios is built for all primary securities.
 For each scenario, derivative returns are computed analytically using Black-Scholes pricing.
 
 **Step 2 — Probability assignment**
-Each state is assigned a probability using a Gaussian copula, correctly capturing
-the dependence structure between assets.
+Each state is assigned a probability using a Gaussian copula, correctly capturing the dependence structure between assets.
 
 **Step 3 — Two-stage optimization**
 - *≤ 4 securities*: exhaustive grid search + COBYLA gradient refinement
 - *≥ 5 securities*: differential evolution (global stochastic optimizer) + COBYLA refinement
+""")
 
-### MVT / MAT Equivalence
+    st.markdown("### MVT / MAT Equivalence")
+    st.markdown(
+        "When no derivatives are present, the mean-variance and behavioral frontiers converge exactly. "
+        "For H = -10% and α = 5%, the implied risk-aversion is λ = 3.795 — at which point both methods "
+        "yield identical optimal portfolios. Adding derivatives breaks this equivalence and reveals "
+        "the superiority of the behavioral approach.")
 
-When no derivatives are present, the mean-variance and behavioral frontiers converge exactly.
-For H = -10% and α = 5%, the implied risk-aversion is λ = 3.795 — at which point both methods
-yield identical optimal portfolios. Adding derivatives breaks this equivalence and reveals
-the superiority of the behavioral approach.
-
-### Supported derivatives & structured products
-
+    st.markdown("### Supported derivatives & structured products")
+    st.markdown("""
 | Type | Description |
 |---|---|
 | Put / Call | Standard European options |
@@ -817,12 +817,11 @@ the superiority of the behavioral approach.
 | Capital-guaranteed note | Uncapped or capped, with floor and participation rate |
 | Barrier-M note | Corridor note with digital components |
 | Custom composer | Build any payoff from calls, puts, digitals, and zero-coupon bonds |
+""")
 
-### Academic references
-
+    st.markdown("### Academic references")
+    st.markdown("""
 - **Das, Sanjiv and Meir Statman (2004)** — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*
 - **Das, Sanjiv, Harry Markowitz, Jonathan Scheid and Meir Statman (2010)** — *Portfolio Optimization with Mental Accounts*, Journal of Financial and Quantitative Analysis, Vol. 45, No. 2, pp. 311–334
 - **Jeddou, Sami (2012)** — *Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios*, MSc Finance Thesis, Università della Svizzera italiana (USI Lugano), supervised by Prof. Enrico De Giorgi
-
-</div>
-""", unsafe_allow_html=True)
+""")
