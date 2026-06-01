@@ -1332,10 +1332,6 @@ I would be glad to hear from you.
 
 
 
-    # Portfolio data after results
-    st.markdown("---")
-    show_portfolio_data(names_in, means_in, sigs_in, corr_in)
-
 with tab2:
     import os as _os
     col_a, col_b = st.columns([1, 3])
