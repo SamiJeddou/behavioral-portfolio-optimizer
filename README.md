@@ -137,7 +137,7 @@ POST /optimize
 }
 ```
 
-🔗 **API docs**: [samijeddou-behavioral-portfolio-optimizer.streamlit.app/api/docs](https://samijeddou-behavioral-portfolio-optimizer.streamlit.app/api/docs)
+🔗 **API docs**: coming soon
 
 ---
 
