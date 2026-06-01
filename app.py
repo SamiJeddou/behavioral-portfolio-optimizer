@@ -1123,8 +1123,8 @@ with tab1:
         st.markdown(
             "Classical portfolio theory ignores derivatives. This app finds the optimal allocation "
             "across securities and derivatives — maximising expected return while keeping the "
-            "probability of loss below a threshold you define (**VaR constraint**) or limiting "
-            "the expected loss in the tail (**ES constraint**).")
+            "probability of loss below a threshold you define (**Value-at-Risk / VaR constraint**) or limiting "
+            "the expected loss in the tail (**Expected Shortfall / ES constraint**).")
     with col_photo:
         if os.path.exists("profile.jpeg"):
             import base64
