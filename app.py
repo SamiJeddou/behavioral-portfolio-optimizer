@@ -490,6 +490,24 @@ with st.sidebar:
     H_val    =st.slider("Threshold H (%)",-25,-3,-10,1)/100
     alpha_val=st.slider("Shortfall probability α (%)",1,15,5,1)/100
 
+    # Implied lambda — displayed right after H and alpha
+    cov_for_lam = corr_to_cov(sigs_in, corr_in)
+    lam = implied_lambda(H_val, alpha_val, means_in, cov_for_lam)
+    if lam is not None:
+        st.markdown(
+            f'<div style="background:#0f1923;border:1px solid #10b981;border-radius:6px;'
+            f'padding:.5rem 1rem;margin-top:.3rem;color:#10b981;font-size:.85rem">'
+            f'<b>Implied risk-aversion λ = {lam:.4f}</b><br>'
+            f'<span style="color:#8896a8;font-size:.78rem">'
+            f'MV optimal at λ={lam:.2f} ≡ behavioral optimal at H={H_val:.0%}, α={alpha_val:.0%}'
+            f'</span></div>',
+            unsafe_allow_html=True)
+    else:
+        st.markdown('<div style="background:#1a0a00;border:1px solid #f59e0b;border-radius:6px;'
+                    'padding:.4rem 1rem;color:#f59e0b;font-size:.78rem;margin-top:.3rem">'
+                    'λ could not be computed for these parameters</div>',
+                    unsafe_allow_html=True)
+
     st.markdown("---")
 
     # ── 4. Grid ───────────────────────────────────────────────────────────────
@@ -502,24 +520,6 @@ with st.sidebar:
                     unsafe_allow_html=True)
     elif "Standard" in grid_lbl:
         st.markdown('<div class="warn-box">⏱️ ~1–2 min.</div>',
-                    unsafe_allow_html=True)
-
-    # Implied lambda display
-    cov_for_lam = corr_to_cov(sigs_in, corr_in)
-    lam = implied_lambda(H_val, alpha_val, means_in, cov_for_lam)
-    if lam is not None:
-        st.markdown(
-            f'<div style="background:#0f1923;border:1px solid #10b981;border-radius:6px;'
-            f'padding:.5rem 1rem;margin-top:.3rem;color:#10b981;font-size:.85rem">'
-            f'<b>Implied risk-aversion λ = {lam:.4f}</b><br>'
-            f'<span style="color:#6b7280;font-size:.78rem">'
-            f'MV optimal portfolio at λ={lam:.2f} is equivalent to behavioral optimal at H={H_val:.0%}, α={alpha_val:.0%}'
-            f'</span></div>',
-            unsafe_allow_html=True)
-    else:
-        st.markdown('<div style="background:#1a0a00;border:1px solid #f59e0b;border-radius:6px;'
-                    'padding:.4rem 1rem;color:#f59e0b;font-size:.78rem;margin-top:.3rem">'
-                    'λ could not be computed for these parameters</div>',
                     unsafe_allow_html=True)
 
     st.markdown("---")
