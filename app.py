@@ -768,7 +768,7 @@ with tab2:
         st.markdown("## Sami Jeddou")
         st.markdown("**Senior Financial Services Transformation Leader**")
         st.markdown("Risk · Capital Markets · Regulatory Programs · Front-to-Back Delivery")
-        st.markdown("📍 Paris, France &nbsp;|&nbsp; 🇫🇷 French National", unsafe_allow_html=True)
+        st.markdown("📍 Paris, France", unsafe_allow_html=True)
         st.markdown("🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;|&nbsp; 🐙 [GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer) &nbsp;|&nbsp; 📧 sami.jeddou@protonmail.com", unsafe_allow_html=True)
 
     st.markdown("---")
@@ -790,9 +790,9 @@ with tab2:
         "large-scale risk, regulatory, and front-to-back programs across tier-1 institutions "
         "including BNP Paribas CIB, Crédit Agricole, BIL Luxembourg, TMX Group, and Capgemini.")
     st.markdown(
-        "**Education & certifications:** MEng and MSc Project & Program Management from École des Mines "
-        "de Saint-Étienne · Master in Finance from Università della Svizzera italiana (USI Lugano) · "
-        "CFA Level I · PRINCE2 Practitioner · SAFe Agilist · Prosci ADKAR · PMP (in progress)")
+        "**Education & certifications:** Engineering degree and MSc Project & Program Management from "
+        "École des Mines de Saint-Étienne · Master in Finance from Università della Svizzera italiana "
+        "(USI Lugano) · CFA Level I · PRINCE2 Practitioner · SAFe Agilist · Prosci ADKAR · PMI member")
     st.markdown("""
 **Key achievements:**
 - Delivered €2M+ annual cost savings and reduced operational risk at BNP Paribas CIB
@@ -850,5 +850,5 @@ For each candidate weight vector, the portfolio return distribution is evaluated
     st.markdown("""
 - **Das, Sanjiv and Meir Statman (2009)** — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*
 - **Das, Sanjiv, Harry Markowitz, Jonathan Scheid and Meir Statman (2010)** — *Portfolio Optimization with Mental Accounts*, Journal of Financial and Quantitative Analysis, Vol. 45, No. 2, pp. 311–334
-- **Jeddou, Sami (2012)** — *Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios*, MSc Finance Thesis, Università della Svizzera italiana (USI Lugano), supervised by Prof. Enrico De Giorgi
+- **Jeddou, Sami (2012)** — *Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios*, MSc Finance Thesis, Università della Svizzera italiana (USI Lugano), supervised by Prof. Enrico De Giorgi. Available on [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404)
 """)
