@@ -172,19 +172,23 @@ def compute_mv_frontier(means_t, cov_t):
     eq=mv_opt(3.7950)
     return [p[0] for p in pts],[p[1] for p in pts],eq
 
-def run_opt(means,sigs,cov,der_config,H,alpha,m,mp):
+def run_opt(means,sigs,cov,der_config,H,alpha,m,mp,
+            constraint_type='var',L=None):
     U,dr=build_state_space(means,sigs,m=m,derivative_config=der_config)
     U=assign_probabilities(U,means,sigs,cov,dr)
     n=U.shape[1]-1
-    res=optimize_portfolio(U,n,H=H,alpha=alpha,m_prime=mp)
+    res=optimize_portfolio(U,n,H=H,alpha=alpha if alpha is not None else 0.05,
+                           m_prime=mp,constraint_type=constraint_type,L=L)
     return res,n
 
-def build_frontier(means,sigs,cov,der_config,alpha,m,mp):
+def build_frontier(means,sigs,cov,der_config,alpha,m,mp,
+                   constraint_type='var',L=None):
     H_vals=[-0.05,-0.08,-0.10,-0.12,-0.15,-0.18,-0.20]
     xs,ys,lbls=[],[],[]
     for H in H_vals:
         try:
-            r,_=run_opt(means,sigs,cov,der_config,H,alpha,m,mp)
+            r,_=run_opt(means,sigs,cov,der_config,H,alpha,m,mp,
+                        constraint_type=constraint_type,L=L)
             xs.append(r["std_dev"]*100); ys.append(r["expected_return"]*100)
             lbls.append(f"H={H:.0%}")
         except: pass
@@ -270,7 +274,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     # ── MVT/MAT note ──────────────────────────────────────────────────────────
     fig.add_annotation(
         xref='paper', yref='paper', x=0.5, y=1.0,
-        text='MV and behavioral frontiers converge without derivatives (MVT/MAT equivalence — Das, Markowitz, Scheid & Statman 2010)',
+        text='MV and behavioral frontiers converge without derivatives (MVT/MAT equivalence)',
         showarrow=False,
         font=dict(color='#6b7280', size=10, style='italic'),
         bgcolor='rgba(13,17,23,0.85)',
@@ -629,26 +633,51 @@ with st.sidebar:
 
     # ── 3. Constraint ─────────────────────────────────────────────────────────
     st.markdown("### 🎯 Mental-account constraint")
-    H_val    =st.slider("Threshold H (%)",-25,-3,-10,1)/100
-    alpha_val=st.slider("Shortfall probability α (%)",1,15,5,1)/100
 
-    # Implied lambda — displayed right after H and alpha
-    cov_for_lam = corr_to_cov(sigs_in, corr_in)
-    lam = implied_lambda(H_val, alpha_val, means_in, cov_for_lam)
-    if lam is not None:
+    # VaR / ES toggle
+    constraint_type = st.radio(
+        "Constraint type",
+        ["VaR — Value at Risk", "ES — Expected Shortfall"],
+        index=0, horizontal=True)
+    use_es = constraint_type.startswith("ES")
+
+    H_val = st.slider("Threshold H (%)", -25, -3, -10, 1) / 100
+
+    if not use_es:
+        alpha_val = st.slider("Shortfall probability α (%)", 1, 15, 5, 1) / 100
+        L_val     = None
         st.markdown(
-            f'<div style="background:#0f1923;border:1px solid #10b981;border-radius:6px;'
-            f'padding:.5rem 1rem;margin-top:.3rem;color:#10b981;font-size:.85rem">'
-            f'<b>Implied risk-aversion λ = {lam:.4f}</b><br>'
-            f'<span style="color:#8896a8;font-size:.78rem">'
-            f'MV optimal at λ={lam:.2f} ≡ behavioral optimal at H={H_val:.0%}, α={alpha_val:.0%}'
-            f'</span></div>',
+            '<div style="background:#1a1a2e;border:1px solid #3a3a5a;border-radius:6px;'
+            'padding:.4rem 1rem;color:#8896a8;font-size:.78rem;margin-top:.3rem">'
+            'VaR constraint: P(return &lt; H) ≤ α</div>',
             unsafe_allow_html=True)
     else:
-        st.markdown('<div style="background:#1a0a00;border:1px solid #f59e0b;border-radius:6px;'
-                    'padding:.4rem 1rem;color:#f59e0b;font-size:.78rem;margin-top:.3rem">'
-                    'λ could not be computed for these parameters</div>',
-                    unsafe_allow_html=True)
+        alpha_val = None
+        L_val     = st.slider("ES lower bound L (%)", -50, -1, -15, 1) / 100
+        st.markdown(
+            '<div style="background:#1a1a2e;border:1px solid #3a3a5a;border-radius:6px;'
+            'padding:.4rem 1rem;color:#8896a8;font-size:.78rem;margin-top:.3rem">'
+            'ES constraint: E[return | return &lt; H] ≥ L</div>',
+            unsafe_allow_html=True)
+
+    # Implied lambda — only for VaR
+    if not use_es:
+        cov_for_lam = corr_to_cov(sigs_in, corr_in)
+        lam = implied_lambda(H_val, alpha_val, means_in, cov_for_lam)
+        if lam is not None:
+            st.markdown(
+                f'<div style="background:#0f1923;border:1px solid #10b981;border-radius:6px;'
+                f'padding:.5rem 1rem;margin-top:.3rem;color:#10b981;font-size:.85rem">'
+                f'<b>Implied risk-aversion λ = {lam:.4f}</b><br>'
+                f'<span style="color:#8896a8;font-size:.78rem">'
+                f'MV optimal at λ={lam:.2f} ≡ behavioral optimal at H={H_val:.0%}, α={alpha_val:.0%}'
+                f'</span></div>',
+                unsafe_allow_html=True)
+        else:
+            st.markdown('<div style="background:#1a0a00;border:1px solid #f59e0b;border-radius:6px;'
+                        'padding:.4rem 1rem;color:#f59e0b;font-size:.78rem;margin-top:.3rem">'
+                        'λ could not be computed for these parameters</div>',
+                        unsafe_allow_html=True)
 
     st.markdown("---")
 
@@ -714,7 +743,7 @@ Follow these steps in the sidebar:
 | **1 — Portfolio data** | Choose a data source: default base case, live market tickers, manual entry, or CSV upload |
 | **2 — Derivative** | Select a derivative or structured product type (or build a custom one) |
 | **3 — Product parameters** | Set the strike, maturity, floor, participation, or other characteristics |
-| **4 — Constraint** | Set the mental-account threshold H and shortfall probability α |
+| **4 — Constraint** | Choose VaR or ES constraint type, set threshold H, and set α (VaR) or L (ES) |
 | **5 — Grid resolution** | Choose Fast for a quick preview, High precision for thesis-level accuracy |
 | **6 — Run** | Click **▶ Run optimizer** |
 
@@ -811,8 +840,12 @@ I would be glad to hear from you.
 
         with st.spinner("Behavioral optimizer — no derivative..."):
             try:
+                _ctype = 'es' if use_es else 'var'
+                _alpha = alpha_val if not use_es else 0.05
+                _L     = L_val if use_es else None
                 nd_xs,nd_ys,nd_lbls=build_frontier(
-                    means_arr,sigs_arr,cov_mat,None,alpha_val,m_val,mp_val)
+                    means_arr,sigs_arr,cov_mat,None,_alpha,m_val,mp_val,
+                    constraint_type=_ctype,L=_L)
             except Exception as e:
                 st.error(f"Optimizer failed: {e}")
                 nd_xs,nd_ys,nd_lbls=[],[],[]
@@ -822,7 +855,8 @@ I would be glad to hear from you.
             with st.spinner(f"Behavioral optimizer — {der_label_sel}..."):
                 try:
                     der_xs,der_ys,der_lbls=build_frontier(
-                        means_arr,sigs_arr,cov_mat,der_config,alpha_val,m_val,mp_val)
+                        means_arr,sigs_arr,cov_mat,der_config,_alpha,m_val,mp_val,
+                        constraint_type=_ctype,L=_L)
                 except Exception as e:
                     st.warning(f"Derivative frontier failed: {e}")
 
@@ -833,19 +867,21 @@ I would be glad to hear from you.
 
         # ── Results ───────────────────────────────────────────────────────────────
         st.markdown("---")
-        st.markdown(f"### Optimal portfolio — H={H_val:.0%}, α={alpha_val:.0%}")
+        constraint_label = f"H={H_val:.0%}, α={_alpha:.0%}" if not use_es else f"H={H_val:.0%}, L={_L:.0%}"
+        st.markdown(f"### Optimal portfolio — {constraint_label}")
         c1,c2=st.columns(2)
 
         nd_res=None
         with c1:
             st.markdown("**Without derivative**")
             try:
-                nd_res,_=run_opt(means_arr,sigs_arr,cov_mat,None,H_val,alpha_val,m_val,mp_val)
+                nd_res,_=run_opt(means_arr,sigs_arr,cov_mat,None,H_val,_alpha,m_val,mp_val,
+                               constraint_type=_ctype,L=_L)
                 m1,m2,m3,m4=st.columns(4)
                 m1.metric("Return",f"{nd_res['expected_return']*100:.2f}%")
                 m2.metric("Std dev",f"{nd_res['std_dev']*100:.2f}%")
                 m3.metric("Skewness",f"{nd_res['skewness']:.3f}")
-                m4.metric("Shortfall",f"{nd_res['shortfall_stat']*100:.2f}%")
+                m4.metric("VaR/ES stat",f"{nd_res['shortfall_stat']*100:.2f}%")
                 st.markdown("**Weights**")
                 for i,w in enumerate(nd_res["weights"]):
                     lbl=names_in[i] if i<len(names_in) else f"Asset {i+1}"
@@ -859,14 +895,15 @@ I would be glad to hear from you.
                 st.markdown(f"**With {der_label_sel}**")
                 try:
                     dr_res,_=run_opt(means_arr,sigs_arr,cov_mat,der_config,
-                                      H_val,alpha_val,m_val,mp_val)
+                                      H_val,_alpha,m_val,mp_val,
+                                      constraint_type=_ctype,L=_L)
                     delta=(dr_res['expected_return']-(nd_res['expected_return'] if nd_res else 0))*100
                     m1,m2,m3,m4=st.columns(4)
                     m1.metric("Return",f"{dr_res['expected_return']*100:.2f}%",
                                delta=f"+{delta:.2f}pp" if delta>0 else f"{delta:.2f}pp")
                     m2.metric("Std dev",f"{dr_res['std_dev']*100:.2f}%")
                     m3.metric("Skewness",f"{dr_res['skewness']:.3f}")
-                    m4.metric("Shortfall",f"{dr_res['shortfall_stat']*100:.2f}%")
+                    m4.metric("VaR/ES stat",f"{dr_res['shortfall_stat']*100:.2f}%")
                     st.markdown("**Weights**")
                     for i,w in enumerate(dr_res["weights"]):
                         lbl=asset_labels[i] if i<len(asset_labels) else f"Asset {i+1}"
@@ -985,7 +1022,11 @@ For each scenario, derivative returns are computed analytically using Black-Scho
 Each state is assigned a probability using a Gaussian copula, correctly capturing the dependence structure between assets.
 
 **Step 3 — Optimization**
-For each candidate weight vector, the portfolio return distribution is evaluated against the mental-account constraint. The best eligible portfolio (highest expected return subject to P(return < H) ≤ α) is selected:
+For each candidate weight vector, the portfolio return distribution is evaluated against the mental-account constraint. Two constraint types are supported:
+- **VaR constraint**: P(return < H) ≤ α — probability of loss beyond H must not exceed α
+- **ES constraint**: E[return | return < H] ≥ L — expected loss in the tail must not exceed L
+
+The best eligible portfolio (highest expected return satisfying the constraint) is selected via:
 - *≤ 4 securities*: exhaustive grid search over all weight combinations
 - *≥ 5 securities*: differential evolution — a global stochastic optimizer that scales to larger portfolios without exhaustive enumeration
 """)
