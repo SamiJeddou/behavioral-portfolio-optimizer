@@ -250,7 +250,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     if mv_eq:
         fig.add_trace(go.Scatter(
             x=[mv_eq[0]], y=[mv_eq[1]], mode='markers',
-            name='◆ Equivalence point — MV = Behavioral (λ=3.795, H=-10%, α=5%)',
+            name='Equivalence point — MV = Behavioral (λ=3.795, H=-10%, α=5%)',
             marker=dict(size=13, color='#10b981', symbol='diamond',
                         line=dict(width=0)),
             showlegend=True,
