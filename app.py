@@ -1137,41 +1137,7 @@ structured products, can unlock beyond what mean-variance can achieve.
 
         st.markdown("---")
 
-        # Portfolio data
-        with st.expander("📋 Portfolio data used in this simulation", expanded=True):
-            # Stats table
-            header_style = "background:#4a9eff;color:#ffffff;font-weight:bold;padding:6px 10px;text-align:left"
-            cell_style   = "background:#ffffff;color:#111111;padding:5px 10px;border-bottom:1px solid #e0e0e0"
-            rows = "".join(
-                f"<tr><td style='{cell_style}'>{names_in[i]}</td>"
-                f"<td style='{cell_style}'>{means_in[i]*100:.2f}%</td>"
-                f"<td style='{cell_style}'>{sigs_in[i]*100:.2f}%</td></tr>"
-                for i in range(len(names_in)))
-            st.markdown(
-                f"<table style='width:100%;border-collapse:collapse'>"
-                f"<tr><th style='{header_style}'>Asset</th>"
-                f"<th style='{header_style}'>Mean return</th>"
-                f"<th style='{header_style}'>Std deviation</th></tr>"
-                f"{rows}</table>",
-                unsafe_allow_html=True)
-            st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
-            st.markdown("**Correlation matrix**")
-            n = len(names_in)
-            corr_rows = "".join(
-                f"<tr><td style='{header_style}'>{names_in[i]}</td>"
-                + "".join(
-                    f"<td style='{cell_style};text-align:center'>{corr_in[i][j]:.3f}</td>"
-                    for j in range(n))
-                + "</tr>"
-                for i in range(n))
-            col_headers = "".join(f"<th style='{header_style};text-align:center'>{names_in[j]}</th>" for j in range(n))
-            st.markdown(
-                f"<table style='width:100%;border-collapse:collapse'>"
-                f"<tr><th style='{header_style}'></th>{col_headers}</tr>"
-                f"{corr_rows}</table>",
-                unsafe_allow_html=True)
 
-        st.markdown("---")
 
         # LinkedIn + contact
         st.markdown("""
@@ -1335,6 +1301,40 @@ I would be glad to hear from you.
             else:
                 st.info("Select a derivative to compare.")
 
+
+
+    # Portfolio data — always visible regardless of run state
+    with st.expander("📋 Portfolio data used in this simulation", expanded=True):
+        header_style = "background:#4a9eff;color:#ffffff;font-weight:bold;padding:6px 10px;text-align:left"
+        cell_style   = "background:#ffffff;color:#111111;padding:5px 10px;border-bottom:1px solid #e0e0e0"
+        rows = "".join(
+            f"<tr><td style='{cell_style}'>{names_in[i]}</td>"
+            f"<td style='{cell_style}'>{means_in[i]*100:.2f}%</td>"
+            f"<td style='{cell_style}'>{sigs_in[i]*100:.2f}%</td></tr>"
+            for i in range(len(names_in)))
+        st.markdown(
+            f"<table style='width:100%;border-collapse:collapse'>"
+            f"<tr><th style='{header_style}'>Asset</th>"
+            f"<th style='{header_style}'>Mean return</th>"
+            f"<th style='{header_style}'>Std deviation</th></tr>"
+            f"{rows}</table>",
+            unsafe_allow_html=True)
+        st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
+        st.markdown("**Correlation matrix**")
+        n = len(names_in)
+        corr_rows = "".join(
+            f"<tr><td style='{header_style}'>{names_in[i]}</td>"
+            + "".join(
+                f"<td style='{cell_style};text-align:center'>{corr_in[i][j]:.3f}</td>"
+                for j in range(n))
+            + "</tr>"
+            for i in range(n))
+        col_headers = "".join(f"<th style='{header_style};text-align:center'>{names_in[j]}</th>" for j in range(n))
+        st.markdown(
+            f"<table style='width:100%;border-collapse:collapse'>"
+            f"<tr><th style='{header_style}'></th>{col_headers}</tr>"
+            f"{corr_rows}</table>",
+            unsafe_allow_html=True)
 
 with tab2:
     import os as _os
