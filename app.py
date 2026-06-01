@@ -836,7 +836,7 @@ with st.sidebar:
 
     # AI tooltip for selected derivative
     if der_type is not None and der_type != "custom":
-        with st.expander("💡 What is this instrument?", expanded=True):
+        with st.expander("✨ AI-powered: What is this instrument?", expanded=True):
             explanation = get_explanation(der_label_sel)
             st.markdown(f'<div style="background:#0f1923;border:1px solid #4a9eff;'
                        f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
