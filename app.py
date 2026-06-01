@@ -165,7 +165,7 @@ def compute_mv_frontier(means_t, cov_t):
         if best is None: return None
         w=best.x
         return float(np.sqrt(w@cov@w))*100, float(w@means)*100
-    pts=[mv_opt(l) for l in np.linspace(0.3,25,120)]
+    pts=[mv_opt(l) for l in np.concatenate([np.linspace(0.5,3,40), np.linspace(3,25,60), np.linspace(25,200,40)])]
     pts=[p for p in pts if p]
     eq=mv_opt(3.7950)
     return [p[0] for p in pts],[p[1] for p in pts],eq
@@ -287,7 +287,8 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             title='Portfolio Risk — Standard Deviation (%)',
             gridcolor='#1e2130', gridwidth=0.5,
             color='#c0c8d8', zerolinecolor='#2a2a3a',
-            range=[0, max(max(mv_x), max(der_x) if der_x else 0) * 1.08]
+            range=[max(0, min(mv_x) - 1),
+                   max(max(mv_x), max(der_x) if der_x else 0) * 1.06]
         ),
         yaxis=dict(
             title='Expected Return (%)',
