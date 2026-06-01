@@ -956,9 +956,11 @@ with tab1:
     col_title, col_photo = st.columns([5, 1])
     with col_title:
         st.markdown("## Beyond Mean-Variance: Portfolio Optimizer with Derivatives & Structured Products")
-        st.markdown("Extends Markowitz mean-variance theory to portfolios including "
-                    "**derivatives and structured products** using a "
-                    "**mental-accounting downside constraint**.")
+        st.markdown(
+            "Classical portfolio theory ignores derivatives. This app finds the optimal allocation "
+            "across securities and derivatives — maximising expected return while keeping the "
+            "probability of loss below a threshold you define (**VaR constraint**) or limiting "
+            "the expected loss in the tail (**ES constraint**).")
     with col_photo:
         if os.path.exists("profile.jpeg"):
             import base64
