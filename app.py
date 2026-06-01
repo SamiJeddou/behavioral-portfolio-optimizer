@@ -167,6 +167,8 @@ def compute_mv_frontier(means_t, cov_t):
         return float(np.sqrt(w@cov@w))*100, float(w@means)*100
     pts=[mv_opt(l) for l in np.concatenate([np.linspace(0.5,3,40), np.linspace(3,25,60), np.linspace(25,200,40)])]
     pts=[p for p in pts if p]
+    # Sort by std dev ascending so line draws left to right
+    pts=sorted(set(pts), key=lambda p: p[0])
     eq=mv_opt(3.7950)
     return [p[0] for p in pts],[p[1] for p in pts],eq
 
