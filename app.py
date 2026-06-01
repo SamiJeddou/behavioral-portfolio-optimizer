@@ -44,7 +44,7 @@ def implied_lambda(H, alpha, means, cov_matrix, lam_lo=0.01, lam_hi=100):
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Behavioral Portfolio Optimizer",
+    page_title="Beyond Mean-Variance: Portfolio Optimizer",
     page_icon="📈", layout="wide",
     initial_sidebar_state="expanded")
 
@@ -955,7 +955,7 @@ with tab1:
     import os
     col_title, col_photo = st.columns([5, 1])
     with col_title:
-        st.markdown("## Behavioral Portfolio Optimizer")
+        st.markdown("## Beyond Mean-Variance: Portfolio Optimizer with Derivatives & Structured Products")
         st.markdown("Extends Markowitz mean-variance theory to portfolios including "
                     "**derivatives and structured products** using a "
                     "**mental-accounting downside constraint**.")
