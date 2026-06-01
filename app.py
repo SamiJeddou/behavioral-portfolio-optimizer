@@ -1277,7 +1277,7 @@ with tab2:
                 unsafe_allow_html=True)
     with col_b:
         st.markdown("## Sami Jeddou")
-        st.markdown("**Senior Financial Services Transformation Leader**")
+        st.markdown("**Senior Financial Services Executive — Transformation, Risk & Capital Markets**")
         st.markdown("Risk · Capital Markets · Post-Trade & Clearing · High-Value Payments · Quantitative Finance · Front-to-Back Delivery · Regulatory Programs")
         st.markdown("📍 Paris, France", unsafe_allow_html=True)
         st.markdown("🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;|&nbsp; 🐙 [GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer) &nbsp;|&nbsp; 📧 sami.jeddou@protonmail.com", unsafe_allow_html=True)
