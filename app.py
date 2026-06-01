@@ -881,7 +881,9 @@ I would be glad to hear from you.
                 m1.metric("Return",f"{nd_res['expected_return']*100:.2f}%")
                 m2.metric("Std dev",f"{nd_res['std_dev']*100:.2f}%")
                 m3.metric("Skewness",f"{nd_res['skewness']:.3f}")
-                m4.metric("VaR/ES stat",f"{nd_res['shortfall_stat']*100:.2f}%")
+                m4.metric(
+                    'Shortfall prob' if not use_es else 'Exp. tail loss',
+                    f"{nd_res['shortfall_stat']*100:.2f}%")
                 st.markdown("**Weights**")
                 for i,w in enumerate(nd_res["weights"]):
                     lbl=names_in[i] if i<len(names_in) else f"Asset {i+1}"
@@ -903,7 +905,9 @@ I would be glad to hear from you.
                                delta=f"+{delta:.2f}pp" if delta>0 else f"{delta:.2f}pp")
                     m2.metric("Std dev",f"{dr_res['std_dev']*100:.2f}%")
                     m3.metric("Skewness",f"{dr_res['skewness']:.3f}")
-                    m4.metric("VaR/ES stat",f"{dr_res['shortfall_stat']*100:.2f}%")
+                    m4.metric(
+                        'Shortfall prob' if not use_es else 'Exp. tail loss',
+                        f"{dr_res['shortfall_stat']*100:.2f}%")
                     st.markdown("**Weights**")
                     for i,w in enumerate(dr_res["weights"]):
                         lbl=asset_labels[i] if i<len(asset_labels) else f"Asset {i+1}"
