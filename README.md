@@ -137,7 +137,7 @@ POST /optimize
 }
 ```
 
-🔗 **API docs**: coming soon
+🔗 **API docs**: (coming soon)
 
 ---
 
