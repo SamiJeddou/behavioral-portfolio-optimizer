@@ -200,9 +200,9 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     # ── Mean-variance frontier ────────────────────────────────────────────────
     fig.add_trace(go.Scatter(
         x=mv_x, y=mv_y, mode='lines',
-        name='Mean-variance frontier (Markowitz)',
+        name='Mean-variance efficient frontier (Markowitz)',
         line=dict(color='#6b7280', width=2, dash='dash'),
-        hovertemplate='<b>Mean-Variance (Markowitz)</b><br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
+        hovertemplate='<b>Mean-Variance Efficient Frontier (Markowitz)</b><br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
     ))
 
     # ── Behavioral — no derivative ────────────────────────────────────────────
