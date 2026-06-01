@@ -58,60 +58,240 @@ h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
 </style>""", unsafe_allow_html=True)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
-# ── AI helper ────────────────────────────────────────────────────────────────
-SYSTEM_PROMPT = """You are a financial expert assistant embedded in a behavioral portfolio
-optimization app. Your role is to give clear, concise explanations of financial concepts,
-derivatives, and portfolio theory. Always relate explanations to portfolio optimization
-and the mental-accounting framework when relevant. Keep answers to 3-5 sentences unless
-more detail is explicitly requested. Use plain language accessible to finance professionals
-but not necessarily quants."""
+# ── Static explanations dictionary (no API cost) ─────────────────────────────
+EXPLANATIONS = {
+    # ── Derivatives ───────────────────────────────────────────────────────────
+    "Put option": (
+        "A put option gives the holder the right to sell the underlying asset at a fixed strike price. "
+        "Its payoff is max(K - S_T, 0), increasing in value when the underlying falls below the strike. "
+        "In a behavioral portfolio, a long put acts as downside insurance — it reduces the probability "
+        "of breaching the mental-account threshold H, allowing the optimizer to allocate more to "
+        "high-return risky assets while satisfying the shortfall constraint."
+    ),
+    "Call option": (
+        "A call option gives the holder the right to buy the underlying asset at a fixed strike price. "
+        "Its payoff is max(S_T - K, 0), increasing in value when the underlying rises above the strike. "
+        "In a behavioral portfolio, a long call provides leveraged upside participation with limited "
+        "downside. It adds positive skewness to the return distribution, which can raise expected return "
+        "for a given mental-account constraint level."
+    ),
+    "Safety collar (long put + short call)": (
+        "A safety collar combines a long put (downside protection) and a short call (capping upside). "
+        "The short call premium offsets part of the put cost, making the hedge cheaper. "
+        "The result is a return profile bounded on both sides: losses are limited below the put strike, "
+        "but gains are also capped above the call strike. "
+        "Useful when the investor wants cheap downside protection and is willing to sacrifice extreme upside."
+    ),
+    "Aggressive collar (long call + short put)": (
+        "An aggressive collar combines a long call (upside participation) and a short put (accepting downside risk). "
+        "The short put premium finances the call, making upside exposure cheaper. "
+        "Unlike the safety collar, this structure increases rather than reduces downside risk — "
+        "it suits investors with a strong upward view who are comfortable bearing more tail risk "
+        "in exchange for leveraged upside."
+    ),
+    "Straddle (long call + long put)": (
+        "A straddle combines a long call and a long put at the same strike, profiting when the "
+        "underlying moves significantly in either direction. "
+        "It is a bet on high volatility regardless of direction. "
+        "In a behavioral portfolio context, a straddle adds fat tails and positive excess kurtosis "
+        "to the return distribution — it performs well in extreme market moves and can help "
+        "satisfy mental-account constraints when large moves are expected."
+    ),
+    "Strangle (long call + long put, diff strikes)": (
+        "A strangle is similar to a straddle but uses different strikes for the call and put, "
+        "making it cheaper since both options are out-of-the-money. "
+        "It profits from large moves in either direction but requires a bigger move than a straddle to break even. "
+        "In a behavioral portfolio, it provides asymmetric tail protection at lower cost than a straddle, "
+        "useful when extreme but not moderate moves are expected."
+    ),
+    "Capital-guaranteed note — uncapped": (
+        "A capital-guaranteed note (CGN) is a structured product that guarantees return of capital "
+        "(plus a floor F) at maturity, while providing participation in the upside of an underlying asset. "
+        "The uncapped version has no ceiling on the upside participation. "
+        "In a behavioral portfolio it is extremely powerful: the capital guarantee directly satisfies "
+        "the mental-account downside constraint, freeing the optimizer to allocate heavily to the CGN "
+        "and achieve significantly higher expected returns than a portfolio of primary securities alone."
+    ),
+    "Capital-guaranteed note — capped": (
+        "A capped CGN is identical to the uncapped version but limits upside participation above a cap level. "
+        "The cap reduces the cost of the product (the issuer saves on the call spread), making it cheaper "
+        "than the uncapped version. "
+        "The trade-off is sacrificed upside beyond the cap. "
+        "In a behavioral portfolio, it still provides strong downside protection but produces lower "
+        "expected returns than the uncapped version when the underlying performs very strongly."
+    ),
+    "Barrier-M note": (
+        "A barrier-M note pays the absolute value of the underlying return when that return stays "
+        "within a corridor [-M, +M], and pays zero outside it. "
+        "It profits from moderate moves in either direction but loses value in extreme moves — "
+        "the opposite of a straddle. "
+        "In a behavioral portfolio it is useful when low-volatility environments are expected, "
+        "providing income from small fluctuations while the mental-account constraint limits tail risk."
+    ),
+    # ── Risk measures ─────────────────────────────────────────────────────────
+    "Value at Risk (VaR)": (
+        "Value at Risk (VaR) at level α is the return threshold H such that losses exceed H with "
+        "probability at most α. For example, a 5% VaR of -10% means there is a 5% chance of "
+        "losing more than 10%. "
+        "In this app, the VaR constraint is the mental-account threshold: "
+        "P(portfolio return < H) ≤ α. The optimizer finds the highest expected return portfolio "
+        "satisfying this constraint."
+    ),
+    "Expected Shortfall (ES)": (
+        "Expected Shortfall (ES), also called Conditional VaR or CVaR, measures the average loss "
+        "in the worst α% of scenarios. Unlike VaR which only gives a threshold, ES captures the "
+        "severity of losses beyond that threshold. "
+        "In this app, the ES constraint requires E[return | return < H] ≥ L — "
+        "the average loss in the tail must not be worse than L. "
+        "ES is considered a more complete risk measure than VaR as it is coherent and convex."
+    ),
+    "Shortfall probability": (
+        "The shortfall probability is P(portfolio return < H) — the probability that the portfolio "
+        "return falls below the mental-account threshold H. "
+        "It is the key output of the VaR constraint mode. "
+        "The optimizer ensures this probability stays at or below α. "
+        "A result of 4.4% with α=5% means the constraint is satisfied with 0.6% margin."
+    ),
+    "Skewness": (
+        "Skewness measures the asymmetry of a return distribution. "
+        "Positive skewness means occasional large gains and frequent small losses — "
+        "preferred by investors. Negative skewness means occasional large losses. "
+        "Derivatives like calls and CGNs add positive skewness to portfolio returns, "
+        "which is one reason behavioral portfolios including them can outperform "
+        "mean-variance portfolios that ignore higher moments."
+    ),
+    "Excess kurtosis": (
+        "Excess kurtosis measures the fatness of the tails of a return distribution relative to "
+        "a normal distribution. Positive excess kurtosis (leptokurtosis) means fatter tails — "
+        "more extreme events than a normal distribution would predict. "
+        "This is why mean-variance theory, which assumes normality, is insufficient for portfolios "
+        "containing derivatives: options have highly non-normal payoff distributions."
+    ),
+    # ── Portfolio theory ──────────────────────────────────────────────────────
+    "Mean-variance efficient frontier": (
+        "The mean-variance efficient frontier, introduced by Markowitz (1952), is the set of portfolios "
+        "that maximise expected return for a given level of variance (risk). "
+        "It is the foundation of modern portfolio theory. "
+        "However it assumes normally distributed returns and ignores higher moments — "
+        "making it inadequate for portfolios containing derivatives. "
+        "This app shows the MV frontier alongside behavioral frontiers to illustrate this limitation."
+    ),
+    "Markowitz optimization": (
+        "Markowitz optimization solves: max w'μ - (λ/2) w'Σw subject to sum(w)=1, w≥0. "
+        "The parameter λ is the risk-aversion coefficient. Higher λ penalises variance more, "
+        "producing lower-risk portfolios. "
+        "A key result in this app is that for any mental-account constraint (H, α), "
+        "there exists an implied λ such that Markowitz and behavioral optimization yield "
+        "identical portfolios — when no derivatives are present."
+    ),
+    "Mental accounting": (
+        "Mental accounting, developed by Richard Thaler, is the tendency of individuals to "
+        "categorise and evaluate financial outcomes in separate mental 'accounts' rather than "
+        "as a unified portfolio. "
+        "In portfolio theory, Das & Statman (2009) formalise this as a downside constraint: "
+        "investors set a threshold H and maximum acceptable probability α of breaching it. "
+        "This framework naturally accommodates derivatives whose asymmetric payoffs "
+        "provide targeted protection for specific mental accounts."
+    ),
+    "Behavioral portfolio theory": (
+        "Behavioral portfolio theory (BPT), developed by Shefrin & Statman (2000) and extended "
+        "by Das & Statman (2009), integrates psychological insights into portfolio construction. "
+        "Rather than maximising a utility function over total wealth, investors set safety-first "
+        "constraints (mental accounts) and maximise expected return subject to them. "
+        "BPT explains observed investor behaviour such as holding both lottery tickets and "
+        "insurance, and provides a framework for including derivatives in optimal portfolios."
+    ),
+    "MVT/MAT equivalence": (
+        "The MVT/MAT equivalence, proven in Das, Markowitz, Scheid & Statman (2010), shows that "
+        "mean-variance theory (MVT) and mental-accounting theory (MAT) are equivalent "
+        "when no derivatives are present. "
+        "For any threshold H and shortfall probability α, there exists a unique implied "
+        "risk-aversion coefficient λ such that both methods produce the same optimal portfolio. "
+        "This equivalence breaks down when derivatives are added — the behavioral approach "
+        "can then exploit asymmetric payoffs that mean-variance cannot capture."
+    ),
+    "Implied risk aversion lambda": (
+        "The implied risk-aversion coefficient λ is the value such that the Markowitz optimal "
+        "portfolio (maximising w'μ - (λ/2)w'Σw) is identical to the behavioral optimal portfolio "
+        "under the mental-account constraint (H, α). "
+        "This app computes λ dynamically as you adjust H and α in the sidebar. "
+        "At H=-10% and α=5%, λ=3.795 for the default base case. "
+        "Higher α (more risk tolerance) implies lower λ; tighter H implies higher λ."
+    ),
+    "Gaussian copula": (
+        "A Gaussian copula models the dependence structure between assets independently of their "
+        "marginal distributions. It maps each asset's returns through their individual CDFs to "
+        "uniform scores, then models their joint dependence using a multivariate normal distribution. "
+        "This allows non-normal marginal distributions (as produced by options) while still "
+        "capturing realistic correlations between assets. "
+        "This app uses a Gaussian copula in Step 2 to assign probabilities to the state space."
+    ),
+    "Black-Scholes pricing": (
+        "The Black-Scholes model prices European options under assumptions of log-normal asset "
+        "prices, constant volatility, and no arbitrage. "
+        "The formula gives call price = S·N(d1) - K·e^(-rT)·N(d2) where d1 and d2 depend on "
+        "spot price, strike, volatility, risk-free rate, and time to maturity. "
+        "This app uses Black-Scholes to compute derivative payoffs in each scenario of the "
+        "state space, enabling the optimizer to price the derivative's contribution to portfolio risk and return."
+    ),
+    # ── Academic references ───────────────────────────────────────────────────
+    "Das & Statman (2009) — Beyond Mean-Variance": (
+        "Das, Sanjiv and Meir Statman (2009) — 'Beyond Mean-Variance: Portfolios with Derivatives "
+        "and Non-Normal Returns in Mental Accounts'. "
+        "This paper introduces the core algorithm used in this app. It shows how to construct "
+        "optimal portfolios including derivatives under a mental-accounting downside constraint, "
+        "using a discrete state space with Gaussian copula probabilities and a grid search optimizer. "
+        "It demonstrates that derivatives — especially capital-guaranteed notes — can substantially "
+        "improve portfolio expected returns while satisfying the same downside constraint."
+    ),
+    "Das, Markowitz, Scheid & Statman (2010) JFQA": (
+        "Das, Sanjiv, Harry Markowitz, Jonathan Scheid and Meir Statman (2010) — "
+        "'Portfolio Optimization with Mental Accounts', Journal of Financial and Quantitative Analysis, "
+        "Vol. 45, No. 2, pp. 311-334. "
+        "This paper proves the MVT/MAT equivalence: for any mental-account constraint (H, α), "
+        "there exists an implied risk-aversion λ such that Markowitz mean-variance optimization "
+        "and behavioral optimization produce identical portfolios when no derivatives are present. "
+        "This is the theoretical foundation for the equivalence point shown on the frontier chart."
+    ),
+    "Jeddou (2012) MSc thesis USI Lugano": (
+        "Jeddou, Sami (2012) — 'Beyond Mean-Variance: Options and Structured Products in "
+        "Behavioral Portfolios', MSc Finance Thesis, Università della Svizzera italiana (USI Lugano), "
+        "supervised by Prof. Enrico De Giorgi. "
+        "This thesis implements the full Das & Statman (2009) algorithm in R and extends it to "
+        "all major derivative and structured product types: puts, calls, safety and aggressive collars, "
+        "straddles, strangles, capital-guaranteed notes (capped and uncapped), and barrier-M notes. "
+        "This app is a Python reimplementation and extension of that work."
+    ),
+}
 
-PAPER_CONTEXT = """The app is based on three key works:
-1. Das & Statman (2009) — Beyond Mean-Variance: introduces behavioral portfolio theory
-   with derivatives, mental-accounting constraints (VaR and ES), and non-normal distributions.
-2. Das, Markowitz, Scheid & Statman (2010) JFQA — proves MVT/MAT equivalence: for any
-   mental-account constraint (H, alpha), there exists an implied risk-aversion lambda such
-   that mean-variance and behavioral optimal portfolios are identical when no derivatives present.
-3. Jeddou (2012) MSc thesis USI Lugano — implements the full algorithm in R, extends to
-   all derivative types including CGNs and barrier notes."""
-
-@st.cache_data(show_spinner=False)
-def get_ai_explanation(term, context=""):
-    """Get AI explanation for a financial term. Cached per term."""
-    try:
-        client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
-        prompt = f"""Explain "{term}" in the context of portfolio optimization and behavioral finance.
-{f"Additional context: {context}" if context else ""}
-{PAPER_CONTEXT}
-Focus on: what it is, how its payoff/effect works, and when it is useful in a behavioral portfolio."""
-        message = client.messages.create(
-            model="claude-haiku-4-5-20251001",
-            max_tokens=300,
-            system=SYSTEM_PROMPT,
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return message.content[0].text
-    except Exception as e:
-        return f"AI explanation unavailable: {str(e)}"
+def get_explanation(term):
+    """Look up explanation from static dictionary. No API call."""
+    return EXPLANATIONS.get(term,
+        f"No pre-written explanation available for '{term}'. "
+        "Please use the custom question box below for AI-generated answers.")
 
 def get_ai_chat_response(question, portfolio_context=""):
-    """Get AI response for a glossary question. Not cached."""
+    """Get AI response for custom questions via Anthropic API."""
     try:
         client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
-        prompt = f"""{PAPER_CONTEXT}
-
-{f"Current portfolio context: {portfolio_context}" if portfolio_context else ""}
-
-User question: {question}"""
+        system = (
+            "You are a financial expert assistant embedded in a behavioral portfolio optimization app. "
+            "Give clear, concise answers in 3-5 sentences. Focus on portfolio optimization context.")
+        paper_ctx = (
+            "The app is based on: Das & Statman (2009) Beyond Mean-Variance; "
+            "Das, Markowitz, Scheid & Statman (2010) JFQA MVT/MAT equivalence; "
+            "Jeddou (2012) MSc thesis USI Lugano.")
+        prompt = f"{paper_ctx}\n{f'Portfolio context: {portfolio_context}' if portfolio_context else ''}\n\nQuestion: {question}"
         message = client.messages.create(
             model="claude-haiku-4-5-20251001",
-            max_tokens=500,
-            system=SYSTEM_PROMPT,
+            max_tokens=400,
+            system=system,
             messages=[{"role": "user", "content": prompt}]
         )
         return message.content[0].text
-    except Exception as e:
-        return f"AI response unavailable: {str(e)}"
+    except Exception:
+        return ("AI response unavailable — the custom question feature requires an Anthropic API key. "
+                "Please check the pre-written explanations above for common terms.")
 
 
 DEFAULT_MEANS = [0.05, 0.10, 0.25]
@@ -601,11 +781,8 @@ with st.sidebar:
 
     # AI tooltip for selected derivative
     if der_type is not None and der_type != "custom":
-        with st.expander("🤖 AI explanation", expanded=True):
-            with st.spinner("Generating explanation..."):
-                explanation = get_ai_explanation(
-                    der_label_sel,
-                    context="behavioral portfolio optimization with mental-accounting constraints")
+        with st.expander("💡 What is this instrument?", expanded=True):
+            explanation = get_explanation(der_label_sel)
             st.markdown(f'<div style="background:#0f1923;border:1px solid #4a9eff;'
                        f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
                        f'{explanation}</div>',
@@ -1175,7 +1352,7 @@ with tab3:
             if cols[i % 3].button(term, key=f"gloss_{term}", use_container_width=True):
                 st.session_state["glossary_term"] = term
                 with st.spinner(f"Looking up: {term}..."):
-                    st.session_state["glossary_response"] = get_ai_chat_response(term)
+                    st.session_state["glossary_response"] = get_explanation(term)
         st.markdown("")
 
     st.markdown("---")
