@@ -873,15 +873,15 @@ I would be glad to hear from you.
             else:
                 st.info("Select a derivative to compare.")
 
-        with st.expander("📋 Portfolio data used in this run"):
-            st.dataframe(pd.DataFrame({
-                "Asset":names_in,
-                "Mean return":[f"{m*100:.2f}%" for m in means_in],
-                "Std deviation":[f"{s*100:.2f}%" for s in sigs_in],
-            }),hide_index=True)
-            st.markdown("**Correlation matrix**")
-            st.dataframe(pd.DataFrame(corr_in,index=names_in,
-                                       columns=names_in).round(3))
+with st.expander("📋 Portfolio data used in this run", expanded=False):
+        st.dataframe(pd.DataFrame({
+            "Asset":names_in,
+            "Mean return":[f"{m*100:.2f}%" for m in means_in],
+            "Std deviation":[f"{s*100:.2f}%" for s in sigs_in],
+        }),hide_index=True)
+        st.markdown("**Correlation matrix**")
+        st.dataframe(pd.DataFrame(corr_in,index=names_in,
+                                   columns=names_in).round(3))
 
 with tab2:
     import os as _os
