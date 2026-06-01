@@ -44,7 +44,7 @@ def implied_lambda(H, alpha, means, cov_matrix, lam_lo=0.01, lam_hi=100):
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Beyond Mean-Variance: Portfolio Optimizer",
+    page_title="Beyond Mean-Variance Portfolio Optimizer",
     page_icon="📈", layout="wide",
     initial_sidebar_state="expanded")
 
@@ -955,7 +955,7 @@ with tab1:
     import os
     col_title, col_photo = st.columns([5, 1])
     with col_title:
-        st.markdown("## Beyond Mean-Variance: Portfolio Optimizer with Derivatives & Structured Products")
+        st.markdown("## Beyond Mean-Variance: Portfolio Optimizer with Derivatives & Structured Products — A Mental Accounts Framework")
         st.markdown(
             "Classical portfolio theory ignores derivatives. This app finds the optimal allocation "
             "across securities and derivatives — maximising expected return while keeping the "
@@ -1246,15 +1246,14 @@ with tab2:
         "large-scale risk, regulatory, and front-to-back programs across tier-1 institutions "
         "including BNP Paribas CIB, Crédit Agricole, BIL Luxembourg, TMX Group, and Capgemini.")
     st.markdown(
-        "**Education & certifications:** Engineering degree and MSc Project & Program Management from "
-        "École des Mines de Saint-Étienne · Master in Finance from Università della Svizzera italiana "
-        "(USI Lugano) · CFA Level I · PRINCE2 Practitioner · SAFe Agilist · Prosci ADKAR · PMI member")
+        "**Education:** Engineering and finance background — MEng, MSc Project and Program Management, "
+        "École des Mines de Saint-Étienne · Master in Finance, USI Lugano · CFA Level I")
     st.markdown("""
 **Key achievements:**
-- Delivered €2M+ annual cost savings and reduced operational risk at BNP Paribas CIB
-- Designed and delivered greenfield risk and clearing platforms for LCH CDSClear and NetOTC
-- Built and led a €25M+ portfolio of concurrent risk and finance transformation initiatives at BIL
-- Delivered major regulatory programs across multiple jurisdictions (Basel IV, FRTB, IRRBB, IFRS 9, MiFID II, ISO 20022)
+- Delivered €2M+ annual cost savings and reduced operational risk across global operations
+- Designed and delivered greenfield risk and clearing platforms for CDS and OTC derivatives at leading central counterparties (CCPs)
+- Built and led a €25M+ portfolio of concurrent risk and finance transformation initiatives
+- Delivered major regulatory programs across multiple jurisdictions (EMIR, Basel IV, FRTB, IRRBB, IFRS 9, MiFID II, ISO 20022)
 
 I am currently available for senior transformation, program director, or portfolio management
 engagements — either freelance/contract or permanent — in France, Europe, or remote/hybrid.
