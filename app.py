@@ -591,11 +591,21 @@ The gold curve shows what the behavioral approach unlocks beyond what mean-varia
         st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 
         with st.form("contact_form"):
-            st.markdown("**💬 Send a comment or question**")
+            st.markdown("""
+<div style="color:#ffffff;margin-bottom:.8rem">
+
+**💬 Get in touch**
+
+Whether you are exploring this tool for a project, considering a collaboration,
+or looking for a senior transformation or risk professional —
+I would be glad to hear from you.
+
+</div>
+""", unsafe_allow_html=True)
             sender_name  = st.text_input("Your name")
             sender_email = st.text_input("Your email")
             message      = st.text_area("Message", height=100,
-                                         placeholder="Questions, feedback, collaboration ideas...")
+                                         placeholder="Introduce yourself, share feedback, or tell me about an opportunity...")
             submitted = st.form_submit_button("Send message")
             if submitted:
                 if sender_name and sender_email and message:
