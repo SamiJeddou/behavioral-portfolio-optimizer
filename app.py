@@ -534,10 +534,21 @@ st.markdown("<div style='margin-top:2.5rem'></div>", unsafe_allow_html=True)
 tab1,tab2=st.tabs(["📊 Optimizer","📖 About"])
 
 with tab1:
-    st.markdown("## Behavioral Portfolio Optimizer")
-    st.markdown("Extends Markowitz mean-variance theory to portfolios including "
-                "**derivatives and structured products** using a "
-                "**mental-accounting downside constraint**.")
+    # Header row: title left, photo right
+    import os
+    col_title, col_photo = st.columns([5, 1])
+    with col_title:
+        st.markdown("## Behavioral Portfolio Optimizer")
+        st.markdown("Extends Markowitz mean-variance theory to portfolios including "
+                    "**derivatives and structured products** using a "
+                    "**mental-accounting downside constraint**.")
+    with col_photo:
+        if os.path.exists("profile.jpeg"):
+            st.image("profile.jpeg", width=90)
+            st.markdown(
+                '<div style="font-size:.72rem;color:#8896a8;text-align:center">'
+                'Sami Jeddou</div>',
+                unsafe_allow_html=True)
 
     if not run_btn:
         st.markdown("""
@@ -592,7 +603,7 @@ The gold curve shows what the behavioral approach unlocks beyond what mean-varia
 
         with st.form("contact_form"):
             st.markdown("""
-<div style="color:#ffffff;margin-bottom:.8rem">
+<div style="color:#c0c8d8;margin-bottom:.8rem">
 
 **💬 Get in touch**
 
@@ -721,49 +732,97 @@ I would be glad to hear from you.
                                    columns=names_in).round(3))
 
 with tab2:
-    st.markdown("## About this tool")
+    import os as _os
+    col_a, col_b = st.columns([1, 3])
+    with col_a:
+        if _os.path.exists("profile.jpeg"):
+            st.image("profile.jpeg", width=160)
+    with col_b:
+        st.markdown("""
+<div style="color:#ffffff">
+
+## Sami Jeddou
+
+**Senior Financial Services Transformation Leader**
+Risk · Capital Markets · Regulatory Programs · Front-to-Back Delivery
+
+📍 Paris, France &nbsp;|&nbsp; 🇫🇷 French National
+
+🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;|&nbsp;
+🐙 [GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer) &nbsp;|&nbsp;
+📧 sami.jeddou@protonmail.com
+
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown("---")
+
     st.markdown("""
-<div class="info-box">
+<div style="color:#c0c8d8">
 
-### Theoretical framework
+### About this tool
 
-Extends **Markowitz mean-variance theory** to portfolios including derivatives and structured
-products using a **mental-accounting downside constraint**:
+This tool extends classical **Markowitz mean-variance theory** to portfolios that include
+**derivatives and structured products**, using a **mental-accounting framework** with a
+downside risk constraint. It was built from the original R code developed as part of my
+MSc Finance thesis at the Università della Svizzera italiana (USI Lugano, 2012),
+supervised by Prof. Enrico De Giorgi, and is based on the foundational work of
+Das, Markowitz, Scheid & Statman (2010).
 
-> *P(portfolio return < H) ≤ α*
+### Background
+
+With over 20 years of experience in financial services transformation, I have delivered
+large-scale risk, regulatory, and front-to-back programs across tier-1 institutions including
+BNP Paribas CIB, Crédit Agricole, BIL Luxembourg, TMX Group, and Capgemini.
+
+Key achievements include:
+
+- Delivered €2M+ annual cost savings and reduced operational risk at BNP Paribas CIB
+- Designed and delivered greenfield risk and clearing platforms for LCH CDSClear and NetOTC
+- Built and led a €25M+ portfolio of concurrent risk and finance transformation initiatives at BIL
+- Delivered major prudential, market, and enterprise regulatory programs across multiple jurisdictions (Basel IV, FRTB, IRRBB, IFRS 9, MiFID II, ISO 20022)
+
+I am currently available for senior transformation, program director, or portfolio management
+engagements — either freelance/contract or permanent — in France, Europe, or remote/hybrid.
 
 ### Algorithm
 
-**Step 1** — Discrete state space built via grid over primary security returns.
-Derivative payoffs computed analytically using Black-Scholes.
+**Step 1 — State space construction**
+A discrete grid of return scenarios is built for all primary securities.
+For each scenario, derivative returns are computed analytically using Black-Scholes pricing.
 
-**Step 2** — Probabilities assigned via Gaussian copula.
+**Step 2 — Probability assignment**
+Each state is assigned a probability using a Gaussian copula, correctly capturing
+the dependence structure between assets.
 
-**Step 3** — Two-stage optimization:
-- *≤ 4 securities*: exhaustive grid search + COBYLA refinement
-- *≥ 5 securities*: differential evolution (global stochastic) + COBYLA refinement
+**Step 3 — Two-stage optimization**
+- *≤ 4 securities*: exhaustive grid search + COBYLA gradient refinement
+- *≥ 5 securities*: differential evolution (global stochastic optimizer) + COBYLA refinement
 
-### Data input modes
-- **Default**: Das & Statman (2010) base case — reproduces thesis results exactly
-- **Live market data**: fetch any global ticker from Yahoo Finance, daily or monthly returns
-- **Manual entry**: enter your own means, std devs, correlations for 2–10 securities
-- **CSV upload**: upload historical price data — statistics computed automatically
+### MVT / MAT Equivalence
 
-### Derivatives & structured products
-- 9 predefined types (puts, calls, collars, straddles, strangles, CGNs, barrier notes)
-- **Custom composer**: build any structured product from calls, puts, digitals, and zero-coupon bonds
-  with live payoff diagram preview
+When no derivatives are present, the mean-variance and behavioral frontiers converge exactly.
+For H = -10% and α = 5%, the implied risk-aversion is λ = 3.795 — at which point both methods
+yield identical optimal portfolios. Adding derivatives breaks this equivalence and reveals
+the superiority of the behavioral approach.
+
+### Supported derivatives & structured products
+
+| Type | Description |
+|---|---|
+| Put / Call | Standard European options |
+| Safety collar | Long put + short call |
+| Aggressive collar | Long call + short put |
+| Straddle / Strangle | Long call + long put (same or different strikes) |
+| Capital-guaranteed note | Uncapped or capped, with floor and participation rate |
+| Barrier-M note | Corridor note with digital components |
+| Custom composer | Build any payoff from calls, puts, digitals, and zero-coupon bonds |
+
+### Academic references
+
+- **Das, Sanjiv and Meir Statman (2004)** — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*
+- **Das, Sanjiv, Harry Markowitz, Jonathan Scheid and Meir Statman (2010)** — *Portfolio Optimization with Mental Accounts*, Journal of Financial and Quantitative Analysis, Vol. 45, No. 2, pp. 311–334
+- **Jeddou, Sami (2012)** — *Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios*, MSc Finance Thesis, Università della Svizzera italiana (USI Lugano), supervised by Prof. Enrico De Giorgi
 
 </div>
-
-### References
-- **Das & Statman (2004)** — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*
-- **Das, Markowitz, Scheid & Statman (2010)** — *Portfolio Optimization with Mental Accounts*, JFQA Vol. 45, No. 2, pp. 311–334
-- **Sami Jeddou (2012)** — *Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios*, MSc Thesis, USI Lugano
-
-### Author
-**Sami Jeddou** — Senior Financial Services Transformation Leader
-
-🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404)
-🐙 [GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer)
 """, unsafe_allow_html=True)
