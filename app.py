@@ -17,6 +17,28 @@ from behavioral_portfolio_optimizer import (
     build_state_space, assign_probabilities, optimize_portfolio,
     compute_structured_payoff, bs_call, bs_put
 )
+from scipy.stats import norm as _norm
+from scipy.optimize import brentq as _brentq
+
+def implied_lambda(H, alpha, means, cov_matrix, lam_lo=0.01, lam_hi=100):
+    """Find implied risk-aversion lambda such that VaR constraint binds at (H, alpha)."""
+    def mv_w(lam):
+        from scipy.optimize import minimize as _min
+        n = len(means)
+        def obj(w): return -(w@means-(lam/2)*(w@cov_matrix@w))
+        res = _min(obj, np.ones(n)/n, method="SLSQP",
+                   bounds=[(0,1)]*n,
+                   constraints=[{"type":"eq","fun":lambda w: w.sum()-1}])
+        return res.x
+    def f(lam):
+        w = mv_w(lam)
+        pm = w @ means
+        ps = np.sqrt(max(w @ cov_matrix @ w, 1e-12))
+        return _norm.cdf((H - pm) / ps) - alpha
+    try:
+        return _brentq(f, lam_lo, lam_hi)
+    except Exception:
+        return None
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -275,8 +297,7 @@ with st.sidebar:
     last_prices={}; data_valid=True
 
     if data_mode=="Default (Das & Statman base case)":
-        st.markdown('<div class="ok-box">✓ Das & Statman (2010) base case:<br>'
-                    'Means: 5%, 10%, 25% | Std: 5%, 20%, 50%</div>',
+        st.markdown('<div class="ok-box">✓ Default base case loaded — Means: 5%, 10%, 25% | Std devs: 5%, 20%, 50%</div>',
                     unsafe_allow_html=True)
 
     elif data_mode=="Live market data (Yahoo Finance)":
@@ -483,6 +504,24 @@ with st.sidebar:
         st.markdown('<div class="warn-box">⏱️ ~1–2 min.</div>',
                     unsafe_allow_html=True)
 
+    # Implied lambda display
+    cov_for_lam = corr_to_cov(sigs_in, corr_in)
+    lam = implied_lambda(H_val, alpha_val, means_in, cov_for_lam)
+    if lam is not None:
+        st.markdown(
+            f'<div style="background:#0f1923;border:1px solid #10b981;border-radius:6px;'
+            f'padding:.5rem 1rem;margin-top:.3rem;color:#10b981;font-size:.85rem">'
+            f'<b>Implied risk-aversion λ = {lam:.4f}</b><br>'
+            f'<span style="color:#6b7280;font-size:.78rem">'
+            f'MV optimal portfolio at λ={lam:.2f} is equivalent to behavioral optimal at H={H_val:.0%}, α={alpha_val:.0%}'
+            f'</span></div>',
+            unsafe_allow_html=True)
+    else:
+        st.markdown('<div style="background:#1a0a00;border:1px solid #f59e0b;border-radius:6px;'
+                    'padding:.4rem 1rem;color:#f59e0b;font-size:.78rem;margin-top:.3rem">'
+                    'λ could not be computed for these parameters</div>',
+                    unsafe_allow_html=True)
+
     st.markdown("---")
     run_btn=st.button("▶ Run optimizer",type="primary",
                        use_container_width=True,disabled=not data_valid)
@@ -528,6 +567,49 @@ The gold curve shows what the behavioral approach unlocks beyond what mean-varia
 
 </div>
 """, unsafe_allow_html=True)
+        # Sample chart
+        import os
+        if os.path.exists("sample_output.png"):
+            st.image("sample_output.png", caption="Sample output — default base case with Capital-Guaranteed Note (CGN)", use_container_width=True)
+
+        st.markdown("---")
+
+        # LinkedIn + contact
+        st.markdown("""
+<div style="background:#0f1923;border:1px solid #4a9eff;border-radius:8px;padding:1rem 1.4rem;color:#ffffff">
+
+**👤 About the author**
+
+**Sami Jeddou** — Senior Financial Services Transformation Leader | Risk, Capital Markets & Front-to-Back Delivery
+
+🔗 [Connect on LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;&nbsp;|&nbsp;&nbsp;
+🐙 [View source on GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer)
+
+</div>
+""", unsafe_allow_html=True)
+
+        st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+
+        with st.form("contact_form"):
+            st.markdown("**💬 Send a comment or question**")
+            sender_name  = st.text_input("Your name")
+            sender_email = st.text_input("Your email")
+            message      = st.text_area("Message", height=100,
+                                         placeholder="Questions, feedback, collaboration ideas...")
+            submitted = st.form_submit_button("Send message")
+            if submitted:
+                if sender_name and sender_email and message:
+                    import urllib.parse
+                    subject = urllib.parse.quote(f"Behavioral Portfolio Optimizer — message from {sender_name}")
+                    body    = urllib.parse.quote(f"From: {sender_name}\nEmail: {sender_email}\n\n{message}")
+                    mailto  = f"mailto:sami.jeddou@protonmail.com?subject={subject}&body={body}"
+                    st.markdown(
+                        f'<meta http-equiv="refresh" content="0;url={mailto}">',
+                        unsafe_allow_html=True)
+                    st.success("✓ Opening your email client to send the message.")
+                else:
+                    st.warning("Please fill in all fields before sending.")
+
         st.stop()
 
     means_arr=np.array(means_in); sigs_arr=np.array(sigs_in)
