@@ -28,7 +28,7 @@ st.markdown("""
 <style>
 .main{background:#0d1117}.block-container{padding-top:1.5rem}
 h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
-.info-box{background:#1a1a2e;border:1px solid #3a3a5a;border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem}
+.info-box{background:#1a1a2e;border:1px solid #4a9eff;border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem;color:#ffffff !important}
 .warn-box{background:#1a1200;border:1px solid #f59e0b;border-radius:6px;padding:.5rem 1rem;color:#f59e0b;font-size:.82rem;margin-top:.3rem}
 .ok-box{background:#001a0f;border:1px solid #10b981;border-radius:6px;padding:.5rem 1rem;color:#10b981;font-size:.82rem;margin-top:.3rem}
 </style>""", unsafe_allow_html=True)
@@ -491,7 +491,7 @@ with st.sidebar:
 # ═════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ═════════════════════════════════════════════════════════════════════════════
-tab1,tab2=st.tabs(["📊  Optimizer","📖  About"])
+tab1,tab2=st.tabs(["Optimizer","About"])
 
 with tab1:
     st.markdown("## Behavioral Portfolio Optimizer")
@@ -501,7 +501,7 @@ with tab1:
 
     if not run_btn:
         st.markdown("""
-<div class="info-box">
+<div class="info-box" style="color:#ffffff !important">
 
 ### 👈 How to use this tool
 
