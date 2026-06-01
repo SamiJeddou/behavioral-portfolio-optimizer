@@ -23,7 +23,7 @@ The chart above shows the core result: under the same downside constraint (H = -
 
 This work is based on the mental-accounting portfolio theory introduced in:
 
-- **Das, Sanjiv and Meir Statman (2004)** — *"Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts"*
+- **Das, Sanjiv and Meir Statman (2009)** — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*
 - **Das, Sanjiv, Harry Markowitz, Jonathan Scheid and Meir Statman (2010)** — *"Portfolio Optimization with Mental Accounts"*, Journal of Financial and Quantitative Analysis, Vol. 45, No. 2, pp. 311–334
 
 The MVT/MAT equivalence (Chapter 4) shows that for a given threshold H and shortfall probability α, there exists an implied risk-aversion coefficient λ such that the mean-variance optimal portfolio and the behavioral optimal portfolio are identical — **when no derivatives are present**. Adding derivatives breaks this equivalence and reveals the superiority of the behavioral approach.
@@ -87,7 +87,7 @@ Three modes are supported for portfolio data:
 
 | Mode | Description |
 |---|---|
-| **Default** | Das & Statman (2010) base case — 3 securities with pre-calibrated means, std devs, and correlations. Works out of the box, reproduces thesis results exactly. |
+| **Default** | Das & Statman (2009) base case — 3 securities with pre-calibrated means, std devs, and correlations. Works out of the box, reproduces thesis results exactly. |
 | **Manual entry** | Enter your own means, standard deviations, and correlation matrix directly in the sidebar. Supports 2–6 primary securities. |
 | **CSV upload** | Upload a CSV of historical prices (date column + one column per asset). Means and covariances are computed automatically from daily returns. |
 
@@ -166,7 +166,7 @@ The baseline result (10.21%) matches the thesis mean-variance result (10.23%) to
 ## Author
 
 **Sami Jeddou**
-Senior Financial Services Transformation Leader | Risk, Capital Markets & Front-to-Back Delivery
+Senior Transformation & Risk Executive | Capital Markets · Front-to-Back Delivery · Asset Management · Financial Infrastructure
 
 - 🔗 [LinkedIn](https://www.linkedin.com/in/samijeddou)
 - 📧 sami.jeddou@protonmail.com
