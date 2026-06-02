@@ -64,10 +64,20 @@ h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
 .info-box{background:#1a1a2e;border:1px solid #1a6bbf;border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem;color:#ffffff !important}
 .warn-box{background:#1a1200;border:1px solid #f59e0b;border-radius:6px;padding:.5rem 1rem;color:#f59e0b;font-size:.82rem;margin-top:.3rem}
 .ok-box{background:#001a0f;border:1px solid #10b981;border-radius:6px;padding:.5rem 1rem;color:#10b981;font-size:.82rem;margin-top:.3rem}
-/* AI-powered expander — light background to contrast with dark section headers */
-    section[data-testid="stSidebar"] details{background:#e8f0fe !important;border:1px solid #1a6bbf !important;border-radius:6px !important;margin-top:.3rem !important}
-    section[data-testid="stSidebar"] details summary{color:#1a3a6b !important;font-size:.85rem !important;font-weight:600 !important}
-    section[data-testid="stSidebar"] details p, section[data-testid="stSidebar"] details div{color:#111111 !important}
+/* AI-powered expander — light background */
+    section[data-testid="stSidebar"] [data-testid="stExpander"],
+    section[data-testid="stSidebar"] [data-testid="stExpander"] > div,
+    section[data-testid="stSidebar"] details,
+    section[data-testid="stSidebar"] details > div {
+        background-color: #e8f0fe !important;
+        background: #e8f0fe !important;
+    }
+    section[data-testid="stSidebar"] details summary,
+    section[data-testid="stSidebar"] [data-testid="stExpander"] summary {
+        color: #1a3a6b !important;
+        font-weight: 600 !important;
+        font-size: .85rem !important;
+    }
     .section-header{border-left:4px solid #1a6bbf;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-top:1.2rem;margin-bottom:.5rem;color:#ffffff;font-weight:600;font-size:1.05rem;letter-spacing:.02em;text-align:center}
 
     .sidebar-divider{border:none;border-top:2px solid #2a3a4a;margin:1rem 0}
