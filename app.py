@@ -589,6 +589,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                 xref='x', yref='y', axref='x', ayref='y',
                 showarrow=True, arrowhead=2, arrowsize=1.2,
                 arrowwidth=2, arrowcolor='#ffffff',
+                arrowdash='dash',
                 text=''
             )
             # Text connected by arrow to the gold end point (behavioural with derivative)
@@ -743,7 +744,7 @@ def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
             x0,y0=nd_x[i0],nd_y[i0]; x1,y1=der_x[i1],der_y[i1]
             ax.annotate("",xy=(x1,y1),xytext=(x0,y0),
                         arrowprops=dict(arrowstyle="->",color="#ffffff",
-                                        lw=1.6,linestyle="dotted"))
+                                        lw=1.6,linestyle="dashed"))
             ax.text(0.55, 0.45,
                     f"+{y1-y0:.1f} pp return\nsame H & α constraint\n(same risk aversion λ)",
                     color="#ffffff", fontsize=8, ha='center', va='center',
