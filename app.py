@@ -662,7 +662,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             xref='paper'
         ),
         xaxis=dict(
-            title='Portfolio Risk — Standard Deviation (%)',
+            title='',
             gridcolor='#1e2130', gridwidth=0.5,
             color='#c0c8d8', zerolinecolor='#2a2a3a',
             range=[max(0, min(mv_x) - 1),
@@ -690,13 +690,13 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         height=520
     )
 
-    # Footer annotation
-    fig.add_annotation(
-        xref='paper', yref='paper', x=0.5, y=-0.1,
-        text='Das & Statman (2009)  |  Das, Markowitz, Scheid & Statman (2010) JFQA  |  Sami Jeddou, MSc Finance USI Lugano 2012',
-        showarrow=False,
-        font=dict(color='#4a5568', size=8, style='italic'),
-        xanchor='center'
+    # Footer — placed below x-axis label using margin space
+    fig.update_layout(
+        margin=dict(t=80, b=90, l=60, r=20),
+        xaxis=dict(title=dict(
+            text='Portfolio Risk — Standard Deviation (%)<br><sup><i>Das & Statman (2009)  |  Das, Markowitz, Scheid & Statman (2010) JFQA  |  Sami Jeddou, MSc Finance USI Lugano 2012</i></sup>',
+            font=dict(color='#c0c8d8', size=11)
+        ))
     )
 
     return fig
