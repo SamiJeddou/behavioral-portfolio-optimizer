@@ -65,59 +65,7 @@ h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
 .warn-box{background:#1a1200;border:1px solid #f59e0b;border-radius:6px;padding:.5rem 1rem;color:#f59e0b;font-size:.82rem;margin-top:.3rem}
 .ok-box{background:#001a0f;border:1px solid #10b981;border-radius:6px;padding:.5rem 1rem;color:#10b981;font-size:.82rem;margin-top:.3rem}
 .section-header{border-left:4px solid #1a6bbf;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-top:1.2rem;margin-bottom:.5rem;color:#ffffff;font-weight:600;font-size:1.05rem;letter-spacing:.02em;text-align:center}
-    /* Override ALL remaining red Streamlit elements with blue */
-    div[data-baseweb="radio"] div[role="radio"]{border-color:#1a6bbf !important}
-    div[data-baseweb="radio"] div[aria-checked="true"]{background-color:#1a6bbf !important;border-color:#1a6bbf !important}
-    div[data-baseweb="radio"] [data-checked="true"]{background:#1a6bbf !important;border-color:#1a6bbf !important}
-    /* Slider track filled portion */
-    div[data-testid="stSlider"] div[role="slider"]{background:#1a6bbf !important;border-color:#1a6bbf !important}
-    div[data-testid="stSlider"] > div > div > div > div:nth-child(2){background:#1a6bbf !important}
-    div[data-testid="stSlider"] > div > div > div > div > div{background:#1a6bbf !important}
-    /* Radio selected dot */
-    input[type="radio"]:checked + div{background:#1a6bbf !important;border-color:#1a6bbf !important}
-    /* Selected option highlight in radio */
-    div[data-baseweb="radio"] label div div{background:#1a6bbf !important}
-    /* Selectbox focus border */
-    div[data-baseweb="select"] div:focus-within{border-color:#1a6bbf !important}
-    /* Any remaining red elements */
-    .st-emotion-cache-1vzeuhh,.st-emotion-cache-ue6h4q,.st-emotion-cache-13ln4jf{background-color:#1a6bbf !important;border-color:#1a6bbf !important}
-    [style*="color: rgb(255, 75, 75)"],[style*="color: rgb(255, 43, 43)"]{color:#1a6bbf !important}
-    [style*="background-color: rgb(255, 75, 75)"],[style*="background-color: rgb(255, 43, 43)"]{background-color:#1a6bbf !important}
-    /* Slider tick value labels (the -12%, -5% numbers) */
-    div[data-testid="stSlider"] span{color:#1a6bbf !important}
-    div[data-testid="stSlider"] p{color:#1a6bbf !important}
-    div[data-testid="stSlider"] [data-testid="stTickBarMin"],
-    div[data-testid="stSlider"] [data-testid="stTickBarMax"]{color:#c0c8d8 !important}
-    /* Radio button unselected circle border */
-    div[data-baseweb="radio"] > label > div > div{
-        border-color:#1a6bbf !important;
-        border-width:2px !important}
-    /* Radio button selected circle fill */
-    div[data-baseweb="radio"] > label > div > div > div{
-        background:#1a6bbf !important}
-    /* Thumb value on slider */
-    [data-testid="stThumbValue"]{color:#1a6bbf !important}
-    /* Radio circles — all states */
-    div[data-baseweb="radio"] [data-checked="false"] div,
-    div[data-baseweb="radio"] label span div,
-    div[data-baseweb="radio"] label div div div {
-        border-color: #1a6bbf !important;
-        background: transparent !important;
-    }
-    div[data-baseweb="radio"] [data-checked="true"] div,
-    div[data-baseweb="radio"] label div div[style*="background"] {
-        background: #1a6bbf !important;
-        border-color: #1a6bbf !important;
-    }
-    /* Force all SVG fills and strokes blue */
-    div[data-baseweb="radio"] svg circle,
-    div[data-baseweb="radio"] svg path {
-        fill: #1a6bbf !important;
-        stroke: #1a6bbf !important;
-    }
-    /* All red text remaining */
-    p[style*="color: red"],span[style*="color: red"],
-    div[style*="color: red"]{color:#1a6bbf !important}
+
     .sidebar-divider{border:none;border-top:2px solid #2a3a4a;margin:1rem 0}
     section[data-testid="stSidebar"] div.stButton > button,section[data-testid="stSidebar"] div.stButton > button[kind="primary"]{background:linear-gradient(180deg,#5aabff 0%,#2d7dd2 100%) !important;border:none !important;border-bottom:3px solid #1a5fa0 !important;border-radius:8px !important;color:#ffffff !important;font-size:1.05rem !important;font-weight:700 !important;padding:.6rem 1rem !important;box-shadow:0 4px 8px rgba(0,0,0,0.5) !important;text-shadow:0 1px 2px rgba(0,0,0,0.3) !important;width:100% !important}
     section[data-testid="stSidebar"] div.stButton > button:hover{background:linear-gradient(180deg,#6bbfff 0%,#3a8de0 100%) !important;box-shadow:0 6px 14px rgba(0,0,0,0.6) !important;transform:translateY(-1px) !important}
