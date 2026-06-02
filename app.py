@@ -584,22 +584,20 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             x0, y0 = nd_x[i0], nd_y[i0]
             x1, y1 = der_x[i1], der_y[i1]
             gain = y1 - y0
-            # Dashed white line as scatter trace (Plotly annotations can't be dashed)
+            # Dashed white line with triangle marker as arrowhead at end
             fig.add_trace(go.Scatter(
                 x=[x0, x1], y=[y0, y1],
-                mode='lines',
+                mode='lines+markers',
                 line=dict(color='#ffffff', width=2, dash='dash'),
+                marker=dict(
+                    symbol=['circle', 'arrow'],
+                    size=[0, 12],
+                    color='#ffffff',
+                    angleref='previous'
+                ),
                 showlegend=False,
                 hoverinfo='skip'
             ))
-            # Arrowhead at end point
-            fig.add_annotation(
-                x=x1, y=y1, ax=x0+(x1-x0)*0.85, ay=y0+(y1-y0)*0.85,
-                xref='x', yref='y', axref='x', ayref='y',
-                showarrow=True, arrowhead=2, arrowsize=1.2,
-                arrowwidth=2, arrowcolor='#ffffff',
-                text=''
-            )
             # Text connected by arrow to the gold end point (behavioural with derivative)
             fig.add_annotation(
                 x=x1, y=y1,
