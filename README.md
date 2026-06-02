@@ -93,8 +93,9 @@ Three modes are supported for portfolio data:
 | Mode | Description |
 |---|---|
 | **Default** | Das & Statman (2009) base case — 3 securities with pre-calibrated means, std devs, and correlations. Works out of the box, reproduces thesis results exactly. |
-| **Manual entry** | Enter your own means, standard deviations, and correlation matrix directly in the sidebar. Supports 2–6 primary securities. |
-| **CSV upload** | Upload a CSV of historical prices (date column + one column per asset). Means and covariances are computed automatically from daily returns. |
+| **Live market data** | Fetch any global ticker from Yahoo Finance. Select a date range and choose daily or monthly return frequency. Means and covariances are computed automatically. Data is automatically cleaned: stale price rows (zero returns) are removed and outliers beyond ±5 standard deviations are winsorised. |
+| **Manual entry** | Enter your own means, standard deviations, and correlation matrix directly in the sidebar. Supports 2–10 primary securities. |
+| **CSV upload** | Upload a CSV of historical prices (date column + one column per asset). Means and covariances are computed automatically. The same data cleaning (stale price removal, ±5σ winsorisation) is applied as for live market data. |
 
 ### CSV format
 
