@@ -691,18 +691,18 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     )
 
     # Update margin only
-    fig.update_layout(margin=dict(t=80, b=120, l=60, r=20))
+    fig.update_layout(margin=dict(t=80, b=140, l=60, r=20))
     fig.add_annotation(
         xref='paper', yref='paper',
-        x=0.5, y=-0.17,
+        x=0.5, y=-0.19,
         text='Behavioural frontiers shown at discrete H levels (-5% to -20%) — each point optimal for that constraint | MV frontier continuous via λ sweep | Both converge via MVT/MAT equivalence when no derivatives present',
         showarrow=False,
-        font=dict(color='#8896a8', size=8, style='italic'),
+        font=dict(color='#8896a8', size=9, style='italic'),
         xanchor='center'
     )
     fig.add_annotation(
         xref='paper', yref='paper',
-        x=0.5, y=-0.24,
+        x=0.5, y=-0.27,
         text='Jeddou (2025) — Beyond Mean-Variance Portfolio Optimiser  |  Built on Das & Statman (2009), Das, Markowitz, Scheid & Statman (2010) JFQA & Jeddou (2012)',
         showarrow=False,
         font=dict(color='#ffffff', size=9, style='italic'),
