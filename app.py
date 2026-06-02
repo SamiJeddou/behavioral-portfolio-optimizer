@@ -589,11 +589,17 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                 xref='x', yref='y', axref='x', ayref='y',
                 showarrow=True, arrowhead=2, arrowsize=1.2,
                 arrowwidth=2, arrowcolor='#ffffff',
-                text=f'+{gain:.1f} pp return<br>same H & α constraint<br>(same risk aversion λ)',
+                text='', showarrow=True
+            )
+            fig.add_annotation(
+                xref='paper', yref='paper',
+                x=0.55, y=0.45,
+                text=f'<b>+{gain:.1f} pp return</b><br>same H & α constraint<br>(same risk aversion λ)',
+                showarrow=False,
                 font=dict(color='#ffffff', size=10),
-                bgcolor='rgba(13,17,23,0.8)',
-                bordercolor='#ffffff', borderwidth=1,
-                xanchor='left'
+                bgcolor='rgba(0,0,0,0)',
+                bordercolor='rgba(0,0,0,0)',
+                align='center'
             )
         except (ValueError, IndexError):
             pass
@@ -734,11 +740,10 @@ def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
             ax.annotate("",xy=(x1,y1),xytext=(x0,y0),
                         arrowprops=dict(arrowstyle="->",color="#ffffff",
                                         lw=1.6,linestyle="dotted"))
-            ax.text((x0+x1)/2+1,(y0+y1)/2,
+            ax.text(0.55, 0.45,
                     f"+{y1-y0:.1f} pp return\nsame H & α constraint\n(same risk aversion λ)",
-                    color="#e2e8f0",fontsize=8,
-                    bbox=dict(boxstyle="round,pad=0.3",facecolor="#0d1117",
-                              edgecolor="#ffffff",alpha=0.8))
+                    color="#ffffff", fontsize=8, ha='center', va='center',
+                    transform=ax.transAxes)
         except (ValueError,IndexError): pass
     if mv_eq:
         ax.scatter(*mv_eq,color="#10b981",s=130,zorder=5,marker="D")
