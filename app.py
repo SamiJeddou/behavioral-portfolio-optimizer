@@ -775,7 +775,7 @@ def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
 # ═════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
     st.markdown("## ⚙️ Parameters")
-    st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
+    st.markdown('<div style="border-top:2px solid #2a3a4a;margin:1rem 0"></div>', unsafe_allow_html=True)
 
     # ── 1. Data source ────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:block;font-size:1.3rem;line-height:1.4">①</span><span style="display:block">📂 Portfolio data</span></div>', unsafe_allow_html=True)
@@ -890,7 +890,7 @@ with st.sidebar:
                     'differential evolution optimizer will be used automatically.</div>',
                     unsafe_allow_html=True)
 
-    st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
+    st.markdown('<div style="border-top:2px solid #2a3a4a;margin:1rem 0"></div>', unsafe_allow_html=True)
 
     # ── 2. Derivative ─────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:block;font-size:1.3rem;line-height:1.4">②</span><span style="display:block">📊 Derivative / Structured product</span></div>', unsafe_allow_html=True)
@@ -995,7 +995,7 @@ with st.sidebar:
             data_valid=False
             st.info("Add at least one component to continue.")
 
-    st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
+    st.markdown('<div style="border-top:2px solid #2a3a4a;margin:1rem 0"></div>', unsafe_allow_html=True)
 
     # ── 3. Constraint ─────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:block;font-size:1.3rem;line-height:1.4">③</span><span style="display:block">🎯 Mental-account constraint</span></div>', unsafe_allow_html=True)
@@ -1057,7 +1057,7 @@ with st.sidebar:
                         '⚠️ Implied λ not available — the VaR constraint may be too tight or too loose for the current portfolio.</div>',
                         unsafe_allow_html=True)
 
-    st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
+    st.markdown('<div style="border-top:2px solid #2a3a4a;margin:1rem 0"></div>', unsafe_allow_html=True)
 
     # ── 4. Grid ───────────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:block;font-size:1.3rem;line-height:1.4">④</span><span style="display:block">⚡ Grid resolution</span></div>', unsafe_allow_html=True)
@@ -1080,7 +1080,7 @@ with st.sidebar:
         st.markdown('<div class="warn-box">⏱️ ~1–2 min.</div>',
                     unsafe_allow_html=True)
 
-    st.markdown('<hr class="sidebar-divider">', unsafe_allow_html=True)
+    st.markdown('<div style="border-top:2px solid #2a3a4a;margin:1rem 0"></div>', unsafe_allow_html=True)
     run_btn=st.button("⑤ ▶ Run optimiser",type="primary",
                        use_container_width=True,disabled=not data_valid)
 
