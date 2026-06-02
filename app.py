@@ -653,7 +653,11 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         paper_bgcolor='#0d1117',
         plot_bgcolor='#0d1117',
         title=dict(
-            text='Mean-Variance vs Behavioral Portfolio Efficient Frontier',
+            text='Mean-Variance vs Behavioural Portfolio Efficient Frontier'
+                 '<br><sup style="color:#8896a8;font-size:11px">'
+                 'Behavioural frontiers shown at discrete H levels (-5% to -20%) — '
+                 'each point optimal for that constraint | MV frontier continuous via λ sweep | '
+                 'Both converge via MVT/MAT equivalence when no derivatives present</sup>',
             font=dict(color='white', size=15),
             x=0.5,
             xanchor='center',
@@ -1257,8 +1261,10 @@ The chart will show three curves and two markers:
 
 At the equivalence point (λ=3.795, H=-10%, α=5%), the grey and blue curves meet exactly —
 confirming the MVT/MAT equivalence proven in Das, Markowitz, Scheid & Statman (2010).
-The gold curve shows what the behavioral approach, with the right choice of derivatives or
+The gold curve shows what the behavioural approach, with the right choice of derivatives or
 structured products, can unlock beyond what mean-variance can achieve.
+
+**Note on discrete vs continuous frontiers:** The behavioural frontiers are plotted at discrete constraint levels (H = -5%, -8%, -10%, -12%, -15%, -18%, -20%). Each point is the optimal portfolio for that specific mental-account threshold. The MV frontier is continuous as it is computed by sweeping the risk-aversion parameter λ — each MV portfolio corresponds to one behavioural portfolio via the MVT/MAT equivalence, demonstrating that both approaches converge to the same solution when no derivatives are present.
 
 </div>
 """, unsafe_allow_html=True)
