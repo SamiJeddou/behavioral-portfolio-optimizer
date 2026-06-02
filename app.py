@@ -64,20 +64,7 @@ h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
 .info-box{background:#1a1a2e;border:1px solid #1a6bbf;border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem;color:#ffffff !important}
 .warn-box{background:#1a1200;border:1px solid #f59e0b;border-radius:6px;padding:.5rem 1rem;color:#f59e0b;font-size:.82rem;margin-top:.3rem}
 .ok-box{background:#001a0f;border:1px solid #10b981;border-radius:6px;padding:.5rem 1rem;color:#10b981;font-size:.82rem;margin-top:.3rem}
-/* AI-powered expander — light background */
-    section[data-testid="stSidebar"] [data-testid="stExpander"],
-    section[data-testid="stSidebar"] [data-testid="stExpander"] > div,
-    section[data-testid="stSidebar"] details,
-    section[data-testid="stSidebar"] details > div {
-        background-color: #e8f0fe !important;
-        background: #e8f0fe !important;
-    }
-    section[data-testid="stSidebar"] details summary,
-    section[data-testid="stSidebar"] [data-testid="stExpander"] summary {
-        color: #1a3a6b !important;
-        font-weight: 600 !important;
-        font-size: .85rem !important;
-    }
+
     .section-header{border-left:4px solid #1a6bbf;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-top:1.2rem;margin-bottom:.5rem;color:#ffffff;font-weight:600;font-size:1.05rem;letter-spacing:.02em;text-align:center}
 
     .sidebar-divider{border:none;border-top:2px solid #2a3a4a;margin:1rem 0}
@@ -945,12 +932,12 @@ with st.sidebar:
 
     # AI tooltip for selected derivative
     if der_type is not None and der_type != "custom":
-        with st.expander("✨ AI-powered: What is this instrument?", expanded=True):
-            explanation = get_explanation(der_label_sel)
-            st.markdown(f'<div style="background:#0f1923;border:1px solid #1a6bbf;'
-                       f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
-                       f'{explanation}</div>',
-                       unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
+            f'padding:.6rem .8rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
+            f'<b style="color:#1a3a6b">✨ AI-powered: What is this instrument?</b><br>'
+            f'{get_explanation(der_label_sel)}</div>',
+            unsafe_allow_html=True)
 
     # Underlying selector (shown for all non-None derivative types)
     if der_type is not None:
@@ -1061,12 +1048,12 @@ with st.sidebar:
             'padding:.4rem 1rem;color:#8896a8;font-size:.78rem;margin-top:.3rem">'
             'VaR constraint: P(return &lt; H) ≤ α</div>',
             unsafe_allow_html=True)
-        with st.expander("✨ AI-powered: What is the VaR constraint?", expanded=False):
-            st.markdown(
-                f'<div style="background:#0f1923;border:1px solid #1a6bbf;'
-                f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
-                f'{CONSTRAINT_EXPLANATIONS["var"]}</div>',
-                unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
+            f'padding:.6rem .8rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
+            f'<b style="color:#1a3a6b">✨ AI-powered: What is the VaR constraint?</b><br>'
+            f'{CONSTRAINT_EXPLANATIONS["var"]}</div>',
+            unsafe_allow_html=True)
     else:
         alpha_val = None
         L_val     = st.slider("ES lower bound L (%)", -50, -1, -15, 1) / 100
@@ -1075,12 +1062,12 @@ with st.sidebar:
             'padding:.4rem 1rem;color:#8896a8;font-size:.78rem;margin-top:.3rem">'
             'ES constraint: E[return | return &lt; H] ≥ L</div>',
             unsafe_allow_html=True)
-        with st.expander("✨ AI-powered: What is the ES constraint?", expanded=False):
-            st.markdown(
-                f'<div style="background:#0f1923;border:1px solid #1a6bbf;'
-                f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
-                f'{CONSTRAINT_EXPLANATIONS["es"]}</div>',
-                unsafe_allow_html=True)
+        st.markdown(
+            f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
+            f'padding:.6rem .8rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
+            f'<b style="color:#1a3a6b">✨ AI-powered: What is the ES constraint?</b><br>'
+            f'{CONSTRAINT_EXPLANATIONS["es"]}</div>',
+            unsafe_allow_html=True)
 
     # Implied lambda — only for VaR
     if not use_es:
@@ -1110,12 +1097,12 @@ with st.sidebar:
     m_val,mp_val=GRID_OPTIONS[grid_lbl]
 
     # AI-powered grid explanation
-    with st.expander("✨ AI-powered: What does this resolution mean?", expanded=True):
-        st.markdown(
-            f'<div style="background:#0f1923;border:1px solid #1a6bbf;'
-            f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
-            f'{GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")}</div>',
-            unsafe_allow_html=True)
+    st.markdown(
+        f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
+        f'padding:.6rem .8rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
+        f'<b style="color:#1a3a6b">✨ AI-powered: What does this resolution mean?</b><br>'
+        f'{GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")}</div>',
+        unsafe_allow_html=True)
 
     if "High" in grid_lbl:
         st.markdown('<div class="warn-box">⚠️ May take 5–10 min.</div>',
