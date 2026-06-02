@@ -331,7 +331,7 @@ GRID_EXPLANATIONS = {
     ),
     "⚖️  Standard (m=35, m'=50)": (
         "Uses a medium grid with 35 return scenarios and 50 weight steps per dimension. "
-        "Runs in ~1-2 minutes. Provides a good balance between speed and accuracy — "
+        "Runs in approximately 3–8 minutes depending on the number of securities and derivative type. Provides a good balance between speed and accuracy — "
         "results are close to the precise solution in most cases. "
         "Recommended for most use cases once you have identified the right parameters."
     ),
@@ -339,7 +339,7 @@ GRID_EXPLANATIONS = {
         "Matches the original thesis parameters exactly — 51 return scenarios and 99 weight steps, "
         "the same values used in Das & Statman (2009) and Jeddou (2012). "
         "Results are publication-quality and directly comparable to academic benchmarks. "
-        "May take 5-10 minutes depending on the number of securities. "
+        "May take 15–30 minutes depending on the number of securities and derivative type. "
         "Recommended for final results and for verifying the equivalence point."
     ),
 }
@@ -1111,10 +1111,10 @@ with st.sidebar:
         unsafe_allow_html=True)
 
     if "High" in grid_lbl:
-        st.markdown('<div class="warn-box">⚠️ May take 5–10 min.</div>',
+        st.markdown('<div class="warn-box">⚠️ May take 15–30 min. Recommended for final results only.</div>',
                     unsafe_allow_html=True)
     elif "Standard" in grid_lbl:
-        st.markdown('<div class="warn-box">⏱️ ~1–2 min.</div>',
+        st.markdown('<div class="warn-box">⏱️ ~3–8 min depending on securities and derivative type.</div>',
                     unsafe_allow_html=True)
 
     st.markdown("\n---\n")
@@ -1343,13 +1343,13 @@ structured products, can unlock beyond what mean-variance can achieve.
 
         nd_res=None
         with c1:
-            st.markdown("**Without derivative**")
+            st.markdown("**Optimal portfolio — no derivative**")
             try:
                 nd_res,_=run_opt(means_arr,sigs_arr,cov_mat,None,H_val,_alpha,m_val,mp_val,
                                constraint_type=_ctype,L=_L)
                 m1,m2,m3,m4=st.columns(4)
-                m1.metric("Return",f"{nd_res['expected_return']*100:.2f}%")
-                m2.metric("Std dev",f"{nd_res['std_dev']*100:.2f}%")
+                m1.metric("Expected return",f"{nd_res['expected_return']*100:.2f}%")
+                m2.metric("Std deviation (risk)",f"{nd_res['std_dev']*100:.2f}%")
                 m3.metric("Skewness",f"{nd_res['skewness']:.3f}")
                 m4.metric(
                     'Shortfall prob' if not use_es else 'Exp. tail loss',
@@ -1358,7 +1358,12 @@ structured products, can unlock beyond what mean-variance can achieve.
                 for i,w in enumerate(nd_res["weights"]):
                     lbl=names_in[i] if i<len(names_in) else f"Asset {i+1}"
                     st.progress(float(w),text=f"{lbl}: {w*100:.1f}%")
-                st.caption(f"Method: {nd_res.get('method_used','—')}")
+                _method_nd = nd_res.get('method_used','—')
+                _method_nd_label = (
+                    "Exhaustive grid search + COBYLA refinement" if _method_nd == "grid_search"
+                    else "Differential evolution + COBYLA refinement" if _method_nd == "differential_evolution"
+                    else _method_nd)
+                st.caption(f"Optimisation method: {_method_nd_label}")
             except Exception as e:
                 st.warning(
                     "⚠️ No eligible portfolio found for these parameters. "
@@ -1367,7 +1372,7 @@ structured products, can unlock beyond what mean-variance can achieve.
 
         with c2:
             if der_config:
-                st.markdown(f"**With {der_label_sel}**")
+                st.markdown(f"**Optimal portfolio — with {der_label_sel}**")
                 try:
                     dr_res,_=run_opt(means_arr,sigs_arr,cov_mat,der_config,
                                       H_val,_alpha,m_val,mp_val,
@@ -1375,8 +1380,9 @@ structured products, can unlock beyond what mean-variance can achieve.
                     delta=(dr_res['expected_return']-(nd_res['expected_return'] if nd_res else 0))*100
                     m1,m2,m3,m4=st.columns(4)
                     m1.metric("Return",f"{dr_res['expected_return']*100:.2f}%",
-                               delta=f"+{delta:.2f}pp" if delta>0 else f"{delta:.2f}pp")
-                    m2.metric("Std dev",f"{dr_res['std_dev']*100:.2f}%")
+                               delta=f"+{delta:.2f}pp" if delta>0 else f"{delta:.2f}pp",
+                          help="Gain vs no-derivative portfolio at same constraint")
+                    m2.metric("Std deviation (risk)",f"{dr_res['std_dev']*100:.2f}%")
                     m3.metric("Skewness",f"{dr_res['skewness']:.3f}")
                     m4.metric(
                         'Shortfall prob' if not use_es else 'Exp. tail loss',
@@ -1385,7 +1391,12 @@ structured products, can unlock beyond what mean-variance can achieve.
                     for i,w in enumerate(dr_res["weights"]):
                         lbl=asset_labels[i] if i<len(asset_labels) else f"Asset {i+1}"
                         st.progress(float(w),text=f"{lbl}: {w*100:.1f}%")
-                    st.caption(f"Method: {dr_res.get('method_used','—')}")
+                    _method_dr = dr_res.get('method_used','—')
+                    _method_dr_label = (
+                        "Exhaustive grid search + COBYLA refinement" if _method_dr == "grid_search"
+                        else "Differential evolution + COBYLA refinement" if _method_dr == "differential_evolution"
+                        else _method_dr)
+                    st.caption(f"Optimisation method: {_method_dr_label}")
                 except Exception as e:
                     st.warning(
                         "⚠️ No eligible portfolio found for these parameters. "
