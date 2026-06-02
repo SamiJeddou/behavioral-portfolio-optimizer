@@ -1159,7 +1159,7 @@ Follow these steps in the sidebar:
 | **3 — Product parameters** | Set the strike, maturity, floor, participation, or other characteristics |
 | **4 — Constraint** | Choose VaR or ES constraint type, set threshold H, and set α (VaR) or L (ES) |
 | **5 — Grid resolution** | Choose Fast for a quick preview, High precision for thesis-level accuracy |
-| **6 — Run** | Click **▶ Run optimizer** |
+| **6 — Run** | Click **▶ Run optimiser** |
 
 The chart will show three curves and two markers:
 - 🔘 **Grey dashed** — classical mean-variance efficient frontier (Markowitz)
