@@ -560,7 +560,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     # ── Behavioral — no derivative ────────────────────────────────────────────
     fig.add_trace(go.Scatter(
         x=nd_x, y=nd_y, mode='lines+markers',
-        name='Behavioural — no derivative',
+        name='Behavioural efficient frontier — no derivative',
         line=dict(color='#1a6bbf', width=2.5),
         marker=dict(size=9, color='#1a6bbf', symbol='circle'),
         text=nd_lbls,
@@ -571,10 +571,10 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     if der_x:
         fig.add_trace(go.Scatter(
             x=der_x, y=der_y, mode='markers',
-            name=f'Behavioural — {der_label}',
+            name=f'Behavioural efficient frontier — {der_label}',
             marker=dict(size=10, color='#f59e0b', symbol='square'),
             text=der_lbls,
-            hovertemplate=f'<b>Behavioural ({der_label})</b><br>Threshold: %{{text}}<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
+            hovertemplate=f'<b>Behavioural efficient frontier ({der_label})</b><br>Threshold: %{{text}}<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
         ))
 
         # Gain arrow at selected H
@@ -584,8 +584,17 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             x0, y0 = nd_x[i0], nd_y[i0]
             x1, y1 = der_x[i1], der_y[i1]
             gain = y1 - y0
+            # Dashed white line as scatter trace (Plotly annotations can't be dashed)
+            fig.add_trace(go.Scatter(
+                x=[x0, x1], y=[y0, y1],
+                mode='lines',
+                line=dict(color='#ffffff', width=2, dash='dash'),
+                showlegend=False,
+                hoverinfo='skip'
+            ))
+            # Arrowhead at end point
             fig.add_annotation(
-                x=x1, y=y1, ax=x0, ay=y0,
+                x=x1, y=y1, ax=x0+(x1-x0)*0.85, ay=y0+(y1-y0)*0.85,
                 xref='x', yref='y', axref='x', ayref='y',
                 showarrow=True, arrowhead=2, arrowsize=1.2,
                 arrowwidth=2, arrowcolor='#ffffff',
