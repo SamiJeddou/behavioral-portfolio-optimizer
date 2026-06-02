@@ -589,7 +589,6 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                 xref='x', yref='y', axref='x', ayref='y',
                 showarrow=True, arrowhead=2, arrowsize=1.2,
                 arrowwidth=2, arrowcolor='#ffffff',
-                arrowdash='dash',
                 text=''
             )
             # Text connected by arrow to the gold end point (behavioural with derivative)
