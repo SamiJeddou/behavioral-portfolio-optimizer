@@ -169,6 +169,8 @@ The baseline result (10.21%) matches the thesis mean-variance result (10.23%) to
 
 ## Author
 
+<img src="profile.jpeg" width="80" align="left" style="border-radius:50%;margin-right:16px;margin-bottom:8px"/>
+
 **Sami Jeddou**
 Senior Financial Services Executive — Transformation, Risk & Capital Markets | Risk · Capital Markets · Post-Trade & Clearing · High-Value Payments · Quantitative Finance · Front-to-Back Delivery · Regulatory Programs
 
