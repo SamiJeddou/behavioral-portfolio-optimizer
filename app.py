@@ -775,7 +775,7 @@ with st.sidebar:
     st.markdown("---")
 
     # ── 1. Data source ────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header">📂 Portfolio data</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">① 📂 Portfolio data</div>', unsafe_allow_html=True)
     data_mode = st.radio("Data source",
         ["Default (Das & Statman base case)",
          "Live market data (Yahoo Finance)",
@@ -890,7 +890,7 @@ with st.sidebar:
     st.markdown("---")
 
     # ── 2. Derivative ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header">📊 Derivative / Structured product</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">② 📊 Derivative / Structured product</div>', unsafe_allow_html=True)
     der_label_sel=st.selectbox("Type",list(PREDEFINED_DERIVATIVES.keys()),
                                 index=0,label_visibility="collapsed")
     der_type=PREDEFINED_DERIVATIVES[der_label_sel]
@@ -995,7 +995,7 @@ with st.sidebar:
     st.markdown("---")
 
     # ── 3. Constraint ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header">🎯 Mental-account constraint</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">③ 🎯 Mental-account constraint</div>', unsafe_allow_html=True)
 
     # VaR / ES toggle
     constraint_type = st.radio(
@@ -1057,7 +1057,7 @@ with st.sidebar:
     st.markdown("---")
 
     # ── 4. Grid ───────────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header">⚡ Grid resolution</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">④ ⚡ Grid resolution</div>', unsafe_allow_html=True)
     grid_lbl=st.selectbox("Resolution",list(GRID_OPTIONS.keys()),
                            index=0,label_visibility="collapsed")
     m_val,mp_val=GRID_OPTIONS[grid_lbl]
@@ -1078,7 +1078,7 @@ with st.sidebar:
                     unsafe_allow_html=True)
 
     st.markdown("---")
-    run_btn=st.button("▶ Run optimiser",type="primary",
+    run_btn=st.button("⑤  ▶ Run optimiser",type="primary",
                        use_container_width=True,disabled=not data_valid)
 
 
@@ -1154,12 +1154,11 @@ Follow these steps in the sidebar:
 
 | Step | Action |
 |---|---|
-| **1 — Portfolio data** | Choose a data source: default base case, live market tickers, manual entry, or CSV upload |
-| **2 — Derivative** | Select a derivative or structured product type (or build a custom one) |
-| **3 — Product parameters** | Set the strike, maturity, floor, participation, or other characteristics |
-| **4 — Constraint** | Choose VaR or ES constraint type, set threshold H, and set α (VaR) or L (ES) |
-| **5 — Grid resolution** | Choose Fast for a quick preview, High precision for thesis-level accuracy |
-| **6 — Run** | Click **▶ Run optimiser** |
+| **① Portfolio data** | Choose a data source: default base case, live market tickers, manual entry, or CSV upload |
+| **② Derivative & parameters** | Select a derivative or structured product type (or build a custom one) and set its characteristics (strike, maturity, floor, participation, etc.) |
+| **③ Constraint** | Choose VaR or ES constraint type, set threshold H, and set α (VaR) or L (ES) |
+| **④ Grid resolution** | Choose Fast for a quick preview, High precision for thesis-level accuracy |
+| **⑤ Run** | Click **▶ Run optimiser** |
 
 The chart will show three curves and two markers:
 - 🔘 **Grey dashed** — classical mean-variance efficient frontier (Markowitz)
