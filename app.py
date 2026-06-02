@@ -778,7 +778,7 @@ with st.sidebar:
     st.markdown("\n---\n")
 
     # ── 1. Data source ────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="display:block;font-size:1.3rem;line-height:1.4">①</span><span style="display:block">📂 PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">1</span><span style="display:block">📂 PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
     data_mode = st.radio("Data source",
         ["Default (Das & Statman base case)",
          "Live market data (Yahoo Finance)",
@@ -893,7 +893,7 @@ with st.sidebar:
     st.markdown("\n---\n")
 
     # ── 2. Derivative ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="display:block;font-size:1.3rem;line-height:1.4">②</span><span style="display:block">📊 DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">2</span><span style="display:block">📊 DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
     der_label_sel=st.selectbox("Type",list(PREDEFINED_DERIVATIVES.keys()),
                                 index=0,label_visibility="collapsed")
     der_type=PREDEFINED_DERIVATIVES[der_label_sel]
@@ -998,7 +998,7 @@ with st.sidebar:
     st.markdown("\n---\n")
 
     # ── 3. Constraint ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="display:block;font-size:1.3rem;line-height:1.4">③</span><span style="display:block">🎯 MENTAL-ACCOUNT CONSTRAINT</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">3</span><span style="display:block">🎯 MENTAL-ACCOUNT CONSTRAINT</span></div>', unsafe_allow_html=True)
 
     # VaR / ES toggle
     constraint_type = st.radio(
@@ -1060,7 +1060,7 @@ with st.sidebar:
     st.markdown("\n---\n")
 
     # ── 4. Grid ───────────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="display:block;font-size:1.3rem;line-height:1.4">④</span><span style="display:block">⚡ GRID RESOLUTION</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">4</span><span style="display:block">⚡ GRID RESOLUTION</span></div>', unsafe_allow_html=True)
     grid_lbl=st.selectbox("Resolution",list(GRID_OPTIONS.keys()),
                            index=0,label_visibility="collapsed")
     m_val,mp_val=GRID_OPTIONS[grid_lbl]
