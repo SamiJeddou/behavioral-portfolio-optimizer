@@ -571,10 +571,10 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     if der_x:
         fig.add_trace(go.Scatter(
             x=der_x, y=der_y, mode='markers',
-            name=f'Behavioural efficient frontier — {der_label}',
+            name=f'Behavioural optimal portfolios — with {der_label}',
             marker=dict(size=10, color='#f59e0b', symbol='square'),
             text=der_lbls,
-            hovertemplate=f'<b>Behavioural efficient frontier ({der_label})</b><br>Threshold: %{{text}}<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
+            hovertemplate=f'<b>Behavioural optimal portfolio (with {der_label})</b><br>Threshold: %{{text}}<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
         ))
 
         # Gain arrow at selected H
