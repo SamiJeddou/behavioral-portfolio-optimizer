@@ -653,11 +653,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         paper_bgcolor='#0d1117',
         plot_bgcolor='#0d1117',
         title=dict(
-            text='Mean-Variance vs Behavioural Portfolio Efficient Frontier'
-                 '<br><sup style="color:#8896a8;font-size:11px">'
-                 'Behavioural frontiers shown at discrete H levels (-5% to -20%) — '
-                 'each point optimal for that constraint | MV frontier continuous via λ sweep | '
-                 'Both converge via MVT/MAT equivalence when no derivatives present</sup>',
+            text='Mean-Variance vs Behavioural Portfolio Efficient Frontier',
             font=dict(color='white', size=15),
             x=0.5,
             xanchor='center',
@@ -695,7 +691,15 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     )
 
     # Update margin only
-    fig.update_layout(margin=dict(t=80, b=100, l=60, r=20))
+    fig.update_layout(margin=dict(t=80, b=120, l=60, r=20))
+    fig.add_annotation(
+        xref='paper', yref='paper',
+        x=0.5, y=-0.17,
+        text='Behavioural frontiers shown at discrete H levels (-5% to -20%) — each point optimal for that constraint | MV frontier continuous via λ sweep | Both converge via MVT/MAT equivalence when no derivatives present',
+        showarrow=False,
+        font=dict(color='#8896a8', size=8, style='italic'),
+        xanchor='center'
+    )
     fig.add_annotation(
         xref='paper', yref='paper',
         x=0.5, y=-0.24,
