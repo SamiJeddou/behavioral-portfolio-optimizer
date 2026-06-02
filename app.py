@@ -1570,11 +1570,26 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
 - **Jeddou, Sami (2012)** — *Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios*, MSc Finance Thesis, Università della Svizzera italiana (USI Lugano), supervised by Prof. Enrico De Giorgi. Available on [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404)
 """)
 
+    st.markdown("---")
+    st.markdown("""
+<div style="background:#0f1923;border:1px solid #1a6bbf;border-radius:8px;padding:1rem 1.4rem;color:#ffffff">
+
+**📬 Get in touch**
+
+Interested in collaborating, discussing an opportunity, or learning more about this work?
+Use the contact form in the **Optimiser tab**, or connect directly:
+
+🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;&nbsp;|&nbsp;&nbsp; 📧 sami.jeddou@protonmail.com
+
+</div>
+""", unsafe_allow_html=True)
+
 with tab3:
     st.markdown("## 📚 AI Glossary & Reference")
     st.markdown(
         "Click any term below for an AI-generated explanation, or type your own question. "
-        "Answers are tailored to the context of behavioral portfolio optimization.")
+        "Answers are tailored to the context of behavioural portfolio optimisation.")
+    st.info("💡 After clicking a term or submitting a question, **scroll down** to see the answer at the bottom of this page.", icon="👇")
 
     GLOSSARY_TERMS = {
         "Derivatives & structured products": [
