@@ -697,7 +697,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     fig.add_annotation(
         xref='paper', yref='paper',
         x=0.5, y=-0.24,
-        text='Das & Statman (2009)  |  Das, Markowitz, Scheid & Statman (2010) JFQA  |  Sami Jeddou, MSc Finance USI Lugano 2012',
+        text='Das & Statman (2009)  |  Das, Markowitz, Scheid & Statman (2010) JFQA  |  Jeddou, MSc Finance thesis, USI Lugano 2012',
         showarrow=False,
         font=dict(color='#ffffff', size=9, style='italic'),
         xanchor='center'
