@@ -662,14 +662,16 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             xref='paper'
         ),
         xaxis=dict(
-            title='',
+            title=dict(text='Portfolio Risk — Standard Deviation (%)',
+                       font=dict(color='#c0c8d8', size=13)),
             gridcolor='#1e2130', gridwidth=0.5,
             color='#c0c8d8', zerolinecolor='#2a2a3a',
             range=[max(0, min(mv_x) - 1),
                    max(max(mv_x), max(der_x) if der_x else 0) * 1.06]
         ),
         yaxis=dict(
-            title='Expected Return (%)',
+            title=dict(text='Expected Return (%)',
+                       font=dict(color='#c0c8d8', size=13)),
             gridcolor='#1e2130', gridwidth=0.5,
             color='#c0c8d8', zerolinecolor='#2a2a3a',
             range=[min(min(mv_y), min(nd_y)) - 2,
@@ -690,14 +692,8 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         height=520
     )
 
-    # Restore x-axis title and put footer at very bottom via annotation
-    fig.update_layout(
-        margin=dict(t=80, b=100, l=60, r=20),
-        xaxis=dict(title=dict(
-            text='Portfolio Risk — Standard Deviation (%)',
-            font=dict(color='#c0c8d8', size=11)
-        ))
-    )
+    # Update margin only
+    fig.update_layout(margin=dict(t=80, b=100, l=60, r=20))
     fig.add_annotation(
         xref='paper', yref='paper',
         x=0.5, y=-0.24,
