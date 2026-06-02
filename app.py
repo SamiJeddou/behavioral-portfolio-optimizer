@@ -553,7 +553,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     fig.add_trace(go.Scatter(
         x=mv_x, y=mv_y, mode='lines',
         name='Mean-variance efficient frontier (Markowitz)',
-        line=dict(color='#6b7280', width=2, dash='dash'),
+        line=dict(color='#a855f7', width=2, dash='dash'),
         hovertemplate='<b>Mean-Variance Efficient Frontier (Markowitz)</b><br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
     ))
 
@@ -731,7 +731,7 @@ def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
     fig.patch.set_facecolor("#0d1117"); ax.set_facecolor("#0d1117")
     ax.grid(True,color="#1e2130",linewidth=0.6,linestyle="--",alpha=0.8)
     ax.set_axisbelow(True)
-    ax.plot(mv_x,mv_y,color="#6b7280",linewidth=2,linestyle="--",
+    ax.plot(mv_x,mv_y,color="#a855f7",linewidth=2,linestyle="--",
             label="Mean-variance frontier (Markowitz)",zorder=2,alpha=0.9)
     ax.plot(nd_x,nd_y,color="#1a6bbf",linewidth=2.5,marker="o",markersize=7,
             markerfacecolor="#1a6bbf",label="Behavioral — no derivative",zorder=3)
@@ -770,7 +770,7 @@ def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
     ax.text(0.5,0.97,
             "MV and behavioral frontiers converge without derivatives\n"
             "(MVT/MAT equivalence — Das, Markowitz, Scheid & Statman 2010)",
-            transform=ax.transAxes,color="#6b7280",fontsize=7.5,
+            transform=ax.transAxes,color="#ffffff",fontsize=7.5,
             ha="center",va="top",style="italic",
             bbox=dict(boxstyle="round,pad=0.3",facecolor="#0d1117",
                       edgecolor="#3a3a5a",alpha=0.95),zorder=10)
