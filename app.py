@@ -690,13 +690,21 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         height=520
     )
 
-    # Footer — placed below x-axis label using margin space
+    # Restore x-axis title and put footer at very bottom via annotation
     fig.update_layout(
-        margin=dict(t=80, b=90, l=60, r=20),
+        margin=dict(t=80, b=80, l=60, r=20),
         xaxis=dict(title=dict(
-            text='Portfolio Risk — Standard Deviation (%)<br><sup><i>Das & Statman (2009)  |  Das, Markowitz, Scheid & Statman (2010) JFQA  |  Sami Jeddou, MSc Finance USI Lugano 2012</i></sup>',
+            text='Portfolio Risk — Standard Deviation (%)',
             font=dict(color='#c0c8d8', size=11)
         ))
+    )
+    fig.add_annotation(
+        xref='paper', yref='paper',
+        x=0.5, y=-0.18,
+        text='Das & Statman (2009)  |  Das, Markowitz, Scheid & Statman (2010) JFQA  |  Sami Jeddou, MSc Finance USI Lugano 2012',
+        showarrow=False,
+        font=dict(color='#4a5568', size=9, style='italic'),
+        xanchor='center'
     )
 
     return fig
