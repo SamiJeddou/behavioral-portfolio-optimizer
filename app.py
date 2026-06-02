@@ -65,7 +65,7 @@ h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
 .info-box{background:#1a1a2e;border:1px solid #4a9eff;border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem;color:#ffffff !important}
 .warn-box{background:#1a1200;border:1px solid #f59e0b;border-radius:6px;padding:.5rem 1rem;color:#f59e0b;font-size:.82rem;margin-top:.3rem}
 .ok-box{background:#001a0f;border:1px solid #10b981;border-radius:6px;padding:.5rem 1rem;color:#10b981;font-size:.82rem;margin-top:.3rem}
-.section-header{border-left:4px solid #4a9eff;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-bottom:.5rem;color:#ffffff;font-weight:600;font-size:.95rem;letter-spacing:.02em}
+.section-header{border-left:4px solid #4a9eff;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-bottom:.5rem;color:#ffffff;font-weight:600;font-size:1.05rem;letter-spacing:.02em}
 </style>""", unsafe_allow_html=True)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -775,7 +775,7 @@ with st.sidebar:
     st.markdown("---")
 
     # ── 1. Data source ────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header">① 📂 Portfolio data</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="font-size:1.3rem">①</span> 📂 Portfolio data</div>', unsafe_allow_html=True)
     data_mode = st.radio("Data source",
         ["Default (Das & Statman base case)",
          "Live market data (Yahoo Finance)",
@@ -890,7 +890,7 @@ with st.sidebar:
     st.markdown("---")
 
     # ── 2. Derivative ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header">② 📊 Derivative / Structured product</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="font-size:1.3rem">②</span> 📊 Derivative / Structured product</div>', unsafe_allow_html=True)
     der_label_sel=st.selectbox("Type",list(PREDEFINED_DERIVATIVES.keys()),
                                 index=0,label_visibility="collapsed")
     der_type=PREDEFINED_DERIVATIVES[der_label_sel]
@@ -995,7 +995,7 @@ with st.sidebar:
     st.markdown("---")
 
     # ── 3. Constraint ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header">③ 🎯 Mental-account constraint</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="font-size:1.3rem">③</span> 🎯 Mental-account constraint</div>', unsafe_allow_html=True)
 
     # VaR / ES toggle
     constraint_type = st.radio(
@@ -1057,7 +1057,7 @@ with st.sidebar:
     st.markdown("---")
 
     # ── 4. Grid ───────────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header">④ ⚡ Grid resolution</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="font-size:1.3rem">④</span> ⚡ Grid resolution</div>', unsafe_allow_html=True)
     grid_lbl=st.selectbox("Resolution",list(GRID_OPTIONS.keys()),
                            index=0,label_visibility="collapsed")
     m_val,mp_val=GRID_OPTIONS[grid_lbl]
