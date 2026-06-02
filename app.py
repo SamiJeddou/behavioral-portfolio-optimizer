@@ -1039,6 +1039,12 @@ with st.sidebar:
     use_es = constraint_type.startswith("ES")
 
     H_val = st.slider("Threshold H (%)", -40, -1, -10, 1) / 100
+    st.markdown(
+        '<div style="background:#ffffff;border:1px solid #3a3a5a;border-radius:6px;'
+        'padding:.3rem .8rem;color:#555555;font-size:.76rem;margin-top:.2rem">'
+        'Range extended to -40% to accommodate highly volatile assets '
+        '(e.g. cryptocurrencies, emerging market equities).</div>',
+        unsafe_allow_html=True)
 
     if not use_es:
         alpha_val = st.slider("Shortfall probability α (%)", 1, 15, 5, 1) / 100

@@ -23,6 +23,8 @@ The app provides three portfolio perspectives for comparison:
 
 Under the default base case (H = -10%, α = 5%), a portfolio including an uncapped Capital-Guaranteed Note achieves **33.6% expected return** versus **10.2% without derivatives** under the same downside constraint.
 
+The threshold H ranges from -40% to -1%, making the framework applicable to highly volatile assets including **cryptocurrencies and digital assets**, emerging market equities, and other non-traditional instruments — extending the mental-accounting approach to today's broader investment universe.
+
 ---
 
 ## Theoretical Background
@@ -93,7 +95,7 @@ Three modes are supported for portfolio data:
 | Mode | Description |
 |---|---|
 | **Default** | Das & Statman (2009) base case — 3 securities with pre-calibrated means, std devs, and correlations. Works out of the box, reproduces thesis results exactly. |
-| **Live market data** | Fetch any global ticker from Yahoo Finance. Select a date range and choose daily or monthly return frequency. Means and covariances are computed automatically. Data is automatically cleaned: stale price rows (zero returns) are removed and outliers beyond ±5 standard deviations are winsorised. |
+| **Live market data** | Fetch any global ticker from Yahoo Finance — stocks, ETFs, indices, and crypto (e.g. BTC-USD, ETH-USD). Select a date range and choose daily or monthly return frequency. Means and covariances are computed automatically. Data is automatically cleaned: stale price rows (zero returns) are removed and outliers beyond ±5 standard deviations are winsorised. |
 | **Manual entry** | Enter your own means, standard deviations, and correlation matrix directly in the sidebar. Supports 2–10 primary securities. |
 | **CSV upload** | Upload a CSV of historical prices (date column + one column per asset). Means and covariances are computed automatically. The same data cleaning (stale price removal, ±5σ winsorisation) is applied as for live market data. |
 
