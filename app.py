@@ -695,7 +695,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     fig.add_annotation(
         xref='paper', yref='paper',
         x=0.5, y=-0.24,
-        text='Das & Statman (2009)  |  Das, Markowitz, Scheid & Statman (2010) JFQA  |  Jeddou (2012), MSc Finance thesis, USI Lugano',
+        text='Jeddou (2025) — Beyond Mean-Variance Portfolio Optimiser  |  Built on Das & Statman (2009), Das, Markowitz, Scheid & Statman (2010) JFQA & Jeddou (2012)',
         showarrow=False,
         font=dict(color='#ffffff', size=9, style='italic'),
         xanchor='center'
@@ -783,9 +783,9 @@ def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
     ax.legend(loc="upper left",fontsize=9,facecolor="#1a1a2e",
               edgecolor="#3a3a5a",labelcolor="white",framealpha=0.9)
     fig.text(0.5,0.001,
-             "Das & Statman (2004)  |  Das, Markowitz, Scheid & Statman (2010) JFQA  |  "
-             "Sami Jeddou, MSc Finance USI Lugano 2012",
-             ha="center",color="#4a5568",fontsize=7,style="italic")
+             "Jeddou (2025) — Beyond Mean-Variance Portfolio Optimiser  |  "
+             "Built on Das & Statman (2009), Das, Markowitz, Scheid & Statman (2010) JFQA & Jeddou (2012)",
+             ha="center",color="#ffffff",fontsize=7,style="italic")
     all_x=mv_x+nd_x+(der_x if der_x else [])
     all_y=mv_y+nd_y+(der_y if der_y else [])
     ax.set_xlim(0,max(all_x)*1.15); ax.set_ylim(min(all_y)-3,max(all_y)+6)
@@ -1029,7 +1029,7 @@ with st.sidebar:
         index=0, horizontal=True)
     use_es = constraint_type.startswith("ES")
 
-    H_val = st.slider("Threshold H (%)", -25, -3, -10, 1) / 100
+    H_val = st.slider("Threshold H (%)", -40, -1, -10, 1) / 100
 
     if not use_es:
         alpha_val = st.slider("Shortfall probability α (%)", 1, 15, 5, 1) / 100
