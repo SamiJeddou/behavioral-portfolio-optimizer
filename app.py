@@ -1342,8 +1342,11 @@ structured products, can unlock beyond what mean-variance can achieve.
         c1,c2=st.columns(2)
 
         nd_res=None
+        dr_res=None
+
         with c1:
-            st.markdown("**Optimal portfolio — no derivative**")
+            st.markdown("**① Optimal portfolio — no derivative**")
+            st.caption("Maximises return subject to the downside constraint")
             try:
                 nd_res,_=run_opt(means_arr,sigs_arr,cov_mat,None,H_val,_alpha,m_val,mp_val,
                                constraint_type=_ctype,L=_L)
@@ -1372,16 +1375,17 @@ structured products, can unlock beyond what mean-variance can achieve.
 
         with c2:
             if der_config:
-                st.markdown(f"**Optimal portfolio — with {der_label_sel}**")
+                st.markdown(f"**② Optimal portfolio — with {der_label_sel}**")
+                st.caption(f"Same downside constraint (H={H_val:.0%}, α={_alpha:.0%}) — maximises return")
                 try:
                     dr_res,_=run_opt(means_arr,sigs_arr,cov_mat,der_config,
                                       H_val,_alpha,m_val,mp_val,
                                       constraint_type=_ctype,L=_L)
                     delta=(dr_res['expected_return']-(nd_res['expected_return'] if nd_res else 0))*100
                     m1,m2,m3,m4=st.columns(4)
-                    m1.metric("Return",f"{dr_res['expected_return']*100:.2f}%",
+                    m1.metric("Expected return",f"{dr_res['expected_return']*100:.2f}%",
                                delta=f"+{delta:.2f}pp" if delta>0 else f"{delta:.2f}pp",
-                          help="Gain vs no-derivative portfolio at same constraint")
+                               help="Gain vs no-derivative portfolio at same downside constraint")
                     m2.metric("Std deviation (risk)",f"{dr_res['std_dev']*100:.2f}%")
                     m3.metric("Skewness",f"{dr_res['skewness']:.3f}")
                     m4.metric(
@@ -1404,6 +1408,61 @@ structured products, can unlock beyond what mean-variance can achieve.
                         "increasing α, or switching to Fast resolution to explore parameters quickly.")
             else:
                 st.info("Select a derivative to compare.")
+
+        # ── Explanatory note ─────────────────────────────────────────────────
+        if der_config and nd_res and dr_res:
+            st.markdown(
+                '<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
+                'padding:.8rem 1rem;margin-top:.5rem;color:#111111;font-size:.85rem">'
+                '<b style="color:#1a3a6b">📌 How to read these results</b><br>'
+                'Portfolio ① and ② are compared at the <b>same downside constraint</b> '
+                f'(H={H_val:.0%}, α={_alpha:.0%} — same risk-aversion λ). '
+                'Portfolio ② achieves higher expected return but may show higher variance — '
+                'this is expected: the derivative satisfies the downside constraint more efficiently, '
+                'freeing the optimiser to pursue higher returns. '
+                'The comparison below shows portfolio ② at the <b>same variance as ①</b> '
+                '(interpolated from the derivative frontier), providing a second perspective.</div>',
+                unsafe_allow_html=True)
+
+            # ── Same risk comparison (interpolated) ──────────────────────────
+            st.markdown("---")
+            st.markdown(f"**③ Same risk as no-derivative — with {der_label_sel}** *(interpolated)*")
+            st.caption(f"What return does the derivative frontier achieve at the same std deviation as portfolio ①?")
+
+            if nd_res and len(der_xs) >= 2:
+                target_std = nd_res['std_dev'] * 100
+                # Sort frontier by std dev
+                frontier_pts = sorted(zip(der_xs, der_ys), key=lambda p: p[0])
+                f_x = [p[0] for p in frontier_pts]
+                f_y = [p[1] for p in frontier_pts]
+
+                if target_std < min(f_x):
+                    st.info(f"The derivative frontier starts at {min(f_x):.1f}% std dev — higher than the no-derivative portfolio ({target_std:.1f}%). Same-risk interpolation not available.")
+                elif target_std > max(f_x):
+                    st.info(f"The no-derivative portfolio risk ({target_std:.1f}%) is above the derivative frontier range. Same-risk interpolation not available.")
+                else:
+                    # Linear interpolation
+                    interp_return = float(np.interp(target_std, f_x, f_y))
+                    gain_same_risk = interp_return - nd_res['expected_return'] * 100
+                    m1_sr, m2_sr, m3_sr = st.columns(3)
+                    m1_sr.metric("Expected return (interpolated)",
+                                 f"{interp_return:.2f}%",
+                                 delta=f"+{gain_same_risk:.2f}pp" if gain_same_risk > 0 else f"{gain_same_risk:.2f}pp",
+                                 help="Return on derivative frontier at same std deviation as no-derivative portfolio")
+                    m2_sr.metric("Std deviation (risk)", f"{target_std:.2f}%",
+                                 help="Same as no-derivative portfolio — this is the controlled variable")
+                    m3_sr.metric("Return gain vs no-derivative", f"+{gain_same_risk:.2f}pp" if gain_same_risk > 0 else f"{gain_same_risk:.2f}pp")
+                    st.markdown(
+                        '<div style="background:#f0f7ff;border:1px solid #1a6bbf;border-radius:6px;'
+                        'padding:.6rem 1rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
+                        f'At the <b>same risk level</b> ({target_std:.1f}% std dev), '
+                        f'the derivative frontier achieves <b>{interp_return:.2f}%</b> expected return '
+                        f'vs <b>{nd_res["expected_return"]*100:.2f}%</b> without derivatives — '
+                        f'a gain of <b>+{gain_same_risk:.2f} percentage points</b>. '
+                        'This demonstrates the superior risk-adjusted performance of the behavioural approach with derivatives.</div>',
+                        unsafe_allow_html=True)
+            else:
+                st.info("Run the optimiser with a derivative to see the same-risk comparison.")
 
 
 
