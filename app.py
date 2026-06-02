@@ -83,6 +83,23 @@ h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
     .st-emotion-cache-1vzeuhh,.st-emotion-cache-ue6h4q,.st-emotion-cache-13ln4jf{background-color:#4a9eff !important;border-color:#4a9eff !important}
     [style*="color: rgb(255, 75, 75)"],[style*="color: rgb(255, 43, 43)"]{color:#4a9eff !important}
     [style*="background-color: rgb(255, 75, 75)"],[style*="background-color: rgb(255, 43, 43)"]{background-color:#4a9eff !important}
+    /* Slider tick value labels (the -12%, -5% numbers) */
+    div[data-testid="stSlider"] span{color:#4a9eff !important}
+    div[data-testid="stSlider"] p{color:#4a9eff !important}
+    div[data-testid="stSlider"] [data-testid="stTickBarMin"],
+    div[data-testid="stSlider"] [data-testid="stTickBarMax"]{color:#c0c8d8 !important}
+    /* Radio button unselected circle border */
+    div[data-baseweb="radio"] > label > div > div{
+        border-color:#4a9eff !important;
+        border-width:2px !important}
+    /* Radio button selected circle fill */
+    div[data-baseweb="radio"] > label > div > div > div{
+        background:#4a9eff !important}
+    /* Thumb value on slider */
+    [data-testid="stThumbValue"]{color:#4a9eff !important}
+    /* All red text remaining */
+    p[style*="color: red"],span[style*="color: red"],
+    div[style*="color: red"]{color:#4a9eff !important}
     .sidebar-divider{border:none;border-top:2px solid #2a3a4a;margin:1rem 0}
     section[data-testid="stSidebar"] div.stButton > button,section[data-testid="stSidebar"] div.stButton > button[kind="primary"]{background:linear-gradient(180deg,#5aabff 0%,#2d7dd2 100%) !important;border:none !important;border-bottom:3px solid #1a5fa0 !important;border-radius:8px !important;color:#ffffff !important;font-size:1.05rem !important;font-weight:700 !important;padding:.6rem 1rem !important;box-shadow:0 4px 8px rgba(0,0,0,0.5) !important;text-shadow:0 1px 2px rgba(0,0,0,0.3) !important;width:100% !important}
     section[data-testid="stSidebar"] div.stButton > button:hover{background:linear-gradient(180deg,#6bbfff 0%,#3a8de0 100%) !important;box-shadow:0 6px 14px rgba(0,0,0,0.6) !important;transform:translateY(-1px) !important}
