@@ -11,7 +11,6 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import plotly.graph_objects as go
-import anthropic
 from scipy.optimize import minimize
 from io import StringIO
 from datetime import date, timedelta
@@ -287,6 +286,7 @@ def get_explanation(term):
 def get_ai_chat_response(question, portfolio_context=""):
     """Get AI response for custom questions via Anthropic API."""
     try:
+        import anthropic
         client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
         system = (
             "You are a financial expert assistant embedded in a behavioral portfolio optimization app. "
