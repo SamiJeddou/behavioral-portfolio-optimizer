@@ -8,8 +8,8 @@ import streamlit as st
 import numpy as np
 import pandas as pd
 import matplotlib
-matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+matplotlib.use('Agg')
 import plotly.graph_objects as go
 from scipy.optimize import minimize
 from io import StringIO
