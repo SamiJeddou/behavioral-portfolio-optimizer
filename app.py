@@ -1233,7 +1233,7 @@ The chart will show three curves and two markers:
 <table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
 <tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Curves</td></tr>
 <tr style="border-bottom:1px solid #2a2a3a">
-  <td style="padding:.3rem .5rem;white-space:nowrap">🔘 <strong>Grey dashed</strong></td>
+  <td style="padding:.3rem .5rem;white-space:nowrap">🟣 <strong>Purple dashed</strong></td>
   <td style="padding:.3rem .5rem">Classical mean-variance efficient frontier (Markowitz)</td>
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
