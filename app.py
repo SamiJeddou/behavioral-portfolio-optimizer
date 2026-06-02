@@ -1176,11 +1176,31 @@ Follow these steps in the sidebar:
 </table>
 
 The chart will show three curves and two markers:
-- 🔘 **Grey dashed** — classical mean-variance efficient frontier (Markowitz)
-- 🔵 **Blue** — behavioural optimiser frontier without derivatives
-- 🟡 **Gold** — behavioural optimiser frontier including your selected derivative
-- ➡️ **White dotted arrow** — return gap between the behavioral frontier without and with the derivative, at the selected H and α constraint
-- 🟢 **Green diamond** — equivalence point: the unique portfolio where the mean-variance and behavioral approaches yield exactly the same result (here at λ=3.795, H=-10%, α=5%). To the right of this point, adding derivatives allows the behavioral approach to outperform mean-variance.
+
+<table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
+<tr><td colspan="2" style="padding:.3rem .5rem;font-weight:600;color:#4a9eff;font-size:.9rem">Curves</td></tr>
+<tr style="border-bottom:1px solid #2a2a3a">
+  <td style="padding:.3rem .5rem;white-space:nowrap">🔘 <strong>Grey dashed</strong></td>
+  <td style="padding:.3rem .5rem">Classical mean-variance efficient frontier (Markowitz)</td>
+</tr>
+<tr style="border-bottom:1px solid #2a2a3a">
+  <td style="padding:.3rem .5rem;white-space:nowrap">🔵 <strong>Blue</strong></td>
+  <td style="padding:.3rem .5rem">Behavioural optimiser frontier without derivatives</td>
+</tr>
+<tr style="border-bottom:1px solid #2a2a3a">
+  <td style="padding:.3rem .5rem;white-space:nowrap">🟡 <strong>Gold</strong></td>
+  <td style="padding:.3rem .5rem">Behavioural optimiser frontier including your selected derivative</td>
+</tr>
+<tr><td colspan="2" style="padding:.5rem .5rem .3rem .5rem;font-weight:600;color:#4a9eff;font-size:.9rem">Markers</td></tr>
+<tr style="border-bottom:1px solid #2a2a3a">
+  <td style="padding:.3rem .5rem;white-space:nowrap">➡️ <strong>White dotted arrow</strong></td>
+  <td style="padding:.3rem .5rem">Return gap between the behavioural frontier without and with the derivative, at the selected H and α constraint</td>
+</tr>
+<tr>
+  <td style="padding:.3rem .5rem;white-space:nowrap">🟢 <strong>Green diamond</strong></td>
+  <td style="padding:.3rem .5rem">Equivalence point: the unique portfolio where the mean-variance and behavioural approaches yield exactly the same result (here at λ=3.795, H=-10%, α=5%). To the right of this point, adding derivatives allows the behavioural approach to outperform mean-variance.</td>
+</tr>
+</table>
 
 At the equivalence point (λ=3.795, H=-10%, α=5%), the grey and blue curves meet exactly —
 confirming the MVT/MAT equivalence proven in Das, Markowitz, Scheid & Statman (2010).
