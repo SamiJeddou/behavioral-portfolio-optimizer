@@ -66,6 +66,8 @@ h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
 .warn-box{background:#1a1200;border:1px solid #f59e0b;border-radius:6px;padding:.5rem 1rem;color:#f59e0b;font-size:.82rem;margin-top:.3rem}
 .ok-box{background:#001a0f;border:1px solid #10b981;border-radius:6px;padding:.5rem 1rem;color:#10b981;font-size:.82rem;margin-top:.3rem}
 .section-header{border-left:4px solid #4a9eff;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-bottom:.5rem;color:#ffffff;font-weight:600;font-size:1.05rem;letter-spacing:.02em}
+    div.stButton > button[kind="primary"]{background:#4a9eff !important;border:none !important;color:#ffffff !important;font-size:1.05rem !important;font-weight:700 !important;padding:.6rem 1rem !important;border-radius:6px !important}
+    div.stButton > button[kind="primary"]:hover{background:#2d7dd2 !important}
 </style>""", unsafe_allow_html=True)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -1178,7 +1180,7 @@ Follow these steps in the sidebar:
 The chart will show three curves and two markers:
 
 <table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
-<tr><td colspan="2" style="padding:.3rem .5rem;font-weight:600;color:#4a9eff;font-size:.9rem">Curves</td></tr>
+<tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#4a9eff;font-size:1.1rem">Curves</td></tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🔘 <strong>Grey dashed</strong></td>
   <td style="padding:.3rem .5rem">Classical mean-variance efficient frontier (Markowitz)</td>
@@ -1191,7 +1193,7 @@ The chart will show three curves and two markers:
   <td style="padding:.3rem .5rem;white-space:nowrap">🟡 <strong>Gold</strong></td>
   <td style="padding:.3rem .5rem">Behavioural optimiser frontier including your selected derivative</td>
 </tr>
-<tr><td colspan="2" style="padding:.5rem .5rem .3rem .5rem;font-weight:600;color:#4a9eff;font-size:.9rem">Markers</td></tr>
+<tr><td colspan="2" style="padding:.5rem .5rem .3rem .5rem;font-weight:700;color:#4a9eff;font-size:1.1rem">Markers</td></tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">➡️ <strong>White dotted arrow</strong></td>
   <td style="padding:.3rem .5rem">Return gap between the behavioural frontier without and with the derivative, at the selected H and α constraint</td>
