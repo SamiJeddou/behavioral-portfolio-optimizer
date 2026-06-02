@@ -2,7 +2,7 @@
 
 > Extending Markowitz mean-variance theory to portfolios with derivatives and structured products using a mental-accounting framework.
 
-![Efficient Frontier](efficient_frontier_v2.png)
+![Efficient Frontier](sample_output.png)
 
 ---
 
@@ -15,7 +15,13 @@ This project implements a **behavioural portfolio optimisation algorithm** that 
 - Handling **non-normal return distributions** via Gaussian and Student-t copulas
 - Proving the **equivalence between mean-variance and mental-accounting** optimisation at a given implied risk-aversion coefficient λ
 
-The chart above shows the core result: under the same downside constraint (H = -10%, α = 5%), a portfolio including an uncapped Capital-Guaranteed Note achieves **33.6% expected return** versus **10.2% without derivatives** — a gain that mean-variance optimisation cannot capture because it assumes normality and cannot price derivative payoffs.
+The app provides three portfolio perspectives for comparison:
+
+- **① No derivative** — optimal portfolio under the mental-account constraint without derivatives
+- **② With derivative, same constraint** — optimal portfolio including the selected derivative, under the same downside constraint (H, α). This may achieve higher expected return but typically at higher variance, as the derivative satisfies the constraint more efficiently
+- **③ With derivative, same variance** — interpolated from the derivative frontier at the same standard deviation as portfolio ①, showing the potential return gain from derivatives at an equivalent risk level
+
+Under the default base case (H = -10%, α = 5%), a portfolio including an uncapped Capital-Guaranteed Note achieves **33.6% expected return** versus **10.2% without derivatives** under the same downside constraint.
 
 ---
 
@@ -72,7 +78,6 @@ behavioral-portfolio-optimizer/
 │
 ├── behavioral_portfolio_optimizer.py   # Core optimizer (Steps 1–3 + all derivative types)
 ├── app.py                              # Streamlit interactive dashboard
-├── api.py                              # FastAPI REST endpoint
 ├── requirements.txt                    # Python dependencies
 ├── efficient_frontier_v2.png           # Frontier chart (used in README)
 └── README.md
@@ -117,8 +122,6 @@ python behavioral_portfolio_optimizer.py
 # Launch the interactive dashboard
 streamlit run app.py
 
-# Launch the API
-uvicorn api:app --reload
 ```
 
 ### Interactive dashboard
@@ -147,8 +150,6 @@ POST /optimize
 }
 ```
 
-🔗 **API docs**: [samijeddou-behavioral-portfolio-optimizer.streamlit.app/api/docs](https://samijeddou-behavioral-portfolio-optimizer.streamlit.app/api/docs)
-
 ---
 
 ## Key Results
@@ -166,9 +167,9 @@ The baseline result (10.21%) matches the thesis mean-variance result (10.23%) to
 ## Author
 
 **Sami Jeddou**
-Senior Transformation & Risk Executive | Capital Markets · Front-to-Back Delivery · Asset Management · Financial Infrastructure
+Senior Financial Services Executive — Transformation, Risk & Capital Markets | Risk · Capital Markets · Post-Trade & Clearing · High-Value Payments · Quantitative Finance · Front-to-Back Delivery · Regulatory Programs
 
-- 🔗 [LinkedIn](https://www.linkedin.com/in/samijeddou)
+- 🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404)
 - 📧 sami.jeddou@protonmail.com
 
 ---
