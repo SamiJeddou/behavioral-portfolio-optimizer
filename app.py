@@ -1273,70 +1273,6 @@ structured products, can unlock beyond what mean-variance can achieve.
         if os.path.exists("sample_output.png"):
             st.image("sample_output.png", caption="Sample output — default base case with Capital-Guaranteed Note (CGN)", use_container_width=True)
 
-        st.markdown("---")
-
-        show_portfolio_data(names_in, means_in, sigs_in, corr_in)
-
-        st.markdown("---")
-
-        # LinkedIn + contact
-        st.markdown("""
-<div style="background:#0f1923;border:1px solid #1a6bbf;border-radius:8px;padding:1rem 1.4rem;color:#ffffff">
-
-**👤 About the author**
-
-**Sami Jeddou**
-
-Senior Financial Services Executive — Transformation, Risk & Capital Markets
-
-🔗 [Connect on LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;&nbsp;|&nbsp;&nbsp;
-🐙 [View source on GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer)
-
-</div>
-""", unsafe_allow_html=True)
-
-        st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-
-        st.markdown("""
-<div style="color:#ffffff !important;margin-bottom:.8rem">
-
-**💬 Get in touch**
-
-Whether you are exploring this tool for a project, considering a collaboration,
-or looking for a senior transformation or risk professional —
-I would be glad to hear from you.
-
-</div>
-""", unsafe_allow_html=True)
-        with st.form("contact_form"):
-            sender_name  = st.text_input("Your name")
-            sender_email = st.text_input("Your email")
-            message      = st.text_area("Message", height=100,
-                                         placeholder="Introduce yourself, share feedback, or tell me about an opportunity...")
-            submitted = st.form_submit_button("Send message")
-            if submitted:
-                if sender_name and sender_email and message:
-                    import requests as _req
-                    try:
-                        resp = _req.post(
-                            "https://formspree.io/f/xvzyepoe",
-                            data={
-                                "name":    sender_name,
-                                "email":   sender_email,
-                                "message": message,
-                            },
-                            headers={"Accept": "application/json"},
-                            timeout=10
-                        )
-                        if resp.status_code == 200:
-                            st.success("✓ Message sent successfully. I will get back to you shortly.")
-                        else:
-                            st.error(f"Could not send message (status {resp.status_code}). Please try again or email sami.jeddou@protonmail.com directly.")
-                    except Exception as ex:
-                        st.error(f"Could not send message: {ex}. Please email sami.jeddou@protonmail.com directly.")
-                else:
-                    st.warning("Please fill in all fields before sending.")
-
         pass  # welcome screen shown, About tab still renders
 
     if run_btn:
@@ -1448,6 +1384,67 @@ I would be glad to hear from you.
                 st.info("Select a derivative to compare.")
 
 
+
+
+    # Always visible — portfolio data and contact
+    st.markdown("---")
+    show_portfolio_data(names_in, means_in, sigs_in, corr_in)
+
+    st.markdown("---")
+
+    # LinkedIn + contact
+    st.markdown("""
+<div style="background:#0f1923;border:1px solid #1a6bbf;border-radius:8px;padding:1rem 1.4rem;color:#ffffff">
+
+**👤 About the author**
+
+**Sami Jeddou**
+
+Senior Financial Services Executive — Transformation, Risk & Capital Markets
+
+🔗 [Connect on LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;&nbsp;|&nbsp;&nbsp;
+🐙 [View source on GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer)
+
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
+
+    st.markdown("""
+<div style="color:#ffffff !important;margin-bottom:.8rem">
+
+**💬 Get in touch**
+
+Whether you are exploring this tool for a project, considering a collaboration,
+or looking for a senior transformation or risk professional —
+I would be glad to hear from you.
+
+</div>
+""", unsafe_allow_html=True)
+    with st.form("contact_form"):
+        sender_name  = st.text_input("Your name")
+        sender_email = st.text_input("Your email")
+        message      = st.text_area("Message", height=100,
+                                     placeholder="Introduce yourself, share feedback, or tell me about an opportunity...")
+        submitted = st.form_submit_button("Send message")
+        if submitted:
+            if sender_name and sender_email and message:
+                import requests as _req
+                try:
+                    resp = _req.post(
+                        "https://formspree.io/f/xvzyepoe",
+                        data={"name": sender_name, "email": sender_email, "message": message},
+                        headers={"Accept": "application/json"},
+                        timeout=10
+                    )
+                    if resp.status_code == 200:
+                        st.success("✓ Message sent successfully. I will get back to you shortly.")
+                    else:
+                        st.error(f"Could not send message (status {resp.status_code}). Please try again or email sami.jeddou@protonmail.com directly.")
+                except Exception as ex:
+                    st.error(f"Could not send message: {ex}. Please email sami.jeddou@protonmail.com directly.")
+            else:
+                st.warning("Please fill in all fields before sending.")
 
 with tab2:
     import os as _os
