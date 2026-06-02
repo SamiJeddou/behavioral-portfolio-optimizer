@@ -591,13 +591,11 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                 arrowwidth=2, arrowcolor='#ffffff',
                 text=''
             )
-            # Text linked by arrow to midpoint of white arrow line
-            mid_x = (x0 + x1) / 2
-            mid_y = (y0 + y1) / 2
+            # Text connected by arrow to the gold end point (behavioural with derivative)
             fig.add_annotation(
-                x=mid_x, y=mid_y,
-                ax=mid_x + max((x1-x0)*0.4, 8),
-                ay=mid_y - (y1-y0)*0.3,
+                x=x1, y=y1,
+                ax=x1 + max((x1-x0)*0.3, 8),
+                ay=y1 + (y1-y0)*0.2,
                 xref='x', yref='y', axref='x', ayref='y',
                 showarrow=True, arrowhead=2, arrowsize=1.0,
                 arrowwidth=1.5, arrowcolor='#ffffff',
