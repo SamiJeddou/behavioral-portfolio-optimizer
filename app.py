@@ -695,7 +695,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     fig.update_layout(margin=dict(t=80, b=140, l=60, r=20))
     fig.add_annotation(
         xref='paper', yref='paper',
-        x=0.5, y=-0.19,
+        x=0.5, y=-0.22,
         text='Behavioural frontiers shown at discrete H levels (-5% to -20%) — each point optimal for that constraint | MV frontier continuous via λ sweep | Both converge via MVT/MAT equivalence when no derivatives present',
         showarrow=False,
         font=dict(color='#8896a8', size=9, style='italic'),
@@ -704,7 +704,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     fig.add_annotation(
         xref='paper', yref='paper',
         x=0.5, y=-0.27,
-        text='Jeddou (2025) — Beyond Mean-Variance Portfolio Optimiser  |  Built on Das & Statman (2009), Das, Markowitz, Scheid & Statman (2010) JFQA & Jeddou (2012)',
+        text='Jeddou (2026) — Beyond Mean-Variance Portfolio Optimiser  |  Built on Das & Statman (2009), Das, Markowitz, Scheid & Statman (2010) JFQA & Jeddou (2012)',
         showarrow=False,
         font=dict(color='#ffffff', size=9, style='italic'),
         xanchor='center'
@@ -792,7 +792,7 @@ def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
     ax.legend(loc="upper left",fontsize=9,facecolor="#1a1a2e",
               edgecolor="#3a3a5a",labelcolor="white",framealpha=0.9)
     fig.text(0.5,0.001,
-             "Jeddou (2025) — Beyond Mean-Variance Portfolio Optimiser  |  "
+             "Jeddou (2026) — Beyond Mean-Variance Portfolio Optimiser  |  "
              "Built on Das & Statman (2009), Das, Markowitz, Scheid & Statman (2010) JFQA & Jeddou (2012)",
              ha="center",color="#ffffff",fontsize=7,style="italic")
     all_x=mv_x+nd_x+(der_x if der_x else [])
