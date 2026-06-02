@@ -8,14 +8,14 @@
 
 ## Overview
 
-This project implements a **behavioral portfolio optimization algorithm** that goes beyond classical mean-variance theory by:
+This project implements a **behavioural portfolio optimisation algorithm** that goes beyond classical mean-variance theory by:
 
-- Incorporating **derivatives and structured products** (puts, calls, collars, straddles, strangles, capital-guaranteed notes, barrier-M notes) directly into the optimization
+- Incorporating **derivatives and structured products** (puts, calls, collars, straddles, strangles, capital-guaranteed notes, barrier-M notes) directly into the optimisation
 - Using a **mental-accounting framework** with a downside risk constraint: the probability of the portfolio return falling below a threshold H must not exceed α
 - Handling **non-normal return distributions** via Gaussian and Student-t copulas
-- Proving the **equivalence between mean-variance and mental-accounting** optimization at a given implied risk-aversion coefficient λ
+- Proving the **equivalence between mean-variance and mental-accounting** optimisation at a given implied risk-aversion coefficient λ
 
-The chart above shows the core result: under the same downside constraint (H = -10%, α = 5%), a portfolio including an uncapped Capital-Guaranteed Note achieves **33.6% expected return** versus **10.2% without derivatives** — a gain that mean-variance optimization cannot capture because it assumes normality and cannot price derivative payoffs.
+The chart above shows the core result: under the same downside constraint (H = -10%, α = 5%), a portfolio including an uncapped Capital-Guaranteed Note achieves **33.6% expected return** versus **10.2% without derivatives** — a gain that mean-variance optimisation cannot capture because it assumes normality and cannot price derivative payoffs.
 
 ---
 
@@ -26,17 +26,17 @@ This work is based on the mental-accounting portfolio theory introduced in:
 - **Das, Sanjiv and Meir Statman (2009)** — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*
 - **Das, Sanjiv, Harry Markowitz, Jonathan Scheid and Meir Statman (2010)** — *"Portfolio Optimization with Mental Accounts"*, Journal of Financial and Quantitative Analysis, Vol. 45, No. 2, pp. 311–334
 
-The MVT/MAT equivalence (Chapter 4) shows that for a given threshold H and shortfall probability α, there exists an implied risk-aversion coefficient λ such that the mean-variance optimal portfolio and the behavioral optimal portfolio are identical — **when no derivatives are present**. Adding derivatives breaks this equivalence and reveals the superiority of the behavioral approach.
+The MVT/MAT equivalence (Chapter 4) shows that for a given threshold H and shortfall probability α, there exists an implied risk-aversion coefficient λ such that the mean-variance optimal portfolio and the behavioural optimal portfolio are identical — **when no derivatives are present**. Adding derivatives breaks this equivalence and reveals the superiority of the behavioural approach.
 
 This Python implementation is a translation and extension of the original R program developed as part of:
 
-> **Sami Jeddou** (2012) — *"Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios"*, Master in Finance Thesis, Università della Svizzera italiana (USI Lugano), supervised by Prof. Enrico De Giorgi. Available on [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404)
+> **Sami Jeddou** (2012) — *"Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios"*, Master in Finance Thesis, Università della Svizzera italiana (USI Lugano), supervised by Prof. Enrico De Giorgi
 
 ---
 
 ## Algorithm
 
-The optimizer runs in three steps:
+The optimiser runs in three steps:
 
 **Step 1 — State space construction**
 A discrete grid of return scenarios is built for all primary securities. For each scenario, derivative returns are computed analytically using Black-Scholes pricing. The result is a matrix U of all possible return vectors across m^n′ states.
@@ -44,9 +44,9 @@ A discrete grid of return scenarios is built for all primary securities. For eac
 **Step 2 — Probability assignment**
 Each state is assigned a probability using a Gaussian (or Student-t) copula, correctly capturing the dependence structure between assets including non-normal marginals.
 
-**Step 3 — Two-stage optimization**
+**Step 3 — Two-stage optimisation**
 - *Grid search*: All weight combinations are evaluated. Those satisfying the mental-account constraint (VaR or ES) are kept as eligible. The highest-return eligible portfolio is selected as the starting point.
-- *Gradient refinement*: A COBYLA nonlinear optimizer refines the solution from that starting point, with the constraint embedded as a penalty term.
+- *Gradient refinement*: A COBYLA nonlinear optimiser refines the solution from that starting point, with the constraint embedded as a penalty term.
 
 ---
 
@@ -88,10 +88,20 @@ Three modes are supported for portfolio data:
 | Mode | Description |
 |---|---|
 | **Default** | Das & Statman (2009) base case — 3 securities with pre-calibrated means, std devs, and correlations. Works out of the box, reproduces thesis results exactly. |
-| **Live market data** | Fetch any global ticker from Yahoo Finance (stocks, ETFs, indices). Select a date range and choose daily or monthly return frequency. Means and covariances are computed automatically. |
-| **Manual entry** | Enter your own means, standard deviations, and correlation matrix directly. Supports 2–10 primary securities. |
-| **CSV upload** | Upload a CSV of historical prices (date column + one column per asset). Means and covariances are computed automatically from returns. |
+| **Manual entry** | Enter your own means, standard deviations, and correlation matrix directly in the sidebar. Supports 2–6 primary securities. |
+| **CSV upload** | Upload a CSV of historical prices (date column + one column per asset). Means and covariances are computed automatically from daily returns. |
 
+### CSV format
+
+```
+Date,Asset1,Asset2,Asset3
+2020-01-02,100.00,100.00,100.00
+2020-01-03,100.05,100.15,100.40
+```
+
+First column must be dates. Remaining columns are asset prices with the asset name as the header. A sample CSV is available for download directly in the app.
+
+---
 
 ## Quickstart
 
@@ -101,7 +111,7 @@ Three modes are supported for portfolio data:
 # Install dependencies
 pip install numpy scipy matplotlib streamlit fastapi uvicorn
 
-# Run the optimizer directly
+# Run the optimiser directly
 python behavioral_portfolio_optimizer.py
 
 # Launch the interactive dashboard
@@ -123,7 +133,7 @@ The Streamlit dashboard allows you to:
 
 ### API
 
-The FastAPI endpoint exposes the optimizer as a REST service:
+The FastAPI endpoint exposes the optimiser as a REST service:
 
 ```bash
 POST /optimize
@@ -137,7 +147,7 @@ POST /optimize
 }
 ```
 
-🔗 **API docs**: (coming soon)
+🔗 **API docs**: [samijeddou-behavioral-portfolio-optimizer.streamlit.app/api/docs](https://samijeddou-behavioral-portfolio-optimizer.streamlit.app/api/docs)
 
 ---
 
@@ -158,7 +168,7 @@ The baseline result (10.21%) matches the thesis mean-variance result (10.23%) to
 **Sami Jeddou**
 Senior Transformation & Risk Executive | Capital Markets · Front-to-Back Delivery · Asset Management · Financial Infrastructure
 
-- 🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404)
+- 🔗 [LinkedIn](https://www.linkedin.com/in/samijeddou)
 - 📧 sami.jeddou@protonmail.com
 
 ---

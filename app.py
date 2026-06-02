@@ -54,7 +54,7 @@ def implied_lambda(H, alpha, means, cov_matrix, lam_lo=0.01, lam_hi=500):
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="Beyond Mean-Variance Portfolio Optimizer",
+    page_title="Beyond Mean-Variance Portfolio Optimiser",
     page_icon="📈", layout="wide",
     initial_sidebar_state="expanded")
 
@@ -74,14 +74,14 @@ EXPLANATIONS = {
     "Put option": (
         "A put option gives the holder the right to sell the underlying asset at a fixed strike price. "
         "Its payoff is max(K - S_T, 0), increasing in value when the underlying falls below the strike. "
-        "In a behavioral portfolio, a long put acts as downside insurance — it reduces the probability "
+        "In a behavioural portfolio, a long put acts as downside insurance — it reduces the probability "
         "of breaching the mental-account threshold H, allowing the optimizer to allocate more to "
         "high-return risky assets while satisfying the shortfall constraint."
     ),
     "Call option": (
         "A call option gives the holder the right to buy the underlying asset at a fixed strike price. "
         "Its payoff is max(S_T - K, 0), increasing in value when the underlying rises above the strike. "
-        "In a behavioral portfolio, a long call provides leveraged upside participation with limited "
+        "In a behavioural portfolio, a long call provides leveraged upside participation with limited "
         "downside. It adds positive skewness to the return distribution, which can raise expected return "
         "for a given mental-account constraint level."
     ),
@@ -103,7 +103,7 @@ EXPLANATIONS = {
         "A straddle combines a long call and a long put at the same strike, profiting when the "
         "underlying moves significantly in either direction. "
         "It is a bet on high volatility regardless of direction. "
-        "In a behavioral portfolio context, a straddle adds fat tails and positive excess kurtosis "
+        "In a behavioural portfolio context, a straddle adds fat tails and positive excess kurtosis "
         "to the return distribution — it performs well in extreme market moves and can help "
         "satisfy mental-account constraints when large moves are expected."
     ),
@@ -111,14 +111,14 @@ EXPLANATIONS = {
         "A strangle is similar to a straddle but uses different strikes for the call and put, "
         "making it cheaper since both options are out-of-the-money. "
         "It profits from large moves in either direction but requires a bigger move than a straddle to break even. "
-        "In a behavioral portfolio, it provides asymmetric tail protection at lower cost than a straddle, "
+        "In a behavioural portfolio, it provides asymmetric tail protection at lower cost than a straddle, "
         "useful when extreme but not moderate moves are expected."
     ),
     "Capital-guaranteed note — uncapped": (
         "A capital-guaranteed note (CGN) is a structured product that guarantees return of capital "
         "(plus a floor F) at maturity, while providing participation in the upside of an underlying asset. "
         "The uncapped version has no ceiling on the upside participation. "
-        "In a behavioral portfolio it is extremely powerful: the capital guarantee directly satisfies "
+        "In a behavioural portfolio it is extremely powerful: the capital guarantee directly satisfies "
         "the mental-account downside constraint, freeing the optimizer to allocate heavily to the CGN "
         "and achieve significantly higher expected returns than a portfolio of primary securities alone."
     ),
@@ -127,7 +127,7 @@ EXPLANATIONS = {
         "The cap reduces the cost of the product (the issuer saves on the call spread), making it cheaper "
         "than the uncapped version. "
         "The trade-off is sacrificed upside beyond the cap. "
-        "In a behavioral portfolio, it still provides strong downside protection but produces lower "
+        "In a behavioural portfolio, it still provides strong downside protection but produces lower "
         "expected returns than the uncapped version when the underlying performs very strongly."
     ),
     "Barrier-M note": (
@@ -135,7 +135,7 @@ EXPLANATIONS = {
         "within a corridor [-M, +M], and pays zero outside it. "
         "It profits from moderate moves in either direction but loses value in extreme moves — "
         "the opposite of a straddle. "
-        "In a behavioral portfolio it is useful when low-volatility environments are expected, "
+        "In a behavioural portfolio it is useful when low-volatility environments are expected, "
         "providing income from small fluctuations while the mental-account constraint limits tail risk."
     ),
     # ── Risk measures ─────────────────────────────────────────────────────────
@@ -554,7 +554,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     # ── Behavioral — no derivative ────────────────────────────────────────────
     fig.add_trace(go.Scatter(
         x=nd_x, y=nd_y, mode='lines+markers',
-        name='Behavioral — no derivative',
+        name='Behavioural — no derivative',
         line=dict(color='#4a9eff', width=2.5),
         marker=dict(size=9, color='#4a9eff', symbol='circle'),
         text=nd_lbls,
@@ -565,10 +565,10 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     if der_x:
         fig.add_trace(go.Scatter(
             x=der_x, y=der_y, mode='markers',
-            name=f'Behavioral — {der_label}',
+            name=f'Behavioural — {der_label}',
             marker=dict(size=10, color='#f59e0b', symbol='square'),
             text=der_lbls,
-            hovertemplate=f'<b>Behavioral ({der_label})</b><br>Threshold: %{{text}}<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
+            hovertemplate=f'<b>Behavioural ({der_label})</b><br>Threshold: %{{text}}<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
         ))
 
         # Gain arrow at selected H
@@ -1077,7 +1077,7 @@ with st.sidebar:
                     unsafe_allow_html=True)
 
     st.markdown("---")
-    run_btn=st.button("▶ Run optimizer",type="primary",
+    run_btn=st.button("▶ Run optimiser",type="primary",
                        use_container_width=True,disabled=not data_valid)
 
 
@@ -1119,9 +1119,9 @@ with tab1:
     import os
     col_title, col_photo = st.columns([5, 1])
     with col_title:
-        st.markdown("## Beyond Mean-Variance: Portfolio Optimizer with Derivatives & Structured Products — A Mental Accounts Framework")
+        st.markdown("## Beyond Mean-Variance: Portfolio Optimiser with Derivatives & Structured Products — A Mental Accounts Framework")
         st.markdown(
-            "Most portfolio optimizers stop at stocks and bonds. This app goes further — "
+            "Most portfolio optimisers stop at stocks and bonds. This app goes further — "
             "incorporating derivatives and structured products, handling **non-normal return distributions**, "
             "and optimising under a risk constraint you define: either the probability of loss below "
             "a threshold (**Value-at-Risk / VaR**) or the expected loss in the worst scenarios "
@@ -1162,8 +1162,8 @@ Follow these steps in the sidebar:
 
 The chart will show three curves and two markers:
 - 🔘 **Grey dashed** — classical mean-variance efficient frontier (Markowitz)
-- 🔵 **Blue** — behavioral optimizer frontier without derivatives
-- 🟡 **Gold** — behavioral optimizer frontier including your selected derivative
+- 🔵 **Blue** — behavioural optimiser frontier without derivatives
+- 🟡 **Gold** — behavioural optimiser frontier including your selected derivative
 - ➡️ **White dotted arrow** — return gap between the behavioral frontier without and with the derivative, at the selected H and α constraint
 - 🟢 **Green diamond** — equivalence point: the unique portfolio where the mean-variance and behavioral approaches yield exactly the same result (here at λ=3.795, H=-10%, α=5%). To the right of this point, adding derivatives allows the behavioral approach to outperform mean-variance.
 
@@ -1267,7 +1267,7 @@ I would be glad to hear from you.
             mv_x,mv_y,mv_eq=compute_mv_frontier(
                 tuple(means_in),tuple(map(tuple,cov_mat.tolist())))
 
-        with st.spinner("Behavioral optimizer — no derivative..."):
+        with st.spinner("Behavioural optimiser — no derivative..."):
             try:
                 _ctype = 'es' if use_es else 'var'
                 _alpha = alpha_val if not use_es else 0.05
@@ -1281,7 +1281,7 @@ I would be glad to hear from you.
 
         der_xs,der_ys,der_lbls=[],[],[]
         if der_config:
-            with st.spinner(f"Behavioral optimizer — {der_label_sel}..."):
+            with st.spinner(f"Behavioural optimiser — {der_label_sel}..."):
                 try:
                     der_xs,der_ys,der_lbls=build_frontier(
                         means_arr,sigs_arr,cov_mat,der_config,_alpha,m_val,mp_val,
@@ -1419,7 +1419,7 @@ engagements — either freelance/contract or permanent — in France, Europe, or
     st.markdown(
         "The full algorithm is described in Das & Statman (2009) — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*. "
         "The original R implementation is provided in the appendix of the thesis (Jeddou, 2012). "
-        "This app is a Python reimplementation of that algorithm, with enhancements and extensions including support for live market data, a custom structured product composer, and an extended optimizer for larger portfolios.")
+        "This app is a Python reimplementation of that algorithm, with enhancements and extensions including support for live market data, a custom structured product composer, and an extended optimiser for larger portfolios.")
     st.markdown("""
 **Step 1 — State space construction**
 A discrete grid of return scenarios is built for all primary securities.
@@ -1435,7 +1435,7 @@ For each candidate weight vector, the portfolio return distribution is evaluated
 
 The best eligible portfolio (highest expected return satisfying the constraint) is selected via:
 - *≤ 4 securities*: exhaustive grid search over all weight combinations
-- *≥ 5 securities*: differential evolution — a global stochastic optimizer that scales to larger portfolios without exhaustive enumeration
+- *≥ 5 securities*: differential evolution — a global stochastic optimiser that scales to larger portfolios without exhaustive enumeration
 """)
 
     st.markdown("### Data input & cleaning")
