@@ -777,7 +777,7 @@ with st.sidebar:
     st.markdown("---")
 
     # ── 1. Data source ────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="font-size:1.3rem">①</span><br>📂 Portfolio data</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:block;font-size:1.3rem;line-height:1.4">①</span><span style="display:block">📂 Portfolio data</span></div>', unsafe_allow_html=True)
     data_mode = st.radio("Data source",
         ["Default (Das & Statman base case)",
          "Live market data (Yahoo Finance)",
@@ -892,7 +892,7 @@ with st.sidebar:
     st.markdown("---")
 
     # ── 2. Derivative ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="font-size:1.3rem">②</span><br>📊 Derivative / Structured product</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:block;font-size:1.3rem;line-height:1.4">②</span><span style="display:block">📊 Derivative / Structured product</span></div>', unsafe_allow_html=True)
     der_label_sel=st.selectbox("Type",list(PREDEFINED_DERIVATIVES.keys()),
                                 index=0,label_visibility="collapsed")
     der_type=PREDEFINED_DERIVATIVES[der_label_sel]
@@ -997,7 +997,7 @@ with st.sidebar:
     st.markdown("---")
 
     # ── 3. Constraint ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="font-size:1.3rem">③</span><br>🎯 Mental-account constraint</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:block;font-size:1.3rem;line-height:1.4">③</span><span style="display:block">🎯 Mental-account constraint</span></div>', unsafe_allow_html=True)
 
     # VaR / ES toggle
     constraint_type = st.radio(
@@ -1059,7 +1059,7 @@ with st.sidebar:
     st.markdown("---")
 
     # ── 4. Grid ───────────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="font-size:1.3rem">④</span><br>⚡ Grid resolution</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:block;font-size:1.3rem;line-height:1.4">④</span><span style="display:block">⚡ Grid resolution</span></div>', unsafe_allow_html=True)
     grid_lbl=st.selectbox("Resolution",list(GRID_OPTIONS.keys()),
                            index=0,label_visibility="collapsed")
     m_val,mp_val=GRID_OPTIONS[grid_lbl]
