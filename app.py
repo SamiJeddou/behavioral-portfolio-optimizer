@@ -1154,24 +1154,24 @@ Follow these steps in the sidebar:
 
 <table style="width:100%;border-collapse:collapse;color:#ffffff">
 <tr style="border-bottom:1px solid #3a3a5a">
-  <td style="padding:.5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.3rem">Step <span style="font-size:1.4rem;font-weight:700;line-height:1">①</span></span></td>
-  <td style="padding:.5rem .8rem"><strong>Portfolio data</strong> — Choose a data source: default base case, live market tickers, manual entry, or CSV upload</td>
+  <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.3rem">Step <span style="font-size:1.4rem;font-weight:700;line-height:1">①</span></span></td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Portfolio data</strong> — Choose a data source: default base case, live market tickers, manual entry, or CSV upload</td>
 </tr>
 <tr style="border-bottom:1px solid #3a3a5a">
-  <td style="padding:.5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.3rem">Step <span style="font-size:1.4rem;font-weight:700;line-height:1">②</span></span></td>
-  <td style="padding:.5rem .8rem"><strong>Derivative &amp; parameters</strong> — Select a derivative or structured product type and set its characteristics (strike, maturity, floor, participation, etc.)</td>
+  <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.3rem">Step <span style="font-size:1.4rem;font-weight:700;line-height:1">②</span></span></td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Derivative &amp; parameters</strong> — Select a derivative or structured product type and set its characteristics (strike, maturity, floor, participation, etc.)</td>
 </tr>
 <tr style="border-bottom:1px solid #3a3a5a">
-  <td style="padding:.5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.3rem">Step <span style="font-size:1.4rem;font-weight:700;line-height:1">③</span></span></td>
-  <td style="padding:.5rem .8rem"><strong>Constraint</strong> — Choose VaR or ES constraint type, set threshold H, and set α (VaR) or L (ES)</td>
+  <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.3rem">Step <span style="font-size:1.4rem;font-weight:700;line-height:1">③</span></span></td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Constraint</strong> — Choose VaR or ES constraint type, set threshold H, and set α (VaR) or L (ES)</td>
 </tr>
 <tr style="border-bottom:1px solid #3a3a5a">
-  <td style="padding:.5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.3rem">Step <span style="font-size:1.4rem;font-weight:700;line-height:1">④</span></span></td>
-  <td style="padding:.5rem .8rem"><strong>Grid resolution</strong> — Choose Fast for a quick preview, High precision for thesis-level accuracy</td>
+  <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.3rem">Step <span style="font-size:1.4rem;font-weight:700;line-height:1">④</span></span></td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Grid resolution</strong> — Choose Fast for a quick preview, High precision for thesis-level accuracy</td>
 </tr>
 <tr>
-  <td style="padding:.5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.3rem">Step <span style="font-size:1.4rem;font-weight:700;line-height:1">⑤</span></span></td>
-  <td style="padding:.5rem .8rem"><strong>Run</strong> — Click <strong>▶ Run optimiser</strong></td>
+  <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.3rem">Step <span style="font-size:1.4rem;font-weight:700;line-height:1">⑤</span></span></td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Run</strong> — Click <strong>▶ Run optimiser</strong></td>
 </tr>
 </table>
 
