@@ -1121,10 +1121,11 @@ with tab1:
     with col_title:
         st.markdown("## Beyond Mean-Variance: Portfolio Optimizer with Derivatives & Structured Products — A Mental Accounts Framework")
         st.markdown(
-            "Classical portfolio theory ignores derivatives. This app finds the optimal allocation "
-            "across securities and derivatives — maximising expected return while keeping the "
-            "probability of loss below a threshold you define (**Value-at-Risk / VaR constraint**) or limiting "
-            "the expected loss in the tail (**Expected Shortfall / ES constraint**).")
+            "Most portfolio optimizers stop at stocks and bonds. This app goes further — "
+            "incorporating derivatives and structured products, handling **non-normal return distributions**, "
+            "and optimising under a risk constraint you define: either the probability of loss below "
+            "a threshold (**Value-at-Risk / VaR**) or the expected loss in the worst scenarios "
+            "(**Expected Shortfall / ES**).")
     with col_photo:
         if os.path.exists("profile.jpeg"):
             import base64
