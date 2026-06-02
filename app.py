@@ -1345,7 +1345,7 @@ structured products, can unlock beyond what mean-variance can achieve.
         dr_res=None
 
         with c1:
-            st.markdown("**① Optimal portfolio — no derivative**")
+            st.markdown("**❶ Optimal portfolio — no derivative**")
             st.caption("Maximises return subject to the downside constraint")
             try:
                 nd_res,_=run_opt(means_arr,sigs_arr,cov_mat,None,H_val,_alpha,m_val,mp_val,
@@ -1375,8 +1375,8 @@ structured products, can unlock beyond what mean-variance can achieve.
 
         with c2:
             if der_config:
-                st.markdown(f"**② Optimal portfolio — with {der_label_sel}**")
-                st.caption(f"Same downside constraint (H={H_val:.0%}, α={_alpha:.0%}) — maximises return")
+                st.markdown(f"**❷ Optimal portfolio — with {der_label_sel}**")
+                st.caption(f"Same mental-accounting & risk-aversion constraint (H={H_val:.0%}, α={_alpha:.0%} ↔ λ) — results may vary")
                 try:
                     dr_res,_=run_opt(means_arr,sigs_arr,cov_mat,der_config,
                                       H_val,_alpha,m_val,mp_val,
@@ -1415,19 +1415,19 @@ structured products, can unlock beyond what mean-variance can achieve.
                 '<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
                 'padding:.8rem 1rem;margin-top:.5rem;color:#111111;font-size:.85rem">'
                 '<b style="color:#1a3a6b">📌 How to read these results</b><br>'
-                'Portfolio ① and ② are compared at the <b>same downside constraint</b> '
+                'Portfolio ❶ and ❷ are compared at the <b>same mental-accounting & risk-aversion constraint</b> '
                 f'(H={H_val:.0%}, α={_alpha:.0%} — same risk-aversion λ). '
-                'Portfolio ② achieves higher expected return but may show higher variance — '
-                'this is expected: the derivative satisfies the downside constraint more efficiently, '
-                'freeing the optimiser to pursue higher returns. '
-                'The comparison below shows portfolio ② at the <b>same variance as ①</b> '
-                '(interpolated from the derivative frontier), providing a second perspective.</div>',
+                'Depending on the derivative chosen, portfolio ② may achieve a higher or lower expected return '
+                'and may show higher variance — the derivative satisfies the downside constraint differently, '
+                'which can allow the optimiser to pursue higher returns in favourable cases. '
+                'The comparison below shows portfolio ❸ at the <b>same variance as ❶ (no-derivative portfolio)</b> '
+                '(interpolated from the derivative frontier), providing a complementary perspective.</div>',
                 unsafe_allow_html=True)
 
             # ── Same risk comparison (interpolated) ──────────────────────────
             st.markdown("---")
-            st.markdown(f"**③ Same risk as no-derivative — with {der_label_sel}** *(interpolated)*")
-            st.caption(f"What return does the derivative frontier achieve at the same std deviation as portfolio ①?")
+            st.markdown(f"**❸ Same variance as ❶ (no-derivative portfolio) — with {der_label_sel}** *(interpolated)*")
+            st.caption(f"Interpolated from the derivative frontier: return at the same std deviation as portfolio ❶ (indicative only)")
 
             if nd_res and len(der_xs) >= 2:
                 target_std = nd_res['std_dev'] * 100
@@ -1455,11 +1455,11 @@ structured products, can unlock beyond what mean-variance can achieve.
                     st.markdown(
                         '<div style="background:#f0f7ff;border:1px solid #1a6bbf;border-radius:6px;'
                         'padding:.6rem 1rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
-                        f'At the <b>same risk level</b> ({target_std:.1f}% std dev), '
+                        f'At the <b>same variance as portfolio ❶</b> ({target_std:.1f}% std dev), '
                         f'the derivative frontier achieves <b>{interp_return:.2f}%</b> expected return '
                         f'vs <b>{nd_res["expected_return"]*100:.2f}%</b> without derivatives — '
                         f'a gain of <b>+{gain_same_risk:.2f} percentage points</b>. '
-                        'This demonstrates the superior risk-adjusted performance of the behavioural approach with derivatives.</div>',
+                        'This illustrates the <b>potential return gain</b> from using derivatives at equivalent risk — results depend on the derivative type and market parameters.</div>',
                         unsafe_allow_html=True)
             else:
                 st.info("Run the optimiser with a derivative to see the same-risk comparison.")

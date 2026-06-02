@@ -17,9 +17,9 @@ This project implements a **behavioural portfolio optimisation algorithm** that 
 
 The app provides three portfolio perspectives for comparison:
 
-- **① No derivative** — optimal portfolio under the mental-account constraint without derivatives
-- **② With derivative, same constraint** — optimal portfolio including the selected derivative, under the same downside constraint (H, α). This may achieve higher expected return but typically at higher variance, as the derivative satisfies the constraint more efficiently
-- **③ With derivative, same variance** — interpolated from the derivative frontier at the same standard deviation as portfolio ①, showing the potential return gain from derivatives at an equivalent risk level
+- **❶ No derivative** — optimal portfolio under the mental-account constraint without derivatives
+- **❷ With derivative, same mental-accounting & risk-aversion constraint (H, α ↔ λ)** — optimal portfolio including the selected derivative, under the same downside constraint (H, α), equivalent to the same risk-aversion λ. This may achieve higher expected return but typically at higher variance, as the derivative satisfies the constraint more efficiently
+- **❸ With derivative, same variance as ❶ (no-derivative portfolio)** — interpolated from the derivative frontier at the same standard deviation as portfolio ❶, showing the potential return gain from derivatives at an equivalent risk level
 
 Under the default base case (H = -10%, α = 5%), a portfolio including an uncapped Capital-Guaranteed Note achieves **33.6% expected return** versus **10.2% without derivatives** under the same downside constraint.
 
