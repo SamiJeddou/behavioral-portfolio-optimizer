@@ -591,15 +591,18 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                 arrowwidth=2, arrowcolor='#ffffff',
                 text=''
             )
+            # Text at midpoint of arrow, offset to the right, no box
             fig.add_annotation(
-                xref='paper', yref='paper',
-                x=0.55, y=0.45,
+                x=(x0+x1)/2 + (x1-x0)*0.15,
+                y=(y0+y1)/2,
+                xref='x', yref='y',
                 text=f'<b>+{gain:.1f} pp return</b><br>same H & α constraint<br>(same risk aversion λ)',
                 showarrow=False,
                 font=dict(color='#ffffff', size=10),
                 bgcolor='rgba(0,0,0,0)',
                 bordercolor='rgba(0,0,0,0)',
-                align='center'
+                align='left',
+                xanchor='left'
             )
         except (ValueError, IndexError):
             pass
