@@ -61,45 +61,63 @@ st.markdown("""
 <style>
 .main{background:#0d1117}.block-container{padding-top:1.5rem}
 h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
-.info-box{background:#1a1a2e;border:1px solid #4a9eff;border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem;color:#ffffff !important}
+.info-box{background:#1a1a2e;border:1px solid #1a6bbf;border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem;color:#ffffff !important}
 .warn-box{background:#1a1200;border:1px solid #f59e0b;border-radius:6px;padding:.5rem 1rem;color:#f59e0b;font-size:.82rem;margin-top:.3rem}
 .ok-box{background:#001a0f;border:1px solid #10b981;border-radius:6px;padding:.5rem 1rem;color:#10b981;font-size:.82rem;margin-top:.3rem}
-.section-header{border-left:4px solid #4a9eff;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-top:1.2rem;margin-bottom:.5rem;color:#ffffff;font-weight:600;font-size:1.05rem;letter-spacing:.02em;text-align:center}
+.section-header{border-left:4px solid #1a6bbf;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-top:1.2rem;margin-bottom:.5rem;color:#ffffff;font-weight:600;font-size:1.05rem;letter-spacing:.02em;text-align:center}
     /* Override ALL remaining red Streamlit elements with blue */
-    div[data-baseweb="radio"] div[role="radio"]{border-color:#4a9eff !important}
-    div[data-baseweb="radio"] div[aria-checked="true"]{background-color:#4a9eff !important;border-color:#4a9eff !important}
-    div[data-baseweb="radio"] [data-checked="true"]{background:#4a9eff !important;border-color:#4a9eff !important}
+    div[data-baseweb="radio"] div[role="radio"]{border-color:#1a6bbf !important}
+    div[data-baseweb="radio"] div[aria-checked="true"]{background-color:#1a6bbf !important;border-color:#1a6bbf !important}
+    div[data-baseweb="radio"] [data-checked="true"]{background:#1a6bbf !important;border-color:#1a6bbf !important}
     /* Slider track filled portion */
-    div[data-testid="stSlider"] div[role="slider"]{background:#4a9eff !important;border-color:#4a9eff !important}
-    div[data-testid="stSlider"] > div > div > div > div:nth-child(2){background:#4a9eff !important}
-    div[data-testid="stSlider"] > div > div > div > div > div{background:#4a9eff !important}
+    div[data-testid="stSlider"] div[role="slider"]{background:#1a6bbf !important;border-color:#1a6bbf !important}
+    div[data-testid="stSlider"] > div > div > div > div:nth-child(2){background:#1a6bbf !important}
+    div[data-testid="stSlider"] > div > div > div > div > div{background:#1a6bbf !important}
     /* Radio selected dot */
-    input[type="radio"]:checked + div{background:#4a9eff !important;border-color:#4a9eff !important}
+    input[type="radio"]:checked + div{background:#1a6bbf !important;border-color:#1a6bbf !important}
     /* Selected option highlight in radio */
-    div[data-baseweb="radio"] label div div{background:#4a9eff !important}
+    div[data-baseweb="radio"] label div div{background:#1a6bbf !important}
     /* Selectbox focus border */
-    div[data-baseweb="select"] div:focus-within{border-color:#4a9eff !important}
+    div[data-baseweb="select"] div:focus-within{border-color:#1a6bbf !important}
     /* Any remaining red elements */
-    .st-emotion-cache-1vzeuhh,.st-emotion-cache-ue6h4q,.st-emotion-cache-13ln4jf{background-color:#4a9eff !important;border-color:#4a9eff !important}
-    [style*="color: rgb(255, 75, 75)"],[style*="color: rgb(255, 43, 43)"]{color:#4a9eff !important}
-    [style*="background-color: rgb(255, 75, 75)"],[style*="background-color: rgb(255, 43, 43)"]{background-color:#4a9eff !important}
+    .st-emotion-cache-1vzeuhh,.st-emotion-cache-ue6h4q,.st-emotion-cache-13ln4jf{background-color:#1a6bbf !important;border-color:#1a6bbf !important}
+    [style*="color: rgb(255, 75, 75)"],[style*="color: rgb(255, 43, 43)"]{color:#1a6bbf !important}
+    [style*="background-color: rgb(255, 75, 75)"],[style*="background-color: rgb(255, 43, 43)"]{background-color:#1a6bbf !important}
     /* Slider tick value labels (the -12%, -5% numbers) */
-    div[data-testid="stSlider"] span{color:#4a9eff !important}
-    div[data-testid="stSlider"] p{color:#4a9eff !important}
+    div[data-testid="stSlider"] span{color:#1a6bbf !important}
+    div[data-testid="stSlider"] p{color:#1a6bbf !important}
     div[data-testid="stSlider"] [data-testid="stTickBarMin"],
     div[data-testid="stSlider"] [data-testid="stTickBarMax"]{color:#c0c8d8 !important}
     /* Radio button unselected circle border */
     div[data-baseweb="radio"] > label > div > div{
-        border-color:#4a9eff !important;
+        border-color:#1a6bbf !important;
         border-width:2px !important}
     /* Radio button selected circle fill */
     div[data-baseweb="radio"] > label > div > div > div{
-        background:#4a9eff !important}
+        background:#1a6bbf !important}
     /* Thumb value on slider */
-    [data-testid="stThumbValue"]{color:#4a9eff !important}
+    [data-testid="stThumbValue"]{color:#1a6bbf !important}
+    /* Radio circles — all states */
+    div[data-baseweb="radio"] [data-checked="false"] div,
+    div[data-baseweb="radio"] label span div,
+    div[data-baseweb="radio"] label div div div {
+        border-color: #1a6bbf !important;
+        background: transparent !important;
+    }
+    div[data-baseweb="radio"] [data-checked="true"] div,
+    div[data-baseweb="radio"] label div div[style*="background"] {
+        background: #1a6bbf !important;
+        border-color: #1a6bbf !important;
+    }
+    /* Force all SVG fills and strokes blue */
+    div[data-baseweb="radio"] svg circle,
+    div[data-baseweb="radio"] svg path {
+        fill: #1a6bbf !important;
+        stroke: #1a6bbf !important;
+    }
     /* All red text remaining */
     p[style*="color: red"],span[style*="color: red"],
-    div[style*="color: red"]{color:#4a9eff !important}
+    div[style*="color: red"]{color:#1a6bbf !important}
     .sidebar-divider{border:none;border-top:2px solid #2a3a4a;margin:1rem 0}
     section[data-testid="stSidebar"] div.stButton > button,section[data-testid="stSidebar"] div.stButton > button[kind="primary"]{background:linear-gradient(180deg,#5aabff 0%,#2d7dd2 100%) !important;border:none !important;border-bottom:3px solid #1a5fa0 !important;border-radius:8px !important;color:#ffffff !important;font-size:1.05rem !important;font-weight:700 !important;padding:.6rem 1rem !important;box-shadow:0 4px 8px rgba(0,0,0,0.5) !important;text-shadow:0 1px 2px rgba(0,0,0,0.3) !important;width:100% !important}
     section[data-testid="stSidebar"] div.stButton > button:hover{background:linear-gradient(180deg,#6bbfff 0%,#3a8de0 100%) !important;box-shadow:0 6px 14px rgba(0,0,0,0.6) !important;transform:translateY(-1px) !important}
@@ -595,8 +613,8 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     fig.add_trace(go.Scatter(
         x=nd_x, y=nd_y, mode='lines+markers',
         name='Behavioural — no derivative',
-        line=dict(color='#4a9eff', width=2.5),
-        marker=dict(size=9, color='#4a9eff', symbol='circle'),
+        line=dict(color='#1a6bbf', width=2.5),
+        marker=dict(size=9, color='#1a6bbf', symbol='circle'),
         text=nd_lbls,
         hovertemplate='<b>Behavioral (no derivative)</b><br>Threshold: %{text}<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
     ))
@@ -698,7 +716,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         ),
         hoverlabel=dict(
             bgcolor='#1a1a2e',
-            bordercolor='#4a9eff',
+            bordercolor='#1a6bbf',
             font=dict(color='white', size=11)
         ),
         margin=dict(t=80, b=60, l=60, r=20),
@@ -746,8 +764,8 @@ def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
     ax.set_axisbelow(True)
     ax.plot(mv_x,mv_y,color="#6b7280",linewidth=2,linestyle="--",
             label="Mean-variance frontier (Markowitz)",zorder=2,alpha=0.9)
-    ax.plot(nd_x,nd_y,color="#4a9eff",linewidth=2.5,marker="o",markersize=7,
-            markerfacecolor="#4a9eff",label="Behavioral — no derivative",zorder=3)
+    ax.plot(nd_x,nd_y,color="#1a6bbf",linewidth=2.5,marker="o",markersize=7,
+            markerfacecolor="#1a6bbf",label="Behavioral — no derivative",zorder=3)
     for x,y,l in zip(nd_x,nd_y,nd_lbls):
         ax.annotate(l,xy=(x,y),xytext=(x,y-1.8),
                     color="#7fb3e8",fontsize=7.5,ha="center",zorder=4)
@@ -939,7 +957,7 @@ with st.sidebar:
     if der_type is not None and der_type != "custom":
         with st.expander("✨ AI-powered: What is this instrument?", expanded=True):
             explanation = get_explanation(der_label_sel)
-            st.markdown(f'<div style="background:#0f1923;border:1px solid #4a9eff;'
+            st.markdown(f'<div style="background:#0f1923;border:1px solid #1a6bbf;'
                        f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
                        f'{explanation}</div>',
                        unsafe_allow_html=True)
@@ -1055,7 +1073,7 @@ with st.sidebar:
             unsafe_allow_html=True)
         with st.expander("✨ AI-powered: What is the VaR constraint?", expanded=False):
             st.markdown(
-                f'<div style="background:#0f1923;border:1px solid #4a9eff;'
+                f'<div style="background:#0f1923;border:1px solid #1a6bbf;'
                 f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
                 f'{CONSTRAINT_EXPLANATIONS["var"]}</div>',
                 unsafe_allow_html=True)
@@ -1069,7 +1087,7 @@ with st.sidebar:
             unsafe_allow_html=True)
         with st.expander("✨ AI-powered: What is the ES constraint?", expanded=False):
             st.markdown(
-                f'<div style="background:#0f1923;border:1px solid #4a9eff;'
+                f'<div style="background:#0f1923;border:1px solid #1a6bbf;'
                 f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
                 f'{CONSTRAINT_EXPLANATIONS["es"]}</div>',
                 unsafe_allow_html=True)
@@ -1104,7 +1122,7 @@ with st.sidebar:
     # AI-powered grid explanation
     with st.expander("✨ AI-powered: What does this resolution mean?", expanded=True):
         st.markdown(
-            f'<div style="background:#0f1923;border:1px solid #4a9eff;'
+            f'<div style="background:#0f1923;border:1px solid #1a6bbf;'
             f'border-radius:6px;padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
             f'{GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")}</div>',
             unsafe_allow_html=True)
@@ -1154,7 +1172,7 @@ div[data-testid="stSidebarContent"] button p {
 # ═════════════════════════════════════════════════════════════════════════════
 def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
     with st.expander("📋 Portfolio data used in this simulation", expanded=True):
-        hs = "background:#4a9eff;color:#ffffff;font-weight:bold;padding:6px 10px;text-align:left"
+        hs = "background:#1a6bbf;color:#ffffff;font-weight:bold;padding:6px 10px;text-align:left"
         cs = "background:#ffffff;color:#111111;padding:5px 10px;border-bottom:1px solid #e0e0e0"
         rows = "".join(
             f"<tr><td style='{cs}'>{names_in[i]}</td>"
@@ -1245,7 +1263,7 @@ Follow these steps in the sidebar:
 The chart will show three curves and two markers:
 
 <table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
-<tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#4a9eff;font-size:1.1rem">Curves</td></tr>
+<tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Curves</td></tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🔘 <strong>Grey dashed</strong></td>
   <td style="padding:.3rem .5rem">Classical mean-variance efficient frontier (Markowitz)</td>
@@ -1258,7 +1276,7 @@ The chart will show three curves and two markers:
   <td style="padding:.3rem .5rem;white-space:nowrap">🟡 <strong>Gold</strong></td>
   <td style="padding:.3rem .5rem">Behavioural optimiser frontier including your selected derivative</td>
 </tr>
-<tr><td colspan="2" style="padding:.5rem .5rem .3rem .5rem;font-weight:700;color:#4a9eff;font-size:1.1rem">Markers</td></tr>
+<tr><td colspan="2" style="padding:.5rem .5rem .3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Markers</td></tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">➡️ <strong>White dotted arrow</strong></td>
   <td style="padding:.3rem .5rem">Return gap between the behavioural frontier without and with the derivative, at the selected H and α constraint</td>
@@ -1289,7 +1307,7 @@ structured products, can unlock beyond what mean-variance can achieve.
 
         # LinkedIn + contact
         st.markdown("""
-<div style="background:#0f1923;border:1px solid #4a9eff;border-radius:8px;padding:1rem 1.4rem;color:#ffffff">
+<div style="background:#0f1923;border:1px solid #1a6bbf;border-radius:8px;padding:1rem 1.4rem;color:#ffffff">
 
 **👤 About the author**
 
@@ -1644,7 +1662,7 @@ with tab3:
         st.markdown("---")
         st.markdown(f"**{st.session_state['glossary_term']}**")
         st.markdown(
-            f'<div style="background:#0f1923;border:1px solid #4a9eff;border-radius:8px;'
+            f'<div style="background:#0f1923;border:1px solid #1a6bbf;border-radius:8px;'
             f'padding:1rem 1.2rem;color:#c0c8d8;font-size:.9rem;line-height:1.6">'
             f'{st.session_state["glossary_response"]}</div>',
             unsafe_allow_html=True)
