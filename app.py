@@ -1043,34 +1043,13 @@ with st.sidebar:
     if not use_es:
         alpha_val = st.slider("Shortfall probability α (%)", 1, 15, 5, 1) / 100
         L_val     = None
+        # Formula box — white background
         st.markdown(
-            '<div style="background:#1a1a2e;border:1px solid #3a3a5a;border-radius:6px;'
-            'padding:.4rem 1rem;color:#8896a8;font-size:.78rem;margin-top:.3rem">'
+            '<div style="background:#ffffff;border:1px solid #3a3a5a;border-radius:6px;'
+            'padding:.4rem 1rem;color:#333333;font-size:.78rem;margin-top:.3rem">'
             'VaR constraint: P(return &lt; H) ≤ α</div>',
             unsafe_allow_html=True)
-        st.markdown(
-            f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
-            f'padding:.6rem .8rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
-            f'<b style="color:#1a3a6b">✨ AI-powered: What is the VaR constraint?</b><br>'
-            f'{CONSTRAINT_EXPLANATIONS["var"]}</div>',
-            unsafe_allow_html=True)
-    else:
-        alpha_val = None
-        L_val     = st.slider("ES lower bound L (%)", -50, -1, -15, 1) / 100
-        st.markdown(
-            '<div style="background:#1a1a2e;border:1px solid #3a3a5a;border-radius:6px;'
-            'padding:.4rem 1rem;color:#8896a8;font-size:.78rem;margin-top:.3rem">'
-            'ES constraint: E[return | return &lt; H] ≥ L</div>',
-            unsafe_allow_html=True)
-        st.markdown(
-            f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
-            f'padding:.6rem .8rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
-            f'<b style="color:#1a3a6b">✨ AI-powered: What is the ES constraint?</b><br>'
-            f'{CONSTRAINT_EXPLANATIONS["es"]}</div>',
-            unsafe_allow_html=True)
-
-    # Implied lambda — only for VaR
-    if not use_es:
+        # Implied lambda — between formula and AI explanation
         cov_for_lam = corr_to_cov(sigs_in, corr_in)
         lam = implied_lambda(H_val, alpha_val, means_in, cov_for_lam)
         if lam is not None:
@@ -1087,6 +1066,33 @@ with st.sidebar:
                         'padding:.4rem 1rem;color:#7a4f00;font-size:.78rem;margin-top:.3rem">'
                         '⚠️ Implied λ not available — the VaR constraint may be too tight or too loose for the current portfolio.</div>',
                         unsafe_allow_html=True)
+        # AI explanation last
+        st.markdown(
+            f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
+            f'padding:.6rem .8rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
+            f'<b style="color:#1a3a6b">✨ AI-powered: What is the VaR constraint?</b><br>'
+            f'{CONSTRAINT_EXPLANATIONS["var"]}</div>',
+            unsafe_allow_html=True)
+    else:
+        alpha_val = None
+        L_val     = st.slider("ES lower bound L (%)", -50, -1, -15, 1) / 100
+        # Formula box — white background
+        st.markdown(
+            '<div style="background:#ffffff;border:1px solid #3a3a5a;border-radius:6px;'
+            'padding:.4rem 1rem;color:#333333;font-size:.78rem;margin-top:.3rem">'
+            'ES constraint: E[return | return &lt; H] ≥ L</div>',
+            unsafe_allow_html=True)
+        # AI explanation
+        st.markdown(
+            f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
+            f'padding:.6rem .8rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
+            f'<b style="color:#1a3a6b">✨ AI-powered: What is the ES constraint?</b><br>'
+            f'{CONSTRAINT_EXPLANATIONS["es"]}</div>',
+            unsafe_allow_html=True)
+
+    # Implied lambda block already handled above for VaR case
+    if use_es:
+        pass  # no lambda for ES
 
     st.markdown("\n---\n")
 
