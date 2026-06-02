@@ -1078,7 +1078,7 @@ with st.sidebar:
                     unsafe_allow_html=True)
 
     st.markdown("---")
-    run_btn=st.button("⑤  ▶ Run optimiser",type="primary",
+    run_btn=st.button("➎  ▶  Run optimiser",type="primary",
                        use_container_width=True,disabled=not data_valid)
 
 
@@ -1152,13 +1152,28 @@ with tab1:
 
 Follow these steps in the sidebar:
 
-| Step | Action |
-|---|---|
-| **① Portfolio data** | Choose a data source: default base case, live market tickers, manual entry, or CSV upload |
-| **② Derivative & parameters** | Select a derivative or structured product type (or build a custom one) and set its characteristics (strike, maturity, floor, participation, etc.) |
-| **③ Constraint** | Choose VaR or ES constraint type, set threshold H, and set α (VaR) or L (ES) |
-| **④ Grid resolution** | Choose Fast for a quick preview, High precision for thesis-level accuracy |
-| **⑤ Run** | Click **▶ Run optimiser** |
+<table style="width:100%;border-collapse:collapse;color:#ffffff">
+<tr style="border-bottom:1px solid #3a3a5a">
+  <td style="padding:.5rem .8rem;white-space:nowrap"><span style="font-size:1.4rem;font-weight:700">①</span></td>
+  <td style="padding:.5rem .8rem"><strong>Portfolio data</strong> — Choose a data source: default base case, live market tickers, manual entry, or CSV upload</td>
+</tr>
+<tr style="border-bottom:1px solid #3a3a5a">
+  <td style="padding:.5rem .8rem;white-space:nowrap"><span style="font-size:1.4rem;font-weight:700">②</span></td>
+  <td style="padding:.5rem .8rem"><strong>Derivative &amp; parameters</strong> — Select a derivative or structured product type and set its characteristics (strike, maturity, floor, participation, etc.)</td>
+</tr>
+<tr style="border-bottom:1px solid #3a3a5a">
+  <td style="padding:.5rem .8rem;white-space:nowrap"><span style="font-size:1.4rem;font-weight:700">③</span></td>
+  <td style="padding:.5rem .8rem"><strong>Constraint</strong> — Choose VaR or ES constraint type, set threshold H, and set α (VaR) or L (ES)</td>
+</tr>
+<tr style="border-bottom:1px solid #3a3a5a">
+  <td style="padding:.5rem .8rem;white-space:nowrap"><span style="font-size:1.4rem;font-weight:700">④</span></td>
+  <td style="padding:.5rem .8rem"><strong>Grid resolution</strong> — Choose Fast for a quick preview, High precision for thesis-level accuracy</td>
+</tr>
+<tr>
+  <td style="padding:.5rem .8rem;white-space:nowrap"><span style="font-size:1.4rem;font-weight:700">⑤</span></td>
+  <td style="padding:.5rem .8rem"><strong>Run</strong> — Click <strong>▶ Run optimiser</strong></td>
+</tr>
+</table>
 
 The chart will show three curves and two markers:
 - 🔘 **Grey dashed** — classical mean-variance efficient frontier (Markowitz)
