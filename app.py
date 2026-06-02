@@ -63,7 +63,7 @@ st.markdown("""
 h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
 .info-box{background:#1a1a2e;border:1px solid #1a6bbf;border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem;color:#ffffff !important}
 .warn-box{background:#1a1200;border:1px solid #f59e0b;border-radius:6px;padding:.5rem 1rem;color:#f59e0b;font-size:.82rem;margin-top:.3rem}
-.ok-box{background:#001a0f;border:1px solid #10b981;border-radius:6px;padding:.5rem 1rem;color:#10b981;font-size:.82rem;margin-top:.3rem}
+.ok-box{background:#ffffff;border:1px solid #10b981;border-radius:6px;padding:.5rem 1rem;color:#1a5c3a;font-size:.82rem;margin-top:.3rem}
 
     .section-header{border-left:4px solid #1a6bbf;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-top:1.2rem;margin-bottom:.5rem;color:#ffffff;font-weight:600;font-size:1.05rem;letter-spacing:.02em;text-align:center}
 
@@ -893,7 +893,7 @@ with st.sidebar:
             st.error("⚠️ Correlation matrix not positive semi-definite."); data_valid=False
 
     elif data_mode=="Upload CSV":
-        st.markdown('<div class="info-box" style="font-size:.82rem">'
+        st.markdown('<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:8px;padding:.6rem 1rem;margin-bottom:.5rem;color:#111111;font-size:.82rem">'
                     '📋 <b>Format:</b> First col = dates, remaining cols = asset prices.</div>',
                     unsafe_allow_html=True)
         sample="""Date,Low_Risk,Mid_Risk,High_Risk
@@ -1075,16 +1075,16 @@ with st.sidebar:
         lam = implied_lambda(H_val, alpha_val, means_in, cov_for_lam)
         if lam is not None:
             st.markdown(
-                f'<div style="background:#0f1923;border:1px solid #10b981;border-radius:6px;'
-                f'padding:.5rem 1rem;margin-top:.3rem;color:#10b981;font-size:.85rem">'
+                f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
+                f'padding:.5rem 1rem;margin-top:.3rem;color:#1a3a6b;font-size:.85rem">'
                 f'<b>Implied risk-aversion λ = {lam:.4f}</b><br>'
-                f'<span style="color:#8896a8;font-size:.78rem">'
-                f'MV optimal at λ={lam:.2f} ≡ behavioral optimal at H={H_val:.0%}, α={alpha_val:.0%}'
+                f'<span style="color:#555555;font-size:.78rem">'
+                f'MV optimal at λ={lam:.2f} ≡ behavioural optimal at H={H_val:.0%}, α={alpha_val:.0%}'
                 f'</span></div>',
                 unsafe_allow_html=True)
         else:
-            st.markdown('<div style="background:#1a0a00;border:1px solid #f59e0b;border-radius:6px;'
-                        'padding:.4rem 1rem;color:#f59e0b;font-size:.78rem;margin-top:.3rem">'
+            st.markdown('<div style="background:#fffbea;border:1px solid #f59e0b;border-radius:6px;'
+                        'padding:.4rem 1rem;color:#7a4f00;font-size:.78rem;margin-top:.3rem">'
                         '⚠️ Implied λ not available — the VaR constraint may be too tight or too loose for the current portfolio.</div>',
                         unsafe_allow_html=True)
 
