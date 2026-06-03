@@ -2233,32 +2233,36 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 st.markdown(note_html, unsafe_allow_html=True)
 
         # ── Compute all three portfolios ─────────────────────────────────────
-        # Use _nd_res_pre if available; if None, retry once more
-        nd_res = _nd_res_pre
-        if nd_res is None:
-            for _retry2 in range(3):
+        if _render_from_cache:
+            # Already restored from cache at top — nd_res/dr_res already set
+            pass
+        else:
+            # Use _nd_res_pre if available; if None, retry once more
+            nd_res = _nd_res_pre
+            if nd_res is None:
+                for _retry2 in range(3):
+                    try:
+                        _r2, _ = run_opt(means_arr, sigs_arr, cov_mat, None, H_val, _alpha,
+                                         m_val, mp_val, constraint_type=_ctype, L=_L)
+                        if _r2 is not None:
+                            nd_res = _r2
+                            break
+                    except Exception:
+                        pass
+            dr_res = None
+            p3_return = None
+            p3_std = None
+
+            if der_config:
                 try:
-                    _r2, _ = run_opt(means_arr, sigs_arr, cov_mat, None, H_val, _alpha,
-                                     m_val, mp_val, constraint_type=_ctype, L=_L)
-                    if _r2 is not None:
-                        nd_res = _r2
-                        break
+                    dr_res, _ = run_opt(means_arr, sigs_arr, cov_mat, der_config,
+                                        H_val, _alpha, m_val, mp_val,
+                                        constraint_type=_ctype, L=_L)
                 except Exception:
                     pass
-        dr_res = None
-        p3_return = None
-        p3_std = None
 
-        if der_config:
-            try:
-                dr_res, _ = run_opt(means_arr, sigs_arr, cov_mat, der_config,
-                                    H_val, _alpha, m_val, mp_val,
-                                    constraint_type=_ctype, L=_L)
-            except Exception:
-                pass
-
-        # Compute Portfolio (3) by interpolation
-        if nd_res and der_xs and len(der_xs) >= 2:
+        # Compute Portfolio (3) by interpolation (only on fresh compute)
+        if not _render_from_cache and nd_res and der_xs and len(der_xs) >= 2:
             try:
                 _target_std = nd_res['std_dev'] * 100
                 _fp = sorted(zip(der_xs, der_ys), key=lambda p: p[0])
