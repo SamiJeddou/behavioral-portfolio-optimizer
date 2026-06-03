@@ -789,6 +789,21 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                     hovertemplate=(f'<b>Portfolio (2)</b><br>Optimum with {der_label}<br>'
                                   f'Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>')
                 ))
+                fig.add_annotation(
+                    x=der_x[_i2], y=der_y[_i2],
+                    ax=-50, ay=-55,
+                    xref='x', yref='y', axref='pixel', ayref='pixel',
+                    showarrow=True, arrowhead=2, arrowsize=1.0,
+                    arrowwidth=1.5, arrowcolor='#ff6b00',
+                    text=(f'<b>Portfolio (2)</b><br>'
+                          f'Optimum with {der_label}<br>'
+                          f'H={H_sel:.0%}, same constraint as Portfolio (1)<br>'
+                          f'Return = {der_y[_i2]:.1f}%'),
+                    font=dict(color='#ff6b00', size=9),
+                    bgcolor='rgba(13,17,23,0.9)',
+                    bordercolor='#ff6b00', borderwidth=1,
+                    align='left', xanchor='right'
+                )
             except Exception:
                 pass
 
@@ -873,6 +888,21 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             hovertemplate=(f'<b>Portfolio (3)</b><br>Same std dev as Portfolio (1)<br>'
                           f'Std Dev: {p3_x:.2f}%<br>Expected Return: {p3_y:.2f}%<extra></extra>')
         ))
+        fig.add_annotation(
+            x=p3_x, y=p3_y,
+            ax=50, ay=-50,
+            xref='x', yref='y', axref='pixel', ayref='pixel',
+            showarrow=True, arrowhead=2, arrowsize=1.0,
+            arrowwidth=1.5, arrowcolor='#e76f51',
+            text=(f'<b>Portfolio (3)</b><br>'
+                  f'Same variance as Portfolio (1)<br>'
+                  f'({p3_x:.1f}% std dev)<br>'
+                  f'Return = {p3_y:.1f}% (interpolated)'),
+            font=dict(color='#e76f51', size=9),
+            bgcolor='rgba(13,17,23,0.9)',
+            bordercolor='#e76f51', borderwidth=1,
+            align='left', xanchor='left'
+        )
 
     # ── Layout ────────────────────────────────────────────────────────────────
     fig.update_layout(
