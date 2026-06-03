@@ -1504,7 +1504,7 @@ structured products, can unlock beyond what mean-variance can achieve.
 <b style="color:#4a9eff">Three optimum portfolios are generated as output of the optimisation:</b><br><br>
 <b style="color:#10b981">Portfolio (1)</b> — Without derivatives: identical to the Markowitz MV optimum, derived through the mental accounting framework (reference portfolio)<br>
 <b style="color:#f59e0b">Portfolio (2)</b> — With derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
-<b style="color:#4a9eff">Portfolio (3)</b> — With derivative, same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (see below)
+<b style="color:#e76f51">Portfolio (3)</b> — With derivative, same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (see below)
 </div>
 ''', unsafe_allow_html=True)
 
@@ -1687,13 +1687,15 @@ structured products, can unlock beyond what mean-variance can achieve.
                 '(interpolated from the derivative frontier), providing a complementary perspective.</div>',
                 unsafe_allow_html=True)
 
-            # ── Same risk comparison (interpolated) ──────────────────────────
+        # ── Portfolio (3): Same risk comparison (always shown when frontier available) ──
+        if der_config and nd_res and len(der_xs) >= 2:
             st.markdown("---")
-            st.markdown(f'**Optimal portfolio (3) — same variance as Portfolio (1), with {der_label_sel}** *(interpolated from derivative frontier)*', unsafe_allow_html=True)
-            st.caption(f"Interpolated from the derivative frontier: return at the same std deviation as portfolio (1) (indicative only)")
-
-            if not (nd_res and len(der_xs) >= 2):
-                st.info("⚠️ Portfolio (3) interpolation requires the derivative frontier to be computed with at least 2 points. Run with Standard or High precision resolution for reliable (3) results.")
+            st.markdown(
+                f'<div style="background:#0d1a2e;border:1px solid #e76f51;border-radius:8px;'
+                f'padding:.6rem 1rem;margin-bottom:.5rem;color:#e76f51;font-size:.85rem;font-weight:600">'
+                f'📊 Optimal portfolio (3) — same variance as Portfolio (1), with {der_label_sel} <span style="font-size:.75rem;font-weight:400;color:#c0c8d8">(interpolated from derivative frontier)</span></div>',
+                unsafe_allow_html=True)
+            st.caption("Interpolated from the derivative frontier: return at the same std deviation as portfolio (1) — indicative only")
             if nd_res and len(der_xs) >= 2:
                 target_std = nd_res['std_dev'] * 100
                 # Sort frontier by std dev
