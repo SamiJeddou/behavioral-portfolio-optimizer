@@ -1941,8 +1941,9 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
 
         pass  # welcome screen shown, About tab still renders
 
+    _render_from_cache = False
     if _run_active and not _needs_compute and _has_results:
-        # Results already computed — just re-display from cache
+        # Restore all variables from cache so full results can re-render below
         _cache = st.session_state['_cached_results']
         nd_res = _cache['nd_res']
         dr_res = _cache['dr_res']
@@ -1960,13 +1961,8 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
         asset_labels = _cache.get('asset_labels', [])
         constraint_str = _cache.get('constraint_str', '')
         grid_lbl = _cache.get('grid_lbl', '')
-        # Show simple placeholder for chart (cached fig)
-        if st.session_state.get('_fig_plotly'):
-            col_summary_c, col_chart_c = st.columns([1, 3.5])
-            with col_chart_c:
-                st.plotly_chart(st.session_state['_fig_plotly'],
-                               use_container_width=True,
-                               config={'editable': True, 'displayModeBar': True})
+        _ctype = 'es' if use_es else 'var'
+        _render_from_cache = True
 
     if _run_active and _needs_compute:
         # Fresh computation needed
@@ -2153,6 +2149,39 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             'use Standard or High precision for publication-quality results.</div>',
             unsafe_allow_html=True)
 
+
+    # ── For cache render path: show params + chart from session state ───────
+    if _render_from_cache:
+        _der_html_c = (
+            f'<span style="color:#f59e0b">{der_label_sel}</span>'
+            if der_config else
+            '<span style="color:#8896a8">None</span>'
+        )
+        def _lbl_c(t): return f'<div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">{t}</div>'
+        def _val_c(v): return f'<div style="margin-bottom:.6rem">{v}</div>'
+        _html_c = ('<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;min-height:560px;'
+                   'padding:.8rem 1rem;color:#c0c8d8;font-size:.8rem">'
+                   '<div style="color:#4a9eff;font-weight:700;font-size:.85rem;'
+                   'margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">'
+                   '📌 Optimisation Parameters <span style="color:#556a8a;font-size:.65rem;font-weight:400">(summary)</span></div>'
+                   + _lbl_c('DATA SOURCE') + _val_c(data_mode.split('(')[0].strip())
+                   + _lbl_c('SECURITIES') + _val_c(', '.join(names_in))
+                   + _lbl_c('DERIVATIVE') + _val_c(_der_html_c)
+                   + _lbl_c('CONSTRAINT') + _val_c(constraint_str)
+                   + _lbl_c('IMPLIED λ')
+                   + f'<div style="margin-bottom:.6rem;color:#10b981;font-weight:600">{lam_summary}</div>'
+                   + _lbl_c('RESOLUTION') + _val_c(grid_lbl.split('(')[0].strip())
+                   + '</div>')
+        _col_s_c, _col_ch_c = st.columns([1, 3.5])
+        with _col_s_c:
+            st.markdown(_html_c, unsafe_allow_html=True)
+        with _col_ch_c:
+            if st.session_state.get('_fig_plotly'):
+                st.plotly_chart(st.session_state['_fig_plotly'],
+                               use_container_width=True,
+                               config={'editable': True, 'displayModeBar': True})
+
+    if _run_active and (_needs_compute or _render_from_cache):
         # ── Results ───────────────────────────────────────────────────────────────
         st.markdown("---")
         constraint_label = f"H={H_val:.0%}, α={_alpha:.0%}" if not use_es else f"H={H_val:.0%}, L={_L:.0%}"
@@ -2507,11 +2536,11 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 'padding:.8rem 1rem;margin-top:.5rem;color:#111111;font-size:.85rem">'
                 '<b style="color:#1a3a6b">📌 How to read these results</b><br>'
                 'Portfolio (1) and (2) are compared at the <b>same mental-accounting & risk-aversion constraint</b> '
-                f'(H={H_val:.0%}, α={_alpha:.0%} — same risk-aversion λ). '
-                'Depending on the derivative chosen, portfolio (2) may achieve a higher or lower expected return '
-                'and may show higher variance. '
-                'Portfolio (3) shows the derivative frontier return at the <b>same variance as Portfolio (1)</b>, '
-                'providing a complementary risk-adjusted perspective.</div>',
+            f'(H={H_val:.0%}, α={_alpha:.0%} — same risk-aversion λ). '
+            'Depending on the derivative chosen, portfolio (2) may achieve a higher or lower expected return '
+            'and may show higher variance. '
+            'Portfolio (3) shows the derivative frontier return at the <b>same variance as Portfolio (1)</b>, '
+            'providing a complementary risk-adjusted perspective.</div>',
                 unsafe_allow_html=True)
 
 
