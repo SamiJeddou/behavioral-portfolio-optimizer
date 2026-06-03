@@ -560,6 +560,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     fig.add_trace(go.Scatter(
         x=mv_x, y=mv_y, mode='lines',
         name='Mean-variance efficient frontier (Markowitz)',
+        legendrank=1,
         line=dict(color='#a855f7', width=2, dash='dash'),
         hovertemplate='<b>Mean-Variance Efficient Frontier (Markowitz)</b><br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
     ))
@@ -568,6 +569,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     fig.add_trace(go.Scatter(
         x=nd_x, y=nd_y, mode='lines+markers',
         name='Behavioural efficient frontier — no derivative',
+        legendrank=2,
         line=dict(color='#1a6bbf', width=2.5),
         marker=dict(size=9, color='#1a6bbf', symbol='circle'),
         text=nd_lbls,
@@ -579,6 +581,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         fig.add_trace(go.Scatter(
             x=der_x, y=der_y, mode='markers',
             name=f'Portfolio (2) — Behavioural optimal portfolios with {der_label}',
+            legendrank=4,
             marker=dict(size=10, color='#f59e0b', symbol='square'),
             text=der_lbls,
             hovertemplate=f'<b>Behavioural optimal portfolio (with {der_label})</b><br>Threshold: %{{text}}<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
@@ -627,6 +630,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         fig.add_trace(go.Scatter(
             x=[mv_eq[0]], y=[mv_eq[1]], mode='markers',
             name='Portfolio (1) — Equivalence point: MV = Behavioural (no derivatives) ↔ H=-10%, α=5%',
+            legendrank=3,
             marker=dict(size=13, color='#10b981', symbol='diamond',
                         line=dict(width=0)),
             showlegend=True,
@@ -659,6 +663,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         fig.add_trace(go.Scatter(
             x=[p3_x], y=[p3_y], mode='markers',
             name=f'Portfolio (3) — same variance as Portfolio (1), with {der_label}',
+            legendrank=6,
             marker=dict(size=14, color='#e76f51', symbol='star',
                        line=dict(color='white', width=1)),
             hovertemplate=(f'<b>Portfolio (3)</b><br>Same std dev as Portfolio (1)<br>'
@@ -1631,12 +1636,14 @@ structured products, can unlock beyond what mean-variance can achieve.
             # Three-column layout: metrics | donut | bars
             col_m, col_d, col_b = st.columns([1.2, 1, 1.4])
             with col_m:
-                st.metric("Expected return",
-                          f"{stats['expected_return']*100:.2f}%",
-                          delta=delta_txt)
-                st.metric("Std deviation", f"{stats['std_dev']*100:.2f}%")
-                st.metric("Skewness", f"{stats['skewness']:.3f}")
-                st.metric("Shortfall / ES", f"{stats['shortfall_stat']*100:.2f}%")
+                _mr1, _mr2 = st.columns(2)
+                _mr1.metric("Expected return",
+                            f"{stats['expected_return']*100:.2f}%",
+                            delta=delta_txt)
+                _mr2.metric("Std deviation", f"{stats['std_dev']*100:.2f}%")
+                _mr3, _mr4 = st.columns(2)
+                _mr3.metric("Skewness", f"{stats['skewness']:.3f}")
+                _mr4.metric("Shortfall / ES", f"{stats['shortfall_stat']*100:.2f}%")
                 if method_txt:
                     st.caption(f"Method: {method_txt}")
             with col_d:
@@ -1763,14 +1770,6 @@ structured products, can unlock beyond what mean-variance can achieve.
         # ── Portfolio (3) — full width below ─────────────────────────────────
         if der_config and nd_res and p3_return is not None:
             st.markdown("---")
-            st.markdown(
-                f'<div style="background:#0d1a2e;border:1px solid #e76f51;border-radius:8px;'
-                f'padding:.6rem 1rem;margin-bottom:.6rem">'
-                f'<span style="color:#e76f51;font-weight:700;font-size:.95rem">'
-                f'Optimal portfolio (3) — same variance as Portfolio (1), with {der_label_sel}'
-                f'</span> <span style="color:#c0c8d8;font-size:.78rem">(interpolated from derivative frontier)</span>'
-                f'</div>',
-                unsafe_allow_html=True)
             _gain3 = p3_return - nd_res['expected_return'] * 100
             # Use derivative weights as approximation (closest frontier point)
             if dr_res:
