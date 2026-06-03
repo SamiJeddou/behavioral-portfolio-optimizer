@@ -1884,6 +1884,7 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                                             p3_x=_p3_x, p3_y=_p3_y,
                                             nd_res_actual=_nd_res_pre,
                                             lam_actual=_lam_actual)
+            st.session_state['_fig_plotly'] = fig_plotly
 
             # ── Simulation summary + chart side by side ───────────────────────
             col_summary, col_chart = st.columns([1, 3.5])
@@ -2163,10 +2164,9 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
             st.markdown("---")
             st.info(f"Portfolio (3) not available — derivative frontier has {len(der_xs)} point(s). Try Standard resolution.")
 
-        # ── PDF Export — generate bytes and store in session_state ─────────────
+        # ── PDF Export — generate and store in session_state ────────────────────
         st.markdown("---")
         if nd_res:
-            # Always generate PDF bytes and store — no button needed to trigger rerun
             try:
                 _lam_s = lam_summary if 'lam_summary' in dir() else "—"
                 _nd_lbls_pdf = [names_in[i] if i<len(names_in) else f"Asset {i+1}" for i in range(len(nd_res["weights"]))]
@@ -2177,6 +2177,8 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 _dr_cols_pdf = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_dr_wts_pdf))] if dr_res else []
                 _p3r = p3_return if p3_return is not None else None
                 _p3s = p3_std if p3_std is not None else None
+                # Retrieve fig from session_state so it survives reruns
+                _fig_for_pdf = st.session_state.get('_fig_plotly', None)
                 _pdf_bytes = generate_pdf_report(
                     constraint_label=constraint_label,
                     nd_res=nd_res, dr_res=dr_res,
@@ -2187,39 +2189,27 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                     H_val=H_val, _alpha=_alpha, use_es=use_es, _L=_L,
                     data_mode=data_mode, names_in=names_in,
                     grid_lbl=grid_lbl, lam_summary=_lam_s,
-                    fig_plotly=fig_plotly
+                    fig_plotly=_fig_for_pdf
                 )
-                st.markdown(
-                    '<style>'
-                    'div[data-testid="stDownloadButton"] {'
-                    '  display:flex; justify-content:center; margin-top:0.5rem;'
-                    '}'
-                    'div[data-testid="stDownloadButton"] button {'
-                    '  background-color:#1a6bbf !important;'
-                    '  color:white !important;'
-                    '  border:none !important;'
-                    '  font-weight:600 !important;'
-                    '  padding:0.5rem 2rem !important;'
-                    '  font-size:1rem !important;'
-                    '  border-radius:6px !important;'
-                    '  width:auto !important;'
-                    '}'
-                    'div[data-testid="stDownloadButton"] button:hover {'
-                    '  background-color:#1558a0 !important;'
-                    '}'
-                    '</style>',
-                    unsafe_allow_html=True)
+                # Store PDF bytes in session_state so download button doesn't trigger rerun loss
+                st.session_state['_pdf_bytes'] = _pdf_bytes
+                st.session_state['_pdf_filename'] = f"portfolio_optimisation_{H_val:.0%}_{_alpha:.0%}.pdf"
+            except Exception as _pdf_err:
+                st.caption(f"PDF generation failed: {_pdf_err}")
+
+        # Render download button from session_state — st.download_button does NOT trigger rerun
+        if st.session_state.get('_pdf_bytes'):
+            _col_l, _col_c, _col_r = st.columns([1, 2, 1])
+            with _col_c:
                 st.download_button(
                     label="📄 Export & Download PDF Report",
-                    data=_pdf_bytes,
-                    file_name=f"portfolio_optimisation_{H_val:.0%}_{_alpha:.0%}.pdf",
+                    data=st.session_state['_pdf_bytes'],
+                    file_name=st.session_state.get('_pdf_filename', 'report.pdf'),
                     mime="application/pdf",
                     type="primary",
                     key="pdf_download",
-                    use_container_width=False
+                    use_container_width=True
                 )
-            except Exception as _pdf_err:
-                st.caption(f"PDF export unavailable: {_pdf_err}")
 
         # ── How to read these results ────────────────────────────────────────
         if der_config and nd_res:
