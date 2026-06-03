@@ -1931,13 +1931,17 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
 </div>
 ''', unsafe_allow_html=True)
 
-        # ── Pre-compute nd_res for chart P3 point ────────────────────────────
+        # ── Pre-compute nd_res — retry up to 3 times for robustness ────────────
         _nd_res_pre = None
-        try:
-            _nd_res_pre, _ = run_opt(means_arr, sigs_arr, cov_mat, None, H_val, _alpha,
-                                     m_val, mp_val, constraint_type=_ctype, L=_L)
-        except Exception:
-            pass
+        for _retry in range(3):
+            try:
+                _r, _ = run_opt(means_arr, sigs_arr, cov_mat, None, H_val, _alpha,
+                                m_val, mp_val, constraint_type=_ctype, L=_L)
+                if _r is not None:
+                    _nd_res_pre = _r
+                    break
+            except Exception:
+                pass
 
         with st.spinner("Rendering chart..."):
             # Compute Portfolio (3) point for chart overlay using pre-computed nd_res
@@ -2095,9 +2099,18 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 st.markdown(note_html, unsafe_allow_html=True)
 
         # ── Compute all three portfolios ─────────────────────────────────────
-        # Reuse _nd_res_pre (already computed before chart) to avoid running twice
-        # and to ensure chart diamond and result block always show the same portfolio
+        # Use _nd_res_pre if available; if None, retry once more
         nd_res = _nd_res_pre
+        if nd_res is None:
+            for _retry2 in range(3):
+                try:
+                    _r2, _ = run_opt(means_arr, sigs_arr, cov_mat, None, H_val, _alpha,
+                                     m_val, mp_val, constraint_type=_ctype, L=_L)
+                    if _r2 is not None:
+                        nd_res = _r2
+                        break
+                except Exception:
+                    pass
         dr_res = None
         p3_return = None
         p3_std = None
@@ -2145,7 +2158,13 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                     stats=nd_res, method_txt=_method)
             else:
                 st.markdown("**Optimal portfolio (1) — no derivative**")
-                st.warning("⚠️ No eligible portfolio found. Try increasing H or α, or use Fast resolution.")
+                # Suggest a wider constraint based on current securities volatility
+                _avg_sig = float(np.mean(sigs_arr)) * 100
+                _suggested_H = f"-{max(15, int(_avg_sig * 1.5))}%"
+                st.warning(
+                    f"⚠️ No eligible portfolio found at H={H_val:.0%}, α={_alpha:.0%}. "
+                    f"With live market data (avg volatility {_avg_sig:.1f}%), "
+                    f"try a wider threshold such as H={_suggested_H} or switch to Standard resolution.")
 
         with st.container():
             if der_config:
