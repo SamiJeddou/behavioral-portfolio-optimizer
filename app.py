@@ -2063,6 +2063,10 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 )
                 st.markdown(_html, unsafe_allow_html=True)
 
+                st.markdown(
+                    '<div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:6px;'                    'padding:.6rem 1rem;color:#111111;font-size:.78rem;margin-top:.5rem">'                    '<b style="color:#1a6bbf">📋 How to interpret these parameters</b><br><br>'                    '<b>Threshold H</b> — the minimum acceptable portfolio return. '                    'For example, H=−10% means you are setting a floor: '                    'the probability of losing more than 10% must not exceed α. '                    'With live market data (higher volatility), a wider threshold (e.g. −25% to −40%) '                    'is typically needed to find feasible portfolios.<br><br>'                    '<b>Shortfall probability α</b> — the maximum tolerated probability of breaching H. '                    'At α=5%, there is at most a 5% chance the portfolio return falls below H.<br><br>'                    '<b>Implied risk-aversion λ</b> — the unique mean-variance risk-aversion coefficient '                    'equivalent to your (H, α) constraint (when no derivatives are present). '                    'A higher λ means greater aversion to risk. '                    'If λ shows "—", the constraint parameters fall outside the computable range.<br><br>'                    '<b>Resolution</b> — controls the granularity of the state space grid. '                    'Fast is best for exploration; Standard and High precision give more accurate '                    'frontiers and are recommended before publishing or sharing results. '                    'Changing any parameter above requires clicking <b>▶ Run Optimiser</b> again.</div>',
+                    unsafe_allow_html=True)
+
             with col_chart:
                 st.plotly_chart(fig_plotly, use_container_width=True, config={'editable': True, 'displayModeBar': True})
                 st.markdown(
