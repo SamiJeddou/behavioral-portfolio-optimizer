@@ -1528,29 +1528,26 @@ div[data-testid="stSidebarContent"] button p {
 
     if run_btn:
         st.session_state['_run_active'] = True
+        st.session_state['_interaction_count'] = st.session_state.get('_interaction_count', 0) + 1
+        st.session_state['_run_interaction'] = st.session_state['_interaction_count']
         st.session_state.pop('_pdf_bytes', None)
         st.session_state.pop('_fig_png', None)
 
     if reset_btn:
-        st.session_state['_run_active'] = False
-        st.session_state.pop('_pdf_bytes', None)
-        st.session_state.pop('_fig_png', None)
-        st.session_state.pop('_fig_plotly', None)
+        for _k in ['_run_active','_pdf_bytes','_fig_png','_fig_plotly','_run_interaction']:
+            st.session_state.pop(_k, None)
         st.rerun()
 
-    # Use a fingerprint of key parameters to detect sidebar changes
-    # and auto-reset results if user changes data mode or H/alpha
-    _param_fingerprint = f"{data_mode}|{H_val}|{alpha_val}|{der_type}|{m_val}"
-    if st.session_state.get('_last_params') != _param_fingerprint:
-        # Parameters changed — clear results so user sees fresh state
-        # But only clear if there was a previous run (not on first load)
-        if st.session_state.get('_last_params') is not None:
-            st.session_state['_run_active'] = False
-            st.session_state.pop('_pdf_bytes', None)
-            st.session_state.pop('_fig_png', None)
-        st.session_state['_last_params'] = _param_fingerprint
-
-    _run_active = st.session_state.get('_run_active', False)
+    # Increment interaction count on every script rerun driven by user action
+    # On a fresh page load (no widget interaction), run_btn and reset_btn are both False
+    # and the interaction count won't increment — so we can detect fresh loads
+    if run_btn or reset_btn:
+        st.session_state['_interaction_count'] = st.session_state.get('_interaction_count', 0)
+    
+    # _run_active is only valid if it was set in the current browser session
+    # We track this by checking if _interaction_count > 0 (any interaction happened)
+    _has_interacted = st.session_state.get('_interaction_count', 0) > 0
+    _run_active = st.session_state.get('_run_active', False) and _has_interacted
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -1773,14 +1770,6 @@ def make_donut_svg(weights, labels, colors, size=160):
            + "".join(paths)
            + '</svg>')
     return svg
-
-# ── Version key — increment this on every deploy to force session state reset ──
-_APP_VERSION = "2.1.0"
-if st.session_state.get('_app_version') != _APP_VERSION:
-    # New version deployed — clear all run state
-    for _k in ['_run_active','_pdf_bytes','_fig_png','_fig_plotly','_last_params']:
-        st.session_state.pop(_k, None)
-    st.session_state['_app_version'] = _APP_VERSION
 
 st.markdown("<div style='margin-top:2.5rem'></div>", unsafe_allow_html=True)
 tab1,tab2,tab3=st.tabs(["📊 Optimiser","📖 About","📚 Glossary"])
