@@ -1513,10 +1513,10 @@ structured products, can unlock beyond what mean-variance can achieve.
         # Three portfolio perspectives note
         st.markdown('''
 <div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#c0c8d8;font-size:.82rem">
-<b style="color:#4a9eff">Three optimum portfolios are generated as output of the optimisation:</b><br><br>
-<b style="color:#10b981">Portfolio (1)</b> — Without derivatives: identical to the Markowitz MV optimum, derived through the mental accounting framework (reference portfolio)<br>
-<b style="color:#f59e0b">Portfolio (2)</b> — With derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
-<b style="color:#e76f51">Portfolio (3)</b> — With derivative, same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (see below)
+<b style="color:#4a9eff">Three portfolios are generated as output of the optimisation:</b><br><br>
+<b style="color:#10b981">Portfolio (1)</b> — Optimum portfolio without derivatives: identical to the Markowitz MV optimum, derived through the mental accounting framework (reference portfolio)<br>
+<b style="color:#f59e0b">Portfolio (2)</b> — Optimum portfolio with derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
+<b style="color:#e76f51">Portfolio (3)</b> — Portfolio with derivative and with the same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (see below)
 </div>
 ''', unsafe_allow_html=True)
 
