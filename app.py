@@ -1557,10 +1557,12 @@ div[data-testid="stSidebarContent"] button p {
         _prev_H     = _cached.get('H_val', None)
         _prev_alpha = _cached.get('_alpha', None)
         _prev_data  = _cached.get('data_mode', '__unset__')
+        _prev_grid  = _cached.get('grid_lbl', '__unset__')
         if (_prev_der != der_label_sel or
             _prev_H != H_val or
             _prev_alpha != alpha_val or
-            _prev_data != data_mode):
+            _prev_data != data_mode or
+            _prev_grid != grid_lbl):
             for _k in ['_run_active','_needs_compute','_cached_results',
                        '_pdf_bytes','_fig_png','_fig_plotly']:
                 st.session_state.pop(_k, None)
