@@ -167,12 +167,14 @@ The baseline result (10.21%) matches the thesis mean-variance result (10.23%) to
 
 ---
 
-## Roadmap
+## 🔮 Coming Soon
 
-- [ ] REST API endpoint (FastAPI) — making the optimiser callable by external portfolio management, risk, and trading systems
-- [ ] Async job handling for long-running optimisations
-- [ ] Additional derivative types and structured product templates
-- [ ] Multi-period optimisation
+| Feature | Status |
+|---|---|
+| REST API endpoint (FastAPI) — making the optimiser callable by external portfolio management, risk, and trading systems | 🔜 Planned |
+| Async job handling for long-running optimisations | 🔜 Planned |
+| Additional derivative types and structured product templates | 🔜 Planned |
+| Multi-period optimisation | 🔜 Planned |
 
 ## Author
 
