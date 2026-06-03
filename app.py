@@ -1774,6 +1774,14 @@ def make_donut_svg(weights, labels, colors, size=160):
            + '</svg>')
     return svg
 
+# ── Version key — increment this on every deploy to force session state reset ──
+_APP_VERSION = "2.1.0"
+if st.session_state.get('_app_version') != _APP_VERSION:
+    # New version deployed — clear all run state
+    for _k in ['_run_active','_pdf_bytes','_fig_png','_fig_plotly','_last_params']:
+        st.session_state.pop(_k, None)
+    st.session_state['_app_version'] = _APP_VERSION
+
 st.markdown("<div style='margin-top:2.5rem'></div>", unsafe_allow_html=True)
 tab1,tab2,tab3=st.tabs(["📊 Optimiser","📖 About","📚 Glossary"])
 
