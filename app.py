@@ -2047,7 +2047,7 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 def _lbl(t): return f'<div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">{t}</div>'
                 def _val(v): return f'<div style="margin-bottom:.6rem">{v}</div>'
                 _html = (
-                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;min-height:560px;'
+                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;min-height:680px;'
                     'padding:.8rem 1rem;color:#c0c8d8;font-size:.8rem">'
                     '<div style="color:#4a9eff;font-weight:700;font-size:.85rem;'
                     'margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">'
@@ -2063,43 +2063,6 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 )
                 st.markdown(_html, unsafe_allow_html=True)
 
-                # ── Key Metrics scorecard below parameters ────────────────────
-                _m1 = _nd_res_pre
-                _nd_ret_s  = f"{_m1['expected_return']*100:.2f}%" if _m1 else "—"
-                _nd_std_s  = f"{_m1['std_dev']*100:.2f}%"        if _m1 else "—"
-                _nd_skew_s = f"{_m1['skewness']:.3f}"            if _m1 else "—"
-                _nd_sf_s   = f"{_m1['shortfall_stat']*100:.2f}%" if _m1 else "—"
-                _lam_s2    = lam_summary if lam_summary != "—" else "—"
-                def _row(label, val, color="#c0c8d8"):
-                    return (f'<tr><td style="padding:.25rem .5rem;color:#7fb3e8;font-size:.75rem;white-space:nowrap">{label}</td>'
-                            f'<td style="padding:.25rem .5rem;color:{color};font-weight:600;font-size:.8rem;text-align:right">{val}</td></tr>')
-                _scorecard = (
-                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;padding:.6rem .8rem;margin-top:.5rem">'
-                    '<div style="color:#4a9eff;font-weight:700;font-size:.8rem;margin-bottom:.4rem">📊 Key Metrics</div>'
-                    '<table style="width:100%;border-collapse:collapse">'
-                    + _row("Portfolio (1) return", _nd_ret_s, "#10b981")
-                    + _row("Portfolio (1) std dev", _nd_std_s)
-                    + _row("Portfolio (1) skewness", _nd_skew_s)
-                    + _row("Shortfall / ES", _nd_sf_s)
-                    + _row("Implied λ", _lam_s2, "#10b981")
-                    + _row("Constraint", constraint_str)
-                )
-                _cached2 = st.session_state.get('_cached_results', {})
-                _dr_res_s = _cached2.get('dr_res')
-                _p3_ret_s = _cached2.get('p3_return')
-                if _m1 and _dr_res_s:
-                    _dr_ret_s = f"{_dr_res_s['expected_return']*100:.2f}%"
-                    _gain_s   = f"{(_dr_res_s['expected_return']-_m1['expected_return'])*100:+.2f} pp"
-                    _gain_col = "#10b981" if _dr_res_s['expected_return'] > _m1['expected_return'] else "#ef4444"
-                    _scorecard += _row("Portfolio (2) return", _dr_ret_s, "#f59e0b")
-                    _scorecard += _row("Gain (2) vs (1)", _gain_s, _gain_col)
-                if _p3_ret_s is not None and _m1:
-                    _p3_gain_s = f"{_p3_ret_s - _m1['expected_return']*100:+.2f} pp"
-                    _p3_col = "#10b981" if _p3_ret_s > _m1['expected_return']*100 else "#ef4444"
-                    _scorecard += _row("Portfolio (3) return", f"{_p3_ret_s:.2f}%", "#e76f51")
-                    _scorecard += _row("Gain (3) vs (1)", _p3_gain_s, _p3_col)
-                _scorecard += '</table></div>'
-                st.markdown(_scorecard, unsafe_allow_html=True)
             with col_chart:
                 st.plotly_chart(fig_plotly, use_container_width=True, config={'editable': True, 'displayModeBar': True})
                 st.markdown(
