@@ -1193,7 +1193,7 @@ def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
 
 # ── Finance banner ────────────────────────────────────────────────────────
 st.markdown(f'''
-<div style="max-width:900px;background:linear-gradient(135deg,#020c1b 0%,#071428 40%,#0a1a35 70%,#020c1b 100%);border-radius:12px;overflow:hidden;border:1px solid #1a3a5c;display:flex;align-items:stretch;font-family:monospace;margin-bottom:1rem">
+<div style="max-width:900px;margin:0 auto;background:linear-gradient(135deg,#020c1b 0%,#071428 40%,#0a1a35 70%,#020c1b 100%);border-radius:12px;overflow:hidden;border:1px solid #1a3a5c;display:flex;align-items:stretch;font-family:monospace;margin-bottom:1rem">
   <div style="flex:1.5;padding:16px 18px;border-right:1px solid #1a3a5c;display:flex;flex-direction:column;justify-content:center;gap:10px">
     <div style="color:#ffffff;font-size:13px;font-weight:700;letter-spacing:0.03em;font-family:Georgia,serif;line-height:1.45">Portfolio Optimiser<br>with Derivatives &amp;<br>Structured Products</div>
     <div style="color:rgba(74,158,255,0.65);font-size:7.5px;letter-spacing:0.22em">BEYOND MEAN-VARIANCE · MENTAL ACCOUNTS FRAMEWORK</div>
@@ -1315,7 +1315,7 @@ st.markdown(f'''
 </div>
 ''', unsafe_allow_html=True)
 
-DONUT_COLORS = ['#4a9eff','#f59e0b','#10b981','#a855f7','#ef4444','#06b6d4','#f97316','#84cc16']
+DONUT_COLORS = ['#e63946','#f4a261','#e9c46a','#2a9d8f','#264653','#023e8a','#e76f51','#457b9d']
 
 def make_donut_svg(weights, labels, colors, size=160):
     """Generate an SVG doughnut chart for portfolio weights."""
@@ -1366,7 +1366,7 @@ def make_donut_svg(weights, labels, colors, size=160):
     for i, (color, lbl, pct) in enumerate(legend_items):
         y = legend_y + i * 16
         legend_svg += (f'<rect x="0" y="{y}" width="10" height="10" fill="{color}" rx="2"/>'
-                       f'<text x="14" y="{y+9}" fill="#c0c8d8" font-size="10" font-family="sans-serif">'
+                       f'<text x="14" y="{y+9}" fill="#ffffff" font-size="10" font-family="sans-serif" font-weight="500">'
                        f'{lbl}: {pct:.1f}%</text>')
     
     total_height = size + 4 + len(legend_items) * 16 + 4
@@ -1515,7 +1515,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                                             der_xs,der_ys,der_lbls,der_label_sel,H_val,alpha_val)
 
             # ── Simulation summary + chart side by side ───────────────────────
-            col_summary, col_chart = st.columns([1, 3])
+            col_summary, col_chart = st.columns([1, 3.5])
 
             with col_summary:
                 # Build derivative parameters string
@@ -1563,11 +1563,11 @@ structured products, can unlock beyond what mean-variance can achieve.
                 def _val(v): return f'<div style="margin-bottom:.6rem">{v}</div>'
 
                 _html = (
-                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'
+                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;min-height:560px;'
                     'padding:.8rem 1rem;color:#c0c8d8;font-size:.8rem">'
                     '<div style="color:#4a9eff;font-weight:700;font-size:.85rem;'
                     'margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">'
-                    '📋 Simulation Parameters <span style="color:#556a8a;font-size:.65rem;font-weight:400">(read-only)</span></div>'
+                    '📌 Optimisation Parameters <span style="color:#556a8a;font-size:.65rem;font-weight:400">(summary)</span></div>'
                     + _lbl("DATA SOURCE") + _val(_data_src)
                     + _lbl("SECURITIES") + _val(_securities)
                     + _lbl("DERIVATIVE") + _val(_der_html)
@@ -1609,15 +1609,14 @@ structured products, can unlock beyond what mean-variance can achieve.
                 _nd_colors = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_nd_weights))]
                 _nd_svg = make_donut_svg(_nd_weights, _nd_labels, _nd_colors, size=150)
                 if _nd_svg:
-                    st.markdown(_nd_svg, unsafe_allow_html=True)
+                    st.markdown(f'<div style="display:flex;justify-content:center;margin-bottom:.5rem">{_nd_svg}</div>', unsafe_allow_html=True)
                 st.markdown("**Weights**")
                 for i,w in enumerate(_nd_weights):
                     lbl=_nd_labels[i]
                     _bar_color = _nd_colors[i]
                     st.markdown(
-                        f'<div style="margin-bottom:.3rem">'                        f'<span style="color:{_bar_color};font-weight:600">{lbl}</span>'                        f'<span style="color:#c0c8d8"> — {w*100:.1f}%</span></div>',
+                        f'<div style="margin-bottom:.5rem">'                        f'<div><span style="color:{_bar_color};font-weight:600">{lbl}</span>'                        f'<span style="color:#c0c8d8"> — {w*100:.1f}%</span></div>'                        f'<div style="height:6px;background:#1a2a3a;border-radius:3px;margin-top:3px">'                        f'<div style="height:6px;width:{w*100:.1f}%;background:{_bar_color};border-radius:3px"></div>'                        f'</div></div>',
                         unsafe_allow_html=True)
-                    st.progress(float(w))
                 _method_nd = nd_res.get('method_used','—')
                 _method_nd_label = (
                     "Exhaustive grid search + COBYLA refinement" if _method_nd == "grid_search"
@@ -1653,15 +1652,14 @@ structured products, can unlock beyond what mean-variance can achieve.
                     _dr_colors = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_dr_weights))]
                     _dr_svg = make_donut_svg(_dr_weights, _dr_labels, _dr_colors, size=150)
                     if _dr_svg:
-                        st.markdown(_dr_svg, unsafe_allow_html=True)
+                        st.markdown(f'<div style="display:flex;justify-content:center;margin-bottom:.5rem">{_dr_svg}</div>', unsafe_allow_html=True)
                     st.markdown("**Weights**")
                     for i,w in enumerate(_dr_weights):
                         lbl=_dr_labels[i]
                         _bar_color = _dr_colors[i]
                         st.markdown(
-                            f'<div style="margin-bottom:.3rem">'                            f'<span style="color:{_bar_color};font-weight:600">{lbl}</span>'                            f'<span style="color:#c0c8d8"> — {w*100:.1f}%</span></div>',
+                            f'<div style="margin-bottom:.5rem">'                            f'<div><span style="color:{_bar_color};font-weight:600">{lbl}</span>'                            f'<span style="color:#c0c8d8"> — {w*100:.1f}%</span></div>'                            f'<div style="height:6px;background:#1a2a3a;border-radius:3px;margin-top:3px">'                            f'<div style="height:6px;width:{w*100:.1f}%;background:{_bar_color};border-radius:3px"></div>'                            f'</div></div>',
                             unsafe_allow_html=True)
-                        st.progress(float(w))
                     _method_dr = dr_res.get('method_used','—')
                     _method_dr_label = (
                         "Exhaustive grid search + COBYLA refinement" if _method_dr == "grid_search"
