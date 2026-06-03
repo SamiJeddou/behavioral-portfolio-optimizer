@@ -1449,7 +1449,68 @@ structured products, can unlock beyond what mean-variance can achieve.
         with st.spinner("Rendering chart..."):
             fig_plotly=plot_frontier_plotly(mv_x,mv_y,mv_eq,nd_xs,nd_ys,nd_lbls,
                                             der_xs,der_ys,der_lbls,der_label_sel,H_val,alpha_val)
-            st.plotly_chart(fig_plotly, use_container_width=True)
+
+            # ── Simulation summary + chart side by side ───────────────────────
+            col_summary, col_chart = st.columns([1, 3])
+
+            with col_summary:
+                # Build derivative parameters string
+                der_params_str = ""
+                if der_config:
+                    for k, v in der_config.items():
+                        if k != "type":
+                            if isinstance(v, float):
+                                der_params_str += f"<br>• {k}: {v:.2%}" if abs(v) < 10 else f"<br>• {k}: {v:.2f}"
+                            else:
+                                der_params_str += f"<br>• {k}: {v}"
+
+                # Implied lambda
+                lam_summary = "—"
+                if not use_es:
+                    _cov_s = corr_to_cov(sigs_in, corr_in)
+                    _lam_s = implied_lambda(H_val, alpha_val, means_in, _cov_s)
+                    if _lam_s is not None:
+                        lam_summary = f"{_lam_s:.4f}"
+
+                constraint_str = (
+                    f"VaR — H={H_val:.0%}, α={_alpha:.0%}"
+                    if not use_es else
+                    f"ES — H={H_val:.0%}, L={_L:.0%}"
+                )
+
+                st.markdown(
+                    f'''<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;
+                    padding:.8rem 1rem;color:#c0c8d8;font-size:.8rem;height:100%">
+                    <div style="color:#4a9eff;font-weight:700;font-size:.85rem;
+                    margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">
+                    📋 Simulation Parameters</div>
+
+                    <div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">DATA SOURCE</div>
+                    <div style="margin-bottom:.6rem">{data_mode.split("(")[0].strip()}</div>
+
+                    <div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">SECURITIES</div>
+                    <div style="margin-bottom:.6rem">{", ".join(names_in)}</div>
+
+                    <div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">DERIVATIVE</div>
+                    <div style="margin-bottom:.6rem">
+                        {"<span style=\'color:#f59e0b\'>" + der_label_sel + "</span>" + der_params_str
+                         if der_config else
+                         "<span style=\'color:#8896a8\'>None</span>"}
+                    </div>
+
+                    <div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">CONSTRAINT</div>
+                    <div style="margin-bottom:.6rem">{constraint_str}</div>
+
+                    <div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">IMPLIED λ</div>
+                    <div style="margin-bottom:.6rem;color:#10b981;font-weight:600">{lam_summary}</div>
+
+                    <div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">RESOLUTION</div>
+                    <div>{grid_lbl.split("(")[0].strip()}</div>
+                    </div>''',
+                    unsafe_allow_html=True)
+
+            with col_chart:
+                st.plotly_chart(fig_plotly, use_container_width=True)
 
         # ── Results ───────────────────────────────────────────────────────────────
         st.markdown("---")
