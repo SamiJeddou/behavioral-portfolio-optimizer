@@ -577,7 +577,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     if der_x:
         fig.add_trace(go.Scatter(
             x=der_x, y=der_y, mode='markers',
-            name=f'Portfolio ❷ — Behavioural optimal portfolios — with {der_label}',
+            name=f'Portfolio (2) — Behavioural optimal portfolios — with {der_label}',
             marker=dict(size=10, color='#f59e0b', symbol='square'),
             text=der_lbls,
             hovertemplate=f'<b>Behavioural optimal portfolio (with {der_label})</b><br>Threshold: %{{text}}<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
@@ -625,7 +625,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     if mv_eq:
         fig.add_trace(go.Scatter(
             x=[mv_eq[0]], y=[mv_eq[1]], mode='markers',
-            name='Portfolio ❶ — Equivalence point: MV = Behavioural (no derivatives) where λ=3.795 ↔ H=-10%, α=5%',
+            name='Portfolio (1) — Equivalence point: MV = Behavioural (no derivatives) where λ=3.795 ↔ H=-10%, α=5%',
             marker=dict(size=13, color='#10b981', symbol='diamond',
                         line=dict(width=0)),
             showlegend=True,
@@ -1502,9 +1502,9 @@ structured products, can unlock beyond what mean-variance can achieve.
         st.markdown('''
 <div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#c0c8d8;font-size:.82rem">
 <b style="color:#4a9eff">Three optimum portfolios are generated as output of the optimisation:</b><br><br>
-<b style="color:#10b981">Portfolio <span style="font-size:1.1rem">❶</span></b> — Without derivatives: identical to the Markowitz MV optimum, derived through the mental accounting framework (reference portfolio)<br>
-<b style="color:#f59e0b">Portfolio <span style="font-size:1.1rem">❷</span></b> — With derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
-<b style="color:#4a9eff">Portfolio <span style="font-size:1.1rem">❸</span></b> — With derivative, same variance as Portfolio ❶: interpolated from the derivative frontier at equivalent risk level (see below)
+<b style="color:#10b981">Portfolio (1)</b> — Without derivatives: identical to the Markowitz MV optimum, derived through the mental accounting framework (reference portfolio)<br>
+<b style="color:#f59e0b">Portfolio (2)</b> — With derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
+<b style="color:#4a9eff">Portfolio (3)</b> — With derivative, same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (see below)
 </div>
 ''', unsafe_allow_html=True)
 
@@ -1590,7 +1590,7 @@ structured products, can unlock beyond what mean-variance can achieve.
         dr_res=None
 
         with c1:
-            st.markdown('**Optimal portfolio <span style="font-size:1.2rem">❶</span> — no derivative**', unsafe_allow_html=True)
+            st.markdown('**Optimal portfolio (1) — no derivative**', unsafe_allow_html=True)
             st.caption("Maximises return subject to the downside constraint")
             try:
                 nd_res,_=run_opt(means_arr,sigs_arr,cov_mat,None,H_val,_alpha,m_val,mp_val,
@@ -1606,7 +1606,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                 _nd_labels = [names_in[i] if i<len(names_in) else f"Asset {i+1}" for i in range(len(_nd_weights))]
                 _nd_colors = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_nd_weights))]
                 _nd_svg = make_donut_svg(_nd_weights, _nd_labels, _nd_colors, size=150)
-                st.markdown('<div style="min-height:1.8rem"><b>Portfolio weights</b></div>', unsafe_allow_html=True)
+                st.markdown('<div style="min-height:2.5rem"><b>Portfolio weights</b></div>', unsafe_allow_html=True)
                 if _nd_svg:
                     st.markdown(f'<div style="display:flex;justify-content:center;margin-bottom:.5rem">{_nd_svg}</div>', unsafe_allow_html=True)
                 for i,w in enumerate(_nd_weights):
@@ -1629,7 +1629,7 @@ structured products, can unlock beyond what mean-variance can achieve.
 
         with c2:
             if der_config:
-                st.markdown(f'**Optimal portfolio <span style="font-size:1.2rem">❷</span> — with {der_label_sel}**', unsafe_allow_html=True)
+                st.markdown(f'**Optimal portfolio (2) — with {der_label_sel}**', unsafe_allow_html=True)
                 st.caption(f"Same mental-accounting & risk-aversion constraint (H={H_val:.0%}, α={_alpha:.0%} ↔ λ) — results may vary")
                 try:
                     dr_res,_=run_opt(means_arr,sigs_arr,cov_mat,der_config,
@@ -1649,7 +1649,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                     _dr_labels = [asset_labels[i] if i<len(asset_labels) else f"Asset {i+1}" for i in range(len(_dr_weights))]
                     _dr_colors = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_dr_weights))]
                     _dr_svg = make_donut_svg(_dr_weights, _dr_labels, _dr_colors, size=150)
-                    st.markdown('<div style="min-height:1.8rem"><b>Portfolio weights</b></div>', unsafe_allow_html=True)
+                    st.markdown('<div style="min-height:2.5rem"><b>Portfolio weights</b></div>', unsafe_allow_html=True)
                     if _dr_svg:
                         st.markdown(f'<div style="display:flex;justify-content:center;margin-bottom:.5rem">{_dr_svg}</div>', unsafe_allow_html=True)
                     for i,w in enumerate(_dr_weights):
@@ -1678,22 +1678,22 @@ structured products, can unlock beyond what mean-variance can achieve.
                 '<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
                 'padding:.8rem 1rem;margin-top:.5rem;color:#111111;font-size:.85rem">'
                 '<b style="color:#1a3a6b">📌 How to read these results</b><br>'
-                'Portfolio ❶ and ❷ are compared at the <b>same mental-accounting & risk-aversion constraint</b> '
+                'Portfolio (1) and (2) are compared at the <b>same mental-accounting & risk-aversion constraint</b> '
                 f'(H={H_val:.0%}, α={_alpha:.0%} — same risk-aversion λ). '
-                'Depending on the derivative chosen, portfolio ② may achieve a higher or lower expected return '
+                'Depending on the derivative chosen, portfolio (2) may achieve a higher or lower expected return '
                 'and may show higher variance — the derivative satisfies the downside constraint differently, '
                 'which can allow the optimiser to pursue higher returns in favourable cases. '
-                'The comparison below shows portfolio ❸ at the <b>same variance as ❶ (no-derivative portfolio)</b> '
+                'The comparison below shows portfolio (3) at the <b>same variance as (1) (no-derivative portfolio)</b> '
                 '(interpolated from the derivative frontier), providing a complementary perspective.</div>',
                 unsafe_allow_html=True)
 
             # ── Same risk comparison (interpolated) ──────────────────────────
             st.markdown("---")
-            st.markdown(f'**Optimal portfolio <span style="font-size:1.2rem">❸</span> — same variance as Portfolio ❶, with {der_label_sel}** *(interpolated from derivative frontier)*', unsafe_allow_html=True)
-            st.caption(f"Interpolated from the derivative frontier: return at the same std deviation as portfolio ❶ (indicative only)")
+            st.markdown(f'**Optimal portfolio (3) — same variance as Portfolio (1), with {der_label_sel}** *(interpolated from derivative frontier)*', unsafe_allow_html=True)
+            st.caption(f"Interpolated from the derivative frontier: return at the same std deviation as portfolio (1) (indicative only)")
 
             if not (nd_res and len(der_xs) >= 2):
-                st.info("⚠️ Portfolio ❸ interpolation requires the derivative frontier to be computed with at least 2 points. Run with Standard or High precision resolution for reliable ❸ results.")
+                st.info("⚠️ Portfolio (3) interpolation requires the derivative frontier to be computed with at least 2 points. Run with Standard or High precision resolution for reliable (3) results.")
             if nd_res and len(der_xs) >= 2:
                 target_std = nd_res['std_dev'] * 100
                 # Sort frontier by std dev
@@ -1720,7 +1720,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                     st.markdown(
                         '<div style="background:#f0f7ff;border:1px solid #1a6bbf;border-radius:6px;'
                         'padding:.6rem 1rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
-                        f'At the <b>same variance as portfolio ❶</b> ({target_std:.1f}% std dev), '
+                        f'At the <b>same variance as portfolio (1)</b> ({target_std:.1f}% std dev), '
                         f'the derivative frontier achieves <b>{interp_return:.2f}%</b> expected return '
                         f'vs <b>{nd_res["expected_return"]*100:.2f}%</b> without derivatives — '
                         f'a gain of <b>+{gain_same_risk:.2f} percentage points</b>. '
