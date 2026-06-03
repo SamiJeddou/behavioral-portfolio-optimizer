@@ -1558,13 +1558,16 @@ div[data-testid="stSidebarContent"] button p {
         _prev_alpha = _cached.get('_alpha', None)
         _prev_data  = _cached.get('data_mode', '__unset__')
         _prev_grid  = _cached.get('grid_lbl', '__unset__')
-        _prev_names = _cached.get('names_in', [])
+        _prev_names    = _cached.get('names_in', [])
+        _prev_undl     = _cached.get('underlying_idx', 0)
+        _cur_undl      = der_params.get('underlying_idx', 0) if der_type is not None else 0
         if (_prev_der != der_label_sel or
             _prev_H != H_val or
             _prev_alpha != alpha_val or
             _prev_data != data_mode or
             _prev_grid != grid_lbl or
-            _prev_names != list(names_in)):
+            _prev_names != list(names_in) or
+            _prev_undl != _cur_undl):
             for _k in ['_run_active','_needs_compute','_cached_results',
                        '_pdf_bytes','_fig_png','_fig_plotly']:
                 st.session_state.pop(_k, None)
@@ -2453,6 +2456,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             'asset_labels': asset_labels,
             'constraint_str': constraint_str,
             'grid_lbl': grid_lbl,
+            'underlying_idx': der_params.get('underlying_idx', 0) if der_config else 0,
         }
         st.session_state['_needs_compute'] = False
 
