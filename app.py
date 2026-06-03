@@ -2007,81 +2007,76 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
             except Exception:
                 st.session_state['_fig_png'] = None
 
-            # ── Simulation summary — full width above chart ───────────────────
-            _SKIP_KEYS = {"type","underlying_index","S0","r","cgn_premium","vol"}
-            _LABEL_MAP = {"T":"Maturity","floor":"Floor","participation":"Participation",
-                          "cap":"Cap","K":"Strike","barrier":"Barrier","M":"Barrier M",
-                          "call_strike":"Call strike","put_strike":"Put strike"}
-            der_params_str = ""
-            if der_config:
-                for k, v in der_config.items():
-                    if k in _SKIP_KEYS or v is None:
-                        continue
-                    label = _LABEL_MAP.get(k, k.replace("_"," ").title())
-                    if isinstance(v, float):
-                        der_params_str += f"<br>• {label}: {v:.2%}" if abs(v) <= 5 else f"<br>• {label}: {v:.2f}"
-                    else:
-                        der_params_str += f"<br>• {label}: {v}"
+            # ── Simulation summary + chart side by side ───────────────────────
+            col_summary, col_chart = st.columns([1, 3.5])
 
-            lam_summary = "—"
-            if not use_es:
-                _cov_s = corr_to_cov(sigs_in, corr_in)
-                _lam_s = implied_lambda(H_val, alpha_val, means_in, _cov_s)
-                if _lam_s is not None:
-                    lam_summary = f"{_lam_s:.4f}"
-
-            constraint_str = (
-                f"VaR — H={H_val:.0%}, α={_alpha:.0%}"
-                if not use_es else
-                f"ES — H={H_val:.0%}, L={_L:.0%}"
-            )
-
-            _data_src = data_mode.split("(")[0].strip()
-            _securities = ", ".join(names_in)
-            _der_html = (
-                f'<span style="color:#f59e0b">{der_label_sel}</span>{der_params_str}'
-                if der_config else
-                '<span style="color:#8896a8">None</span>'
-            )
-            _resolution = grid_lbl.split("(")[0].strip()
-
-            def _lbl(t): return (
-                f'<span style="color:#7fb3e8;font-size:.72rem;font-weight:600">{t}:</span> ')
-            def _val(v): return f'<span style="color:#c0c8d8">{v}</span>'
-
-            _params_inline = (
-                _lbl("DATA SOURCE") + _val(_data_src) + " &nbsp;|&nbsp; "
-                + _lbl("SECURITIES") + _val(_securities) + " &nbsp;|&nbsp; "
-                + _lbl("DERIVATIVE") + _val(_der_html) + " &nbsp;|&nbsp; "
-                + _lbl("CONSTRAINT") + _val(constraint_str) + " &nbsp;|&nbsp; "
-                + _lbl("IMPLIED λ") + f'<span style="color:#10b981;font-weight:600">{lam_summary}</span>'
-                + " &nbsp;|&nbsp; "
-                + _lbl("RESOLUTION") + _val(_resolution)
-            )
-            st.markdown(
-                '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'
-                'padding:.6rem 1rem;color:#c0c8d8;font-size:.8rem;margin-bottom:.5rem;'
-                'display:flex;flex-wrap:wrap;align-items:center;gap:.3rem">'
-                '<span style="color:#4a9eff;font-weight:700;margin-right:.5rem">'
-                '📌 Optimisation Parameters (summary)</span>'
-                + _params_inline + '</div>',
+            with col_summary:
+                _SKIP_KEYS = {"type","underlying_index","S0","r","cgn_premium","vol"}
+                _LABEL_MAP = {"T":"Maturity","floor":"Floor","participation":"Participation",
+                              "cap":"Cap","K":"Strike","barrier":"Barrier","M":"Barrier M",
+                              "call_strike":"Call strike","put_strike":"Put strike"}
+                der_params_str = ""
+                if der_config:
+                    for k, v in der_config.items():
+                        if k in _SKIP_KEYS or v is None:
+                            continue
+                        label = _LABEL_MAP.get(k, k.replace("_"," ").title())
+                        if isinstance(v, float):
+                            der_params_str += f"<br>• {label}: {v:.2%}" if abs(v) <= 5 else f"<br>• {label}: {v:.2f}"
+                        else:
+                            der_params_str += f"<br>• {label}: {v}"
+                lam_summary = "—"
+                if not use_es:
+                    _cov_s = corr_to_cov(sigs_in, corr_in)
+                    _lam_s = implied_lambda(H_val, alpha_val, means_in, _cov_s)
+                    if _lam_s is not None:
+                        lam_summary = f"{_lam_s:.4f}"
+                constraint_str = (
+                    f"VaR — H={H_val:.0%}, α={_alpha:.0%}"
+                    if not use_es else
+                    f"ES — H={H_val:.0%}, L={_L:.0%}"
+                )
+                _data_src = data_mode.split("(")[0].strip()
+                _securities = ", ".join(names_in)
+                _der_html = (
+                    f'<span style="color:#f59e0b">{der_label_sel}</span>{der_params_str}'
+                    if der_config else
+                    '<span style="color:#8896a8">None</span>'
+                )
+                _resolution = grid_lbl.split("(")[0].strip()
+                def _lbl(t): return f'<div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">{t}</div>'
+                def _val(v): return f'<div style="margin-bottom:.6rem">{v}</div>'
+                _html = (
+                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;min-height:560px;'
+                    'padding:.8rem 1rem;color:#c0c8d8;font-size:.8rem">'
+                    '<div style="color:#4a9eff;font-weight:700;font-size:.85rem;'
+                    'margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">'
+                    '📌 Optimisation Parameters <span style="color:#556a8a;font-size:.65rem;font-weight:400">(summary)</span></div>'
+                    + _lbl("DATA SOURCE") + _val(_data_src)
+                    + _lbl("SECURITIES") + _val(_securities)
+                    + _lbl("DERIVATIVE") + _val(_der_html)
+                    + _lbl("CONSTRAINT") + _val(constraint_str)
+                    + _lbl("IMPLIED λ")
+                    + f'<div style="margin-bottom:.6rem;color:#10b981;font-weight:600">{lam_summary}</div>'
+                    + _lbl("RESOLUTION") + _val(_resolution)
+                    + '</div>'
+                )
+                st.markdown(_html, unsafe_allow_html=True)
+            with col_chart:
+                st.plotly_chart(fig_plotly, use_container_width=True, config={'editable': True, 'displayModeBar': True})
+                st.markdown(
+                '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;'
+                'padding:.6rem 1rem;color:#c0c8d8;font-size:.78rem;margin-top:.3rem">'
+                '<b style="color:#4a9eff">📐 Reading the chart</b> — '
+                'Without derivatives, the blue behavioural frontier should closely track the purple MV frontier, '
+                'confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010). '
+                'With derivatives, the frontiers may diverge — this is expected and is the core contribution of the framework: '
+                'derivatives allow the behavioural approach to reach portfolios that mean-variance optimisation cannot. '
+                'Some behavioural points may appear below the MV frontier at certain risk levels — this reflects the binding '
+                'nature of the downside constraint at those H values, not a failure of the method. '
+                '<b style="color:#f59e0b">Fast resolution</b> uses a coarse grid and may introduce small approximation errors — '
+                'use Standard or High precision for publication-quality results.</div>',
                 unsafe_allow_html=True)
-
-            # ── Chart full width ──────────────────────────────────────────────
-            st.plotly_chart(fig_plotly, use_container_width=True, config={'editable': True, 'displayModeBar': True})
-            st.markdown(
-            '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;'
-            'padding:.6rem 1rem;color:#c0c8d8;font-size:.78rem;margin-top:.3rem">'
-            '<b style="color:#4a9eff">📐 Reading the chart</b> — '
-            'Without derivatives, the blue behavioural frontier should closely track the purple MV frontier, '
-            'confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010). '
-            'With derivatives, the frontiers may diverge — this is expected and is the core contribution of the framework: '
-            'derivatives allow the behavioural approach to reach portfolios that mean-variance optimisation cannot. '
-            'Some behavioural points may appear below the MV frontier at certain risk levels — this reflects the binding '
-            'nature of the downside constraint at those H values, not a failure of the method. '
-            '<b style="color:#f59e0b">Fast resolution</b> uses a coarse grid and may introduce small approximation errors — '
-            'use Standard or High precision for publication-quality results.</div>',
-            unsafe_allow_html=True)
 
         # ── Results ───────────────────────────────────────────────────────────────
         st.markdown("---")
