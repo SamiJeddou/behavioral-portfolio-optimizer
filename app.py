@@ -1712,7 +1712,7 @@ tab1,tab2,tab3=st.tabs(["📊 Optimiser","📖 About","📚 Glossary"])
 
 with tab1:
     import os
-    st.markdown("## Beyond Mean-Variance: Portfolio Optimiser with Derivatives & Structured Products — A Mental Accounts Framework")
+    st.markdown('<h2 style="color:#4a9eff">Beyond Mean-Variance: Portfolio Optimiser with Derivatives &amp; Structured Products — A Mental Accounts Framework</h2>', unsafe_allow_html=True)
     st.markdown(
         "Most portfolio optimisers stop at stocks and bonds. This app goes further — "
         "incorporating derivatives and structured products, handling **non-normal return distributions**, "
@@ -1800,17 +1800,16 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
         import os
         if os.path.exists("sample_output.png"):
             st.markdown(
-                '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'
-                'padding:.6rem 1rem .4rem 1rem;margin-top:.5rem">'
-                '<div style="color:#4a9eff;font-weight:600;font-size:.85rem;margin-bottom:.4rem">'
-                '🖼️ Sample output — Safety collar with all three portfolio perspectives</div>'
+                '<div style="text-align:center;margin:1rem 0 .6rem 0">'
+                '<span style="font-size:1.3rem;font-weight:700;color:#4a9eff">'
+                '🖼️ Sample Output</span><br>'
+                '<span style="font-size:.85rem;color:#c0c8d8">'
+                'Safety collar — showing all three portfolio perspectives</span>'
                 '</div>',
                 unsafe_allow_html=True)
             _col_l2, _col_img, _col_r2 = st.columns([1, 4, 1])
             with _col_img:
-                st.image("sample_output.png",
-                         caption="Portfolio (1) green diamond · Portfolio (2) orange square · Portfolio (3) coral star",
-                         use_container_width=True)
+                st.image("sample_output.png", use_container_width=True)
 
         pass  # welcome screen shown, About tab still renders
 
