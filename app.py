@@ -78,25 +78,56 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
         ]
 
     def weights_table(labels, weights, colors_list, title):
-        data = [[title, 'Weight', 'Bar']]
+        from reportlab.platypus import Flowable
+        from reportlab.lib.units import cm as _cm
+
+        class BarFlowable(Flowable):
+            def __init__(self, fraction, bar_color, width=5*cm, height=0.35*cm):
+                Flowable.__init__(self)
+                self.fraction = max(0.0, min(1.0, fraction))
+                self.bar_color = bar_color
+                self.width = width
+                self.height = height
+            def draw(self):
+                # Background track
+                self.canv.setFillColor(colors.HexColor('#e9ecef'))
+                self.canv.rect(0, 0, self.width, self.height, fill=1, stroke=0)
+                # Filled portion
+                if self.fraction > 0:
+                    self.canv.setFillColor(self.bar_color)
+                    self.canv.rect(0, 0, self.width * self.fraction, self.height, fill=1, stroke=0)
+
+        # Header row
+        header = [Paragraph(f'<b>{title}</b>', ParagraphStyle('h', parent=styles["Normal"], fontSize=8, textColor=white)),
+                  Paragraph('<b>Weight</b>', ParagraphStyle('h', parent=styles["Normal"], fontSize=8, textColor=white)),
+                  Paragraph('<b>Allocation</b>', ParagraphStyle('h', parent=styles["Normal"], fontSize=8, textColor=white))]
+        rows = [header]
+
+        _bar_colors = [colors.HexColor('#e63946'), colors.HexColor('#f4a261'),
+                       colors.HexColor('#e9c46a'), colors.HexColor('#2a9d8f'),
+                       colors.HexColor('#264653'), colors.HexColor('#023e8a'),
+                       colors.HexColor('#e76f51'), colors.HexColor('#457b9d')]
+
         for i, (lbl, w) in enumerate(zip(labels, weights)):
-            # Normalise: if weights appear to be percentages (>1), convert to fraction
             _wf = float(w) / 100.0 if float(w) > 1.0 else float(w)
             _wf = max(0.0, min(1.0, _wf))
-            _filled = int(round(_wf * 20))
-            bar = '█' * _filled + '░' * (20 - _filled)
-            data.append([lbl, f'{_wf*100:.1f}%', bar])
-        t = Table(data, colWidths=[6*cm, 2*cm, 6*cm])
+            _col = _bar_colors[i % len(_bar_colors)]
+            rows.append([
+                Paragraph(lbl, ParagraphStyle('c', parent=styles["Normal"], fontSize=8)),
+                Paragraph(f'{_wf*100:.1f}%', ParagraphStyle('c', parent=styles["Normal"], fontSize=8, alignment=1)),
+                BarFlowable(_wf, _col, width=5*cm, height=0.3*cm),
+            ])
+
+        t = Table(rows, colWidths=[6*cm, 2*cm, 5.5*cm], rowHeights=[0.55*cm] + [0.5*cm]*len(labels))
         t.setStyle(TableStyle([
             ('BACKGROUND', (0,0), (-1,0), navy),
-            ('TEXTCOLOR',  (0,0), (-1,0), white),
-            ('FONTSIZE',   (0,0), (-1,-1), 8),
             ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor('#f8f9fa'), white]),
             ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#dee2e6')),
-            ('ALIGN', (1,0), (1,-1), 'CENTER'),
-            ('FONTNAME', (2,1), (2,-1), 'Courier'),
-            ('FONTSIZE', (2,1), (2,-1), 7),
-            ('TEXTCOLOR', (2,1), (2,-1), blue),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+            ('LEFTPADDING', (0,0), (-1,-1), 4),
+            ('RIGHTPADDING', (0,0), (-1,-1), 4),
+            ('TOPPADDING', (0,0), (-1,-1), 3),
+            ('BOTTOMPADDING', (0,0), (-1,-1), 3),
         ]))
         return t
 
