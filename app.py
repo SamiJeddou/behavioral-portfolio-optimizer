@@ -2047,7 +2047,7 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 def _lbl(t): return f'<div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">{t}</div>'
                 def _val(v): return f'<div style="margin-bottom:.6rem">{v}</div>'
                 _html = (
-                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;min-height:680px;'
+                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;min-height:560px;'
                     'padding:.8rem 1rem;color:#c0c8d8;font-size:.8rem">'
                     '<div style="color:#4a9eff;font-weight:700;font-size:.85rem;'
                     'margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">'
@@ -2066,16 +2066,16 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
             with col_chart:
                 st.plotly_chart(fig_plotly, use_container_width=True, config={'editable': True, 'displayModeBar': True})
                 st.markdown(
-                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;'
-                    'padding:.6rem 1rem;color:#c0c8d8;font-size:.78rem;margin-top:.3rem">'
-                    '<b style="color:#4a9eff">📐 Reading the chart</b> — '
+                    '<div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:6px;'
+                    'padding:.6rem 1rem;color:#111111;font-size:.78rem;margin-top:.3rem">'
+                    '<b style="color:#1a6bbf">📐 Reading the chart</b> — '
                     'Without derivatives, the blue behavioural frontier should closely track the purple MV frontier, '
                     'confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010). '
                     'With derivatives, the frontiers may diverge — this is expected and is the core contribution of the framework: '
                     'derivatives allow the behavioural approach to reach portfolios that mean-variance optimisation cannot. '
                     'Some behavioural points may appear below the MV frontier at certain risk levels — this reflects the binding '
                     'nature of the downside constraint at those H values, not a failure of the method. '
-                    '<b style="color:#f59e0b">Fast resolution</b> uses a coarse grid and may introduce small approximation errors — '
+                    '<b style="color:#d97706">Fast resolution</b> uses a coarse grid and may introduce small approximation errors — '
                     'use Standard or High precision for publication-quality results.</div>',
                     unsafe_allow_html=True)
 
