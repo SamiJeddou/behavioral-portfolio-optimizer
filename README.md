@@ -2,7 +2,7 @@
 
 > Extending Markowitz mean-variance theory to portfolios with derivatives and structured products using a mental-accounting framework.
 
-![Efficient Frontier](sample_output.png)
+![Portfolio Optimiser Output — Safety Collar example with three portfolio perspectives](sample_output.png)
 
 ---
 
