@@ -1648,39 +1648,47 @@ Follow these steps in the sidebar:
 </tr>
 </table>
 
-The chart will show three curves and two markers:
+The chart shows the efficient frontiers and up to three portfolio markers:
 
 <table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
 <tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Curves</td></tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🟣 <strong>Purple dashed</strong></td>
-  <td style="padding:.3rem .5rem">Classical mean-variance efficient frontier (Markowitz)</td>
+  <td style="padding:.3rem .5rem">Mean-variance efficient frontier (Markowitz)</td>
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
-  <td style="padding:.3rem .5rem;white-space:nowrap">🔵 <strong>Blue</strong></td>
-  <td style="padding:.3rem .5rem">Behavioural optimiser frontier without derivatives</td>
+  <td style="padding:.3rem .5rem;white-space:nowrap">🔵 <strong>Blue dots</strong></td>
+  <td style="padding:.3rem .5rem">Behavioural efficient frontier — no derivative (each dot is the optimum portfolio for one H constraint level)</td>
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
-  <td style="padding:.3rem .5rem;white-space:nowrap">🟡 <strong>Gold</strong></td>
-  <td style="padding:.3rem .5rem">Behavioural optimiser frontier including your selected derivative</td>
+  <td style="padding:.3rem .5rem;white-space:nowrap">🟡 <strong>Gold squares</strong></td>
+  <td style="padding:.3rem .5rem">Behavioural optimum portfolios — derivative frontier (one point per H level, with the selected derivative)</td>
 </tr>
-<tr><td colspan="2" style="padding:.5rem .5rem .3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Markers</td></tr>
+<tr><td colspan="2" style="padding:.5rem .5rem .3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Portfolio markers</td></tr>
 <tr style="border-bottom:1px solid #2a2a3a">
-  <td style="padding:.3rem .5rem;white-space:nowrap">➡️ <strong>White dotted arrow</strong></td>
-  <td style="padding:.3rem .5rem">Return gap between the behavioural frontier without and with the derivative, at the selected H and α constraint</td>
+  <td style="padding:.3rem .5rem;white-space:nowrap">🟢 <strong>Green diamond</strong></td>
+  <td style="padding:.3rem .5rem"><strong>Portfolio (1)</strong> — Equivalence point: the unique portfolio where mean-variance and behavioural approaches yield exactly the same result. At H=-10%, α=5%, the implied risk-aversion is λ=3.795. Both curves meet here, confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010).</td>
+</tr>
+<tr style="border-bottom:1px solid #2a2a3a">
+  <td style="padding:.3rem .5rem;white-space:nowrap">🟠 <strong>Orange square (white frame)</strong></td>
+  <td style="padding:.3rem .5rem"><strong>Portfolio (2)</strong> — Behavioural optimum portfolio with the selected derivative at the chosen H and α constraint. Highlighted separately from the frontier squares to identify the specific selected constraint point.</td>
+</tr>
+<tr style="border-bottom:1px solid #2a2a3a">
+  <td style="padding:.3rem .5rem;white-space:nowrap">🔴 <strong>Coral star (white frame)</strong></td>
+  <td style="padding:.3rem .5rem"><strong>Portfolio (3)</strong> — Interpolated point on the derivative frontier at the same standard deviation as Portfolio (1). Shows the return achievable with derivatives at equivalent risk — indicative only, not always available (requires derivative frontier to overlap with Portfolio (1) risk level).</td>
 </tr>
 <tr>
-  <td style="padding:.3rem .5rem;white-space:nowrap">🟢 <strong>Green diamond</strong></td>
-  <td style="padding:.3rem .5rem">Equivalence point: the unique portfolio where the mean-variance and behavioural approaches yield exactly the same result (here at λ=3.795, H=-10%, α=5%). To the right of this point, adding derivatives allows the behavioural approach to outperform mean-variance.</td>
+  <td style="padding:.3rem .5rem;white-space:nowrap">➡️ <strong>White dotted arrow</strong></td>
+  <td style="padding:.3rem .5rem">Return gap between Portfolio (1) and Portfolio (2) at the selected H and α constraint — illustrates the return uplift (or reduction) from adding derivatives.</td>
 </tr>
 </table>
 
-At the equivalence point (λ=3.795, H=-10%, α=5%), the grey and blue curves meet exactly —
+At the equivalence point (λ=3.795, H=-10%, α=5%), the purple and blue curves meet exactly —
 confirming the MVT/MAT equivalence proven in Das, Markowitz, Scheid & Statman (2010).
-The gold curve shows what the behavioural approach, with the right choice of derivatives or
-structured products, can unlock beyond what mean-variance can achieve.
+Adding derivatives shifts the frontier upward (gold squares above blue dots), revealing
+what the behavioural approach with derivatives can unlock beyond mean-variance.
 
-**Note on discrete vs continuous frontiers:** The behavioural frontiers are plotted at discrete constraint levels (H = -5%, -8%, -10%, -12%, -15%, -18%, -20%). Each point is the optimal portfolio for that specific mental-account threshold. The MV frontier is continuous as it is computed by sweeping the risk-aversion parameter λ — each MV portfolio corresponds to one behavioural portfolio via the MVT/MAT equivalence, demonstrating that both approaches converge to the same solution when no derivatives are present.
+**Note on discrete vs continuous frontiers:** The behavioural frontiers are plotted at discrete constraint levels (H = -2%, -5%, -8%, -10%, -12%, -15%, -18%, -20%, -25%, -30%, -35%, -40%). Each point is the optimal portfolio for that specific mental-account threshold. The MV frontier is continuous as it is computed by sweeping the risk-aversion parameter λ — each MV portfolio corresponds to one behavioural portfolio via the MVT/MAT equivalence, demonstrating that both approaches converge to the same solution when no derivatives are present.
 
 </div>
 """, unsafe_allow_html=True)
@@ -1745,29 +1753,26 @@ structured products, can unlock beyond what mean-variance can achieve.
 </div>
 ''', unsafe_allow_html=True)
 
+        # ── Pre-compute nd_res for chart P3 point ────────────────────────────
+        _nd_res_pre = None
+        try:
+            _nd_res_pre, _ = run_opt(means_arr, sigs_arr, cov_mat, None, H_val, _alpha,
+                                     m_val, mp_val, constraint_type=_ctype, L=_L)
+        except Exception:
+            pass
+
         with st.spinner("Rendering chart..."):
-            # Compute Portfolio (3) point for chart overlay
+            # Compute Portfolio (3) point for chart overlay using pre-computed nd_res
             _p3_x, _p3_y = None, None
-            if der_xs and len(der_xs) >= 2:
+            if der_xs and len(der_xs) >= 2 and _nd_res_pre:
                 try:
-                    # Use nd_res std_dev if available, else use closest frontier point
-                    if nd_res:
-                        _target_std = nd_res['std_dev'] * 100
-                    else:
-                        _key = f"H={H_val:.0%}"
-                        if _key in nd_lbls:
-                            _target_std = nd_xs[nd_lbls.index(_key)]
-                        elif nd_xs:
-                            _target_std = nd_xs[len(nd_xs)//2]
-                        else:
-                            _target_std = None
-                    if _target_std is not None:
-                        _fp = sorted(zip(der_xs, der_ys), key=lambda p: p[0])
-                        _fx = [p[0] for p in _fp]
-                        _fy = [p[1] for p in _fp]
-                        if min(_fx) <= _target_std <= max(_fx):
-                            _p3_x = _target_std
-                            _p3_y = float(np.interp(_target_std, _fx, _fy))
+                    _target_std = _nd_res_pre['std_dev'] * 100
+                    _fp = sorted(zip(der_xs, der_ys), key=lambda p: p[0])
+                    _fx = [p[0] for p in _fp]
+                    _fy = [p[1] for p in _fp]
+                    if min(_fx) <= _target_std <= max(_fx):
+                        _p3_x = _target_std
+                        _p3_y = float(np.interp(_target_std, _fx, _fy))
                 except Exception:
                     pass
 
