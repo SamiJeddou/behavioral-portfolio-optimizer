@@ -1521,10 +1521,34 @@ div[data-testid="stSidebarContent"] button p {
         use_container_width=True,
         disabled=not data_valid)
 
+    reset_btn=st.button(
+        "↩  Reset / New Simulation",
+        type="secondary",
+        use_container_width=True)
+
     if run_btn:
         st.session_state['_run_active'] = True
-        # Clear old PDF when new run starts
         st.session_state.pop('_pdf_bytes', None)
+        st.session_state.pop('_fig_png', None)
+
+    if reset_btn:
+        st.session_state['_run_active'] = False
+        st.session_state.pop('_pdf_bytes', None)
+        st.session_state.pop('_fig_png', None)
+        st.session_state.pop('_fig_plotly', None)
+        st.rerun()
+
+    # Use a fingerprint of key parameters to detect sidebar changes
+    # and auto-reset results if user changes data mode or H/alpha
+    _param_fingerprint = f"{data_mode}|{H_val}|{alpha_val}|{der_type}|{m_val}"
+    if st.session_state.get('_last_params') != _param_fingerprint:
+        # Parameters changed — clear results so user sees fresh state
+        # But only clear if there was a previous run (not on first load)
+        if st.session_state.get('_last_params') is not None:
+            st.session_state['_run_active'] = False
+            st.session_state.pop('_pdf_bytes', None)
+            st.session_state.pop('_fig_png', None)
+        st.session_state['_last_params'] = _param_fingerprint
 
     _run_active = st.session_state.get('_run_active', False)
 
