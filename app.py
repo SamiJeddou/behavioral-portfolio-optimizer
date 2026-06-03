@@ -11,6 +11,181 @@ import matplotlib
 import matplotlib.pyplot as plt
 matplotlib.use('Agg')
 import plotly.graph_objects as go
+
+def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
+                         nd_labels, nd_weights, nd_colors,
+                         dr_labels, dr_weights, dr_colors,
+                         der_label_sel, H_val, _alpha, use_es, _L,
+                         data_mode, names_in, grid_lbl, lam_summary):
+    """Generate a PDF summary report of optimisation results."""
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.lib import colors
+    from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer,
+                                     Table, TableStyle, HRFlowable)
+    from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    import io, datetime
+
+    buf = io.BytesIO()
+    doc = SimpleDocTemplate(buf, pagesize=A4,
+                            leftMargin=2*cm, rightMargin=2*cm,
+                            topMargin=2*cm, bottomMargin=2*cm)
+
+    styles = getSampleStyleSheet()
+    navy   = colors.HexColor('#0d1a2e')
+    blue   = colors.HexColor('#1a6bbf')
+    green  = colors.HexColor('#10b981')
+    gold   = colors.HexColor('#f59e0b')
+    coral  = colors.HexColor('#e76f51')
+    light  = colors.HexColor('#c0c8d8')
+    white  = colors.white
+
+    title_style = ParagraphStyle('Title2', parent=styles['Title'],
+                                  textColor=navy, fontSize=16, spaceAfter=4)
+    h1_style    = ParagraphStyle('H1', parent=styles['Heading1'],
+                                  textColor=blue, fontSize=12, spaceAfter=4)
+    h2_style    = ParagraphStyle('H2', parent=styles['Heading2'],
+                                  textColor=navy, fontSize=10, spaceAfter=2)
+    body_style  = ParagraphStyle('Body2', parent=styles['Normal'],
+                                  fontSize=9, spaceAfter=3)
+    caption_style = ParagraphStyle('Caption', parent=styles['Normal'],
+                                    fontSize=8, textColor=colors.grey, spaceAfter=2)
+
+    def section_header(text, color=blue):
+        return [
+            Paragraph(text, ParagraphStyle('SH', parent=styles['Heading2'],
+                       textColor=white, backColor=color, fontSize=10,
+                       spaceBefore=8, spaceAfter=4, leftIndent=-6, rightIndent=-6,
+                       borderPadding=(4,6,4,6))),
+        ]
+
+    def weights_table(labels, weights, colors_list, title):
+        data = [[title, 'Weight', 'Bar']]
+        for i, (lbl, w) in enumerate(zip(labels, weights)):
+            bar = '█' * int(w * 20) + '░' * (20 - int(w * 20))
+            data.append([lbl, f'{w*100:.1f}%', bar])
+        t = Table(data, colWidths=[6*cm, 2*cm, 6*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), navy),
+            ('TEXTCOLOR',  (0,0), (-1,0), white),
+            ('FONTSIZE',   (0,0), (-1,-1), 8),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor('#f8f9fa'), white]),
+            ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#dee2e6')),
+            ('ALIGN', (1,0), (1,-1), 'CENTER'),
+            ('FONTNAME', (2,1), (2,-1), 'Courier'),
+            ('FONTSIZE', (2,1), (2,-1), 7),
+            ('TEXTCOLOR', (2,1), (2,-1), blue),
+        ]))
+        return t
+
+    def metrics_table(res, is_interp=False, interp_ret=None, interp_std=None, gain=None):
+        if is_interp:
+            data = [
+                ['Metric', 'Value'],
+                ['Expected return (interpolated)', f'{interp_ret:.2f}%'],
+                ['Std deviation', f'{interp_std:.2f}%'],
+                ['Return vs Portfolio (1)', f'{gain:+.2f} pp'],
+            ]
+        else:
+            data = [
+                ['Metric', 'Value'],
+                ['Expected return', f"{res['expected_return']*100:.2f}%"],
+                ['Std deviation',   f"{res['std_dev']*100:.2f}%"],
+                ['Skewness',        f"{res['skewness']:.3f}"],
+                ['Shortfall / ES',  f"{res['shortfall_stat']*100:.2f}%"],
+            ]
+        t = Table(data, colWidths=[8*cm, 4*cm])
+        t.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), navy),
+            ('TEXTCOLOR',  (0,0), (-1,0), white),
+            ('FONTSIZE',   (0,0), (-1,-1), 9),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor('#f8f9fa'), white]),
+            ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#dee2e6')),
+            ('ALIGN', (1,0), (1,-1), 'RIGHT'),
+        ]))
+        return t
+
+    story = []
+
+    # ── Title ─────────────────────────────────────────────────────────────────
+    story.append(Paragraph('Portfolio Optimisation Report', title_style))
+    story.append(Paragraph(
+        'Beyond Mean-Variance: Portfolio Optimiser with Derivatives &amp; Structured Products — A Mental Accounts Framework',
+        ParagraphStyle('Sub', parent=styles['Normal'], fontSize=9, textColor=colors.grey)))
+    story.append(Paragraph(
+        f'Generated: {datetime.datetime.now().strftime("%d %B %Y, %H:%M")} | '
+        f'Constraint: {constraint_label} | Data: {data_mode.split("(")[0].strip()}',
+        caption_style))
+    story.append(HRFlowable(width='100%', thickness=1, color=blue, spaceAfter=8))
+
+    # ── Simulation parameters ─────────────────────────────────────────────────
+    story += section_header('Simulation Parameters', navy)
+    params = [
+        ['Parameter', 'Value'],
+        ['Data source', data_mode.split('(')[0].strip()],
+        ['Securities', ', '.join(names_in)],
+        ['Derivative', der_label_sel if der_label_sel else 'None'],
+        ['Constraint type', 'Expected Shortfall' if use_es else 'Value-at-Risk (VaR)'],
+        ['Threshold H', f'{H_val:.0%}'],
+        ['Shortfall prob α' if not use_es else 'Tail limit L', f'{_alpha:.0%}' if not use_es else f'{_L:.0%}'],
+        ['Implied risk-aversion λ', lam_summary],
+        ['Grid resolution', grid_lbl.split('(')[0].strip()],
+    ]
+    t = Table(params, colWidths=[7*cm, 7*cm])
+    t.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), navy),
+        ('TEXTCOLOR',  (0,0), (-1,0), white),
+        ('FONTSIZE',   (0,0), (-1,-1), 9),
+        ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor('#f8f9fa'), white]),
+        ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#dee2e6')),
+    ]))
+    story.append(t)
+    story.append(Spacer(1, 8))
+
+    # ── Portfolio (1) ─────────────────────────────────────────────────────────
+    if nd_res:
+        story += section_header('Portfolio (1) — Optimum without derivatives', green)
+        story.append(metrics_table(nd_res))
+        story.append(Spacer(1, 4))
+        story.append(weights_table(nd_labels, nd_weights, nd_colors, 'Security'))
+        story.append(Spacer(1, 8))
+
+    # ── Portfolio (2) ─────────────────────────────────────────────────────────
+    if dr_res and der_label_sel:
+        story += section_header(f'Portfolio (2) — Optimum with {der_label_sel}', gold)
+        if nd_res:
+            delta = (dr_res['expected_return'] - nd_res['expected_return']) * 100
+            story.append(Paragraph(
+                f'Return vs Portfolio (1): <b>{delta:+.2f} pp</b> at same constraint (H={H_val:.0%}, alpha={_alpha:.0%})',
+                body_style))
+        story.append(metrics_table(dr_res))
+        story.append(Spacer(1, 4))
+        story.append(weights_table(dr_labels, dr_weights, dr_colors, 'Security / Instrument'))
+        story.append(Spacer(1, 8))
+
+    # ── Portfolio (3) ─────────────────────────────────────────────────────────
+    if p3_return is not None and nd_res:
+        story += section_header(f'Portfolio (3) — Same variance as Portfolio (1), with {der_label_sel}', coral)
+        story.append(Paragraph(
+            'Interpolated from the derivative frontier — indicative only.',
+            caption_style))
+        gain = p3_return - nd_res['expected_return'] * 100
+        story.append(metrics_table(None, is_interp=True,
+                                   interp_ret=p3_return, interp_std=p3_std, gain=gain))
+        story.append(Spacer(1, 8))
+
+    # ── Footer ────────────────────────────────────────────────────────────────
+    story.append(HRFlowable(width='100%', thickness=0.5, color=colors.grey))
+    story.append(Paragraph(
+        'This report is for educational and research purposes only. '
+        'It does not constitute financial advice or investment recommendations. '
+        'Built on Das &amp; Statman (2009), Das, Markowitz, Scheid &amp; Statman (2010) JFQA, and Jeddou (2012) USI Lugano.',
+        ParagraphStyle('Footer', parent=styles['Normal'], fontSize=7, textColor=colors.grey)))
+
+    doc.build(story)
+    buf.seek(0)
+    return buf.getvalue()
 from scipy.optimize import minimize
 from io import StringIO
 from datetime import date, timedelta
@@ -589,19 +764,33 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         ))
 
         # ── Portfolio (2) highlighted point at selected H ─────────────────────
-        try:
-            _i2 = der_lbls.index(f'H={H_sel:.0%}')
-            fig.add_trace(go.Scatter(
-                x=[der_x[_i2]], y=[der_y[_i2]], mode='markers',
-                name=f'Portfolio (2) — optimum with {der_label} at H={H_sel:.0%}',
-                legendrank=6,
-                marker=dict(size=14, color='#ff6b00', symbol='square',
-                           line=dict(color='white', width=1.5)),
-                hovertemplate=(f'<b>Portfolio (2)</b><br>Optimum with {der_label}<br>'
-                              f'Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>')
-            ))
-        except (ValueError, IndexError):
-            pass
+        if der_x and der_y and der_lbls:
+            try:
+                _target_h = f'H={H_sel:.0%}'
+                if _target_h in der_lbls:
+                    _i2 = der_lbls.index(_target_h)
+                else:
+                    _i2 = 0
+                    _best = float('inf')
+                    for _ii, _lbl in enumerate(der_lbls):
+                        try:
+                            _hv = float(_lbl.replace('H=','').replace('%','')) / 100
+                            if abs(_hv - H_sel) < _best:
+                                _best = abs(_hv - H_sel)
+                                _i2 = _ii
+                        except Exception:
+                            pass
+                fig.add_trace(go.Scatter(
+                    x=[der_x[_i2]], y=[der_y[_i2]], mode='markers',
+                    name=f'Portfolio (2) — optimum with {der_label} at H={H_sel:.0%}',
+                    legendrank=6,
+                    marker=dict(size=14, color='#ff6b00', symbol='square',
+                               line=dict(color='white', width=1.5)),
+                    hovertemplate=(f'<b>Portfolio (2)</b><br>Optimum with {der_label}<br>'
+                                  f'Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>')
+                ))
+            except Exception:
+                pass
 
         # Gain arrow at selected H
         try:
@@ -1549,10 +1738,10 @@ structured products, can unlock beyond what mean-variance can achieve.
         # Three portfolio perspectives note
         st.markdown('''
 <div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#c0c8d8;font-size:.82rem">
-<b style="color:#4a9eff">Three portfolios are generated as output of the optimisation:</b><br><br>
+<b style="color:#4a9eff">Up to three portfolios can be generated as output of the optimisation:</b><br><br>
 <b style="color:#10b981">Portfolio (1)</b> — Optimum portfolio without derivatives: identical to the Markowitz MV optimum, derived through the mental accounting framework (reference portfolio)<br>
 <b style="color:#f59e0b">Portfolio (2)</b> — Optimum portfolio with derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
-<b style="color:#e76f51">Portfolio (3)</b> — Portfolio with derivative and with the same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (see below)
+<b style="color:#e76f51">Portfolio (3)</b> — Portfolio with derivative and with the same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (indicative only)
 </div>
 ''', unsafe_allow_html=True)
 
@@ -1561,15 +1750,18 @@ structured products, can unlock beyond what mean-variance can achieve.
             _p3_x, _p3_y = None, None
             if der_xs and len(der_xs) >= 2:
                 try:
-                    # nd_res may not be available yet — use equivalence point std dev from nd_xs
-                    _key = f"H={H_val:.0%}"
-                    if _key in nd_lbls:
-                        _target_std = nd_xs[nd_lbls.index(_key)]
-                    elif nd_xs:
-                        _target_std = nd_xs[len(nd_xs)//2]  # middle point as fallback
+                    # Use nd_res std_dev if available, else use closest frontier point
+                    if nd_res:
+                        _target_std = nd_res['std_dev'] * 100
                     else:
-                        _target_std = None
-                    if _target_std:
+                        _key = f"H={H_val:.0%}"
+                        if _key in nd_lbls:
+                            _target_std = nd_xs[nd_lbls.index(_key)]
+                        elif nd_xs:
+                            _target_std = nd_xs[len(nd_xs)//2]
+                        else:
+                            _target_std = None
+                    if _target_std is not None:
                         _fp = sorted(zip(der_xs, der_ys), key=lambda p: p[0])
                         _fx = [p[0] for p in _fp]
                         _fy = [p[1] for p in _fp]
@@ -1654,7 +1846,7 @@ structured products, can unlock beyond what mean-variance can achieve.
         # ── Results ───────────────────────────────────────────────────────────────
         st.markdown("---")
         constraint_label = f"H={H_val:.0%}, α={_alpha:.0%}" if not use_es else f"H={H_val:.0%}, L={_L:.0%}"
-        st.markdown(f"### Optimal portfolios — {constraint_label}")
+        st.markdown(f"### Optimal portfolios with {constraint_label}")
 
         # ── Helper to render one portfolio column ────────────────────────────
         def _render_portfolio(border_color, header_html, caption_txt,
@@ -1769,7 +1961,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                     _p2_sign = "+" if _dr_ret >= _nd_ret else ""
                     _p2_diff = _dr_ret - _nd_ret
                     _p2_note = (
-                        f'<div style="background:#1c1200;border:1px solid #f59e0b;border-radius:6px;'
+                        f'<div style="background:#1e1500;border:1px solid #f59e0b;border-radius:6px;'
                         f'padding:.6rem 1rem;color:#c0c8d8;font-size:.82rem;margin-top:.6rem">'
                         f'At the same mental-accounting constraint (H={H_val:.0%}, α={_alpha:.0%} ↔ λ), '
                         f'the optimum portfolio with <b style="color:#f59e0b">{der_label_sel}</b> '
@@ -1811,7 +2003,7 @@ structured products, can unlock beyond what mean-variance can achieve.
             _gain3_word = "gain" if _gain3 >= 0 else "reduction"
             _gain3_color = "#10b981" if _gain3 >= 0 else "#ef4444"
             _p3_interp_note = (
-                f'<div style="background:#1a0a00;border:1px solid #e76f51;border-radius:6px;'
+                f'<div style="background:#1e0e00;border:1px solid #e76f51;border-radius:6px;'
                 f'padding:.6rem 1rem;color:#c0c8d8;font-size:.82rem;margin-top:.4rem">'
                 f'At the <b style="color:#e76f51">same variance as portfolio (1)</b> ({p3_std:.1f}% std dev), '
                 f'the derivative frontier achieves <b style="color:#e76f51">{p3_return:.2f}%</b> expected return '
@@ -1860,6 +2052,43 @@ structured products, can unlock beyond what mean-variance can achieve.
         elif der_config and nd_res and len(der_xs) < 2:
             st.markdown("---")
             st.info(f"Portfolio (3) not available — derivative frontier has {len(der_xs)} point(s). Try Standard resolution.")
+
+        # ── PDF Export ───────────────────────────────────────────────────────────
+        st.markdown("---")
+        if nd_res:
+            if st.button("📄 Export results to PDF", type="secondary", key="pdf_export"):
+                try:
+                    _lam_s = lam_summary if 'lam_summary' in dir() else "—"
+                    _nd_lbls_pdf = [names_in[i] if i<len(names_in) else f"Asset {i+1}" for i in range(len(nd_res["weights"]))]
+                    _nd_wts_pdf  = list(nd_res["weights"])
+                    _nd_cols_pdf = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_nd_wts_pdf))]
+                    _dr_lbls_pdf = [asset_labels[i] if i<len(asset_labels) else f"Asset {i+1}" for i in range(len(dr_res["weights"]))] if dr_res else []
+                    _dr_wts_pdf  = list(dr_res["weights"]) if dr_res else []
+                    _dr_cols_pdf = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_dr_wts_pdf))] if dr_res else []
+                    _p3r = p3_return if p3_return is not None else None
+                    _p3s = p3_std if p3_std is not None else None
+                    _pdf_bytes = generate_pdf_report(
+                        constraint_label=constraint_label,
+                        nd_res=nd_res, dr_res=dr_res,
+                        p3_return=_p3r, p3_std=_p3s,
+                        nd_labels=_nd_lbls_pdf, nd_weights=_nd_wts_pdf, nd_colors=_nd_cols_pdf,
+                        dr_labels=_dr_lbls_pdf, dr_weights=_dr_wts_pdf, dr_colors=_dr_cols_pdf,
+                        der_label_sel=der_label_sel,
+                        H_val=H_val, _alpha=_alpha, use_es=use_es, _L=_L,
+                        data_mode=data_mode, names_in=names_in,
+                        grid_lbl=grid_lbl, lam_summary=_lam_s
+                    )
+                    st.download_button(
+                        label="⬇️ Download PDF report",
+                        data=_pdf_bytes,
+                        file_name=f"portfolio_optimisation_{H_val:.0%}_{_alpha:.0%}.pdf",
+                        mime="application/pdf",
+                        type="primary",
+                        key="pdf_download"
+                    )
+                    st.success("PDF report generated. Click the button above to download.")
+                except Exception as _pdf_err:
+                    st.error(f"PDF generation failed: {_pdf_err}")
 
         # ── How to read these results ────────────────────────────────────────
         if der_config and nd_res:
