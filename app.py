@@ -24,7 +24,8 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
     from reportlab.lib.units import cm
     from reportlab.lib import colors
     from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer,
-                                     Table, TableStyle, HRFlowable, Image as RLImage)
+                                     Table, TableStyle, HRFlowable, Image as RLImage,
+                                     PageBreak)
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
     from reportlab.platypus.doctemplate import PageTemplate, BaseDocTemplate
     from reportlab.platypus.frames import Frame
@@ -178,6 +179,9 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
             story.append(Spacer(1, 8))
         except Exception as _chart_err:
             story.append(Paragraph(f'Chart export unavailable: {_chart_err}', caption_style))
+
+    # ── Page break — portfolios start on page 2 ──────────────────────────────
+    story.append(PageBreak())
 
     # ── Portfolio (1) ─────────────────────────────────────────────────────────
     if nd_res:
