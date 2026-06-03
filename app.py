@@ -65,6 +65,11 @@ h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
 .warn-box{background:#1a1200;border:1px solid #f59e0b;border-radius:6px;padding:.5rem 1rem;color:#f59e0b;font-size:.82rem;margin-top:.3rem}
 .ok-box{background:#ffffff;border:1px solid #10b981;border-radius:6px;padding:.5rem 1rem;color:#1a5c3a;font-size:.82rem;margin-top:.3rem}
 
+    /* Larger tab labels */
+    button[data-baseweb="tab"] p {
+        font-size: 1.05rem !important;
+        font-weight: 600 !important;
+    }
     .section-header{border-left:4px solid #1a6bbf;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-top:1.2rem;margin-bottom:.5rem;color:#ffffff;font-weight:600;font-size:1.05rem;letter-spacing:.02em;text-align:center}
 
     .sidebar-divider{border:none;border-top:2px solid #2a3a4a;margin:1rem 0}
@@ -1187,7 +1192,7 @@ def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
             unsafe_allow_html=True)
 
 st.markdown("<div style='margin-top:2.5rem'></div>", unsafe_allow_html=True)
-tab1,tab2,tab3=st.tabs(["📊 Optimizer","📖 About","📚 Glossary"])
+tab1,tab2,tab3=st.tabs(["📊 Optimiser","📖 About","📚 Glossary"])
 
 with tab1:
     import os
@@ -1198,6 +1203,83 @@ with tab1:
         "and optimising under a risk constraint you define: either the probability of loss below "
         "a threshold (**Value-at-Risk / VaR**) or the expected loss in the worst scenarios "
         "(**Expected Shortfall / ES**).")
+
+    # ── Finance banner ───────────────────────────────────────────────────────
+    st.markdown('''<div style="width:100%;margin-bottom:1rem;border-radius:10px;overflow:hidden">
+<svg width="100%" viewBox="0 0 900 160" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#0a0f1e"/>
+      <stop offset="50%" style="stop-color:#0d1a35"/>
+      <stop offset="100%" style="stop-color:#0a0f1e"/>
+    </linearGradient>
+    <linearGradient id="lineGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1a6bbf;stop-opacity:0"/>
+      <stop offset="30%" style="stop-color:#1a6bbf;stop-opacity:1"/>
+      <stop offset="70%" style="stop-color:#4a9eff;stop-opacity:1"/>
+      <stop offset="100%" style="stop-color:#4a9eff;stop-opacity:0"/>
+    </linearGradient>
+    <linearGradient id="lineGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#a855f7;stop-opacity:0"/>
+      <stop offset="30%" style="stop-color:#a855f7;stop-opacity:0.8"/>
+      <stop offset="70%" style="stop-color:#a855f7;stop-opacity:0.8"/>
+      <stop offset="100%" style="stop-color:#a855f7;stop-opacity:0"/>
+    </linearGradient>
+    <linearGradient id="lineGrad3" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0"/>
+      <stop offset="40%" style="stop-color:#f59e0b;stop-opacity:0.9"/>
+      <stop offset="80%" style="stop-color:#f59e0b;stop-opacity:0.7"/>
+      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="900" height="160" fill="url(#bgGrad)"/>
+  <!-- Subtle grid lines -->
+  <line x1="0" y1="40" x2="900" y2="40" stroke="#1a2a4a" stroke-width="0.5"/>
+  <line x1="0" y1="80" x2="900" y2="80" stroke="#1a2a4a" stroke-width="0.5"/>
+  <line x1="0" y1="120" x2="900" y2="120" stroke="#1a2a4a" stroke-width="0.5"/>
+  <line x1="150" y1="0" x2="150" y2="160" stroke="#1a2a4a" stroke-width="0.5"/>
+  <line x1="300" y1="0" x2="300" y2="160" stroke="#1a2a4a" stroke-width="0.5"/>
+  <line x1="450" y1="0" x2="450" y2="160" stroke="#1a2a4a" stroke-width="0.5"/>
+  <line x1="600" y1="0" x2="600" y2="160" stroke="#1a2a4a" stroke-width="0.5"/>
+  <line x1="750" y1="0" x2="750" y2="160" stroke="#1a2a4a" stroke-width="0.5"/>
+  <!-- MV Efficient frontier (purple dashed) -->
+  <path d="M0,145 Q100,140 200,128 Q300,112 400,92 Q500,70 600,52 Q700,38 800,28 L900,22"
+        fill="none" stroke="url(#lineGrad2)" stroke-width="1.8" stroke-dasharray="6,4"/>
+  <!-- Behavioural frontier no derivative (blue) -->
+  <circle cx="180" cy="132" r="4" fill="#4a9eff"/>
+  <circle cx="310" cy="114" r="4" fill="#4a9eff"/>
+  <circle cx="420" cy="97" r="4" fill="#4a9eff"/>
+  <circle cx="530" cy="80" r="4" fill="#4a9eff"/>
+  <circle cx="650" cy="62" r="4" fill="#4a9eff"/>
+  <path d="M180,132 Q245,123 310,114 Q365,105 420,97 Q475,89 530,80 Q590,71 650,62"
+        fill="none" stroke="url(#lineGrad1)" stroke-width="2.2"/>
+  <!-- Gold optimal points (derivative) -->
+  <rect x="596" y="29" width="8" height="8" fill="#f59e0b" transform="rotate(45 600 33)"/>
+  <rect x="696" y="19" width="8" height="8" fill="#f59e0b" transform="rotate(45 700 23)"/>
+  <rect x="796" y="11" width="8" height="8" fill="#f59e0b" transform="rotate(45 800 15)"/>
+  <!-- Gold frontier line -->
+  <path d="M420,97 Q510,65 600,33 Q700,19 800,12"
+        fill="none" stroke="url(#lineGrad3)" stroke-width="2" stroke-dasharray="5,3"/>
+  <!-- Green equivalence diamond -->
+  <polygon points="420,97 428,89 420,81 412,89" fill="#10b981"/>
+  <!-- White dashed arrow -->
+  <line x1="420" y1="89" x2="420" y2="46" stroke="white" stroke-width="1.5" stroke-dasharray="4,3"/>
+  <polygon points="420,38 415,50 425,50" fill="white"/>
+  <!-- Axis lines -->
+  <line x1="60" y1="20" x2="60" y2="150" stroke="#3a4a6a" stroke-width="1.5"/>
+  <line x1="60" y1="150" x2="870" y2="150" stroke="#3a4a6a" stroke-width="1.5"/>
+  <!-- Axis labels -->
+  <text x="55" y="16" fill="#6a8aaa" font-size="9" font-family="sans-serif" text-anchor="middle">Return</text>
+  <text x="875" y="154" fill="#6a8aaa" font-size="9" font-family="sans-serif" text-anchor="end">Risk (σ)</text>
+  <!-- Title text -->
+  <text x="450" y="75" fill="white" font-size="20" font-family="sans-serif" font-weight="700"
+        text-anchor="middle" opacity="0.15">BEYOND MEAN-VARIANCE</text>
+  <!-- Subtle glow dots -->
+  <circle cx="100" cy="80" r="40" fill="#1a6bbf" opacity="0.04"/>
+  <circle cx="800" cy="80" r="50" fill="#f59e0b" opacity="0.04"/>
+  <circle cx="450" cy="80" r="60" fill="#a855f7" opacity="0.03"/>
+</svg></div>''', unsafe_allow_html=True)
 
     if not run_btn:
         st.markdown("""
