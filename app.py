@@ -1791,7 +1791,7 @@ with tab1:
         st.markdown("""
 <div class="info-box" style="color:#ffffff !important">
 
-### 👈 How to use this tool
+<span style="color:#4a9eff;font-size:1.3rem;font-weight:700">👈 How to use this tool</span>
 
 Follow these steps in the sidebar:
 
