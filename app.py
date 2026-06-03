@@ -1853,14 +1853,20 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
 </tr>
 </table>
 
+**MVT/MAT equivalence**
+
 At the equivalence point (λ=3.795, H=-10%, α=5%), the purple and blue curves meet exactly —
 confirming the MVT/MAT equivalence proven in Das, Markowitz, Scheid & Statman (2010).
 Adding derivatives shifts the frontier upward (gold squares above blue dots), revealing
 what the behavioural approach with derivatives can unlock beyond mean-variance.
 
-**Note on discrete vs continuous frontiers:** The behavioural frontiers are plotted at discrete constraint levels (H = -2%, -5%, -8%, -10%, -12%, -15%, -18%, -20%, -25%, -30%, -35%, -40%). Each point is the optimal portfolio for that specific mental-account threshold. The MV frontier is continuous as it is computed by sweeping the risk-aversion parameter λ — each MV portfolio corresponds to one behavioural portfolio via the MVT/MAT equivalence, demonstrating that both approaches converge to the same solution when no derivatives are present.
+**Note on discrete vs continuous frontiers:**
 
-**Why some behavioural points may appear below the MV frontier:** When derivatives are present, or when the downside constraint is particularly binding at certain H values, some behavioural frontier points may fall below the MV frontier. This is mathematically correct — the behavioural approach optimises under an additional constraint (the shortfall threshold) which can restrict the feasible set. Without derivatives, both frontiers should coincide closely. With derivatives, the behavioural approach can outperform MV at higher risk levels while remaining protected at the threshold — this is the core insight of the framework. Use Standard or High precision resolution to reduce grid approximation errors.
+The behavioural frontiers are plotted at discrete constraint levels (H = -2%, -5%, -8%, -10%, -12%, -15%, -18%, -20%, -25%, -30%, -35%, -40%). Each point is the optimal portfolio for that specific mental-account threshold. The MV frontier is continuous as it is computed by sweeping the risk-aversion parameter λ — each MV portfolio corresponds to one behavioural portfolio via the MVT/MAT equivalence, demonstrating that both approaches converge to the same solution when no derivatives are present.
+
+**Why some behavioural points may appear below the MV frontier:**
+
+When derivatives are present, or when the downside constraint is particularly binding at certain H values, some behavioural frontier points may fall below the MV frontier. This is mathematically correct — the behavioural approach optimises under an additional constraint (the shortfall threshold) which can restrict the feasible set. Without derivatives, both frontiers should coincide closely. With derivatives, the behavioural approach can outperform MV at higher risk levels while remaining protected at the threshold — this is the core insight of the framework. Use Standard or High precision resolution to reduce grid approximation errors.
 
 </div>
 """, unsafe_allow_html=True)
