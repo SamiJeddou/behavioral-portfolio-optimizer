@@ -2074,16 +2074,12 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 st.markdown(note_html, unsafe_allow_html=True)
 
         # ── Compute all three portfolios ─────────────────────────────────────
-        nd_res = None
+        # Reuse _nd_res_pre (already computed before chart) to avoid running twice
+        # and to ensure chart diamond and result block always show the same portfolio
+        nd_res = _nd_res_pre
         dr_res = None
         p3_return = None
         p3_std = None
-
-        try:
-            nd_res, _ = run_opt(means_arr, sigs_arr, cov_mat, None, H_val, _alpha,
-                                m_val, mp_val, constraint_type=_ctype, L=_L)
-        except Exception:
-            pass
 
         if der_config:
             try:
