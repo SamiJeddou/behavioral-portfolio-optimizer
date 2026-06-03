@@ -1190,33 +1190,14 @@ st.markdown("<div style='margin-top:2.5rem'></div>", unsafe_allow_html=True)
 tab1,tab2,tab3=st.tabs(["📊 Optimizer","📖 About","📚 Glossary"])
 
 with tab1:
-    # Header row: title left, photo right
     import os
-    col_title, col_photo = st.columns([5, 1])
-    with col_title:
-        st.markdown("## Beyond Mean-Variance: Portfolio Optimiser with Derivatives & Structured Products — A Mental Accounts Framework")
-        st.markdown(
-            "Most portfolio optimisers stop at stocks and bonds. This app goes further — "
-            "incorporating derivatives and structured products, handling **non-normal return distributions**, "
-            "and optimising under a risk constraint you define: either the probability of loss below "
-            "a threshold (**Value-at-Risk / VaR**) or the expected loss in the worst scenarios "
-            "(**Expected Shortfall / ES**).")
-    with col_photo:
-        if os.path.exists("profile.jpeg"):
-            import base64
-            with open("profile.jpeg","rb") as _f:
-                _b64 = base64.b64encode(_f.read()).decode()
-            st.markdown(
-                f'''<a href="https://www.linkedin.com/in/sami-jeddou-25787a404" target="_blank"
-                   style="text-decoration:none">
-  <div style="position:relative;display:inline-block;width:90px">
-    <img src="data:image/jpeg;base64,{_b64}" style="width:90px;border-radius:6px;display:block"/>
-    <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);
-                color:#ffffff;font-size:.65rem;text-align:center;padding:3px 0;
-                border-radius:0 0 6px 6px">Sami Jeddou</div>
-  </div>
-</a>''',
-                unsafe_allow_html=True)
+    st.markdown("## Beyond Mean-Variance: Portfolio Optimiser with Derivatives & Structured Products — A Mental Accounts Framework")
+    st.markdown(
+        "Most portfolio optimisers stop at stocks and bonds. This app goes further — "
+        "incorporating derivatives and structured products, handling **non-normal return distributions**, "
+        "and optimising under a risk constraint you define: either the probability of loss below "
+        "a threshold (**Value-at-Risk / VaR**) or the expected loss in the worst scenarios "
+        "(**Expected Shortfall / ES**).")
 
     if not run_btn:
         st.markdown("""
@@ -1480,20 +1461,39 @@ structured products, can unlock beyond what mean-variance can achieve.
     st.markdown("---")
 
     # LinkedIn + contact
-    st.markdown("""
-<div style="background:#0f1923;border:1px solid #1a6bbf;border-radius:8px;padding:1rem 1.4rem;color:#ffffff">
+    # About the author with photo
+    import base64 as _b64mod
+    _photo_html = ""
+    if os.path.exists("profile.jpeg"):
+        with open("profile.jpeg","rb") as _pf:
+            _pb64 = _b64mod.b64encode(_pf.read()).decode()
+        _photo_html = (
+            f'<a href="https://www.linkedin.com/in/sami-jeddou-25787a404" target="_blank" style="text-decoration:none">'
 
-**👤 About the author**
+            f'<div style="position:relative;display:inline-block;width:80px;margin-right:1rem;vertical-align:top">'
 
-**Sami Jeddou**
+            f'<img src="data:image/jpeg;base64,{_pb64}" style="width:80px;border-radius:6px;display:block"/>'
 
-Senior Financial Services Executive — Transformation, Risk & Capital Markets
+            f'<div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,0,0,0.55);'
 
-🔗 [Connect on LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;&nbsp;|&nbsp;&nbsp;
-🐙 [View source on GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer)
+            f'color:#ffffff;font-size:.6rem;text-align:center;padding:2px 0;border-radius:0 0 6px 6px">Sami Jeddou</div>'
 
+            f'</div></a>'
+        )
+    st.markdown(
+        f'''<div style="background:#0f1923;border:1px solid #1a6bbf;border-radius:8px;padding:1rem 1.4rem;color:#ffffff">
+<b>👤 About the author</b><br><br>
+<div style="display:flex;align-items:flex-start;gap:1rem">
+{_photo_html}
+<div>
+<b>Sami Jeddou</b><br>
+Senior Financial Services Executive — Transformation, Risk &amp; Capital Markets<br><br>
+🔗 <a href="https://www.linkedin.com/in/sami-jeddou-25787a404" target="_blank" style="color:#7fb3e8">Connect on LinkedIn</a> &nbsp;&nbsp;|&nbsp;&nbsp;
+🐙 <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer" target="_blank" style="color:#7fb3e8">View source on GitHub</a>
 </div>
-""", unsafe_allow_html=True)
+</div>
+</div>''',
+        unsafe_allow_html=True)
 
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
 
