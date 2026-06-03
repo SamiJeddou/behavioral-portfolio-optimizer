@@ -2189,13 +2189,34 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                     grid_lbl=grid_lbl, lam_summary=_lam_s,
                     fig_plotly=fig_plotly
                 )
+                st.markdown(
+                    '<style>'
+                    'div[data-testid="stDownloadButton"] {'
+                    '  display:flex; justify-content:center; margin-top:0.5rem;'
+                    '}'
+                    'div[data-testid="stDownloadButton"] button {'
+                    '  background-color:#1a6bbf !important;'
+                    '  color:white !important;'
+                    '  border:none !important;'
+                    '  font-weight:600 !important;'
+                    '  padding:0.5rem 2rem !important;'
+                    '  font-size:1rem !important;'
+                    '  border-radius:6px !important;'
+                    '  width:auto !important;'
+                    '}'
+                    'div[data-testid="stDownloadButton"] button:hover {'
+                    '  background-color:#1558a0 !important;'
+                    '}'
+                    '</style>',
+                    unsafe_allow_html=True)
                 st.download_button(
                     label="📄 Export & Download PDF Report",
                     data=_pdf_bytes,
                     file_name=f"portfolio_optimisation_{H_val:.0%}_{_alpha:.0%}.pdf",
                     mime="application/pdf",
-                    type="secondary",
-                    key="pdf_download"
+                    type="primary",
+                    key="pdf_download",
+                    use_container_width=False
                 )
             except Exception as _pdf_err:
                 st.caption(f"PDF export unavailable: {_pdf_err}")
