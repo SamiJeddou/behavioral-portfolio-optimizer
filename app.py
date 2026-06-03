@@ -1860,6 +1860,8 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
 
 **Note on discrete vs continuous frontiers:** The behavioural frontiers are plotted at discrete constraint levels (H = -2%, -5%, -8%, -10%, -12%, -15%, -18%, -20%, -25%, -30%, -35%, -40%). Each point is the optimal portfolio for that specific mental-account threshold. The MV frontier is continuous as it is computed by sweeping the risk-aversion parameter λ — each MV portfolio corresponds to one behavioural portfolio via the MVT/MAT equivalence, demonstrating that both approaches converge to the same solution when no derivatives are present.
 
+**Why some behavioural points may appear below the MV frontier:** When derivatives are present, or when the downside constraint is particularly binding at certain H values, some behavioural frontier points may fall below the MV frontier. This is mathematically correct — the behavioural approach optimises under an additional constraint (the shortfall threshold) which can restrict the feasible set. Without derivatives, both frontiers should coincide closely. With derivatives, the behavioural approach can outperform MV at higher risk levels while remaining protected at the threshold — this is the core insight of the framework. Use Standard or High precision resolution to reduce grid approximation errors.
+
 </div>
 """, unsafe_allow_html=True)
         # Sample chart
@@ -2072,6 +2074,19 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
 
             with col_chart:
                 st.plotly_chart(fig_plotly, use_container_width=True, config={'editable': True, 'displayModeBar': True})
+                st.markdown(
+                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;'
+                    'padding:.6rem 1rem;color:#c0c8d8;font-size:.78rem;margin-top:.3rem">'
+                    '<b style="color:#4a9eff">📐 Reading the chart</b> — '
+                    'Without derivatives, the blue behavioural frontier should closely track the purple MV frontier, '
+                    'confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010). '
+                    'With derivatives, the frontiers may diverge — this is expected and is the core contribution of the framework: '
+                    'derivatives allow the behavioural approach to reach portfolios that mean-variance optimisation cannot. '
+                    'Some behavioural points may appear below the MV frontier at certain risk levels — this reflects the binding '
+                    'nature of the downside constraint at those H values, not a failure of the method. '
+                    '<b style="color:#f59e0b">Fast resolution</b> uses a coarse grid and may introduce small approximation errors — '
+                    'use Standard or High precision for publication-quality results.</div>',
+                    unsafe_allow_html=True)
 
         # ── Results ───────────────────────────────────────────────────────────────
         st.markdown("---")
