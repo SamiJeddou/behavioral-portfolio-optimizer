@@ -1227,7 +1227,7 @@ def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
 st.markdown("<div style='height:0.6rem'></div>", unsafe_allow_html=True)
 st.markdown(f'''
 <div style="width:100%;background:#020c1b;padding:4px 0 0 0;margin-bottom:0">
-<div style="max-width:900px;margin:0 auto;background:linear-gradient(135deg,#020c1b 0%,#071428 40%,#0a1a35 70%,#020c1b 100%);border-radius:12px;overflow:hidden;border:1px solid #1a3a5c;display:flex;align-items:stretch;font-family:monospace;margin-bottom:0">
+<div style="max-width:900px;margin:0 auto;background:linear-gradient(135deg,#020c1b 0%,#071428 40%,#0a1a35 70%,#020c1b 100%);border-radius:0;overflow:hidden;border:none;display:flex;align-items:stretch;font-family:monospace;margin-bottom:0">
   <div style="flex:1.5;padding:16px 18px;border-right:1px solid #1a3a5c;display:flex;flex-direction:column;justify-content:center;gap:10px">
     <div style="color:#ffffff;font-size:13px;font-weight:700;letter-spacing:0.03em;font-family:Georgia,serif;line-height:1.45">Portfolio Optimiser<br>with Derivatives &amp;<br>Structured Products</div>
     <div style="color:rgba(74,158,255,0.65);font-size:7.5px;letter-spacing:0.22em">BEYOND MEAN-VARIANCE · MENTAL ACCOUNTS FRAMEWORK</div>
@@ -1742,7 +1742,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                         '<div style="background:#0d1a2e;border:1px solid #10b981;border-radius:8px;'
                         'padding:.6rem 1rem;margin-bottom:.4rem;text-align:center">'
                         '<span style="color:#10b981;font-weight:700;font-size:.95rem">'
-                        'Optimal portfolio (1) — no derivative</span></div>'
+                        '<span style="color:#10b981;margin-right:.4rem">◆</span>Optimal portfolio (1) — no derivative</span></div>'
                     ),
                     caption_txt="Maximises return subject to the downside constraint — reference portfolio (equivalent to Markowitz MV optimum)",
                     weights=_nd_weights, labels=_nd_labels, colors=_nd_colors,
@@ -1766,7 +1766,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                     _p2_sign = "+" if _dr_ret >= _nd_ret else ""
                     _p2_diff = _dr_ret - _nd_ret
                     _p2_note = (
-                        f'<div style="background:#0d1a2e;border:1px solid #f59e0b;border-radius:6px;'
+                        f'<div style="background:#1c1200;border:1px solid #f59e0b;border-radius:6px;'
                         f'padding:.6rem 1rem;color:#c0c8d8;font-size:.82rem;margin-top:.6rem">'
                         f'At the same mental-accounting constraint (H={H_val:.0%}, α={_alpha:.0%} ↔ λ), '
                         f'the optimum portfolio with <b style="color:#f59e0b">{der_label_sel}</b> '
@@ -1782,7 +1782,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                             f'<div style="background:#0d1a2e;border:1px solid #f59e0b;border-radius:8px;'
                             f'padding:.6rem 1rem;margin-bottom:.4rem;text-align:center">'
                             f'<span style="color:#f59e0b;font-weight:700;font-size:.95rem">'
-                            f'Optimal portfolio (2) — with {der_label_sel}</span></div>'
+                            f'<span style="display:inline-block;width:12px;height:12px;background:#ff6b00;border:2px solid white;margin-right:.4rem;vertical-align:middle"></span>Optimal portfolio (2) — with {der_label_sel}</span></div>'
                         ),
                         caption_txt=f"Same mental-accounting & risk-aversion constraint (H={H_val:.0%}, α={_alpha:.0%} ↔ λ) — results may vary",
                         weights=_dr_weights, labels=_dr_labels, colors=_dr_colors,
@@ -1808,7 +1808,7 @@ structured products, can unlock beyond what mean-variance can achieve.
             _gain3_word = "gain" if _gain3 >= 0 else "reduction"
             _gain3_color = "#10b981" if _gain3 >= 0 else "#ef4444"
             _p3_interp_note = (
-                f'<div style="background:#0d1a2e;border:1px solid #e76f51;border-radius:6px;'
+                f'<div style="background:#1a0a00;border:1px solid #e76f51;border-radius:6px;'
                 f'padding:.6rem 1rem;color:#c0c8d8;font-size:.82rem;margin-top:.4rem">'
                 f'At the <b style="color:#e76f51">same variance as portfolio (1)</b> ({p3_std:.1f}% std dev), '
                 f'the derivative frontier achieves <b style="color:#e76f51">{p3_return:.2f}%</b> expected return '
@@ -1830,7 +1830,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                         f'<div style="background:#0d1a2e;border:1px solid #e76f51;border-radius:8px;'
                         f'padding:.6rem 1rem;margin-bottom:.4rem;text-align:center">'
                         f'<span style="color:#e76f51;font-weight:700;font-size:.95rem">'
-                        f'Optimal portfolio (3) — same variance as Portfolio (1), with {der_label_sel}'
+                        f'<span style="color:#e76f51;margin-right:.4rem">★</span>Optimal portfolio (3) — same variance as Portfolio (1), with {der_label_sel}'
                         f'</span> <span style="color:#c0c8d8;font-size:.78rem">(interpolated)</span>'
                         f'</div>'
                     ),
