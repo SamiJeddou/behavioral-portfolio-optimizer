@@ -80,8 +80,12 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
     def weights_table(labels, weights, colors_list, title):
         data = [[title, 'Weight', 'Bar']]
         for i, (lbl, w) in enumerate(zip(labels, weights)):
-            bar = '█' * int(w * 20) + '░' * (20 - int(w * 20))
-            data.append([lbl, f'{w*100:.1f}%', bar])
+            # Normalise: if weights appear to be percentages (>1), convert to fraction
+            _wf = float(w) / 100.0 if float(w) > 1.0 else float(w)
+            _wf = max(0.0, min(1.0, _wf))
+            _filled = int(round(_wf * 20))
+            bar = '█' * _filled + '░' * (20 - _filled)
+            data.append([lbl, f'{_wf*100:.1f}%', bar])
         t = Table(data, colWidths=[6*cm, 2*cm, 6*cm])
         t.setStyle(TableStyle([
             ('BACKGROUND', (0,0), (-1,0), navy),
