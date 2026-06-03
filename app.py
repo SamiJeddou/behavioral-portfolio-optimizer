@@ -581,7 +581,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         fig.add_trace(go.Scatter(
             x=der_x, y=der_y, mode='markers',
             name=f'Behavioural optimum portfolios — derivative frontier ({der_label})',
-            legendrank=4,
+            legendrank=3,
             marker=dict(size=8, color='#f59e0b', symbol='square'),
             opacity=0.7,
             text=der_lbls,
@@ -594,7 +594,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             fig.add_trace(go.Scatter(
                 x=[der_x[_i2]], y=[der_y[_i2]], mode='markers',
                 name=f'Portfolio (2) — optimum with {der_label} at H={H_sel:.0%}',
-                legendrank=41,
+                legendrank=6,
                 marker=dict(size=14, color='#ff6b00', symbol='square',
                            line=dict(color='white', width=1.5)),
                 hovertemplate=(f'<b>Portfolio (2)</b><br>Optimum with {der_label}<br>'
@@ -646,7 +646,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         fig.add_trace(go.Scatter(
             x=[mv_eq[0]], y=[mv_eq[1]], mode='markers',
             name='Portfolio (1) — Equivalence point: MV = Behavioural (no derivatives) ↔ H=-10%, α=5%',
-            legendrank=3,
+            legendrank=5,
             marker=dict(size=13, color='#10b981', symbol='diamond',
                         line=dict(width=0)),
             showlegend=True,
@@ -678,7 +678,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         fig.add_trace(go.Scatter(
             x=[p3_x], y=[p3_y], mode='markers',
             name=f'Portfolio (3) — same variance as Portfolio (1), with {der_label}',
-            legendrank=6,
+            legendrank=7,
             marker=dict(size=14, color='#e76f51', symbol='star',
                        line=dict(color='white', width=1)),
             hovertemplate=(f'<b>Portfolio (3)</b><br>Same std dev as Portfolio (1)<br>'
@@ -1224,6 +1224,7 @@ def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
             unsafe_allow_html=True)
 
 # ── Finance banner ────────────────────────────────────────────────────────
+st.markdown("<div style='height:0.6rem'></div>", unsafe_allow_html=True)
 st.markdown(f'''
 <div style="max-width:900px;margin:0 auto;background:linear-gradient(135deg,#020c1b 0%,#071428 40%,#0a1a35 70%,#020c1b 100%);border-radius:12px;overflow:hidden;border:1px solid #1a3a5c;display:flex;align-items:stretch;font-family:monospace;margin-bottom:1rem">
   <div style="flex:1.5;padding:16px 18px;border-right:1px solid #1a3a5c;display:flex;flex-direction:column;justify-content:center;gap:10px">
@@ -1739,7 +1740,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                     border_color="#10b981",
                     header_html=(
                         '<div style="background:#0d1a2e;border:1px solid #10b981;border-radius:8px;'
-                        'padding:.6rem 1rem;margin-bottom:.4rem">'
+                        'padding:.6rem 1rem;margin-bottom:.4rem;text-align:center">'
                         '<span style="color:#10b981;font-weight:700;font-size:.95rem">'
                         'Optimal portfolio (1) — no derivative</span></div>'
                     ),
