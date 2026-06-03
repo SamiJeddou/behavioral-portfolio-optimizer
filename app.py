@@ -1626,7 +1626,6 @@ structured products, can unlock beyond what mean-variance can achieve.
                                    interp_note=None):
             st.markdown(f'**{title}**', unsafe_allow_html=True)
             st.caption(caption_txt)
-            # Spacer so both columns start weights at same vertical position
             st.markdown("<div style='height:.3rem'></div>", unsafe_allow_html=True)
             m1,m2,m3,m4 = st.columns(4)
             m1.metric("Expected return", f"{stats['expected_return']*100:.2f}%" if not is_interp else f"{stats['expected_return']:.2f}%",
@@ -1638,9 +1637,10 @@ structured products, can unlock beyond what mean-variance can achieve.
             else:
                 m3.metric("Return gain", delta_txt or "—")
                 m4.metric("Source", "Interpolated")
-            # Spacer matching height of delta row in c2 so weights align
-            st.markdown("<div style='height:.1rem'></div>", unsafe_allow_html=True)
-            st.markdown('<div style="margin-top:.6rem;margin-bottom:.3rem;font-weight:600;font-size:.9rem">Portfolio weights</div>', unsafe_allow_html=True)
+            # When no delta, add a spacer matching the delta label height (~28px) so weights align
+            if delta_txt is None:
+                st.markdown("<div style='height:1.9rem'></div>", unsafe_allow_html=True)
+            st.markdown('<div style="margin-top:.4rem;margin-bottom:.3rem;font-weight:600;font-size:.9rem">Portfolio weights</div>', unsafe_allow_html=True)
             _svg = make_donut_svg(weights, labels, colors, size=150)
             if _svg:
                 st.markdown(f'<div style="display:flex;justify-content:center;margin-bottom:.5rem">{_svg}</div>', unsafe_allow_html=True)
@@ -1694,7 +1694,8 @@ structured products, can unlock beyond what mean-variance can achieve.
                 pass
 
         # ── Render Portfolio (1) and (2) side by side ────────────────────────
-        c1, c2 = st.columns(2)
+        c1 = st.container()
+        c2 = st.container()
 
         with c1:
             if nd_res:
@@ -1704,8 +1705,14 @@ structured products, can unlock beyond what mean-variance can achieve.
                 _method = ("Exhaustive grid search + COBYLA" if nd_res.get('method_used') == "grid_search"
                            else "Differential evolution + COBYLA" if nd_res.get('method_used') == "differential_evolution"
                            else nd_res.get('method_used', '—'))
+                st.markdown(
+                    '<div style="background:#0d1a2e;border:1px solid #10b981;border-radius:8px;'
+                    'padding:.6rem 1rem;margin-bottom:.6rem">'
+                    '<span style="color:#10b981;font-weight:700;font-size:.95rem">'
+                    'Optimal portfolio (1) — no derivative</span></div>',
+                    unsafe_allow_html=True)
                 _render_portfolio_col(
-                    title="Optimal portfolio (1) — no derivative",
+                    title="",
                     caption_txt="Maximises return subject to the downside constraint — reference portfolio",
                     weights=_nd_weights, labels=_nd_labels, colors=_nd_colors,
                     stats=nd_res, method_txt=_method)
@@ -1723,9 +1730,15 @@ structured products, can unlock beyond what mean-variance can achieve.
                     _method = ("Exhaustive grid search + COBYLA" if dr_res.get('method_used') == "grid_search"
                                else "Differential evolution + COBYLA" if dr_res.get('method_used') == "differential_evolution"
                                else dr_res.get('method_used', '—'))
+                    st.markdown(
+                        f'<div style="background:#0d1a2e;border:1px solid #f59e0b;border-radius:8px;'
+                        f'padding:.6rem 1rem;margin-bottom:.6rem">'
+                        f'<span style="color:#f59e0b;font-weight:700;font-size:.95rem">'
+                        f'Optimal portfolio (2) — with {der_label_sel}</span></div>',
+                        unsafe_allow_html=True)
                     _render_portfolio_col(
-                        title=f"Optimal portfolio (2) — with {der_label_sel}",
-                        caption_txt=f"Same mental-accounting & risk-aversion constraint (H={H_val:.0%}, α={_alpha:.0%} ↔ λ) — results may vary",
+                        title="",
+                        caption_txt=f"Same mental-accounting & risk-aversion constraint (H={{H_val:.0%}}, α={{_alpha:.0%}} ↔ λ) — results may vary",
                         weights=_dr_weights, labels=_dr_labels, colors=_dr_colors,
                         stats=dr_res, delta_txt=_delta, method_txt=_method)
                 else:
@@ -1752,26 +1765,33 @@ structured products, can unlock beyond what mean-variance can achieve.
                 _p3_labels = [asset_labels[i] if i < len(asset_labels) else f"Asset {i+1}" for i in range(len(_p3_weights))]
                 _p3_colors = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_p3_weights))]
                 _p3_donut = make_donut_svg(_p3_weights, _p3_labels, _p3_colors, size=150)
+            _gain3_sign = "+" if _gain3 >= 0 else ""
+            _gain3_word = "gain" if _gain3 >= 0 else "reduction"
+            _gain3_color = "#10b981" if _gain3 >= 0 else "#ef4444"
             _p3_interp_note = (
                 f'<div style="background:#0d1a2e;border:1px solid #e76f51;border-radius:6px;'
                 f'padding:.6rem 1rem;color:#c0c8d8;font-size:.82rem;margin-top:.4rem">'
                 f'At the <b style="color:#e76f51">same variance as portfolio (1)</b> ({p3_std:.1f}% std dev), '
                 f'the derivative frontier achieves <b style="color:#e76f51">{p3_return:.2f}%</b> expected return '
                 f'vs <b>{nd_res["expected_return"]*100:.2f}%</b> without derivatives — '
-                f'a potential gain of <b style="color:#e76f51">+{_gain3:.2f} percentage points</b> '
-                f'(indicative — interpolated, not directly optimised).</div>'
+                f'a <b style="color:{_gain3_color}">{_gain3_sign}{_gain3:.2f} pp {_gain3_word}</b> '
+                f'(indicative — interpolated from derivative frontier, not directly optimised).</div>'
             )
             c3a, c3b = st.columns([1, 2])
+            _gain3_sign = "+" if _gain3 >= 0 else ""
             with c3a:
                 m1p3, m2p3, m3p3 = st.columns(3)
                 m1p3.metric("Expected return", f"{p3_return:.2f}%",
-                            delta=f"+{_gain3:.2f}pp" if _gain3 > 0 else f"{_gain3:.2f}pp")
-                m2p3.metric("Std deviation", f"{p3_std:.2f}%")
-                m3p3.metric("Return gain vs (1)", f"+{_gain3:.2f}pp" if _gain3 > 0 else f"{_gain3:.2f}pp")
+                            delta=f"{_gain3_sign}{_gain3:.2f}pp vs portfolio (1)")
+                m2p3.metric("Std deviation", f"{p3_std:.2f}%",
+                            help="Same as portfolio (1) — the controlled variable")
+                m3p3.metric("Return vs portfolio (1)", f"{_gain3_sign}{_gain3:.2f}pp",
+                            help="Positive: derivative adds return at same risk. Negative: derivative reduces return at same risk.")
                 st.markdown(_p3_interp_note, unsafe_allow_html=True)
             with c3b:
                 if dr_res and _p3_donut:
-                    st.markdown('<div style="font-weight:600;font-size:.9rem;margin-bottom:.3rem">Portfolio weights (same allocation as closest frontier point)</div>', unsafe_allow_html=True)
+                    st.caption("Method: interpolated from derivative frontier — weights shown are the closest optimised frontier point")
+                    st.markdown('<div style="font-weight:600;font-size:.9rem;margin-bottom:.3rem">Portfolio weights</div>', unsafe_allow_html=True)
                     col_svg, col_bars = st.columns([1, 1])
                     with col_svg:
                         st.markdown(f'<div style="display:flex;justify-content:center">{_p3_donut}</div>', unsafe_allow_html=True)
@@ -1789,7 +1809,18 @@ structured products, can unlock beyond what mean-variance can achieve.
                                 unsafe_allow_html=True)
         elif der_config and nd_res and len(der_xs) >= 2:
             st.markdown("---")
-            st.info(f"Portfolio (3): the no-derivative portfolio std dev ({nd_res['std_dev']*100:.1f}%) falls outside the derivative frontier range ({min(der_xs):.1f}%–{max(der_xs):.1f}%). Try Standard resolution for a wider frontier.")
+            st.markdown(
+                f'<div style="background:#0d1a2e;border:1px solid #e76f51;border-radius:8px;'
+                f'padding:.8rem 1rem;color:#c0c8d8;font-size:.85rem">'
+                f'<b style="color:#e76f51">Portfolio (3) — not available for this derivative</b><br><br>'
+                f'Portfolio (3) requires the no-derivative portfolio std dev (<b>{nd_res["std_dev"]*100:.1f}%</b>) '
+                f'to fall within the derivative frontier range '
+                f'(<b>{min(der_xs):.1f}%–{max(der_xs):.1f}%</b>). '
+                f'With a <b>{der_label_sel}</b>, the derivative portfolio always carries higher variance than the '
+                f'no-derivative portfolio — so no same-variance comparison is possible at this constraint level.<br><br>'
+                f'<b>To see Portfolio (3):</b> try a <b>put option</b> or <b>collar</b>, which have lower variance '
+                f'impact and whose frontier may overlap with the no-derivative portfolio range.</div>',
+                unsafe_allow_html=True)
         elif der_config and nd_res and len(der_xs) < 2:
             st.markdown("---")
             st.info(f"Portfolio (3) not available — derivative frontier has {len(der_xs)} point(s). Try Standard resolution.")
