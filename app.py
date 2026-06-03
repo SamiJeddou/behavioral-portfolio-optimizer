@@ -825,18 +825,18 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                 ))
                 fig.add_annotation(
                     x=der_x[_i2], y=der_y[_i2],
-                    ax=-50, ay=-55,
+                    ax=-90, ay=-70,
                     xref='x', yref='y', axref='pixel', ayref='pixel',
                     showarrow=True, arrowhead=2, arrowsize=1.0,
                     arrowwidth=1.5, arrowcolor='#ff6b00',
                     text=(f'<b>Portfolio (2)</b><br>'
                           f'Optimum with {der_label}<br>'
-                          f'H={H_sel:.0%}, same constraint as Portfolio (1)<br>'
+                          f'H={H_sel:.0%}, same constraint as (1)<br>'
                           f'Return = {der_y[_i2]:.1f}%'),
                     font=dict(color='#ff6b00', size=9),
                     bgcolor='rgba(13,17,23,0.9)',
                     bordercolor='#ff6b00', borderwidth=1,
-                    align='left', xanchor='right'
+                    align='right', xanchor='right'
                 )
             except Exception:
                 pass
@@ -897,12 +897,15 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         ))
         fig.add_annotation(
             x=_p1_x, y=_p1_y,
-            text=f'<b>Portfolio (1)</b><br>Optimum without derivatives<br>{_h_str} ↔ {_lam_str}<br>Return = {_p1_y:.1f}%',
+            ax=80, ay=70,
+            xref='x', yref='y', axref='pixel', ayref='pixel',
             showarrow=True, arrowhead=2, arrowcolor='#10b981',
-            arrowwidth=1.5, ax=40, ay=60,
+            arrowwidth=1.5,
+            text=f'<b>Portfolio (1)</b><br>Optimum — no derivative<br>{_h_str} ↔ {_lam_str}<br>Return = {_p1_y:.1f}%',
             font=dict(color='#10b981', size=9),
             bgcolor='rgba(13,17,23,0.9)',
-            bordercolor='#10b981', borderwidth=1
+            bordercolor='#10b981', borderwidth=1,
+            align='left', xanchor='left'
         )
     elif mv_eq:
         fig.add_trace(go.Scatter(
@@ -916,12 +919,15 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         ))
         fig.add_annotation(
             x=mv_eq[0], y=mv_eq[1],
-            text=f'Portfolio (1) — Equivalence point<br>MV = Behavioural (no derivatives)<br>λ=3.795 ↔ H=-10%, α=5%<br>Return = {mv_eq[1]:.1f}%',
+            ax=80, ay=70,
+            xref='x', yref='y', axref='pixel', ayref='pixel',
             showarrow=True, arrowhead=2, arrowcolor='#10b981',
-            arrowwidth=1.5, ax=40, ay=60,
+            arrowwidth=1.5,
+            text=f'Portfolio (1) — Equivalence point<br>MV = Behavioural (no derivatives)<br>λ=3.795 ↔ H=-10%, α=5%<br>Return = {mv_eq[1]:.1f}%',
             font=dict(color='#10b981', size=9),
             bgcolor='rgba(13,17,23,0.9)',
-            bordercolor='#10b981', borderwidth=1
+            bordercolor='#10b981', borderwidth=1,
+            align='left', xanchor='left'
         )
 
     # ── MVT/MAT note ──────────────────────────────────────────────────────────
@@ -948,12 +954,12 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         ))
         fig.add_annotation(
             x=p3_x, y=p3_y,
-            ax=50, ay=-50,
+            ax=90, ay=-70,
             xref='x', yref='y', axref='pixel', ayref='pixel',
             showarrow=True, arrowhead=2, arrowsize=1.0,
             arrowwidth=1.5, arrowcolor='#e76f51',
             text=(f'<b>Portfolio (3)</b><br>'
-                  f'Same variance as Portfolio (1)<br>'
+                  f'Same variance as (1)<br>'
                   f'({p3_x:.1f}% std dev)<br>'
                   f'Return = {p3_y:.1f}% (interpolated)'),
             font=dict(color='#e76f51', size=9),
@@ -1945,7 +1951,7 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 st.markdown(_html, unsafe_allow_html=True)
 
             with col_chart:
-                st.plotly_chart(fig_plotly, use_container_width=True)
+                st.plotly_chart(fig_plotly, use_container_width=True, config={'editable': True, 'displayModeBar': True})
 
         # ── Results ───────────────────────────────────────────────────────────────
         st.markdown("---")
