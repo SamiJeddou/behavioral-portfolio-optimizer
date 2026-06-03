@@ -2019,12 +2019,18 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                                             nd_res_actual=_nd_res_pre,
                                             lam_actual=_lam_actual)
             st.session_state['_fig_plotly'] = fig_plotly
-            # Also store as PNG bytes for PDF export (more reliable than figure object)
-            try:
-                st.session_state['_fig_png'] = fig_plotly.to_image(
-                    format='png', width=900, height=500, scale=2)
-            except Exception:
-                st.session_state['_fig_png'] = None
+            # Store frontier data for matplotlib PDF chart (kaleido not available on Streamlit Cloud)
+            st.session_state['_frontier_data'] = {
+                'mv_x': mv_x, 'mv_y': mv_y, 'mv_eq': mv_eq,
+                'nd_xs': nd_xs, 'nd_ys': nd_ys,
+                'der_xs': der_xs, 'der_ys': der_ys,
+                'der_label': der_label_sel,
+                'H_val': H_val, 'alpha_val': alpha_val,
+                'nd_res_actual': _nd_res_pre,
+                'lam_actual': _lam_actual,
+                'p3_x': _p3_x, 'p3_y': _p3_y,
+            }
+            st.session_state['_fig_png'] = None  # will be built at PDF time
 
             # ── Simulation summary + chart side by side ───────────────────────
             col_summary, col_chart = st.columns([1, 3.5])
@@ -2340,17 +2346,64 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 _dr_cols_pdf = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_dr_wts_pdf))] if dr_res else []
                 _p3r = p3_return if p3_return is not None else None
                 _p3s = p3_std if p3_std is not None else None
-                # Try to get PNG from session state; retry export if missing
-                _fig_png_for_pdf = st.session_state.get('_fig_png', None)
-                if _fig_png_for_pdf is None:
-                    _fig_obj = st.session_state.get('_fig_plotly', None)
-                    if _fig_obj is not None:
-                        try:
-                            _fig_png_for_pdf = _fig_obj.to_image(
-                                format='png', width=900, height=500, scale=2)
-                            st.session_state['_fig_png'] = _fig_png_for_pdf
-                        except Exception:
-                            pass
+                # Build chart PNG using matplotlib (kaleido not available on Streamlit Cloud)
+                _fig_png_for_pdf = None
+                _fd = st.session_state.get('_frontier_data', {})
+                if _fd:
+                    try:
+                        import matplotlib
+                        matplotlib.use('Agg')
+                        import matplotlib.pyplot as plt
+                        import matplotlib.patches as mpatches
+                        import io as _io
+                        _fig_m, _ax = plt.subplots(figsize=(10, 5.5))
+                        _fig_m.patch.set_facecolor('#0d1117')
+                        _ax.set_facecolor('#0d1117')
+                        _ax.tick_params(colors='#c0c8d8', labelsize=8)
+                        _ax.spines[:].set_color('#1a3a5c')
+                        _ax.xaxis.label.set_color('#c0c8d8')
+                        _ax.yaxis.label.set_color('#c0c8d8')
+                        _ax.set_xlabel('Portfolio Risk — Standard Deviation (%)', fontsize=9, color='#c0c8d8')
+                        _ax.set_ylabel('Expected Return (%)', fontsize=9, color='#c0c8d8')
+                        _ax.set_title('Mean-Variance vs Behavioural Portfolio Efficient Frontier',
+                                      fontsize=10, color='#ffffff', pad=8)
+                        _ax.grid(True, color='#1a3a5c', linewidth=0.5, alpha=0.5)
+                        if _fd.get('mv_x'):
+                            _ax.plot(_fd['mv_x'], _fd['mv_y'], '--', color='#a855f7',
+                                     linewidth=1.2, label='MV frontier (Markowitz)', alpha=0.8)
+                        if _fd.get('nd_xs'):
+                            _ax.plot(_fd['nd_xs'], _fd['nd_ys'], 'o-', color='#4a9eff',
+                                     linewidth=1.2, markersize=5, label='Behavioural — no derivative', alpha=0.85)
+                        if _fd.get('der_xs'):
+                            _ax.scatter(_fd['der_xs'], _fd['der_ys'], marker='s', color='#f59e0b',
+                                        s=40, label=f"Behavioural — {_fd.get('der_label','derivative')}", alpha=0.8, zorder=5)
+                        _nr = _fd.get('nd_res_actual')
+                        if _nr:
+                            _ax.scatter([_nr['std_dev']*100], [_nr['expected_return']*100],
+                                        marker='D', color='#10b981', s=100, zorder=10,
+                                        label=f"Portfolio (1) H={_fd['H_val']:.0%} α={_fd['alpha_val']:.0%}")
+                        if _fd.get('p3_x') and _fd.get('p3_y'):
+                            _ax.scatter([_fd['p3_x']], [_fd['p3_y']], marker='*',
+                                        color='#e76f51', s=200, zorder=10,
+                                        edgecolors='white', linewidths=0.8,
+                                        label='Portfolio (3) — interpolated')
+                        # P2 orange square
+                        if _fd.get('der_xs') and _fd.get('H_val') is not None:
+                            try:
+                                _target = f"H={_fd['H_val']:.0%}"
+                                from app import build_frontier
+                            except Exception:
+                                pass
+                        _ax.legend(fontsize=7, facecolor='#0d1a2e', edgecolor='#1a3a5c',
+                                   labelcolor='#c0c8d8', loc='upper left')
+                        plt.tight_layout(pad=1.5)
+                        _buf_m = _io.BytesIO()
+                        _fig_m.savefig(_buf_m, format='png', dpi=150,
+                                       bbox_inches='tight', facecolor='#0d1117')
+                        plt.close(_fig_m)
+                        _fig_png_for_pdf = _buf_m.getvalue()
+                    except Exception as _mpl_err:
+                        _fig_png_for_pdf = None
                 _pdf_bytes = generate_pdf_report(
                     constraint_label=constraint_label,
                     nd_res=nd_res, dr_res=dr_res,

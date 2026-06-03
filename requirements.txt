@@ -8,4 +8,3 @@ plotly>=5.18
 anthropic>=0.40
 requests>=2.31
 reportlab
-kaleido
