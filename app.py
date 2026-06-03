@@ -1385,6 +1385,7 @@ def make_donut_svg(weights, labels, colors, size=160):
                 f'fill="{color}" stroke="#0d1117" stroke-width="1.5"/>')
         paths.append(path)
 
+        pct = w / total * 100
         # Percentage label inside segment — show if >= 8%
         if pct >= 8:
             mid_angle = angle + sweep / 2
@@ -1398,7 +1399,6 @@ def make_donut_svg(weights, labels, colors, size=160):
             )
         
         # Legend
-        pct = w / total * 100
         short_lbl = label[:12] + "…" if len(label) > 12 else label
         legend_items.append((color, short_lbl, pct))
         
@@ -1779,7 +1779,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                         border_color="#f59e0b",
                         header_html=(
                             f'<div style="background:#0d1a2e;border:1px solid #f59e0b;border-radius:8px;'
-                            f'padding:.6rem 1rem;margin-bottom:.4rem">'
+                            f'padding:.6rem 1rem;margin-bottom:.4rem;text-align:center">'
                             f'<span style="color:#f59e0b;font-weight:700;font-size:.95rem">'
                             f'Optimal portfolio (2) — with {der_label_sel}</span></div>'
                         ),
@@ -1827,7 +1827,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                     border_color="#e76f51",
                     header_html=(
                         f'<div style="background:#0d1a2e;border:1px solid #e76f51;border-radius:8px;'
-                        f'padding:.6rem 1rem;margin-bottom:.4rem">'
+                        f'padding:.6rem 1rem;margin-bottom:.4rem;text-align:center">'
                         f'<span style="color:#e76f51;font-weight:700;font-size:.95rem">'
                         f'Optimal portfolio (3) — same variance as Portfolio (1), with {der_label_sel}'
                         f'</span> <span style="color:#c0c8d8;font-size:.78rem">(interpolated)</span>'
