@@ -2026,7 +2026,11 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
         # ── Results ───────────────────────────────────────────────────────────────
         st.markdown("---")
         constraint_label = f"H={H_val:.0%}, α={_alpha:.0%}" if not use_es else f"H={H_val:.0%}, L={_L:.0%}"
-        st.markdown(f"### Optimal portfolios with {constraint_label}")
+        _lam_suffix = f" — implied λ = {lam_summary}" if lam_summary and lam_summary != "—" else ""
+        st.markdown(
+            f'<h3 style="color:#4a9eff;text-align:center">'
+            f'Optimal portfolios with {constraint_label}{_lam_suffix}</h3>',
+            unsafe_allow_html=True)
 
         # ── Helper to render one portfolio column ────────────────────────────
         def _render_portfolio(border_color, header_html, caption_txt,
