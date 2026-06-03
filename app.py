@@ -16,21 +16,37 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
                          nd_labels, nd_weights, nd_colors,
                          dr_labels, dr_weights, dr_colors,
                          der_label_sel, H_val, _alpha, use_es, _L,
-                         data_mode, names_in, grid_lbl, lam_summary):
+                         data_mode, names_in, grid_lbl, lam_summary,
+                         fig_plotly=None):
     """Generate a PDF summary report of optimisation results."""
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
     from reportlab.lib.units import cm
     from reportlab.lib import colors
     from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer,
-                                     Table, TableStyle, HRFlowable)
+                                     Table, TableStyle, HRFlowable, Image as RLImage)
     from reportlab.lib.enums import TA_CENTER, TA_LEFT
+    from reportlab.platypus.doctemplate import PageTemplate, BaseDocTemplate
+    from reportlab.platypus.frames import Frame
     import io, datetime
 
+    # ── Page number canvas callback ───────────────────────────────────────────
+    class _NumberedDoc(SimpleDocTemplate):
+        def handle_pageEnd(self):
+            self.canv.saveState()
+            self.canv.setFont('Helvetica', 8)
+            self.canv.setFillColor(colors.grey)
+            self.canv.drawCentredString(
+                A4[0] / 2, 1.2*cm,
+                f"Page {self.canv.getPageNumber()} — Beyond Mean-Variance Portfolio Optimiser | Jeddou (2026)"
+            )
+            self.canv.restoreState()
+            super().handle_pageEnd()
+
     buf = io.BytesIO()
-    doc = SimpleDocTemplate(buf, pagesize=A4,
-                            leftMargin=2*cm, rightMargin=2*cm,
-                            topMargin=2*cm, bottomMargin=2*cm)
+    doc = _NumberedDoc(buf, pagesize=A4,
+                       leftMargin=2*cm, rightMargin=2*cm,
+                       topMargin=2*cm, bottomMargin=2.5*cm)
 
     styles = getSampleStyleSheet()
     navy   = colors.HexColor('#0d1a2e')
@@ -142,6 +158,23 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
     ]))
     story.append(t)
     story.append(Spacer(1, 8))
+
+    # ── Optimisation chart ────────────────────────────────────────────────────
+    if fig_plotly is not None:
+        try:
+            _img_bytes = fig_plotly.to_image(format='png', width=700, height=400, scale=2)
+            _img_buf = io.BytesIO(_img_bytes)
+            _rl_img = RLImage(_img_buf, width=17*cm, height=9.7*cm)
+            story += section_header('Optimisation Chart — Efficient Frontiers', navy)
+            story.append(_rl_img)
+            story.append(Paragraph(
+                'Purple dashed: MV frontier (Markowitz) · Blue: Behavioural frontier without derivatives · '
+                'Gold squares: Behavioural frontier with derivatives · '
+                'Green diamond: Portfolio (1) · Orange square: Portfolio (2) · Coral star: Portfolio (3)',
+                caption_style))
+            story.append(Spacer(1, 8))
+        except Exception as _chart_err:
+            story.append(Paragraph(f'Chart export unavailable: {_chart_err}', caption_style))
 
     # ── Portfolio (1) ─────────────────────────────────────────────────────────
     if nd_res:
@@ -2147,7 +2180,8 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                     der_label_sel=der_label_sel,
                     H_val=H_val, _alpha=_alpha, use_es=use_es, _L=_L,
                     data_mode=data_mode, names_in=names_in,
-                    grid_lbl=grid_lbl, lam_summary=_lam_s
+                    grid_lbl=grid_lbl, lam_summary=_lam_s,
+                    fig_plotly=fig_plotly
                 )
                 st.download_button(
                     label="📄 Export & Download PDF Report",
