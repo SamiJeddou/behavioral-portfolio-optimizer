@@ -1527,27 +1527,29 @@ div[data-testid="stSidebarContent"] button p {
         use_container_width=True)
 
     if run_btn:
+        # Run clicked — clear old results and mark as needing fresh computation
         st.session_state['_run_active'] = True
-        st.session_state['_interaction_count'] = st.session_state.get('_interaction_count', 0) + 1
-        st.session_state['_run_interaction'] = st.session_state['_interaction_count']
+        st.session_state['_needs_compute'] = True
+        st.session_state.pop('_cached_results', None)
         st.session_state.pop('_pdf_bytes', None)
         st.session_state.pop('_fig_png', None)
 
     if reset_btn:
-        for _k in ['_run_active','_pdf_bytes','_fig_png','_fig_plotly','_run_interaction']:
+        for _k in ['_run_active','_needs_compute','_cached_results',
+                   '_pdf_bytes','_fig_png','_fig_plotly']:
             st.session_state.pop(_k, None)
         st.rerun()
 
-    # Increment interaction count on every script rerun driven by user action
-    # On a fresh page load (no widget interaction), run_btn and reset_btn are both False
-    # and the interaction count won't increment — so we can detect fresh loads
-    if run_btn or reset_btn:
-        st.session_state['_interaction_count'] = st.session_state.get('_interaction_count', 0)
-    
-    # _run_active is only valid if it was set in the current browser session
-    # We track this by checking if _interaction_count > 0 (any interaction happened)
-    _has_interacted = st.session_state.get('_interaction_count', 0) > 0
-    _run_active = st.session_state.get('_run_active', False) and _has_interacted
+    # Only show results if explicitly run — not on slider/widget reruns
+    _run_active = st.session_state.get('_run_active', False)
+    # On fresh page load session_state may have _run_active=True from previous session
+    # Detect this: if _needs_compute is not set and no cached results exist → fresh load
+    _has_results = st.session_state.get('_cached_results') is not None
+    _needs_compute = st.session_state.get('_needs_compute', False)
+    if _run_active and not _has_results and not _needs_compute:
+        # Stale session state from previous session — reset
+        st.session_state.pop('_run_active', None)
+        _run_active = False
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -1785,7 +1787,7 @@ with tab1:
         "(**Expected Shortfall / ES**).")
 
 
-    if not run_btn and not _run_active:
+    if not _run_active:
         st.markdown("""
 <div class="info-box" style="color:#ffffff !important">
 
@@ -1877,7 +1879,30 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
 
         pass  # welcome screen shown, About tab still renders
 
-    if run_btn or _run_active:
+    if _run_active and not _needs_compute and _has_results:
+        # Results already computed — just re-display from cache
+        _cache = st.session_state['_cached_results']
+        nd_res = _cache['nd_res']
+        dr_res = _cache['dr_res']
+        p3_return = _cache['p3_return']
+        p3_std = _cache['p3_std']
+        constraint_label = _cache['constraint_label']
+        der_config = _cache['der_config']
+        der_label_sel = _cache['der_label_sel']
+        H_val = _cache['H_val']
+        _alpha = _cache['_alpha']
+        use_es = _cache['use_es']
+        _L = _cache['_L']
+        # Show simple placeholder for chart (cached fig)
+        if st.session_state.get('_fig_plotly'):
+            col_summary_c, col_chart_c = st.columns([1, 3.5])
+            with col_chart_c:
+                st.plotly_chart(st.session_state['_fig_plotly'],
+                               use_container_width=True,
+                               config={'editable': True, 'displayModeBar': True})
+
+    if _run_active and _needs_compute:
+        # Fresh computation needed
         means_arr=np.array(means_in); sigs_arr=np.array(sigs_in)
         cov_mat=corr_to_cov(sigs_arr,corr_in)
 
@@ -2160,7 +2185,8 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 st.markdown("**Optimal portfolio (1) — no derivative**")
                 # Suggest a wider constraint based on current securities volatility
                 _avg_sig = float(np.mean(sigs_arr)) * 100
-                _suggested_H = f"-{max(15, int(_avg_sig * 1.5))}%"
+                _suggested_H_val = min(40, max(15, int(_avg_sig * 1.5)))
+                _suggested_H = f"-{_suggested_H_val}%"
                 st.warning(
                     f"⚠️ No eligible portfolio found at H={H_val:.0%}, α={_alpha:.0%}. "
                     f"With live market data (avg volatility {_avg_sig:.1f}%), "
@@ -2317,6 +2343,16 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                     key="pdf_download",
                     use_container_width=True
                 )
+
+        # ── Cache results in session_state ───────────────────────────────────
+        st.session_state['_cached_results'] = {
+            'nd_res': nd_res, 'dr_res': dr_res,
+            'p3_return': p3_return, 'p3_std': p3_std,
+            'constraint_label': constraint_label,
+            'der_config': der_config, 'der_label_sel': der_label_sel,
+            'H_val': H_val, '_alpha': _alpha, 'use_es': use_es, '_L': _L,
+        }
+        st.session_state['_needs_compute'] = False
 
         # ── How to read these results ────────────────────────────────────────
         if der_config and nd_res:
