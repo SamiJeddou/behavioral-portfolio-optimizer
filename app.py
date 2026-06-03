@@ -1542,14 +1542,31 @@ div[data-testid="stSidebarContent"] button p {
 
     # Only show results if explicitly run — not on slider/widget reruns
     _run_active = st.session_state.get('_run_active', False)
-    # On fresh page load session_state may have _run_active=True from previous session
-    # Detect this: if _needs_compute is not set and no cached results exist → fresh load
     _has_results = st.session_state.get('_cached_results') is not None
     _needs_compute = st.session_state.get('_needs_compute', False)
+
+    # Detect fresh page load: no results and no pending compute → reset
     if _run_active and not _has_results and not _needs_compute:
-        # Stale session state from previous session — reset
         st.session_state.pop('_run_active', None)
         _run_active = False
+
+    # Reset if key parameters changed since last run — forces back to how-to screen
+    if not run_btn and _run_active and _has_results:
+        _cached = st.session_state.get('_cached_results', {})
+        _prev_der   = _cached.get('der_label_sel', '__unset__')
+        _prev_H     = _cached.get('H_val', None)
+        _prev_alpha = _cached.get('_alpha', None)
+        _prev_data  = _cached.get('data_mode', '__unset__')
+        if (_prev_der != der_label_sel or
+            _prev_H != H_val or
+            _prev_alpha != alpha_val or
+            _prev_data != data_mode):
+            for _k in ['_run_active','_needs_compute','_cached_results',
+                       '_pdf_bytes','_fig_png','_fig_plotly']:
+                st.session_state.pop(_k, None)
+            _run_active = False
+            _has_results = False
+            _needs_compute = False
 
 
 # ═════════════════════════════════════════════════════════════════════════════
@@ -2357,6 +2374,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             'constraint_label': constraint_label,
             'der_config': der_config, 'der_label_sel': der_label_sel,
             'H_val': H_val, '_alpha': _alpha, 'use_es': use_es, '_L': _L,
+            'data_mode': data_mode,
         }
         st.session_state['_needs_compute'] = False
 
