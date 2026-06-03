@@ -1226,48 +1226,9 @@ def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
 # ── Finance banner ────────────────────────────────────────────────────────
 st.markdown("<div style='height:0.6rem'></div>", unsafe_allow_html=True)
 st.markdown(f'''
-<div style="width:100%;background:#020c1b;padding:0;margin-bottom:0;display:flex;align-items:stretch;height:148px;overflow:hidden">
-<div style="flex:1;overflow:hidden;height:148px;background:#020c1b;position:relative">
-<svg viewBox="0 0 180 148" width="100%" height="148" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-<rect width="180" height="148" fill="#020c1b"/>
-<line x1="0" y1="40" x2="180" y2="40" stroke="#0a1e36" stroke-width="0.5"/>
-<line x1="0" y1="75" x2="180" y2="75" stroke="#0a1e36" stroke-width="0.5"/>
-<line x1="0" y1="110" x2="180" y2="110" stroke="#0a1e36" stroke-width="0.5"/>
-<line x1="28" y1="140" x2="155" y2="140" stroke="#1a3a5c" stroke-width="0.8"/>
-<line x1="28" y1="140" x2="8" y2="122" stroke="#1a3a5c" stroke-width="0.8"/>
-<line x1="155" y1="140" x2="172" y2="122" stroke="#1a3a5c" stroke-width="0.8"/>
-<line x1="8" y1="122" x2="172" y2="122" stroke="#1a3a5c" stroke-width="0.8"/>
-<line x1="28" y1="140" x2="28" y2="14" stroke="#1a3a5c" stroke-width="0.8"/>
-<polyline points="28,138 58,135 88,131 118,126 148,118" fill="none" stroke="#1a6bbf" stroke-width="0.7" opacity="0.6"/>
-<polyline points="20,128 50,124 80,119 112,112 145,100" fill="none" stroke="#1a6bbf" stroke-width="0.7" opacity="0.65"/>
-<polyline points="14,116 44,110 74,102 106,90 140,72" fill="none" stroke="#1a6bbf" stroke-width="0.7" opacity="0.7"/>
-<polyline points="10,102 40,92 70,78 103,60 138,38" fill="none" stroke="#4a9eff" stroke-width="0.9" opacity="0.8"/>
-<polyline points="8,86 38,72 68,54 101,32 136,10" fill="none" stroke="#4a9eff" stroke-width="1" opacity="0.85"/>
-<polyline points="28,138 20,128 14,116 10,102 8,86" fill="none" stroke="#1a6bbf" stroke-width="0.6" opacity="0.5"/>
-<polyline points="58,135 50,124 44,110 40,92 38,72" fill="none" stroke="#1a6bbf" stroke-width="0.6" opacity="0.5"/>
-<polyline points="88,131 80,119 74,102 70,78 68,54" fill="none" stroke="#1a6bbf" stroke-width="0.6" opacity="0.55"/>
-<polyline points="118,126 112,112 106,90 103,60 101,32" fill="none" stroke="#4a9eff" stroke-width="0.6" opacity="0.6"/>
-<polyline points="148,118 145,100 140,72 138,38 136,10" fill="none" stroke="#4a9eff" stroke-width="0.7" opacity="0.65"/>
-<circle cx="33" cy="132" r="5" fill="#1a3a8f" opacity="0.9"/>
-<circle cx="52" cy="124" r="4" fill="#1a3a8f" opacity="0.85"/>
-<circle cx="36" cy="116" r="7.5" fill="#1a4aaf" opacity="0.9"/>
-<circle cx="62" cy="108" r="5" fill="#1a4aaf" opacity="0.85"/>
-<circle cx="46" cy="98" r="9.5" fill="#2a5abf" opacity="0.9"/>
-<circle cx="78" cy="92" r="4" fill="#2a5abf" opacity="0.85"/>
-<circle cx="56" cy="80" r="6.5" fill="#3a6acf" opacity="0.9"/>
-<circle cx="92" cy="70" r="5" fill="#3a6acf" opacity="0.85"/>
-<circle cx="68" cy="62" r="8.5" fill="#4a7adf" opacity="0.9"/>
-<circle cx="108" cy="52" r="6" fill="#4a7adf" opacity="0.85"/>
-<circle cx="82" cy="44" r="5.5" fill="#5a8aef" opacity="0.9"/>
-<circle cx="125" cy="34" r="7.5" fill="#5a8aef" opacity="0.9"/>
-<circle cx="98" cy="26" r="10" fill="#6a9aff" opacity="0.95"/>
-<circle cx="140" cy="16" r="5.5" fill="#6a9aff" opacity="0.9"/>
-<circle cx="116" cy="12" r="12" fill="#7aaaff" opacity="0.95"/>
-<text x="14" y="12" fill="rgba(74,158,255,0.55)" font-size="8" font-family="monospace">λ</text>
-<text x="158" y="147" fill="rgba(74,158,255,0.45)" font-size="7" font-family="monospace">H</text>
-<text x="1" y="120" fill="rgba(168,85,247,0.45)" font-size="7" font-family="monospace">α</text>
-</svg></div></div>
-<div style="max-width:900px;flex-shrink:0;height:148px;background:linear-gradient(135deg,#020c1b 0%,#071428 40%,#0a1a35 70%,#020c1b 100%);border-radius:0;overflow:hidden;border:none;display:flex;align-items:stretch;font-family:monospace;margin-bottom:0">
+<div style="width:100%;background:#020c1b;padding:0;margin-bottom:0">
+</div>
+<div style="max-width:900px;margin:0 auto;background:linear-gradient(135deg,#020c1b 0%,#071428 40%,#0a1a35 70%,#020c1b 100%);border-radius:0;overflow:hidden;border:none;display:flex;align-items:stretch;font-family:monospace;margin-bottom:0">
   <div style="flex:1.5;padding:16px 18px;border-right:1px solid #1a3a5c;display:flex;flex-direction:column;justify-content:center;gap:10px">
     <div style="color:#ffffff;font-size:13px;font-weight:700;letter-spacing:0.03em;font-family:Georgia,serif;line-height:1.45">Portfolio Optimiser<br>with Derivatives &amp;<br>Structured Products</div>
     <div style="color:rgba(74,158,255,0.65);font-size:7.5px;letter-spacing:0.22em">BEYOND MEAN-VARIANCE · MENTAL ACCOUNTS FRAMEWORK</div>
@@ -1309,7 +1270,7 @@ st.markdown(f'''
       </div>
       <div style="padding:7px 10px;height:68px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;text-align:center">
         <div style="color:rgba(200,220,255,0.9);font-size:7.5px;font-weight:600;letter-spacing:0.12em;margin-bottom:3px;min-height:18px">LIVE MARKET DATA</div>
-        <div style="font-size:19px;font-weight:700;font-family:Georgia,serif;color:#4a9eff">10,000+</div>
+        <div style="font-size:19px;font-weight:700;font-family:Georgia,serif;color:#10b981">10,000+</div>
         <div style="font-size:8px;margin-top:3px;color:rgba(150,180,220,0.55)">tickers · equities · crypto · ETFs</div>
         <div style="height:2px;margin-top:5px;border-radius:1px;background:#1a3a5c"><div style="width:75%;height:100%;border-radius:1px;background:#4a9eff"></div></div>
       </div>
@@ -1388,35 +1349,7 @@ st.markdown(f'''
   </div>
 </div>
 </div>
-<div style="flex:1;overflow:hidden;height:148px;background:#020c1b;position:relative">
-<svg viewBox="0 0 180 148" width="100%" height="148" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
-<rect width="180" height="148" fill="#020c1b"/>
-<line x1="0" y1="40" x2="180" y2="40" stroke="#0a1e36" stroke-width="0.5"/>
-<line x1="0" y1="80" x2="180" y2="80" stroke="#0a1e36" stroke-width="0.5"/>
-<line x1="0" y1="110" x2="180" y2="110" stroke="#0a1e36" stroke-width="0.5"/>
-<line x1="28" y1="138" x2="158" y2="138" stroke="#1a3a5c" stroke-width="0.8"/>
-<line x1="28" y1="138" x2="8" y2="120" stroke="#1a3a5c" stroke-width="0.8"/>
-<line x1="158" y1="138" x2="172" y2="120" stroke="#1a3a5c" stroke-width="0.8"/>
-<line x1="8" y1="120" x2="172" y2="120" stroke="#1a3a5c" stroke-width="0.8"/>
-<line x1="28" y1="138" x2="28" y2="16" stroke="#1a3a5c" stroke-width="0.8"/>
-<path d="M 28,134 Q 55,137 82,108 Q 93,94 93,76 Q 93,94 110,108 Q 138,137 158,134" fill="none" stroke="#2a9d8f" stroke-width="0.9" opacity="0.8"/>
-<path d="M 16,120 Q 44,122 72,90 Q 86,68 93,46 Q 100,68 118,90 Q 148,122 166,120" fill="none" stroke="#2a9d8f" stroke-width="0.9" opacity="0.85"/>
-<path d="M 10,104 Q 38,104 65,66 Q 80,38 93,14 Q 106,38 126,66 Q 154,104 170,104" fill="none" stroke="#4a9eff" stroke-width="1.1" opacity="0.9"/>
-<path d="M 28,134 Q 20,126 16,120 Q 12,112 10,104" fill="none" stroke="#1a6bbf" stroke-width="0.7" opacity="0.6"/>
-<path d="M 55,137 Q 46,128 44,122 Q 40,112 38,104" fill="none" stroke="#1a6bbf" stroke-width="0.6" opacity="0.55"/>
-<path d="M 82,108 Q 72,94 72,90 Q 68,76 65,66" fill="none" stroke="#1a6bbf" stroke-width="0.6" opacity="0.65"/>
-<path d="M 93,76 Q 93,60 93,46 Q 93,30 93,14" fill="none" stroke="#4a9eff" stroke-width="0.8" opacity="0.75"/>
-<path d="M 110,108 Q 120,94 118,90 Q 124,76 126,66" fill="none" stroke="#1a6bbf" stroke-width="0.6" opacity="0.65"/>
-<path d="M 138,137 Q 148,128 148,122 Q 152,112 154,104" fill="none" stroke="#1a6bbf" stroke-width="0.6" opacity="0.55"/>
-<path d="M 158,134 Q 164,126 166,120 Q 170,112 170,104" fill="none" stroke="#1a6bbf" stroke-width="0.7" opacity="0.6"/>
-<polygon points="28,134 55,137 72,90 65,66 38,104 16,120" fill="#0a2a3a" opacity="0.4"/>
-<polygon points="55,137 82,108 93,46 72,90" fill="#0a3040" opacity="0.35"/>
-<polygon points="82,108 110,108 126,66 93,46" fill="#0a3a4a" opacity="0.35"/>
-<polygon points="110,108 138,137 166,120 154,104 126,66" fill="#0a2a3a" opacity="0.4"/>
-<text x="14" y="14" fill="rgba(74,158,255,0.55)" font-size="8" font-family="monospace">ρ</text>
-<text x="160" y="146" fill="rgba(45,157,143,0.55)" font-size="7" font-family="monospace">u₁</text>
-<text x="1" y="118" fill="rgba(45,157,143,0.5)" font-size="7" font-family="monospace">u₂</text>
-</svg></div></div>
+</div>
 </div>''', unsafe_allow_html=True)
 
 DONUT_COLORS = ['#e63946','#f4a261','#e9c46a','#2a9d8f','#264653','#023e8a','#e76f51','#457b9d']
