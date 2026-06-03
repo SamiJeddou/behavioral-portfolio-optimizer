@@ -2222,7 +2222,7 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                     _p2_sign = "+" if _dr_ret >= _nd_ret else ""
                     _p2_diff = _dr_ret - _nd_ret
                     _p2_note = (
-                        f'<div style="background:#1e1500;border:1px solid #f59e0b;border-radius:6px;'
+                        f'<div style="background:#ffffff;border:1px solid #f59e0b;border-radius:6px;'
                         f'padding:.6rem 1rem;color:#c0c8d8;font-size:.82rem;margin-top:.6rem">'
                         f'At the same mental-accounting constraint (H={H_val:.0%}, α={_alpha:.0%} ↔ λ), '
                         f'the optimum portfolio with <b style="color:#f59e0b">{der_label_sel}</b> '
@@ -2264,7 +2264,7 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
             _gain3_word = "gain" if _gain3 >= 0 else "reduction"
             _gain3_color = "#10b981" if _gain3 >= 0 else "#ef4444"
             _p3_interp_note = (
-                f'<div style="background:#1e0e00;border:1px solid #e76f51;border-radius:6px;'
+                f'<div style="background:#ffffff;border:1px solid #e76f51;border-radius:6px;'
                 f'padding:.6rem 1rem;color:#c0c8d8;font-size:.82rem;margin-top:.4rem">'
                 f'At the <b style="color:#e76f51">same variance as portfolio (1)</b> ({p3_std:.1f}% std dev), '
                 f'the derivative frontier achieves <b style="color:#e76f51">{p3_return:.2f}%</b> expected return '
