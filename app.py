@@ -2047,7 +2047,7 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 def _lbl(t): return f'<div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">{t}</div>'
                 def _val(v): return f'<div style="margin-bottom:.6rem">{v}</div>'
                 _html = (
-                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;min-height:560px;'
+                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;height:450px;'
                     'padding:.8rem 1rem;color:#c0c8d8;font-size:.8rem">'
                     '<div style="color:#4a9eff;font-weight:700;font-size:.85rem;'
                     'margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">'
@@ -2064,9 +2064,14 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 st.markdown(_html, unsafe_allow_html=True)
 
                 st.markdown(
-                    '<div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:6px;'                    'padding:.6rem 1rem;color:#111111;font-size:.78rem;margin-top:.5rem">'                    '<b style="color:#1a6bbf">📋 How to interpret these parameters</b><br><br>'                    '<b>H & α</b> — H is the return floor (e.g. −10%); α is the maximum probability of breaching it (e.g. 5%). '                    'With live market data, use a wider H (−20% to −40%) to find feasible portfolios.<br><br>'                    '<b>Implied λ</b> — the mean-variance risk-aversion coefficient equivalent to (H, α) '                    'when no derivatives are present. Shows "—" if outside the computable range.<br><br>'                    '<b>Resolution</b> — Fast for exploration; Standard or High for publication-quality results. '                    'Any parameter change requires clicking <b>▶ Run Optimiser</b> again.</div>',
+                    '<div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:6px;'
+                    'padding:.6rem 1rem;color:#111111;font-size:.78rem;margin-top:.3rem">'
+                    '<b style="color:#1a6bbf">📋 Parameters guide</b><br><br>'
+                    '<b>H & α</b> — downside floor and breach probability.<br>'
+                    '<b>λ</b> — implied risk-aversion (no derivatives).<br>'
+                    '<b>Resolution</b> — Fast: explore · Standard/High: final.<br><br>'
+                    'Click <b>▶ Run Optimiser</b> after any change.</div>',
                     unsafe_allow_html=True)
-
             with col_chart:
                 st.plotly_chart(fig_plotly, use_container_width=True, config={'editable': True, 'displayModeBar': True})
                 st.markdown(
