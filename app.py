@@ -2088,42 +2088,41 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
             st.markdown("---")
             st.info(f"Portfolio (3) not available — derivative frontier has {len(der_xs)} point(s). Try Standard resolution.")
 
-        # ── PDF Export ───────────────────────────────────────────────────────────
+        # ── PDF Export — generate bytes and store in session_state ─────────────
         st.markdown("---")
         if nd_res:
-            if st.button("📄 Export results to PDF", type="secondary", key="pdf_export"):
-                try:
-                    _lam_s = lam_summary if 'lam_summary' in dir() else "—"
-                    _nd_lbls_pdf = [names_in[i] if i<len(names_in) else f"Asset {i+1}" for i in range(len(nd_res["weights"]))]
-                    _nd_wts_pdf  = list(nd_res["weights"])
-                    _nd_cols_pdf = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_nd_wts_pdf))]
-                    _dr_lbls_pdf = [asset_labels[i] if i<len(asset_labels) else f"Asset {i+1}" for i in range(len(dr_res["weights"]))] if dr_res else []
-                    _dr_wts_pdf  = list(dr_res["weights"]) if dr_res else []
-                    _dr_cols_pdf = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_dr_wts_pdf))] if dr_res else []
-                    _p3r = p3_return if p3_return is not None else None
-                    _p3s = p3_std if p3_std is not None else None
-                    _pdf_bytes = generate_pdf_report(
-                        constraint_label=constraint_label,
-                        nd_res=nd_res, dr_res=dr_res,
-                        p3_return=_p3r, p3_std=_p3s,
-                        nd_labels=_nd_lbls_pdf, nd_weights=_nd_wts_pdf, nd_colors=_nd_cols_pdf,
-                        dr_labels=_dr_lbls_pdf, dr_weights=_dr_wts_pdf, dr_colors=_dr_cols_pdf,
-                        der_label_sel=der_label_sel,
-                        H_val=H_val, _alpha=_alpha, use_es=use_es, _L=_L,
-                        data_mode=data_mode, names_in=names_in,
-                        grid_lbl=grid_lbl, lam_summary=_lam_s
-                    )
-                    st.download_button(
-                        label="⬇️ Download PDF report",
-                        data=_pdf_bytes,
-                        file_name=f"portfolio_optimisation_{H_val:.0%}_{_alpha:.0%}.pdf",
-                        mime="application/pdf",
-                        type="primary",
-                        key="pdf_download"
-                    )
-                    st.success("PDF report generated. Click the button above to download.")
-                except Exception as _pdf_err:
-                    st.error(f"PDF generation failed: {_pdf_err}")
+            # Always generate PDF bytes and store — no button needed to trigger rerun
+            try:
+                _lam_s = lam_summary if 'lam_summary' in dir() else "—"
+                _nd_lbls_pdf = [names_in[i] if i<len(names_in) else f"Asset {i+1}" for i in range(len(nd_res["weights"]))]
+                _nd_wts_pdf  = list(nd_res["weights"])
+                _nd_cols_pdf = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_nd_wts_pdf))]
+                _dr_lbls_pdf = [asset_labels[i] if i<len(asset_labels) else f"Asset {i+1}" for i in range(len(dr_res["weights"]))] if dr_res else []
+                _dr_wts_pdf  = list(dr_res["weights"]) if dr_res else []
+                _dr_cols_pdf = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_dr_wts_pdf))] if dr_res else []
+                _p3r = p3_return if p3_return is not None else None
+                _p3s = p3_std if p3_std is not None else None
+                _pdf_bytes = generate_pdf_report(
+                    constraint_label=constraint_label,
+                    nd_res=nd_res, dr_res=dr_res,
+                    p3_return=_p3r, p3_std=_p3s,
+                    nd_labels=_nd_lbls_pdf, nd_weights=_nd_wts_pdf, nd_colors=_nd_cols_pdf,
+                    dr_labels=_dr_lbls_pdf, dr_weights=_dr_wts_pdf, dr_colors=_dr_cols_pdf,
+                    der_label_sel=der_label_sel,
+                    H_val=H_val, _alpha=_alpha, use_es=use_es, _L=_L,
+                    data_mode=data_mode, names_in=names_in,
+                    grid_lbl=grid_lbl, lam_summary=_lam_s
+                )
+                st.download_button(
+                    label="📄 Export & Download PDF Report",
+                    data=_pdf_bytes,
+                    file_name=f"portfolio_optimisation_{H_val:.0%}_{_alpha:.0%}.pdf",
+                    mime="application/pdf",
+                    type="secondary",
+                    key="pdf_download"
+                )
+            except Exception as _pdf_err:
+                st.caption(f"PDF export unavailable: {_pdf_err}")
 
         # ── How to read these results ────────────────────────────────────────
         if der_config and nd_res:
