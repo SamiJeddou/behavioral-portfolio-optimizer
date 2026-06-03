@@ -634,7 +634,6 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             marker=dict(size=13, color='#10b981', symbol='diamond',
                         line=dict(width=0)),
             showlegend=True,
-            legendrank=4,
             hovertemplate='<b>Equivalence point</b><br>MV = Behavioural (no derivatives)<br>where λ=3.795 ↔ H=-10%, α=5%<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
         ))
         fig.add_annotation(
