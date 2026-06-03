@@ -1204,82 +1204,124 @@ with tab1:
         "a threshold (**Value-at-Risk / VaR**) or the expected loss in the worst scenarios "
         "(**Expected Shortfall / ES**).")
 
-    # ── Finance banner ───────────────────────────────────────────────────────
-    st.markdown('''<div style="width:100%;margin-bottom:1rem;border-radius:10px;overflow:hidden">
-<svg width="100%" viewBox="0 0 900 160" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
-  <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#0a0f1e"/>
-      <stop offset="50%" style="stop-color:#0d1a35"/>
-      <stop offset="100%" style="stop-color:#0a0f1e"/>
-    </linearGradient>
-    <linearGradient id="lineGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#1a6bbf;stop-opacity:0"/>
-      <stop offset="30%" style="stop-color:#1a6bbf;stop-opacity:1"/>
-      <stop offset="70%" style="stop-color:#4a9eff;stop-opacity:1"/>
-      <stop offset="100%" style="stop-color:#4a9eff;stop-opacity:0"/>
-    </linearGradient>
-    <linearGradient id="lineGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#a855f7;stop-opacity:0"/>
-      <stop offset="30%" style="stop-color:#a855f7;stop-opacity:0.8"/>
-      <stop offset="70%" style="stop-color:#a855f7;stop-opacity:0.8"/>
-      <stop offset="100%" style="stop-color:#a855f7;stop-opacity:0"/>
-    </linearGradient>
-    <linearGradient id="lineGrad3" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:0"/>
-      <stop offset="40%" style="stop-color:#f59e0b;stop-opacity:0.9"/>
-      <stop offset="80%" style="stop-color:#f59e0b;stop-opacity:0.7"/>
-      <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:0"/>
-    </linearGradient>
-  </defs>
-  <!-- Background -->
-  <rect width="900" height="160" fill="url(#bgGrad)"/>
-  <!-- Subtle grid lines -->
-  <line x1="0" y1="40" x2="900" y2="40" stroke="#1a2a4a" stroke-width="0.5"/>
-  <line x1="0" y1="80" x2="900" y2="80" stroke="#1a2a4a" stroke-width="0.5"/>
-  <line x1="0" y1="120" x2="900" y2="120" stroke="#1a2a4a" stroke-width="0.5"/>
-  <line x1="150" y1="0" x2="150" y2="160" stroke="#1a2a4a" stroke-width="0.5"/>
-  <line x1="300" y1="0" x2="300" y2="160" stroke="#1a2a4a" stroke-width="0.5"/>
-  <line x1="450" y1="0" x2="450" y2="160" stroke="#1a2a4a" stroke-width="0.5"/>
-  <line x1="600" y1="0" x2="600" y2="160" stroke="#1a2a4a" stroke-width="0.5"/>
-  <line x1="750" y1="0" x2="750" y2="160" stroke="#1a2a4a" stroke-width="0.5"/>
-  <!-- MV Efficient frontier (purple dashed) -->
-  <path d="M0,145 Q100,140 200,128 Q300,112 400,92 Q500,70 600,52 Q700,38 800,28 L900,22"
-        fill="none" stroke="url(#lineGrad2)" stroke-width="1.8" stroke-dasharray="6,4"/>
-  <!-- Behavioural frontier no derivative (blue) -->
-  <circle cx="180" cy="132" r="4" fill="#4a9eff"/>
-  <circle cx="310" cy="114" r="4" fill="#4a9eff"/>
-  <circle cx="420" cy="97" r="4" fill="#4a9eff"/>
-  <circle cx="530" cy="80" r="4" fill="#4a9eff"/>
-  <circle cx="650" cy="62" r="4" fill="#4a9eff"/>
-  <path d="M180,132 Q245,123 310,114 Q365,105 420,97 Q475,89 530,80 Q590,71 650,62"
-        fill="none" stroke="url(#lineGrad1)" stroke-width="2.2"/>
-  <!-- Gold optimal points (derivative) -->
-  <rect x="596" y="29" width="8" height="8" fill="#f59e0b" transform="rotate(45 600 33)"/>
-  <rect x="696" y="19" width="8" height="8" fill="#f59e0b" transform="rotate(45 700 23)"/>
-  <rect x="796" y="11" width="8" height="8" fill="#f59e0b" transform="rotate(45 800 15)"/>
-  <!-- Gold frontier line -->
-  <path d="M420,97 Q510,65 600,33 Q700,19 800,12"
-        fill="none" stroke="url(#lineGrad3)" stroke-width="2" stroke-dasharray="5,3"/>
-  <!-- Green equivalence diamond -->
-  <polygon points="420,97 428,89 420,81 412,89" fill="#10b981"/>
-  <!-- White dashed arrow -->
-  <line x1="420" y1="89" x2="420" y2="46" stroke="white" stroke-width="1.5" stroke-dasharray="4,3"/>
-  <polygon points="420,38 415,50 425,50" fill="white"/>
-  <!-- Axis lines -->
-  <line x1="60" y1="20" x2="60" y2="150" stroke="#3a4a6a" stroke-width="1.5"/>
-  <line x1="60" y1="150" x2="870" y2="150" stroke="#3a4a6a" stroke-width="1.5"/>
-  <!-- Axis labels -->
-  <text x="55" y="16" fill="#6a8aaa" font-size="9" font-family="sans-serif" text-anchor="middle">Return</text>
-  <text x="875" y="154" fill="#6a8aaa" font-size="9" font-family="sans-serif" text-anchor="end">Risk (σ)</text>
-  <!-- Title text -->
-  <text x="450" y="75" fill="white" font-size="20" font-family="sans-serif" font-weight="700"
-        text-anchor="middle" opacity="0.15">BEYOND MEAN-VARIANCE</text>
-  <!-- Subtle glow dots -->
-  <circle cx="100" cy="80" r="40" fill="#1a6bbf" opacity="0.04"/>
-  <circle cx="800" cy="80" r="50" fill="#f59e0b" opacity="0.04"/>
-  <circle cx="450" cy="80" r="60" fill="#a855f7" opacity="0.03"/>
-</svg></div>''', unsafe_allow_html=True)
+    # ── Premium finance banner ────────────────────────────────────────────────
+    st.markdown('''
+<div style="
+    width:100%;
+    background:linear-gradient(135deg,#020818 0%,#0a1628 40%,#0d1f3c 70%,#020818 100%);
+    border-radius:12px;
+    overflow:hidden;
+    margin-bottom:1.2rem;
+    position:relative;
+    height:140px;
+    border:1px solid #1a3a5c">
+
+  <!-- Animated SVG inside the banner -->
+  <svg width="100%" height="140" viewBox="0 0 1000 140" preserveAspectRatio="none"
+       xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0">
+    <defs>
+      <linearGradient id="b1" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#a855f7" stop-opacity="0"/>
+        <stop offset="20%" stop-color="#a855f7" stop-opacity="0.7"/>
+        <stop offset="80%" stop-color="#a855f7" stop-opacity="0.7"/>
+        <stop offset="100%" stop-color="#a855f7" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="b2" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#1a6bbf" stop-opacity="0"/>
+        <stop offset="15%" stop-color="#4a9eff" stop-opacity="0.9"/>
+        <stop offset="85%" stop-color="#4a9eff" stop-opacity="0.9"/>
+        <stop offset="100%" stop-color="#1a6bbf" stop-opacity="0"/>
+      </linearGradient>
+      <linearGradient id="b3" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="#f59e0b" stop-opacity="0"/>
+        <stop offset="25%" stop-color="#f59e0b" stop-opacity="0.85"/>
+        <stop offset="75%" stop-color="#fbbf24" stop-opacity="0.85"/>
+        <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+      </linearGradient>
+      <filter id="glow1">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glow2">
+        <feGaussianBlur stdDeviation="2.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <!-- Grid -->
+    <line x1="0" y1="35" x2="1000" y2="35" stroke="#0d2a4a" stroke-width="0.8"/>
+    <line x1="0" y1="70" x2="1000" y2="70" stroke="#0d2a4a" stroke-width="0.8"/>
+    <line x1="0" y1="105" x2="1000" y2="105" stroke="#0d2a4a" stroke-width="0.8"/>
+    <line x1="200" y1="0" x2="200" y2="140" stroke="#0d2a4a" stroke-width="0.8"/>
+    <line x1="400" y1="0" x2="400" y2="140" stroke="#0d2a4a" stroke-width="0.8"/>
+    <line x1="600" y1="0" x2="600" y2="140" stroke="#0d2a4a" stroke-width="0.8"/>
+    <line x1="800" y1="0" x2="800" y2="140" stroke="#0d2a4a" stroke-width="0.8"/>
+    <!-- Purple MV frontier with glow -->
+    <path d="M0,138 C150,132 280,118 400,98 C520,78 640,55 760,36 C850,22 930,14 1000,8"
+          fill="none" stroke="url(#b1)" stroke-width="2" stroke-dasharray="8,5" filter="url(#glow1)"/>
+    <!-- Blue behavioural frontier with glow -->
+    <path d="M50,135 C180,126 310,112 430,96 C540,81 650,66 750,52"
+          fill="none" stroke="url(#b2)" stroke-width="2.5" filter="url(#glow2)"/>
+    <!-- Blue dots on behavioural frontier -->
+    <circle cx="160" cy="128" r="5" fill="#4a9eff" filter="url(#glow2)"/>
+    <circle cx="300" cy="114" r="5" fill="#4a9eff" filter="url(#glow2)"/>
+    <circle cx="430" cy="96" r="5" fill="#4a9eff" filter="url(#glow2)"/>
+    <circle cx="560" cy="79" r="5" fill="#4a9eff" filter="url(#glow2)"/>
+    <circle cx="680" cy="61" r="5" fill="#4a9eff" filter="url(#glow2)"/>
+    <!-- Gold derivative frontier -->
+    <path d="M430,96 C530,68 640,38 760,18 C840,8 920,5 1000,3"
+          fill="none" stroke="url(#b3)" stroke-width="2.5" filter="url(#glow1)"/>
+    <!-- Gold squares -->
+    <rect x="554" y="37" width="9" height="9" fill="#f59e0b" transform="rotate(45 558 41)" filter="url(#glow1)"/>
+    <rect x="674" y="22" width="9" height="9" fill="#f59e0b" transform="rotate(45 678 26)" filter="url(#glow1)"/>
+    <rect x="794" y="11" width="9" height="9" fill="#fbbf24" transform="rotate(45 798 15)" filter="url(#glow1)"/>
+    <!-- Green equivalence diamond -->
+    <polygon points="430,96 440,86 430,76 420,86" fill="#10b981" filter="url(#glow2)"/>
+    <!-- White dashed arrow -->
+    <line x1="430" y1="84" x2="430" y2="48" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-dasharray="5,3"/>
+    <polygon points="430,40 424,52 436,52" fill="rgba(255,255,255,0.8)"/>
+    <!-- Ambient glow circles -->
+    <circle cx="200" cy="100" r="80" fill="#1a6bbf" opacity="0.06"/>
+    <circle cx="600" cy="70" r="100" fill="#a855f7" opacity="0.05"/>
+    <circle cx="900" cy="40" r="70" fill="#f59e0b" opacity="0.06"/>
+  </svg>
+
+  <!-- Text overlay -->
+  <div style="
+      position:absolute;top:0;left:0;right:0;bottom:0;
+      display:flex;flex-direction:column;justify-content:center;
+      padding:0 2rem;pointer-events:none">
+    <div style="
+        color:rgba(255,255,255,0.08);
+        font-size:2.8rem;
+        font-weight:800;
+        letter-spacing:.15em;
+        font-family:Georgia,serif;
+        line-height:1;
+        user-select:none">
+      BEYOND MEAN-VARIANCE
+    </div>
+    <div style="
+        color:rgba(74,158,255,0.5);
+        font-size:0.75rem;
+        letter-spacing:.3em;
+        margin-top:.3rem;
+        font-family:monospace;
+        user-select:none">
+      PORTFOLIO OPTIMISER · DERIVATIVES & STRUCTURED PRODUCTS · MENTAL ACCOUNTS FRAMEWORK
+    </div>
+  </div>
+
+  <!-- Legend pills -->
+  <div style="
+      position:absolute;bottom:10px;right:16px;
+      display:flex;gap:10px;align-items:center">
+    <span style="color:#a855f7;font-size:.68rem;font-family:monospace;opacity:0.8">▬ ▬ MV frontier</span>
+    <span style="color:#4a9eff;font-size:.68rem;font-family:monospace;opacity:0.8">── Behavioural</span>
+    <span style="color:#f59e0b;font-size:.68rem;font-family:monospace;opacity:0.8">── With derivative</span>
+    <span style="color:#10b981;font-size:.68rem;font-family:monospace;opacity:0.8">◆ Equivalence</span>
+  </div>
+</div>
+''', unsafe_allow_html=True)
 
     if not run_btn:
         st.markdown("""
