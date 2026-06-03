@@ -1226,7 +1226,8 @@ def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
 # ── Finance banner ────────────────────────────────────────────────────────
 st.markdown("<div style='height:0.6rem'></div>", unsafe_allow_html=True)
 st.markdown(f'''
-<div style="max-width:900px;margin:0 auto;background:linear-gradient(135deg,#020c1b 0%,#071428 40%,#0a1a35 70%,#020c1b 100%);border-radius:12px;overflow:hidden;border:1px solid #1a3a5c;display:flex;align-items:stretch;font-family:monospace;margin-bottom:1rem">
+<div style="width:100%;background:#020c1b;padding:4px 0 0 0;margin-bottom:0">
+<div style="max-width:900px;margin:0 auto;background:linear-gradient(135deg,#020c1b 0%,#071428 40%,#0a1a35 70%,#020c1b 100%);border-radius:12px;overflow:hidden;border:1px solid #1a3a5c;display:flex;align-items:stretch;font-family:monospace;margin-bottom:0">
   <div style="flex:1.5;padding:16px 18px;border-right:1px solid #1a3a5c;display:flex;flex-direction:column;justify-content:center;gap:10px">
     <div style="color:#ffffff;font-size:13px;font-weight:700;letter-spacing:0.03em;font-family:Georgia,serif;line-height:1.45">Portfolio Optimiser<br>with Derivatives &amp;<br>Structured Products</div>
     <div style="color:rgba(74,158,255,0.65);font-size:7.5px;letter-spacing:0.22em">BEYOND MEAN-VARIANCE · MENTAL ACCOUNTS FRAMEWORK</div>
@@ -1346,7 +1347,7 @@ st.markdown(f'''
     </div>
   </div>
 </div>
-''', unsafe_allow_html=True)
+</div>''', unsafe_allow_html=True)
 
 DONUT_COLORS = ['#e63946','#f4a261','#e9c46a','#2a9d8f','#264653','#023e8a','#e76f51','#457b9d']
 
@@ -1387,25 +1388,24 @@ def make_donut_svg(weights, labels, colors, size=160):
         paths.append(path)
 
         pct = w / total * 100
-        # Percentage label inside segment — show if >= 8%
-        if pct >= 8:
+        # Percentage label OUTSIDE the ring with security color
+        if pct >= 5:
             mid_angle = angle + sweep / 2
-            r_mid = (r_out + r_in) / 2
-            lx, ly = polar(cx, cy, r_mid, mid_angle)
+            r_label = r_out + 14
+            lx, ly = polar(cx, cy, r_label, mid_angle)
             paths.append(
                 f'<text x="{lx:.1f}" y="{ly:.1f}" '
-                f'fill="white" font-size="11" font-weight="600" '
+                f'fill="{color}" font-size="10" font-weight="700" '
                 f'font-family="sans-serif" text-anchor="middle" dominant-baseline="central">'
                 f'{pct:.0f}%</text>'
             )
-        
         # Legend
         short_lbl = label[:12] + "…" if len(label) > 12 else label
         legend_items.append((color, short_lbl, pct))
         
         angle += sweep
     
-    svg = (f'<svg width="{size}" height="{size}" viewBox="0 0 {size} {size}" '
+    svg = (f'<svg width="{size+30}" height="{size+30}" viewBox="-15 -15 {size+30} {size+30}" '
            f'xmlns="http://www.w3.org/2000/svg">'
            + "".join(paths)
            + '</svg>')
