@@ -662,20 +662,63 @@ def parse_csv(f):
 def fetch_tickers(tickers, start, end, freq):
     try:
         import yfinance as yf
-        raw = yf.download(tickers, start=str(start), end=str(end),
-                          auto_adjust=True, progress=False)['Close']
-        if isinstance(raw, pd.Series): raw = raw.to_frame(tickers[0])
-        raw = raw.dropna()
+        # Download with group_by='ticker' to get consistent multi-ticker structure
+        raw_full = yf.download(tickers, start=str(start), end=str(end),
+                               auto_adjust=True, progress=False,
+                               group_by='column')
+
+        # Handle both single and multi-ticker cases robustly
+        if raw_full.empty:
+            return None, None, None, None, None, "No data returned — check tickers and date range.", {}
+
+        # Extract Close prices — handle MultiIndex columns from newer yfinance
+        if isinstance(raw_full.columns, pd.MultiIndex):
+            # Multi-ticker: columns are (field, ticker)
+            if 'Close' in raw_full.columns.get_level_values(0):
+                raw = raw_full['Close'].copy()
+            elif 'Adj Close' in raw_full.columns.get_level_values(0):
+                raw = raw_full['Adj Close'].copy()
+            else:
+                raw = raw_full.xs('Close', axis=1, level=0) if 'Close' in raw_full.columns.get_level_values(0) else raw_full.iloc[:, :len(tickers)]
+        else:
+            # Single ticker or flat columns
+            if 'Close' in raw_full.columns:
+                raw = raw_full[['Close']].copy()
+                raw.columns = [tickers[0]]
+            elif 'Adj Close' in raw_full.columns:
+                raw = raw_full[['Adj Close']].copy()
+                raw.columns = [tickers[0]]
+            else:
+                raw = raw_full.copy()
+
+        # Ensure DataFrame
+        if isinstance(raw, pd.Series):
+            raw = raw.to_frame(tickers[0])
+
+        # Reorder columns to match requested ticker order
+        available = [t for t in tickers if t in raw.columns]
+        if not available:
+            return None, None, None, None, None, f"No Close price data found for tickers: {tickers}", {}
+        raw = raw[available].copy()
+
+        raw = raw.dropna(how='all').dropna(axis=1, how='all')
+        if raw.empty or len(raw) < 5:
+            return None, None, None, None, None, "Insufficient data after cleaning — try a wider date range.", {}
+
         if freq == "Monthly":
             raw = raw.resample('ME').last()
+
         rets = raw.pct_change().dropna()
+        if rets.empty or len(rets) < 3:
+            return None, None, None, None, None, "Insufficient return data after cleaning.", {}
+
         rets, cleaning_report = clean_returns(rets.copy())
         factor = 252 if freq == "Daily" else 12
         means = (rets.mean() * factor).tolist()
         sigs  = (rets.std() * np.sqrt(factor)).tolist()
         corr  = rets.corr().values.tolist()
         names = list(rets.columns)
-        last_prices = raw.iloc[-1].to_dict()
+        last_prices = {col: float(raw[col].dropna().iloc[-1]) for col in raw.columns if not raw[col].dropna().empty}
         return means, sigs, corr, names, last_prices, None, cleaning_report
     except Exception as e:
         return None, None, None, None, None, str(e), {}
