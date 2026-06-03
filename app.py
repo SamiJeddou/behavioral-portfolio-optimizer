@@ -533,7 +533,7 @@ def run_opt(means,sigs,cov,der_config,H,alpha,m,mp,
 
 def build_frontier(means,sigs,cov,der_config,alpha,m,mp,
                    constraint_type='var',L=None):
-    H_vals=[-0.05,-0.08,-0.10,-0.12,-0.15,-0.18,-0.20]
+    H_vals=[-0.02,-0.05,-0.08,-0.10,-0.12,-0.15,-0.18,-0.20,-0.25,-0.30,-0.35,-0.40]
     pts=[]
     for H in H_vals:
         try:
@@ -551,7 +551,8 @@ def build_frontier(means,sigs,cov,der_config,alpha,m,mp,
 def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                          nd_x, nd_y, nd_lbls,
                          der_x, der_y, der_lbls,
-                         der_label, H_sel, alpha):
+                         der_label, H_sel, alpha,
+                         p3_x=None, p3_y=None):
     """Interactive Plotly version of the frontier chart with hover tooltips."""
     fig = go.Figure()
 
@@ -652,6 +653,17 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         bordercolor='#3a3a5a', borderwidth=1,
         xanchor='center', yanchor='bottom'
     )
+
+    # ── Portfolio (3) point ──────────────────────────────────────────────────
+    if p3_x is not None and p3_y is not None:
+        fig.add_trace(go.Scatter(
+            x=[p3_x], y=[p3_y], mode='markers',
+            name=f'Portfolio (3) — same variance as (1), with {der_label}',
+            marker=dict(size=14, color='#e76f51', symbol='star',
+                       line=dict(color='white', width=1)),
+            hovertemplate=(f'<b>Portfolio (3)</b><br>Same std dev as Portfolio (1)<br>'
+                          f'Std Dev: {p3_x:.2f}%<br>Expected Return: {p3_y:.2f}%<extra></extra>')
+        ))
 
     # ── Layout ────────────────────────────────────────────────────────────────
     fig.update_layout(
@@ -1509,8 +1521,31 @@ structured products, can unlock beyond what mean-variance can achieve.
 ''', unsafe_allow_html=True)
 
         with st.spinner("Rendering chart..."):
+            # Compute Portfolio (3) point for chart overlay
+            _p3_x, _p3_y = None, None
+            if der_xs and len(der_xs) >= 2:
+                try:
+                    # nd_res may not be available yet — use equivalence point std dev from nd_xs
+                    _key = f"H={H_val:.0%}"
+                    if _key in nd_lbls:
+                        _target_std = nd_xs[nd_lbls.index(_key)]
+                    elif nd_xs:
+                        _target_std = nd_xs[len(nd_xs)//2]  # middle point as fallback
+                    else:
+                        _target_std = None
+                    if _target_std:
+                        _fp = sorted(zip(der_xs, der_ys), key=lambda p: p[0])
+                        _fx = [p[0] for p in _fp]
+                        _fy = [p[1] for p in _fp]
+                        if min(_fx) <= _target_std <= max(_fx):
+                            _p3_x = _target_std
+                            _p3_y = float(np.interp(_target_std, _fx, _fy))
+                except Exception:
+                    pass
+
             fig_plotly=plot_frontier_plotly(mv_x,mv_y,mv_eq,nd_xs,nd_ys,nd_lbls,
-                                            der_xs,der_ys,der_lbls,der_label_sel,H_val,alpha_val)
+                                            der_xs,der_ys,der_lbls,der_label_sel,H_val,alpha_val,
+                                            p3_x=_p3_x, p3_y=_p3_y)
 
             # ── Simulation summary + chart side by side ───────────────────────
             col_summary, col_chart = st.columns([1, 3.5])
@@ -1584,7 +1619,7 @@ structured products, can unlock beyond what mean-variance can achieve.
         st.markdown("---")
         constraint_label = f"H={H_val:.0%}, α={_alpha:.0%}" if not use_es else f"H={H_val:.0%}, L={_L:.0%}"
         st.markdown(f"### Optimal portfolios — {constraint_label}")
-        c1,c2=st.columns(2)
+        c1,c2=st.columns(2, vertical_alignment="top")
 
         nd_res=None
         dr_res=None
@@ -1592,6 +1627,7 @@ structured products, can unlock beyond what mean-variance can achieve.
         with c1:
             st.markdown('**Optimal portfolio (1) — no derivative**', unsafe_allow_html=True)
             st.caption("Maximises return subject to the downside constraint")
+            st.markdown("<div style='min-height:.1rem'></div>", unsafe_allow_html=True)
             try:
                 nd_res,_=run_opt(means_arr,sigs_arr,cov_mat,None,H_val,_alpha,m_val,mp_val,
                                constraint_type=_ctype,L=_L)
@@ -1606,7 +1642,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                 _nd_labels = [names_in[i] if i<len(names_in) else f"Asset {i+1}" for i in range(len(_nd_weights))]
                 _nd_colors = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_nd_weights))]
                 _nd_svg = make_donut_svg(_nd_weights, _nd_labels, _nd_colors, size=150)
-                st.markdown('<div style="min-height:2.5rem"><b>Portfolio weights</b></div>', unsafe_allow_html=True)
+                st.markdown('<div style="margin-top:.8rem;margin-bottom:.3rem;font-weight:600">Portfolio weights</div>', unsafe_allow_html=True)
                 if _nd_svg:
                     st.markdown(f'<div style="display:flex;justify-content:center;margin-bottom:.5rem">{_nd_svg}</div>', unsafe_allow_html=True)
                 for i,w in enumerate(_nd_weights):
@@ -1621,6 +1657,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                     else "Differential evolution + COBYLA refinement" if _method_nd == "differential_evolution"
                     else _method_nd)
                 st.caption(f"Optimisation method: {_method_nd_label}")
+                st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
             except Exception as e:
                 st.warning(
                     "⚠️ No eligible portfolio found for these parameters. "
@@ -1649,7 +1686,7 @@ structured products, can unlock beyond what mean-variance can achieve.
                     _dr_labels = [asset_labels[i] if i<len(asset_labels) else f"Asset {i+1}" for i in range(len(_dr_weights))]
                     _dr_colors = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_dr_weights))]
                     _dr_svg = make_donut_svg(_dr_weights, _dr_labels, _dr_colors, size=150)
-                    st.markdown('<div style="min-height:2.5rem"><b>Portfolio weights</b></div>', unsafe_allow_html=True)
+                    st.markdown('<div style="margin-top:.8rem;margin-bottom:.3rem;font-weight:600">Portfolio weights</div>', unsafe_allow_html=True)
                     if _dr_svg:
                         st.markdown(f'<div style="display:flex;justify-content:center;margin-bottom:.5rem">{_dr_svg}</div>', unsafe_allow_html=True)
                     for i,w in enumerate(_dr_weights):
@@ -1688,6 +1725,10 @@ structured products, can unlock beyond what mean-variance can achieve.
                 unsafe_allow_html=True)
 
         # ── Portfolio (3): Same risk comparison (always shown when frontier available) ──
+        if der_config and nd_res:
+            if len(der_xs) < 2:
+                st.markdown("---")
+                st.info(f"⚠️ Portfolio (3) not available — the derivative frontier could not be computed (got {len(der_xs)} point(s)). Try Standard resolution or check derivative parameters.")
         if der_config and nd_res and len(der_xs) >= 2:
             st.markdown("---")
             st.markdown(
