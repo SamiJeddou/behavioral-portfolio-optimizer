@@ -727,7 +727,8 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                          nd_x, nd_y, nd_lbls,
                          der_x, der_y, der_lbls,
                          der_label, H_sel, alpha,
-                         p3_x=None, p3_y=None):
+                         p3_x=None, p3_y=None,
+                         nd_res_actual=None, lam_actual=None):
     """Interactive Plotly version of the frontier chart with hover tooltips."""
     fig = go.Figure()
 
@@ -845,8 +846,32 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         except (ValueError, IndexError):
             pass
 
-    # ── Equivalence point ─────────────────────────────────────────────────────
-    if mv_eq:
+    # ── Portfolio (1) / Equivalence point ───────────────────────────────────────
+    # Use actual optimised Portfolio (1) point if available, else fall back to default
+    if nd_res_actual:
+        _p1_x = nd_res_actual['std_dev'] * 100
+        _p1_y = nd_res_actual['expected_return'] * 100
+        _lam_str = f"λ={lam_actual:.4f}" if lam_actual else "λ computed"
+        _h_str = f"H={H_sel:.0%}, α={alpha:.0%}"
+        fig.add_trace(go.Scatter(
+            x=[_p1_x], y=[_p1_y], mode='markers',
+            name=f'Portfolio (1) — Optimum without derivatives ({_h_str})',
+            legendrank=5,
+            marker=dict(size=13, color='#10b981', symbol='diamond',
+                        line=dict(width=0)),
+            showlegend=True,
+            hovertemplate=f'<b>Portfolio (1)</b><br>Optimum without derivatives<br>{_h_str} ↔ {_lam_str}<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
+        ))
+        fig.add_annotation(
+            x=_p1_x, y=_p1_y,
+            text=f'<b>Portfolio (1)</b><br>Optimum without derivatives<br>{_h_str} ↔ {_lam_str}<br>Return = {_p1_y:.1f}%',
+            showarrow=True, arrowhead=2, arrowcolor='#10b981',
+            arrowwidth=1.5, ax=40, ay=60,
+            font=dict(color='#10b981', size=9),
+            bgcolor='rgba(13,17,23,0.9)',
+            bordercolor='#10b981', borderwidth=1
+        )
+    elif mv_eq:
         fig.add_trace(go.Scatter(
             x=[mv_eq[0]], y=[mv_eq[1]], mode='markers',
             name='Portfolio (1) — Equivalence point: MV = Behavioural (no derivatives) ↔ H=-10%, α=5%',
@@ -854,11 +879,11 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             marker=dict(size=13, color='#10b981', symbol='diamond',
                         line=dict(width=0)),
             showlegend=True,
-            hovertemplate='<b>Equivalence point</b><br>MV = Behavioural (no derivatives)<br>where λ=3.795 ↔ H=-10%, α=5%<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
+            hovertemplate='<b>Portfolio (1) — Equivalence point</b><br>MV = Behavioural (no derivatives)<br>where λ=3.795 ↔ H=-10%, α=5%<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
         ))
         fig.add_annotation(
             x=mv_eq[0], y=mv_eq[1],
-            text=f'Equivalence point<br>MV = Behavioural (no derivatives)<br>where λ=3.795 ↔ H=-10%, α=5%<br>Return = {mv_eq[1]:.1f}%',
+            text=f'Portfolio (1) — Equivalence point<br>MV = Behavioural (no derivatives)<br>λ=3.795 ↔ H=-10%, α=5%<br>Return = {mv_eq[1]:.1f}%',
             showarrow=True, arrowhead=2, arrowcolor='#10b981',
             arrowwidth=1.5, ax=40, ay=60,
             font=dict(color='#10b981', size=9),
@@ -1806,9 +1831,20 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 except Exception:
                     pass
 
+            # Compute implied lambda for actual Portfolio (1) point
+            _lam_actual = None
+            try:
+                from scipy.optimize import brentq as _brentq
+                _cov_s = corr_to_cov(sigs_in, corr_in)
+                _lam_actual = implied_lambda(H_val, alpha_val, means_in, _cov_s)
+            except Exception:
+                pass
+
             fig_plotly=plot_frontier_plotly(mv_x,mv_y,mv_eq,nd_xs,nd_ys,nd_lbls,
                                             der_xs,der_ys,der_lbls,der_label_sel,H_val,alpha_val,
-                                            p3_x=_p3_x, p3_y=_p3_y)
+                                            p3_x=_p3_x, p3_y=_p3_y,
+                                            nd_res_actual=_nd_res_pre,
+                                            lam_actual=_lam_actual)
 
             # ── Simulation summary + chart side by side ───────────────────────
             col_summary, col_chart = st.columns([1, 3.5])
