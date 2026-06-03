@@ -17,7 +17,7 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
                          dr_labels, dr_weights, dr_colors,
                          der_label_sel, H_val, _alpha, use_es, _L,
                          data_mode, names_in, grid_lbl, lam_summary,
-                         fig_plotly=None):
+                         fig_plotly=None, fig_png=None):
     """Generate a PDF summary report of optimisation results."""
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
@@ -160,10 +160,13 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
     story.append(Spacer(1, 8))
 
     # ── Optimisation chart ────────────────────────────────────────────────────
-    if fig_plotly is not None:
+    _chart_bytes = fig_png if fig_png is not None else (
+        fig_plotly.to_image(format='png', width=700, height=400, scale=2)
+        if fig_plotly is not None else None
+    )
+    if _chart_bytes is not None:
         try:
-            _img_bytes = fig_plotly.to_image(format='png', width=700, height=400, scale=2)
-            _img_buf = io.BytesIO(_img_bytes)
+            _img_buf = io.BytesIO(_chart_bytes)
             _rl_img = RLImage(_img_buf, width=17*cm, height=9.7*cm)
             story += section_header('Optimisation Chart — Efficient Frontiers', navy)
             story.append(_rl_img)
@@ -1475,6 +1478,13 @@ div[data-testid="stSidebarContent"] button p {
         use_container_width=True,
         disabled=not data_valid)
 
+    if run_btn:
+        st.session_state['_run_active'] = True
+        # Clear old PDF when new run starts
+        st.session_state.pop('_pdf_bytes', None)
+
+    _run_active = st.session_state.get('_run_active', False)
+
 
 # ═════════════════════════════════════════════════════════════════════════════
 # MAIN
@@ -1711,7 +1721,7 @@ with tab1:
         "(**Expected Shortfall / ES**).")
 
 
-    if not run_btn:
+    if not run_btn and not _run_active:
         st.markdown("""
 <div class="info-box" style="color:#ffffff !important">
 
@@ -1789,11 +1799,22 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
         # Sample chart
         import os
         if os.path.exists("sample_output.png"):
-            st.image("sample_output.png", caption="Sample output — Safety collar example showing all three portfolio perspectives (Portfolio (1) green diamond, Portfolio (2) orange square, Portfolio (3) coral star)", use_container_width=True)
+            st.markdown(
+                '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'
+                'padding:.6rem 1rem .4rem 1rem;margin-top:.5rem">'
+                '<div style="color:#4a9eff;font-weight:600;font-size:.85rem;margin-bottom:.4rem">'
+                '🖼️ Sample output — Safety collar with all three portfolio perspectives</div>'
+                '</div>',
+                unsafe_allow_html=True)
+            _col_l2, _col_img, _col_r2 = st.columns([1, 4, 1])
+            with _col_img:
+                st.image("sample_output.png",
+                         caption="Portfolio (1) green diamond · Portfolio (2) orange square · Portfolio (3) coral star",
+                         use_container_width=True)
 
         pass  # welcome screen shown, About tab still renders
 
-    if run_btn:
+    if run_btn or _run_active:
         means_arr=np.array(means_in); sigs_arr=np.array(sigs_in)
         cov_mat=corr_to_cov(sigs_arr,corr_in)
 
@@ -1885,6 +1906,12 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                                             nd_res_actual=_nd_res_pre,
                                             lam_actual=_lam_actual)
             st.session_state['_fig_plotly'] = fig_plotly
+            # Also store as PNG bytes for PDF export (more reliable than figure object)
+            try:
+                st.session_state['_fig_png'] = fig_plotly.to_image(
+                    format='png', width=900, height=500, scale=2)
+            except Exception:
+                st.session_state['_fig_png'] = None
 
             # ── Simulation summary + chart side by side ───────────────────────
             col_summary, col_chart = st.columns([1, 3.5])
@@ -2177,8 +2204,6 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 _dr_cols_pdf = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_dr_wts_pdf))] if dr_res else []
                 _p3r = p3_return if p3_return is not None else None
                 _p3s = p3_std if p3_std is not None else None
-                # Retrieve fig from session_state so it survives reruns
-                _fig_for_pdf = st.session_state.get('_fig_plotly', None)
                 _pdf_bytes = generate_pdf_report(
                     constraint_label=constraint_label,
                     nd_res=nd_res, dr_res=dr_res,
@@ -2189,7 +2214,7 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                     H_val=H_val, _alpha=_alpha, use_es=use_es, _L=_L,
                     data_mode=data_mode, names_in=names_in,
                     grid_lbl=grid_lbl, lam_summary=_lam_s,
-                    fig_plotly=_fig_for_pdf
+                    fig_png=st.session_state.get('_fig_png', None)
                 )
                 # Store PDF bytes in session_state so download button doesn't trigger rerun loss
                 st.session_state['_pdf_bytes'] = _pdf_bytes
