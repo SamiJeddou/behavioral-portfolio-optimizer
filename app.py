@@ -580,12 +580,28 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     if der_x:
         fig.add_trace(go.Scatter(
             x=der_x, y=der_y, mode='markers',
-            name=f'Portfolio (2) — Behavioural optimal portfolios with {der_label}',
+            name=f'Behavioural optimum portfolios — derivative frontier ({der_label})',
             legendrank=4,
-            marker=dict(size=10, color='#f59e0b', symbol='square'),
+            marker=dict(size=8, color='#f59e0b', symbol='square'),
+            opacity=0.7,
             text=der_lbls,
             hovertemplate=f'<b>Behavioural optimal portfolio (with {der_label})</b><br>Threshold: %{{text}}<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
         ))
+
+        # ── Portfolio (2) highlighted point at selected H ─────────────────────
+        try:
+            _i2 = der_lbls.index(f'H={H_sel:.0%}')
+            fig.add_trace(go.Scatter(
+                x=[der_x[_i2]], y=[der_y[_i2]], mode='markers',
+                name=f'Portfolio (2) — optimum with {der_label} at H={H_sel:.0%}',
+                legendrank=41,
+                marker=dict(size=14, color='#ff6b00', symbol='square',
+                           line=dict(color='white', width=1.5)),
+                hovertemplate=(f'<b>Portfolio (2)</b><br>Optimum with {der_label}<br>'
+                              f'Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>')
+            ))
+        except (ValueError, IndexError):
+            pass
 
         # Gain arrow at selected H
         try:
@@ -1368,6 +1384,18 @@ def make_donut_svg(weights, labels, colors, size=160):
                 f'A {r_in} {r_in} 0 {large} 0 {x2i:.1f} {y2i:.1f} Z" '
                 f'fill="{color}" stroke="#0d1117" stroke-width="1.5"/>')
         paths.append(path)
+
+        # Percentage label inside segment — show if >= 8%
+        if pct >= 8:
+            mid_angle = angle + sweep / 2
+            r_mid = (r_out + r_in) / 2
+            lx, ly = polar(cx, cy, r_mid, mid_angle)
+            paths.append(
+                f'<text x="{lx:.1f}" y="{ly:.1f}" '
+                f'fill="white" font-size="11" font-weight="600" '
+                f'font-family="sans-serif" text-anchor="middle" dominant-baseline="central">'
+                f'{pct:.0f}%</text>'
+            )
         
         # Legend
         pct = w / total * 100
@@ -1646,10 +1674,9 @@ structured products, can unlock beyond what mean-variance can achieve.
                 if method_txt:
                     st.caption(f"Method: {method_txt}")
             with col_d:
-                st.markdown('<div style="font-weight:600;font-size:.9rem;margin-bottom:.4rem">Portfolio weights</div>', unsafe_allow_html=True)
                 _svg = make_donut_svg(weights, labels, colors, size=150)
                 if _svg:
-                    st.markdown(f'<div style="display:flex;justify-content:center">{_svg}</div>', unsafe_allow_html=True)
+                    st.markdown(f'<div style="display:flex;justify-content:center;margin-top:1.8rem">{_svg}</div>', unsafe_allow_html=True)
             with col_b:
                 st.markdown('<div style="font-weight:600;font-size:.9rem;margin-bottom:.4rem">Portfolio weights</div>', unsafe_allow_html=True)
                 for i, w in enumerate(weights):
