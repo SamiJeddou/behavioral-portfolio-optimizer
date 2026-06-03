@@ -243,11 +243,22 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
     if p3_return is not None and nd_res:
         story += section_header(f'Portfolio (3) — Same variance as Portfolio (1), with {der_label_sel}', coral)
         story.append(Paragraph(
-            'Interpolated from the derivative frontier — indicative only.',
+            'Interpolated from the derivative frontier — indicative only. '
+            'Portfolio (3) is not directly optimised: its return is obtained by interpolating '
+            'the derivative frontier at the same standard deviation as Portfolio (1). '
+            'No exact weight vector exists — the allocation below is the derivative frontier '
+            'allocation from Portfolio (2) provided for reference only.',
             caption_style))
         gain = p3_return - nd_res['expected_return'] * 100
         story.append(metrics_table(None, is_interp=True,
                                    interp_ret=p3_return, interp_std=p3_std, gain=gain))
+        story.append(Spacer(1, 4))
+        if dr_labels and dr_weights:
+            story.append(Paragraph(
+                '<i>Reference allocation (from Portfolio (2) derivative frontier — indicative only):</i>',
+                ParagraphStyle('ref', parent=styles['Normal'], fontSize=8, textColor=colors.grey)))
+            story.append(Spacer(1, 2))
+            story.append(weights_table(dr_labels, dr_weights, dr_colors, 'Security / Instrument'))
         story.append(Spacer(1, 8))
 
     # ── Footer ────────────────────────────────────────────────────────────────
