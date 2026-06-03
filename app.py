@@ -1752,7 +1752,7 @@ Follow these steps in the sidebar:
 </tr>
 </table>
 
-The chart shows the efficient frontiers and up to three portfolio markers:
+The chart shows the efficient frontiers and up to three portfolio markers (see sample output at the bottom of this section):
 
 <table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
 <tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Curves</td></tr>
