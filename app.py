@@ -2064,19 +2064,48 @@ what the behavioural approach with derivatives can unlock beyond mean-variance.
                 st.markdown(_html, unsafe_allow_html=True)
             with col_chart:
                 st.plotly_chart(fig_plotly, use_container_width=True, config={'editable': True, 'displayModeBar': True})
-                st.markdown(
-                '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;'
-                'padding:.6rem 1rem;color:#c0c8d8;font-size:.78rem;margin-top:.3rem">'
-                '<b style="color:#4a9eff">📐 Reading the chart</b> — '
-                'Without derivatives, the blue behavioural frontier should closely track the purple MV frontier, '
-                'confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010). '
-                'With derivatives, the frontiers may diverge — this is expected and is the core contribution of the framework: '
-                'derivatives allow the behavioural approach to reach portfolios that mean-variance optimisation cannot. '
-                'Some behavioural points may appear below the MV frontier at certain risk levels — this reflects the binding '
-                'nature of the downside constraint at those H values, not a failure of the method. '
-                '<b style="color:#f59e0b">Fast resolution</b> uses a coarse grid and may introduce small approximation errors — '
-                'use Standard or High precision for publication-quality results.</div>',
-                unsafe_allow_html=True)
+                # ── Below chart: metrics scorecard left + reading note right ──────
+                _cb_left, _cb_right = st.columns([1, 2.5])
+                with _cb_left:
+                    # Build metrics scorecard from results if available
+                    _m1 = _nd_res_pre
+                    _nd_ret_s  = f"{_m1['expected_return']*100:.2f}%" if _m1 else "—"
+                    _nd_std_s  = f"{_m1['std_dev']*100:.2f}%"        if _m1 else "—"
+                    _nd_skew_s = f"{_m1['skewness']:.3f}"            if _m1 else "—"
+                    _nd_sf_s   = f"{_m1['shortfall_stat']*100:.2f}%" if _m1 else "—"
+                    _lam_s2    = lam_summary if lam_summary != "—" else "—"
+                    def _row(label, val, color="#c0c8d8"):
+                        return (f'<tr><td style="padding:.25rem .5rem;color:#7fb3e8;font-size:.75rem;white-space:nowrap">{label}</td>'
+                                f'<td style="padding:.25rem .5rem;color:{color};font-weight:600;font-size:.8rem;text-align:right">{val}</td></tr>')
+                    _scorecard = (
+                        '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;padding:.6rem .8rem;margin-top:.3rem">'                        '<div style="color:#4a9eff;font-weight:700;font-size:.8rem;margin-bottom:.4rem">📊 Key Metrics</div>'                        '<table style="width:100%;border-collapse:collapse">'                        + _row("Portfolio (1) return", _nd_ret_s, "#10b981")                        + _row("Portfolio (1) std dev", _nd_std_s)                        + _row("Portfolio (1) skewness", _nd_skew_s)                        + _row("Shortfall / ES", _nd_sf_s)                        + _row("Implied λ", _lam_s2, "#10b981")                        + _row("Constraint", constraint_str)                    )
+                    if _nd_res_pre and dr_res:
+                        _dr_ret_s = f"{dr_res['expected_return']*100:.2f}%"
+                        _gain_s = f"{(dr_res['expected_return']-_nd_res_pre['expected_return'])*100:+.2f} pp"
+                        _gain_col = "#10b981" if dr_res['expected_return'] > _nd_res_pre['expected_return'] else "#ef4444"
+                        _scorecard += _row(f"Portfolio (2) return", _dr_ret_s, "#f59e0b")
+                        _scorecard += _row("Return gain (2) vs (1)", _gain_s, _gain_col)
+                    if p3_return is not None and _nd_res_pre:
+                        _p3_gain_s = f"{p3_return - _nd_res_pre['expected_return']*100:+.2f} pp"
+                        _p3_col = "#10b981" if p3_return > _nd_res_pre['expected_return']*100 else "#ef4444"
+                        _scorecard += _row("Portfolio (3) return", f"{p3_return:.2f}%", "#e76f51")
+                        _scorecard += _row("Return gain (3) vs (1)", _p3_gain_s, _p3_col)
+                    _scorecard += '</table></div>'
+                    st.markdown(_scorecard, unsafe_allow_html=True)
+                with _cb_right:
+                    st.markdown(
+                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;'
+                    'padding:.6rem 1rem;color:#c0c8d8;font-size:.78rem;margin-top:.3rem">'
+                    '<b style="color:#4a9eff">📐 Reading the chart</b> — '
+                    'Without derivatives, the blue behavioural frontier should closely track the purple MV frontier, '
+                    'confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010). '
+                    'With derivatives, the frontiers may diverge — this is expected and is the core contribution of the framework: '
+                    'derivatives allow the behavioural approach to reach portfolios that mean-variance optimisation cannot. '
+                    'Some behavioural points may appear below the MV frontier at certain risk levels — this reflects the binding '
+                    'nature of the downside constraint at those H values, not a failure of the method. '
+                    '<b style="color:#f59e0b">Fast resolution</b> uses a coarse grid and may introduce small approximation errors — '
+                    'use Standard or High precision for publication-quality results.</div>',
+                    unsafe_allow_html=True)
 
         # ── Results ───────────────────────────────────────────────────────────────
         st.markdown("---")
