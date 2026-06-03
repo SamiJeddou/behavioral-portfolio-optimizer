@@ -1909,6 +1909,11 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
         _alpha = _cache['_alpha']
         use_es = _cache['use_es']
         _L = _cache['_L']
+        lam_summary = _cache.get('lam_summary', '—')
+        names_in = _cache.get('names_in', [])
+        asset_labels = _cache.get('asset_labels', [])
+        constraint_str = _cache.get('constraint_str', '')
+        grid_lbl = _cache.get('grid_lbl', '')
         # Show simple placeholder for chart (cached fig)
         if st.session_state.get('_fig_plotly'):
             col_summary_c, col_chart_c = st.columns([1, 3.5])
@@ -2335,6 +2340,17 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 _dr_cols_pdf = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_dr_wts_pdf))] if dr_res else []
                 _p3r = p3_return if p3_return is not None else None
                 _p3s = p3_std if p3_std is not None else None
+                # Try to get PNG from session state; retry export if missing
+                _fig_png_for_pdf = st.session_state.get('_fig_png', None)
+                if _fig_png_for_pdf is None:
+                    _fig_obj = st.session_state.get('_fig_plotly', None)
+                    if _fig_obj is not None:
+                        try:
+                            _fig_png_for_pdf = _fig_obj.to_image(
+                                format='png', width=900, height=500, scale=2)
+                            st.session_state['_fig_png'] = _fig_png_for_pdf
+                        except Exception:
+                            pass
                 _pdf_bytes = generate_pdf_report(
                     constraint_label=constraint_label,
                     nd_res=nd_res, dr_res=dr_res,
@@ -2345,7 +2361,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                     H_val=H_val, _alpha=_alpha, use_es=use_es, _L=_L,
                     data_mode=data_mode, names_in=names_in,
                     grid_lbl=grid_lbl, lam_summary=_lam_s,
-                    fig_png=st.session_state.get('_fig_png', None)
+                    fig_png=_fig_png_for_pdf
                 )
                 # Store PDF bytes in session_state so download button doesn't trigger rerun loss
                 st.session_state['_pdf_bytes'] = _pdf_bytes
@@ -2375,6 +2391,11 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             'der_config': der_config, 'der_label_sel': der_label_sel,
             'H_val': H_val, '_alpha': _alpha, 'use_es': use_es, '_L': _L,
             'data_mode': data_mode,
+            'lam_summary': lam_summary,
+            'names_in': names_in,
+            'asset_labels': asset_labels,
+            'constraint_str': constraint_str,
+            'grid_lbl': grid_lbl,
         }
         st.session_state['_needs_compute'] = False
 
