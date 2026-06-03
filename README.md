@@ -135,7 +135,7 @@ The Streamlit dashboard allows you to:
 - Visualise the three-curve efficient frontier (MV / Behavioral / Behavioral + derivative) in real time
 - Read optimal portfolio weights and statistics for the selected parameters
 
-🔗 **Live app**: [samijeddou-behavioral-portfolio-optimizer.streamlit.app](https://samijeddou-behavioral-portfolio-optimizer.streamlit.app)
+🔗 **Live app**: [sami-jeddou-behavioral-portfolio-optimizer.streamlit.app](https://sami-jeddou-behavioral-portfolio-optimizer.streamlit.app)
 
 ### API
 
@@ -166,6 +166,13 @@ POST /optimize
 The baseline result (10.21%) matches the thesis mean-variance result (10.23%) to within **2 basis points**, confirming correct algorithm calibration.
 
 ---
+
+## Roadmap
+
+- [ ] REST API endpoint (FastAPI) — making the optimiser callable by external portfolio management, risk, and trading systems
+- [ ] Async job handling for long-running optimisations
+- [ ] Additional derivative types and structured product templates
+- [ ] Multi-period optimisation
 
 ## Author
 
