@@ -1227,7 +1227,7 @@ with st.sidebar:
     # ── 1. Data source ────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">1</span><span style="display:block">📂 PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
     data_mode = st.radio("Data source",
-        ["Default (Das & Statman base case)",
+        ["Default (3-asset sample case)",
          "Live market data (Yahoo Finance)",
          "Enter manually",
          "Upload CSV"],
@@ -1237,7 +1237,7 @@ with st.sidebar:
     corr_in=[r[:] for r in DEFAULT_CORR]; names_in=DEFAULT_NAMES[:]
     last_prices={}; data_valid=True
 
-    if data_mode=="Default (Das & Statman base case)":
+    if data_mode=="Default (3-asset sample case)":
         st.markdown('<div class="ok-box">✓ Default base case loaded — Means: 5%, 10%, 25% | Std devs: 5%, 20%, 50%</div>',
                     unsafe_allow_html=True)
 
