@@ -1927,7 +1927,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 '<span style="font-size:1.3rem;font-weight:700;color:#4a9eff">'
                 '🖼️ Sample Output</span><br>'
                 '<span style="font-size:.85rem;color:#c0c8d8">'
-                'Safety collar — showing all three portfolio perspectives</span>'
+                'Safety collar — showing all three portfolio perspectives with annotation boxes</span>'
                 '</div>',
                 unsafe_allow_html=True)
             _col_l2, _col_img, _col_r2 = st.columns([1, 4, 1])
