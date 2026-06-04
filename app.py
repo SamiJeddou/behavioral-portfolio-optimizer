@@ -1239,7 +1239,7 @@ with st.sidebar:
          "Live market data (Yahoo Finance)",
          "Enter manually",
          "Upload CSV"],
-        index=0, label_visibility="collapsed")
+        index=0, label_visibility="collapsed", key="data_mode")
 
     means_in=DEFAULT_MEANS[:]; sigs_in=DEFAULT_SIGS[:]
     corr_in=[r[:] for r in DEFAULT_CORR]; names_in=DEFAULT_NAMES[:]
@@ -1350,7 +1350,7 @@ with st.sidebar:
     # ── 2. Derivative ─────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">2</span><span style="display:block">📊 DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
     der_label_sel=st.selectbox("Type",list(PREDEFINED_DERIVATIVES.keys()),
-                                index=0,label_visibility="collapsed")
+                                index=0,label_visibility="collapsed",key="der_label_sel")
     der_type=PREDEFINED_DERIVATIVES[der_label_sel]
     der_params={}
 
@@ -1521,7 +1521,7 @@ with st.sidebar:
     # ── 4. Grid ───────────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">4</span><span style="display:block">⚡ GRID RESOLUTION</span></div>', unsafe_allow_html=True)
     grid_lbl=st.selectbox("Resolution",list(GRID_OPTIONS.keys()),
-                           index=0,label_visibility="collapsed")
+                           index=0,label_visibility="collapsed",key="grid_lbl")
     m_val,mp_val=GRID_OPTIONS[grid_lbl]
 
     # AI-powered grid explanation
@@ -1826,34 +1826,6 @@ def make_donut_svg(weights, labels, colors, size=160):
 st.markdown("<div style='margin-top:2.5rem'></div>", unsafe_allow_html=True)
 tab1,tab2,tab3=st.tabs(["📊 Optimiser","📖 About","📚 Glossary"])
 
-# JS fix for Streamlit sidebar duplication bug — hides duplicate elements after reset button
-st.markdown('''<script>
-(function() {
-    function fixSidebar() {
-        const sidebar = document.querySelector('[data-testid="stSidebar"] [data-testid="stVerticalBlock"]');
-        if (!sidebar) return;
-        const children = Array.from(sidebar.children);
-        // Find the Reset button (last button in sidebar)
-        let resetIdx = -1;
-        for (let i = children.length - 1; i >= 0; i--) {
-            if (children[i].textContent.includes('Reset')) { resetIdx = i; break; }
-        }
-        // Hide everything after the reset button
-        if (resetIdx >= 0) {
-            for (let i = resetIdx + 1; i < children.length; i++) {
-                children[i].style.display = 'none';
-            }
-        }
-    }
-    // Run on load and observe changes
-    fixSidebar();
-    const observer = new MutationObserver(fixSidebar);
-    const root = document.querySelector('[data-testid="stAppViewContainer"]');
-    if (root) observer.observe(root, {childList: true, subtree: true});
-    setTimeout(fixSidebar, 1000);
-    setTimeout(fixSidebar, 3000);
-})();
-</script>''', unsafe_allow_html=True)
 
 with tab1:
     import os
