@@ -1664,7 +1664,7 @@ st.markdown(f'''
       <span style="background:rgba(26,107,191,0.18);border:1px solid rgba(74,158,255,0.28);border-radius:3px;color:rgba(74,158,255,0.75);font-size:7px;letter-spacing:0.1em;padding:2px 5px">GRID SEARCH · COBYLA</span>
     </div>
   </div>
-  <div style="flex:3.2;display:grid;grid-template-columns:repeat(4,1fr)">
+  <div style="flex:3.2;display:grid;grid-template-columns:repeat(5,1fr)">
     <!-- Col 1: Live market ticker -->
     <div style="border-right:1px solid #1a3a5c;display:flex;flex-direction:column">
       <div style="height:82px;position:relative;overflow:hidden;border-bottom:1px solid #0d2a4a">
@@ -1767,9 +1767,8 @@ st.markdown(f'''
         <div style="font-size:8px;margin-top:3px;color:rgba(150,180,220,0.55)">puts · calls · CGNs · barrier</div>
         <div style="height:2px;margin-top:5px;border-radius:1px;background:#1a3a5c"><div style="width:85%;height:100%;border-radius:1px;background:#a855f7"></div></div>
       </div>
-    </div>
-    <!-- Col 5: Framework / Method -->
-    <div style="border-left:1px solid #1a3a5c;display:flex;flex-direction:column">
+      <!-- Col 5: Framework / Method -->
+      <div style="display:flex;flex-direction:column">
       <div style="height:82px;overflow:hidden;border-bottom:1px solid #0d2a4a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px">
         <div style="text-align:center">
           <div style="color:rgba(74,158,255,0.5);font-size:6px;font-weight:600;letter-spacing:0.12em;margin-bottom:2px">FRAMEWORK</div>
@@ -1787,12 +1786,11 @@ st.markdown(f'''
         <div style="font-size:8px;margin-top:3px;color:rgba(150,180,220,0.55)">Fast · Standard · High</div>
         <div style="height:2px;margin-top:5px;border-radius:1px;background:#1a3a5c"><div style="width:60%;height:100%;border-radius:1px;background:#f59e0b"></div></div>
       </div>
+      </div>
+    </div>
     </div>
   </div>
-</div>
-</div>
-</div>
-</div></div>''', unsafe_allow_html=True)
+</div>''', unsafe_allow_html=True)
 
 DONUT_COLORS = ['#e63946','#f4a261','#e9c46a','#2a9d8f','#264653','#023e8a','#e76f51','#457b9d']
 
