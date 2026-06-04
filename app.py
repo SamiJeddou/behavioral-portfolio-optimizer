@@ -1233,7 +1233,7 @@ with st.sidebar:
     st.markdown("\n---\n")
 
     # ── 1. Data source ────────────────────────────────────────────────────────
-    st.sidebar.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">1</span><span style="display:block">📂 PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">1</span><span style="display:block">📂 PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
     data_mode = st.radio("Data source",
         ["Default (3-asset sample case)",
          "Live market data (Yahoo Finance)",
@@ -1348,7 +1348,7 @@ with st.sidebar:
     st.markdown("\n---\n")
 
     # ── 2. Derivative ─────────────────────────────────────────────────────────
-    st.sidebar.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">2</span><span style="display:block">📊 DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">2</span><span style="display:block">📊 DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
     der_label_sel=st.selectbox("Type",list(PREDEFINED_DERIVATIVES.keys()),
                                 index=0,label_visibility="collapsed")
     der_type=PREDEFINED_DERIVATIVES[der_label_sel]
@@ -1450,7 +1450,7 @@ with st.sidebar:
     st.markdown("\n---\n")
 
     # ── 3. Constraint ─────────────────────────────────────────────────────────
-    st.sidebar.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">3</span><span style="display:block">🎯 MENTAL-ACCOUNT CONSTRAINT</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">3</span><span style="display:block">🎯 MENTAL-ACCOUNT CONSTRAINT</span></div>', unsafe_allow_html=True)
 
     # VaR / ES toggle
     constraint_type = st.radio(
@@ -1516,7 +1516,7 @@ with st.sidebar:
     st.markdown("\n---\n")
 
     # ── 4. Grid ───────────────────────────────────────────────────────────────
-    st.sidebar.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">4</span><span style="display:block">⚡ GRID RESOLUTION</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">4</span><span style="display:block">⚡ GRID RESOLUTION</span></div>', unsafe_allow_html=True)
     grid_lbl=st.selectbox("Resolution",list(GRID_OPTIONS.keys()),
                            index=0,label_visibility="collapsed")
     m_val,mp_val=GRID_OPTIONS[grid_lbl]
@@ -1558,49 +1558,48 @@ with st.sidebar:
             st.session_state.pop(_k, None)
         st.session_state['_do_rerun'] = True
 
-    # Only show results if explicitly run — not on slider/widget reruns
-    _run_active = st.session_state.get('_run_active', False)
-    _has_results = st.session_state.get('_cached_results') is not None
-    _needs_compute = st.session_state.get('_needs_compute', False)
-
-    # Detect fresh page load: no results and no pending compute → reset
-    if _run_active and not _has_results and not _needs_compute:
-        st.session_state.pop('_run_active', None)
-        _run_active = False
-
-    # Reset if key parameters changed since last run — forces back to how-to screen
-    if not run_btn and _run_active and _has_results:
-        _cached = st.session_state.get('_cached_results', {})
-        _prev_der   = _cached.get('der_label_sel', '__unset__')
-        _prev_H     = _cached.get('H_val', None)
-        _prev_alpha = _cached.get('_alpha', None)
-        _prev_data  = _cached.get('data_mode', '__unset__')
-        _prev_grid  = _cached.get('grid_lbl', '__unset__')
-        _prev_names    = _cached.get('names_in', [])
-        _prev_undl     = _cached.get('underlying_idx', 0)
-        _cur_undl      = der_params.get('underlying_idx', 0) if der_type is not None else 0
-        # Include all derivative params in fingerprint so strike/maturity changes reset
-        _prev_der_params = _cached.get('der_params_fp', '')
-        _cur_der_params  = str(sorted(der_params.items())) if der_type is not None else ''
-        if (_prev_der != der_label_sel or
-            _prev_H != H_val or
-            _prev_alpha != alpha_val or
-            _prev_data != data_mode or
-            _prev_grid != grid_lbl or
-            _prev_names != list(names_in) or
-            _prev_undl != _cur_undl or
-            _prev_der_params != _cur_der_params):
-            for _k in ['_run_active','_needs_compute','_cached_results',
-                       '_pdf_bytes','_fig_png','_fig_plotly']:
-                st.session_state.pop(_k, None)
-            _run_active = False
-            _has_results = False
-            _needs_compute = False
-
 
 # Handle reset rerun OUTSIDE sidebar to prevent DOM leak
 if st.session_state.pop('_do_rerun', False):
     st.rerun()
+
+# ── Session state logic OUTSIDE sidebar to prevent double-render ─────────────
+_run_active = st.session_state.get('_run_active', False)
+_has_results = st.session_state.get('_cached_results') is not None
+_needs_compute = st.session_state.get('_needs_compute', False)
+
+# Detect fresh page load
+if _run_active and not _has_results and not _needs_compute:
+    st.session_state.pop('_run_active', None)
+    _run_active = False
+
+# Reset if key parameters changed since last run
+if not run_btn and _run_active and _has_results:
+    _cached = st.session_state.get('_cached_results', {})
+    _prev_der   = _cached.get('der_label_sel', '__unset__')
+    _prev_H     = _cached.get('H_val', None)
+    _prev_alpha = _cached.get('_alpha', None)
+    _prev_data  = _cached.get('data_mode', '__unset__')
+    _prev_grid  = _cached.get('grid_lbl', '__unset__')
+    _prev_names    = _cached.get('names_in', [])
+    _prev_undl     = _cached.get('underlying_idx', 0)
+    _cur_undl      = der_params.get('underlying_idx', 0) if der_type is not None else 0
+    _prev_der_params = _cached.get('der_params_fp', '')
+    _cur_der_params  = str(sorted(der_params.items())) if der_type is not None else ''
+    if (_prev_der != der_label_sel or
+        _prev_H != H_val or
+        _prev_alpha != alpha_val or
+        _prev_data != data_mode or
+        _prev_grid != grid_lbl or
+        _prev_names != list(names_in) or
+        _prev_undl != _cur_undl or
+        _prev_der_params != _cur_der_params):
+        for _k in ['_run_active','_needs_compute','_cached_results',
+                   '_pdf_bytes','_fig_png','_fig_plotly']:
+            st.session_state.pop(_k, None)
+        _run_active = False
+        _has_results = False
+        _needs_compute = False
 
 # ═════════════════════════════════════════════════════════════════════════════
 # MAIN
