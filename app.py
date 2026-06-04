@@ -592,10 +592,10 @@ DEFAULT_CORR  = [[1.0,0.0,0.0],[0.0,1.0,0.4],[0.0,0.4,1.0]]
 DEFAULT_NAMES = ["Sec 1 — Low risk","Sec 2 — Mid risk","Sec 3 — High risk"]
 
 GRID_OPTIONS = {
+    "🚀 Turbo (High-precision accuracy, ~seconds)": (51,'turbo'),
     "⚡ Fast (m=21, m'=15)":           (21,15),
     "⚖️  Standard (m=35, m'=50)":      (35,50),
     "🎯 High precision (m=51, m'=99)": (51,99),
-    "🚀 Turbo (High-precision accuracy, ~seconds)": (51,'turbo'),
 }
 
 GRID_EXPLANATIONS = {
@@ -1552,7 +1552,10 @@ with st.sidebar:
         f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'        '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What does this resolution mean?</summary>'        f'<div style="color:#1a3a5c;margin-top:.4rem">{GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")}</div></details>',
         unsafe_allow_html=True)
 
-    if "High" in grid_lbl:
+    if "Turbo" in grid_lbl:
+        st.markdown('<div class="warn-box">⚡ Runs in ~seconds at High-precision accuracy (VaR constraint).</div>',
+                    unsafe_allow_html=True)
+    elif "High precision" in grid_lbl:
         st.markdown('<div class="warn-box">⚠️ May take 15–30 min or more. Recommended for final results only.</div>',
                     unsafe_allow_html=True)
     elif "Standard" in grid_lbl:
