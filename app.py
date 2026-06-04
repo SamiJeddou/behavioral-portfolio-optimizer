@@ -1887,7 +1887,7 @@ Follow these steps in the sidebar:
 </tr>
 <tr style="border-bottom:1px solid #3a3a5a">
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">4</span></span></td>
-  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Grid resolution</strong> — Choose Fast for a quick preview, High precision for thesis-level accuracy</td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Grid resolution</strong> — Turbo (default) gives thesis-level VaR accuracy in seconds; Fast for a quick preview; High precision for exact thesis-grade results (and for ES runs)</td>
 </tr>
 <tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">5</span></span></td>
