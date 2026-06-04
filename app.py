@@ -2777,6 +2777,9 @@ with tab2:
 
     st.markdown("### About this app")
     st.markdown(
+        "📄 **[Download the User Guide (PDF)](https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf)** — step-by-step guide to using the app",
+        unsafe_allow_html=False)
+    st.markdown(
         "This app extends classical **Markowitz mean-variance theory** to portfolios that include "
         "**derivatives and structured products**, using a **mental-accounting framework** with a "
         "downside risk constraint. It is a **Python** reimplementation and extension of the original "
