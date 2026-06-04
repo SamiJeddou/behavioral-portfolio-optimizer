@@ -1537,8 +1537,14 @@ with st.sidebar:
 
     # ── 4. Grid ───────────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">4</span><span style="display:block">⚡ GRID RESOLUTION</span></div>', unsafe_allow_html=True)
-    grid_lbl=st.selectbox("Resolution",list(GRID_OPTIONS.keys()),
-                           index=0,label_visibility="collapsed",key="grid_lbl")
+    # Turbo accelerates the VaR path only; hide it when ES is selected so the
+    # list reflects what actually applies (and never mislabels a slow ES run).
+    _res_keys=[k for k in GRID_OPTIONS
+               if not (use_es and GRID_OPTIONS[k][1]=='turbo')]
+    if st.session_state.get("grid_lbl") not in _res_keys:
+        st.session_state["grid_lbl"]=_res_keys[0]
+    grid_lbl=st.selectbox("Resolution",_res_keys,
+                           label_visibility="collapsed",key="grid_lbl")
     m_val,mp_val=GRID_OPTIONS[grid_lbl]
 
     # AI-powered grid explanation
