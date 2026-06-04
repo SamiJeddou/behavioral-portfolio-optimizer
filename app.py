@@ -1564,6 +1564,7 @@ if run_btn:
     st.session_state.pop('_cached_results', None)
     st.session_state.pop('_pdf_bytes', None)
     st.session_state.pop('_fig_png', None)
+    st.rerun()
 
 # ── Session state logic OUTSIDE sidebar to prevent double-render ─────────────
 _run_active = st.session_state.get('_run_active', False)
