@@ -280,6 +280,7 @@ from behavioral_portfolio_optimizer import (
     compute_structured_payoff, bs_call, bs_put
 )
 from turbo_optimizer import optimize_portfolio_turbo
+from es_rigorous import optimize_portfolio_es_rigorous
 from scipy.stats import norm as _norm
 from scipy.optimize import brentq as _brentq
 
@@ -649,6 +650,14 @@ CONSTRAINT_EXPLANATIONS = {
         "For example, with H = -10% and L = -15%, the optimizer ensures that when losses exceed "
         "10%, their average is no worse than 15%."
     ),
+    "es_rigorous": (
+        "**Rigorous Expected Shortfall (beyond thesis).** Maximises expected return subject to "
+        "E[return | return < H] ≥ L, enforcing the ES limit *in the final optimisation itself*. "
+        "The standard ES option reproduces the thesis exactly — its refinement targets the VaR "
+        "boundary, so the resulting ES can drift past L. This corrected mode keeps the portfolio "
+        "ES-feasible and will usually report a higher, feasible expected return for the same H and L. "
+        "Use it for decision-making; use standard ES to reproduce the thesis."
+    ),
 }
 
 PREDEFINED_DERIVATIVES = {
@@ -847,11 +856,14 @@ def compute_mv_frontier(means_t, cov_t):
 def run_opt(means,sigs,cov,der_config,H,alpha,m,mp,
             constraint_type='var',L=None):
     turbo=(mp=='turbo')
-    U,dr=build_state_space(means,sigs,m=(51 if turbo else m),derivative_config=der_config)
+    rigorous=(constraint_type=='es_rigorous')
+    U,dr=build_state_space(means,sigs,m=(51 if (turbo or rigorous) else m),derivative_config=der_config)
     U=assign_probabilities(U,means,sigs,cov,dr)
     n=U.shape[1]-1
     a=alpha if alpha is not None else 0.05
-    if turbo:
+    if rigorous:
+        res=optimize_portfolio_es_rigorous(U,n,CVARH=H,L=L)
+    elif turbo:
         res=optimize_portfolio_turbo(U,n,H=H,alpha=a,m_prime=99,
                                      constraint_type=constraint_type,L=L)
     else:
@@ -1473,9 +1485,10 @@ with st.sidebar:
     # VaR / ES toggle
     constraint_type = st.radio(
         "Constraint type",
-        ["VaR — Value at Risk", "ES — Expected Shortfall"],
+        ["VaR — Value at Risk", "ES — Expected Shortfall", "ES — Rigorous (beyond thesis)"],
         index=0, horizontal=True)
     use_es = constraint_type.startswith("ES")
+    use_es_rigorous = "Rigorous" in constraint_type
 
     H_val = st.slider("Threshold H (%)", -40, -1, -10, 1) / 100
     st.markdown(
@@ -1526,7 +1539,7 @@ with st.sidebar:
             unsafe_allow_html=True)
         # AI explanation
         st.markdown(
-            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is the ES constraint?</summary>'            f'<div style="color:#1a3a5c;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS["es"]}</div></details>',
+            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is the ES constraint?</summary>'            f'<div style="color:#1a3a5c;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS["es_rigorous" if use_es_rigorous else "es"]}</div></details>',
             unsafe_allow_html=True)
 
     # Implied lambda block already handled above for VaR case
@@ -1975,7 +1988,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
         asset_labels = _cache.get('asset_labels', [])
         constraint_str = _cache.get('constraint_str', '')
         grid_lbl = _cache.get('grid_lbl', '')
-        _ctype = 'es' if use_es else 'var'
+        _ctype = _cache.get('_ctype', 'es' if use_es else 'var')
         _render_from_cache = True
 
     if _run_active and _needs_compute:
@@ -1997,7 +2010,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
 
         asset_labels=names_in+(["Derivative"] if der_config else [])
 
-        _ctype = 'es' if use_es else 'var'
+        _ctype = 'es_rigorous' if use_es_rigorous else ('es' if use_es else 'var')
         _alpha = alpha_val if not use_es else 0.05
         _L     = L_val if use_es else None
 
@@ -2656,7 +2669,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             'p3_return': p3_return, 'p3_std': p3_std,
             'constraint_label': constraint_label,
             'der_config': der_config, 'der_label_sel': der_label_sel,
-            'H_val': H_val, '_alpha': _alpha, 'use_es': use_es, '_L': _L,
+            'H_val': H_val, '_alpha': _alpha, 'use_es': use_es, '_ctype': _ctype, '_L': _L,
             'data_mode': data_mode,
             'lam_summary': lam_summary,
             'names_in': names_in,
