@@ -1354,10 +1354,11 @@ with st.sidebar:
     der_type=PREDEFINED_DERIVATIVES[der_label_sel]
     der_params={}
 
-    # AI tooltip for selected derivative
+    # AI tooltip for selected derivative — use details/summary to avoid sidebar duplication bug
     if der_type is not None and der_type != "custom":
-        with st.expander("✨ AI-powered: What is this instrument?"):
-            st.markdown(get_explanation(der_label_sel), unsafe_allow_html=True)
+        st.markdown(
+            f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is this instrument?</summary>'            f'<div style="color:#c0c8d8;margin-top:.4rem">{get_explanation(der_label_sel)}</div></details>',
+            unsafe_allow_html=True)
 
     # Underlying selector (shown for all non-None derivative types)
     if der_type is not None:
@@ -1494,8 +1495,9 @@ with st.sidebar:
                         '⚠️ Implied λ not available — the VaR constraint may be too tight or too loose for the current portfolio.</div>',
                         unsafe_allow_html=True)
         # AI explanation last
-        with st.expander("✨ AI-powered: What is the VaR constraint?"):
-            st.markdown(CONSTRAINT_EXPLANATIONS["var"], unsafe_allow_html=True)
+        st.markdown(
+            f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is the VaR constraint?</summary>'            f'<div style="color:#c0c8d8;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS["var"]}</div></details>',
+            unsafe_allow_html=True)
     else:
         alpha_val = None
         L_val     = st.slider("ES lower bound L (%)", -50, -1, -15, 1) / 100
@@ -1506,8 +1508,9 @@ with st.sidebar:
             'ES constraint: E[return | return &lt; H] ≥ L</div>',
             unsafe_allow_html=True)
         # AI explanation
-        with st.expander("✨ AI-powered: What is the ES constraint?"):
-            st.markdown(CONSTRAINT_EXPLANATIONS["es"], unsafe_allow_html=True)
+        st.markdown(
+            f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is the ES constraint?</summary>'            f'<div style="color:#c0c8d8;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS["es"]}</div></details>',
+            unsafe_allow_html=True)
 
     # Implied lambda block already handled above for VaR case
     if use_es:
@@ -1522,8 +1525,9 @@ with st.sidebar:
     m_val,mp_val=GRID_OPTIONS[grid_lbl]
 
     # AI-powered grid explanation
-    with st.expander("✨ AI-powered: What does this resolution mean?"):
-        st.markdown(GRID_EXPLANATIONS.get(grid_lbl, "No explanation available."), unsafe_allow_html=True)
+    st.markdown(
+        f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'        '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What does this resolution mean?</summary>'        f'<div style="color:#c0c8d8;margin-top:.4rem">{GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")}</div></details>',
+        unsafe_allow_html=True)
 
     if "High" in grid_lbl:
         st.markdown('<div class="warn-box">⚠️ May take 15–30 min or more. Recommended for final results only.</div>',
