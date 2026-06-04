@@ -1360,10 +1360,14 @@ with st.sidebar:
             index=min(len(names_in)-1, 2))
         der_params["underlying_idx"]=underlying_idx
 
-        # Volatility = std dev of underlying security (per model specification)
+        # Volatility — default = std dev of underlying security (model-consistent)
         auto_vol=sigs_in[underlying_idx]
-        der_params["vol"]=auto_vol
-        st.caption(f"Volatility: {auto_vol*100:.1f}% (std dev of {names_in[underlying_idx]})")
+        vol_override=st.number_input(
+            "Volatility (annualised %)",
+            value=round(auto_vol*100,1), min_value=1.0, max_value=200.0,
+            format="%.1f", step=0.5) / 100
+        der_params["vol"]=vol_override
+        st.caption(f"Default: {auto_vol*100:.1f}% (std dev of {names_in[underlying_idx]}). Override for implied vol.")
 
         rf=st.number_input("Risk-free rate (%)",value=3.0,min_value=0.0,
                             max_value=20.0,format="%.1f",step=0.1)/100
