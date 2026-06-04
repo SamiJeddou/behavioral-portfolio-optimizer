@@ -1768,6 +1768,26 @@ st.markdown(f'''
         <div style="height:2px;margin-top:5px;border-radius:1px;background:#1a3a5c"><div style="width:85%;height:100%;border-radius:1px;background:#a855f7"></div></div>
       </div>
     </div>
+    <!-- Col 5: Framework / Method -->
+    <div style="border-left:1px solid #1a3a5c;display:flex;flex-direction:column">
+      <div style="height:82px;overflow:hidden;border-bottom:1px solid #0d2a4a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px">
+        <div style="text-align:center">
+          <div style="color:rgba(74,158,255,0.5);font-size:6px;font-weight:600;letter-spacing:0.12em;margin-bottom:2px">FRAMEWORK</div>
+          <div style="color:rgba(255,255,255,0.85);font-size:8px;font-weight:600;font-family:Georgia,serif;line-height:1.3">Mental Accounts<br>Theory</div>
+        </div>
+        <div style="width:50%;height:1px;background:rgba(74,158,255,0.2)"></div>
+        <div style="text-align:center">
+          <div style="color:rgba(74,158,255,0.5);font-size:6px;font-weight:600;letter-spacing:0.12em;margin-bottom:2px">METHOD</div>
+          <div style="color:rgba(255,255,255,0.85);font-size:8px;font-weight:600;font-family:Georgia,serif;line-height:1.3">Gaussian<br>Copula</div>
+        </div>
+      </div>
+      <div style="padding:7px 10px;height:68px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;text-align:center">
+        <div style="color:rgba(200,220,255,0.9);font-size:7.5px;font-weight:600;letter-spacing:0.12em;margin-bottom:3px;min-height:18px">RESOLUTIONS</div>
+        <div style="font-size:19px;font-weight:700;font-family:Georgia,serif;color:#f59e0b">3</div>
+        <div style="font-size:8px;margin-top:3px;color:rgba(150,180,220,0.55)">Fast · Standard · High</div>
+        <div style="height:2px;margin-top:5px;border-radius:1px;background:#1a3a5c"><div style="width:60%;height:100%;border-radius:1px;background:#f59e0b"></div></div>
+      </div>
+    </div>
   </div>
 </div>
 </div>
