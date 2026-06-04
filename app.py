@@ -2021,12 +2021,23 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                              f'<span style="color:#1a3a5c;font-size:.75rem">○</span>'
                              f'<span style="color:#3a5a7a;font-size:.75rem">{label}</span>'
                              f'</div>')
-            total_str = (f' <span style="color:#556a8a;font-size:.7rem">'
-                         f'(Execution time: {_fmt_t(total_elapsed)})</span>' if total_elapsed > 0 else "")
+            # JS live timer — counts up in browser independently of Python execution
+            _s = int(total_elapsed)
+            js_timer = (
+                f'<span id="_sim_elapsed" style="color:#556a8a;font-size:.7rem"></span>'
+                f'<script>(function(){{'
+                f'var s={_s};'
+                f'var el=document.getElementById("_sim_elapsed");'
+                f'if(!el)return;'
+                f'function fmt(n){{return n<60?n+"s":Math.floor(n/60)+"m "+String(n%60).padStart(2,"0")+"s"}}'
+                f'el.textContent="(Execution time: "+fmt(s)+")";'
+                f'var t=setInterval(function(){{s++;if(el)el.textContent="(Execution time: "+fmt(s)+")"}},1000);'
+                f'}})();</script>'
+            )
             return ('<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'
                     'padding:.6rem 1rem;margin-bottom:.5rem">'
                     '<div style="color:#4a9eff;font-weight:700;font-size:.78rem;margin-bottom:.4rem">'
-                    f'⚙️ Computation in progress...{total_str}</div>' + rows + '</div>')
+                    f'⚙️ Computation in progress... ' + js_timer + '</div>' + rows + '</div>')
 
         _steps_base = [
             ("Mean-variance frontier",       "Markowitz MV sweep over λ"),
