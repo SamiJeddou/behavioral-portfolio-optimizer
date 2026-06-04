@@ -145,7 +145,7 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
                 ['Expected return', f"{res['expected_return']*100:.2f}%"],
                 ['Std deviation',   f"{res['std_dev']*100:.2f}%"],
                 ['Skewness',        f"{res['skewness']:.3f}"],
-                ['Shortfall / ES',  f"{res['shortfall_stat']*100:.2f}%"],
+                ['Expected shortfall E[r|r<H]' if use_es else 'Shortfall prob P(r<H)',  f"{res['shortfall_stat']*100:.2f}%"],
             ]
         t = Table(data, colWidths=[8*cm, 4*cm])
         t.setStyle(TableStyle([
@@ -626,6 +626,11 @@ GRID_EXPLANATIONS = {
         "of 15–30 minutes, matching High precision to within ~0.1 percentage point of expected "
         "return. Expected-Shortfall and 5+-security problems automatically use the standard solver. "
         "Recommended for fast, publication-quality VaR results."
+    ),
+    "🚀 Rigorous ES — high-precision accuracy (~seconds)": (
+        "Rigorous ES does not use the resolution grid you would choose for VaR. It runs on the "
+        "high-precision m=51 state space with a fast coarse-to-fine weight search, delivering "
+        "high-precision-grade accuracy in a few seconds. The setting is fixed for this mode."
     ),
 }
 
@@ -1550,22 +1555,30 @@ with st.sidebar:
 
     # ── 4. Grid ───────────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">4</span><span style="display:block">⚡ GRID RESOLUTION</span></div>', unsafe_allow_html=True)
-    # Turbo accelerates the VaR path only; hide it when ES is selected so the
-    # list reflects what actually applies (and never mislabels a slow ES run).
-    _res_keys=[k for k in GRID_OPTIONS
-               if not (use_es and GRID_OPTIONS[k][1]=='turbo')]
-    if st.session_state.get("grid_lbl") not in _res_keys:
-        st.session_state["grid_lbl"]=_res_keys[0]
-    grid_lbl=st.selectbox("Resolution",_res_keys,
-                           label_visibility="collapsed",key="grid_lbl")
-    m_val,mp_val=GRID_OPTIONS[grid_lbl]
+    # Turbo accelerates the VaR path only; hide it when ES is selected. Rigorous
+    # ES uses the high-precision (m=51) state space via the fast coarse-to-fine
+    # engine, so its resolution is fixed and the selector does not apply.
+    if use_es_rigorous:
+        grid_lbl="🚀 Rigorous ES — high-precision accuracy (~seconds)"
+        m_val,mp_val=51,99
+    else:
+        _res_keys=[k for k in GRID_OPTIONS
+                   if not (use_es and GRID_OPTIONS[k][1]=='turbo')]
+        if st.session_state.get("grid_lbl") not in _res_keys:
+            st.session_state["grid_lbl"]=_res_keys[0]
+        grid_lbl=st.selectbox("Resolution",_res_keys,
+                               label_visibility="collapsed",key="grid_lbl")
+        m_val,mp_val=GRID_OPTIONS[grid_lbl]
 
     # AI-powered grid explanation
     st.markdown(
         f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'        '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What does this resolution mean?</summary>'        f'<div style="color:#1a3a5c;margin-top:.4rem">{GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")}</div></details>',
         unsafe_allow_html=True)
 
-    if "Turbo" in grid_lbl:
+    if "Rigorous" in grid_lbl:
+        st.markdown('<div class="warn-box">⚡ Rigorous ES runs at high-precision accuracy (m=51) in ~seconds — resolution is fixed for this mode.</div>',
+                    unsafe_allow_html=True)
+    elif "Turbo" in grid_lbl:
         st.markdown('<div class="warn-box">⚡ Runs in ~seconds at High-precision accuracy (VaR constraint).</div>',
                     unsafe_allow_html=True)
     elif "High precision" in grid_lbl:
@@ -2342,7 +2355,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
         # ── Helper to render one portfolio column ────────────────────────────
         def _render_portfolio(border_color, header_html, caption_txt,
                               weights, labels, colors, stats,
-                              delta_txt=None, method_txt=None, note_html=None):
+                              delta_txt=None, method_txt=None, note_html=None, show_feasibility=False):
             """Render one portfolio: header box, then metrics left / donut centre / bars right."""
             # Header box
             st.markdown(header_html, unsafe_allow_html=True)
@@ -2357,7 +2370,21 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 _mr2.metric("Std deviation", f"{stats['std_dev']*100:.2f}%")
                 _mr3, _mr4 = st.columns(2)
                 _mr3.metric("Skewness", f"{stats['skewness']:.3f}")
-                _mr4.metric("Shortfall / ES", f"{stats['shortfall_stat']*100:.2f}%")
+                _mr4.metric("Exp. shortfall" if use_es else "Shortfall prob",
+                            f"{stats['shortfall_stat']*100:.2f}%")
+                if show_feasibility:
+                    _sf2 = round(stats['shortfall_stat']*100, 2)
+                    if use_es:
+                        _lim2 = round(_L*100, 2) if _L is not None else None
+                        _ok2 = (_lim2 is None) or (_sf2 >= _lim2)
+                        _btxt = "✓ meets ES ≥ L" if _ok2 else "✗ ES below L (drifted past limit)"
+                    else:
+                        _lim2 = round(_alpha*100, 2) if _alpha is not None else None
+                        _ok2 = (_lim2 is None) or (_sf2 <= _lim2)
+                        _btxt = "✓ meets P(r&lt;H) ≤ α" if _ok2 else "✗ exceeds α"
+                    st.markdown(f'<div style="color:{"#16a34a" if _ok2 else "#dc2626"};'
+                                f'font-size:.74rem;margin-top:-.5rem;margin-bottom:.2rem">{_btxt}</div>',
+                                unsafe_allow_html=True)
                 if method_txt:
                     st.caption(f"Method: {method_txt}")
             with col_d:
@@ -2433,6 +2460,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                            else nd_res.get('method_used', '—'))
                 _render_portfolio(
                     border_color="#10b981",
+                    show_feasibility=True,
                     header_html=(
                         '<div style="background:#0d1a2e;border:1px solid #10b981;border-radius:8px;'
                         'padding:.6rem 1rem;margin-bottom:.4rem;text-align:center">'
@@ -2480,6 +2508,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                     )
                     _render_portfolio(
                         border_color="#f59e0b",
+                        show_feasibility=True,
                         header_html=(
                             f'<div style="background:#0d1a2e;border:1px solid #f59e0b;border-radius:8px;'
                             f'padding:.6rem 1rem;margin-bottom:.4rem;text-align:center">'
