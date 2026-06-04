@@ -2027,6 +2027,23 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                     '<div style="color:#4a9eff;font-weight:700;font-size:.78rem;margin-bottom:.4rem">'
                     f'⚙️ Computation in progress...{t_str_total}</div>' + rows + '</div>')
 
+        def _step_html_done(steps, step_times, total_elapsed):
+            rows = ""
+            for i, (label, desc) in enumerate(steps):
+                t_str = (f' <span style="color:#556a8a;font-size:.7rem">'
+                         f'(Execution time: {_fmt_t(step_times[i])})</span>'
+                         if i in step_times else "")
+                rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.15rem 0">'
+                         f'<span style="color:#10b981;font-size:.75rem">✓</span>'
+                         f'<span style="color:#10b981;font-size:.75rem">{label}</span>{t_str}'
+                         f'</div>')
+            t_str_total = (f' <span style="color:#556a8a;font-size:.7rem">'
+                           f'(Total execution time: {_fmt_t(total_elapsed)})</span>')
+            uid = "prog_done"
+            return (
+                f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'                f'padding:.4rem 1rem;margin-bottom:.5rem">'                f'<summary style="cursor:pointer;color:#10b981;font-weight:700;font-size:.78rem;'                f'list-style:none;display:flex;align-items:center;gap:.4rem">'                f'✅ Computation complete{t_str_total}'                f'<span style="color:#556a8a;font-size:.7rem;margin-left:auto">▼ click to expand</span>'                f'</summary>'                f'<div style="margin-top:.4rem">' + rows + f'</div></details>'
+            )
+
         _steps_base = [
             ("Mean-variance frontier",       "Markowitz MV sweep over λ"),
             ("Covariance matrix",             "Building Σ from securities data"),
@@ -2137,7 +2154,11 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                                             nd_res_actual=_nd_res_pre,
                                             lam_actual=_lam_actual)
             st.session_state['_fig_plotly'] = fig_plotly
-            _prog_box.empty()  # Clear progress indicator
+            # Show final collapsed summary instead of clearing
+            _final_elapsed = _time.time() - _sim_start
+            _prog_box.markdown(
+                _step_html_done(_all_steps, _step_times, _final_elapsed),
+                unsafe_allow_html=True)
             # Store frontier data for matplotlib PDF chart (kaleido not available on Streamlit Cloud)
             st.session_state['_frontier_data'] = {
                 'mv_x': mv_x, 'mv_y': mv_y, 'mv_eq': mv_eq,
