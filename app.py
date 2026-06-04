@@ -2146,7 +2146,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             st.error(f"Optimizer failed: {e}")
             nd_xs,nd_ys,nd_lbls=[],[],[]
 
-        _step_times[2] = _time.time()-_step_start; _step_start = _time.time()
+        _step_times[1] = _time.time()-_step_start; _step_start = _time.time()
         der_xs,der_ys,der_lbls=[],[],[]
         if der_config:
             _prog_box.markdown(_step_html(_all_steps, 6, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
@@ -2161,6 +2161,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             _step_times[7] = _time.time()-_step_start
         _prog_box.markdown(_step_html(_all_steps, len(_all_steps)-2, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
 
+        _step_start = _time.time()
         # ── Pre-compute nd_res — retry up to 3 times for robustness ────────────
         _nd_res_pre = None
         for _retry in range(3):
@@ -2173,6 +2174,9 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             except Exception:
                 pass
 
+        # Results computation (final P1 metrics) is now complete; capture its time
+        _results_t = _time.time() - _step_start
+        _step_start = _time.time()
         with st.spinner("Rendering chart..."):
             # Compute Portfolio (3) point for chart overlay using pre-computed nd_res
             _p3_x, _p3_y = None, None
@@ -2205,8 +2209,8 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             st.session_state['_fig_plotly'] = fig_plotly
             # Record times for chart + results steps
             _chart_t = _time.time() - _step_start
-            _step_times[len(_all_steps)-2] = _chart_t
-            _step_times[len(_all_steps)-1] = _chart_t
+            _step_times[len(_all_steps)-2] = _chart_t       # Chart rendering
+            _step_times[len(_all_steps)-1] = _results_t     # Results computation
             # Show final collapsed summary instead of clearing
             _final_elapsed = _time.time() - _sim_start
             _prog_box.markdown(
