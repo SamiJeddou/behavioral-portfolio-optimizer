@@ -1992,13 +1992,22 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
         _L     = L_val if use_es else None
 
         _n_steps = 8 if der_config else 6
-        def _step_html(steps, current):
+        import time as _time
+
+        def _fmt_t(secs):
+            if secs < 60: return f"{secs:.0f}s"
+            return f"{int(secs//60)}m {int(secs%60):02d}s"
+
+        def _step_html(steps, current, step_times=None, total_elapsed=0):
             rows = ""
             for i, (label, desc) in enumerate(steps):
+                t_str = (f' <span style="color:#556a8a;font-size:.7rem">'
+                         f'(Execution time: {_fmt_t(step_times[i])})</span>'
+                         if step_times and i in step_times else "")
                 if i < current:
                     rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.15rem 0">'
                              f'<span style="color:#10b981;font-size:.75rem">✓</span>'
-                             f'<span style="color:#10b981;font-size:.75rem">{label}</span>'
+                             f'<span style="color:#10b981;font-size:.75rem">{label}</span>{t_str}'
                              f'</div>')
                 elif i == current:
                     rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.15rem 0;'
@@ -2012,9 +2021,12 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                              f'<span style="color:#1a3a5c;font-size:.75rem">○</span>'
                              f'<span style="color:#3a5a7a;font-size:.75rem">{label}</span>'
                              f'</div>')
+            total_str = (f' <span style="color:#556a8a;font-size:.7rem">'
+                         f'(Execution time: {_fmt_t(total_elapsed)})</span>' if total_elapsed > 0 else "")
             return ('<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'
-                    'padding:.6rem 1rem;margin-bottom:.5rem">'                    '<div style="color:#4a9eff;font-weight:700;font-size:.78rem;margin-bottom:.4rem">'
-                    '⚙️ Computation in progress...</div>' + rows + '</div>')
+                    'padding:.6rem 1rem;margin-bottom:.5rem">'
+                    '<div style="color:#4a9eff;font-weight:700;font-size:.78rem;margin-bottom:.4rem">'
+                    f'⚙️ Computation in progress...{total_str}</div>' + rows + '</div>')
 
         _steps_base = [
             ("Mean-variance frontier",       "Markowitz MV sweep over λ"),
@@ -2038,13 +2050,17 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
         ]
 
         _prog_box = st.empty()
-        _prog_box.markdown(_step_html(_all_steps, 0), unsafe_allow_html=True)
+        _step_times = {}
+        _sim_start = _time.time()
+        _step_start = _time.time()
+        _prog_box.markdown(_step_html(_all_steps, 0, _step_times, 0), unsafe_allow_html=True)
 
-        _prog_box.markdown(_step_html(_all_steps, 0), unsafe_allow_html=True)
+        _prog_box.markdown(_step_html(_all_steps, 0, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
         mv_x,mv_y,mv_eq=compute_mv_frontier(
             tuple(means_in),tuple(map(tuple,cov_mat.tolist())))
 
-        _prog_box.markdown(_step_html(_all_steps, 2), unsafe_allow_html=True)
+        _step_times[0] = _time.time()-_step_start; _step_start = _time.time()
+        _prog_box.markdown(_step_html(_all_steps, 2, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
         try:
             nd_xs,nd_ys,nd_lbls=build_frontier(
                 means_arr,sigs_arr,cov_mat,None,_alpha,m_val,mp_val,
@@ -2055,7 +2071,8 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
 
         der_xs,der_ys,der_lbls=[],[],[]
         if der_config:
-            _prog_box.markdown(_step_html(_all_steps, 6), unsafe_allow_html=True)
+            _step_times[2] = _time.time()-_step_start; _step_start = _time.time()
+            _prog_box.markdown(_step_html(_all_steps, 6, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
             try:
                 der_xs,der_ys,der_lbls=build_frontier(
                     means_arr,sigs_arr,cov_mat,der_config,_alpha,m_val,mp_val,
@@ -2063,7 +2080,11 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             except Exception as e:
                 st.warning(f"Derivative frontier failed: {e}")
 
-        _prog_box.markdown(_step_html(_all_steps, len(_all_steps)-2), unsafe_allow_html=True)
+        if der_config:
+            _step_times[6] = _time.time()-_step_start
+        else:
+            _step_times[2] = _time.time()-_step_start
+        _prog_box.markdown(_step_html(_all_steps, len(_all_steps)-2, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
 
         # Three portfolio perspectives note
         st.markdown('''
