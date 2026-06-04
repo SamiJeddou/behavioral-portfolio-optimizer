@@ -1596,13 +1596,17 @@ div[data-testid="stSidebarContent"] button p {
         _prev_names    = _cached.get('names_in', [])
         _prev_undl     = _cached.get('underlying_idx', 0)
         _cur_undl      = der_params.get('underlying_idx', 0) if der_type is not None else 0
+        # Include all derivative params in fingerprint so strike/maturity changes reset
+        _prev_der_params = _cached.get('der_params_fp', '')
+        _cur_der_params  = str(sorted(der_params.items())) if der_type is not None else ''
         if (_prev_der != der_label_sel or
             _prev_H != H_val or
             _prev_alpha != alpha_val or
             _prev_data != data_mode or
             _prev_grid != grid_lbl or
             _prev_names != list(names_in) or
-            _prev_undl != _cur_undl):
+            _prev_undl != _cur_undl or
+            _prev_der_params != _cur_der_params):
             for _k in ['_run_active','_needs_compute','_cached_results',
                        '_pdf_bytes','_fig_png','_fig_plotly']:
                 st.session_state.pop(_k, None)
@@ -2525,6 +2529,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             'constraint_str': constraint_str,
             'grid_lbl': grid_lbl,
             'underlying_idx': der_params.get('underlying_idx', 0) if der_config else 0,
+            'der_params_fp': str(sorted(der_params.items())) if der_type is not None else '',
         }
         st.session_state['_needs_compute'] = False
 
