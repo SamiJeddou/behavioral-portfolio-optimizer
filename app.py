@@ -2021,23 +2021,30 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                              f'<span style="color:#1a3a5c;font-size:.75rem">○</span>'
                              f'<span style="color:#3a5a7a;font-size:.75rem">{label}</span>'
                              f'</div>')
-            # JS live timer — counts up in browser independently of Python execution
-            _s = int(total_elapsed)
-            js_timer = (
-                f'<span id="_sim_elapsed" style="color:#556a8a;font-size:.7rem"></span>'
-                f'<script>(function(){{'
-                f'var s={_s};'
-                f'var el=document.getElementById("_sim_elapsed");'
-                f'if(!el)return;'
-                f'function fmt(n){{return n<60?n+"s":Math.floor(n/60)+"m "+String(n%60).padStart(2,"0")+"s"}}'
-                f'el.textContent="(Execution time: "+fmt(s)+")";'
-                f'var t=setInterval(function(){{s++;if(el)el.textContent="(Execution time: "+fmt(s)+")"}},1000);'
-                f'}})();</script>'
-            )
+            t_str_total = (f' <span style="color:#556a8a;font-size:.7rem">'
+                           f'(Execution time: {_fmt_t(total_elapsed)})</span>'
+                           if total_elapsed > 0 else "")
             return ('<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'
                     'padding:.6rem 1rem;margin-bottom:.5rem">'
                     '<div style="color:#4a9eff;font-weight:700;font-size:.78rem;margin-bottom:.4rem">'
-                    f'⚙️ Computation in progress... ' + js_timer + '</div>' + rows + '</div>')
+                    f'⚙️ Computation in progress...{t_str_total}</div>' + rows + '</div>')
+
+        def _timer_html(elapsed_secs):
+            """Live JS timer rendered via st.components — scripts execute in iframe."""
+            s = int(elapsed_secs)
+            return (
+                f'<div style="background:#0d1a2e;padding:.3rem 1rem;font-family:monospace">'
+                f'<span style="color:#4a9eff;font-weight:700;font-size:.78rem">⚙️ Computation in progress... </span>'
+                f'<span id="tc" style="color:#556a8a;font-size:.7rem"></span>'
+                f'</div>'
+                f'<script>'
+                f'var s={s};'
+                f'function fmt(n){{return n<60?n+"s":Math.floor(n/60)+"m "+String(n%60).padStart(2,"0")+"s"}}'
+                f'var el=document.getElementById("tc");'
+                f'if(el){{el.textContent="(Execution time: "+fmt(s)+")";'
+                f'setInterval(function(){{s++;if(el)el.textContent="(Execution time: "+fmt(s)+")"}},1000);}}'
+                f'</script>'
+            )
 
         _steps_base = [
             ("Mean-variance frontier",       "Markowitz MV sweep over λ"),
@@ -2060,18 +2067,23 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             ("Results computation",           "Final portfolio metrics"),
         ]
 
-        _prog_box = st.empty()
+        import streamlit.components.v1 as _stc
+        _timer_box = st.empty()
+        _prog_box  = st.empty()
         _step_times = {}
         _sim_start = _time.time()
         _step_start = _time.time()
+        _timer_box.html(_timer_html(0), height=36)
         _prog_box.markdown(_step_html(_all_steps, 0, _step_times, 0), unsafe_allow_html=True)
 
-        _prog_box.markdown(_step_html(_all_steps, 0, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
+        _timer_box.html(_timer_html(_time.time()-_sim_start), height=36)
+        _prog_box.markdown(_step_html(_all_steps, 0, _step_times, 0), unsafe_allow_html=True)
         mv_x,mv_y,mv_eq=compute_mv_frontier(
             tuple(means_in),tuple(map(tuple,cov_mat.tolist())))
 
         _step_times[0] = _time.time()-_step_start; _step_start = _time.time()
-        _prog_box.markdown(_step_html(_all_steps, 2, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
+        _timer_box.html(_timer_html(_time.time()-_sim_start), height=36)
+        _prog_box.markdown(_step_html(_all_steps, 2, _step_times, 0), unsafe_allow_html=True)
         try:
             nd_xs,nd_ys,nd_lbls=build_frontier(
                 means_arr,sigs_arr,cov_mat,None,_alpha,m_val,mp_val,
@@ -2083,7 +2095,8 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
         der_xs,der_ys,der_lbls=[],[],[]
         if der_config:
             _step_times[2] = _time.time()-_step_start; _step_start = _time.time()
-            _prog_box.markdown(_step_html(_all_steps, 6, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
+            _timer_box.html(_timer_html(_time.time()-_sim_start), height=36)
+            _prog_box.markdown(_step_html(_all_steps, 6, _step_times, 0), unsafe_allow_html=True)
             try:
                 der_xs,der_ys,der_lbls=build_frontier(
                     means_arr,sigs_arr,cov_mat,der_config,_alpha,m_val,mp_val,
@@ -2095,7 +2108,8 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             _step_times[6] = _time.time()-_step_start
         else:
             _step_times[2] = _time.time()-_step_start
-        _prog_box.markdown(_step_html(_all_steps, len(_all_steps)-2, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
+        _timer_box.html(_timer_html(_time.time()-_sim_start), height=36)
+        _prog_box.markdown(_step_html(_all_steps, len(_all_steps)-2, _step_times, 0), unsafe_allow_html=True)
 
         # Three portfolio perspectives note
         st.markdown('''
@@ -2149,6 +2163,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                                             nd_res_actual=_nd_res_pre,
                                             lam_actual=_lam_actual)
             st.session_state['_fig_plotly'] = fig_plotly
+            _timer_box.empty()  # Clear live timer
             _prog_box.empty()  # Clear progress indicator
             # Store frontier data for matplotlib PDF chart (kaleido not available on Streamlit Cloud)
             st.session_state['_frontier_data'] = {
