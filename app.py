@@ -2375,17 +2375,28 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 _mr3, _mr4 = st.columns(2)
                 _mr3.metric("Skewness", f"{stats['skewness']:.3f}")
                 _mr4.metric("Exp. shortfall" if use_es else "Shortfall prob",
-                            f"{stats['shortfall_stat']*100:.2f}%")
+                            f"{stats['shortfall_stat']*100:.2f}%",
+                            help=("Realized expected shortfall E[r | r<H] at this optimal "
+                                  "portfolio (average return in the tail below H). The ES "
+                                  "constraint requires this to stay ≥ L — the limit set in the sidebar."
+                                  if use_es else
+                                  "Realized P(r<H) at this optimal portfolio (probability the "
+                                  "return falls below the threshold H). The VaR constraint requires "
+                                  "this to stay ≤ α — the limit set in the sidebar."))
                 if show_feasibility:
                     _sf2 = round(stats['shortfall_stat']*100, 2)
                     if use_es:
                         _lim2 = round(_L*100, 2) if _L is not None else None
                         _ok2 = (_lim2 is None) or (_sf2 >= _lim2)
-                        _btxt = "✓ meets ES ≥ L" if _ok2 else "✗ ES below L (drifted past limit)"
+                        _lim_txt = f"L limit {_lim2:.2f}%" if _lim2 is not None else "L limit"
+                        _btxt = (f"✓ {_sf2:.2f}% ≥ {_lim_txt}" if _ok2
+                                 else f"✗ {_sf2:.2f}% &lt; {_lim_txt} (drifted past limit)")
                     else:
                         _lim2 = round(_alpha*100, 2) if _alpha is not None else None
                         _ok2 = (_lim2 is None) or (_sf2 <= _lim2)
-                        _btxt = "✓ meets P(r&lt;H) ≤ α" if _ok2 else "✗ exceeds α"
+                        _lim_txt = f"α limit {_lim2:.2f}%" if _lim2 is not None else "α limit"
+                        _btxt = (f"✓ {_sf2:.2f}% ≤ {_lim_txt}" if _ok2
+                                 else f"✗ {_sf2:.2f}% &gt; {_lim_txt}")
                     _mr4.markdown(f'<div style="color:{"#16a34a" if _ok2 else "#dc2626"};'
                                 f'font-size:.74rem;margin-top:-.5rem;margin-bottom:.2rem">{_btxt}</div>',
                                 unsafe_allow_html=True)
