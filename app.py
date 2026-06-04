@@ -928,7 +928,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                     text=(f'<b>Portfolio (2)</b><br>'
                           f'Optimum with {der_label}<br>'
                           f'H={H_sel:.0%}, same constraint as (1)<br>'
-                          f'Return = {der_y[_i2]:.1f}%'),
+                          f'Return = {der_y[_i2]:.1f}%  |  Std dev = {der_x[_i2]:.1f}%'),
                     font=dict(color='#ff6b00', size=9),
                     bgcolor='rgba(13,17,23,0.9)',
                     bordercolor='#ff6b00', borderwidth=1,
@@ -997,7 +997,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             xref='x', yref='y', axref='pixel', ayref='pixel',
             showarrow=True, arrowhead=2, arrowcolor='#10b981',
             arrowwidth=1.5,
-            text=f'<b>Portfolio (1)</b><br>Optimum — no derivative<br>{_h_str} ↔ {_lam_str}<br>Return = {_p1_y:.1f}%',
+            text=f'<b>Portfolio (1)</b><br>Optimum — no derivative<br>{_h_str} ↔ {_lam_str}<br>Return = {_p1_y:.1f}%  |  Std dev = {_p1_x:.1f}%',
             font=dict(color='#10b981', size=9),
             bgcolor='rgba(13,17,23,0.9)',
             bordercolor='#10b981', borderwidth=1,
@@ -1019,7 +1019,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             xref='x', yref='y', axref='pixel', ayref='pixel',
             showarrow=True, arrowhead=2, arrowcolor='#10b981',
             arrowwidth=1.5,
-            text=f'Portfolio (1) — Equivalence point<br>MV = Behavioural (no derivatives)<br>λ=3.795 ↔ H=-10%, α=5%<br>Return = {mv_eq[1]:.1f}%',
+            text=f'Portfolio (1) — Equivalence point<br>MV = Behavioural (no derivatives)<br>λ=3.795 ↔ H=-10%, α=5%<br>Return = {mv_eq[1]:.1f}%  |  Std dev = {mv_eq[0]:.1f}%',
             font=dict(color='#10b981', size=9),
             bgcolor='rgba(13,17,23,0.9)',
             bordercolor='#10b981', borderwidth=1,
@@ -1056,7 +1056,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             arrowwidth=1.5, arrowcolor='#e76f51',
             text=(f'<b>Portfolio (3)</b><br>'
                   f'Same variance as (1)<br>'
-                  f'({p3_x:.1f}% std dev)<br>'
+                  f'Std dev = {p3_x:.1f}%<br>'
                   f'Return = {p3_y:.1f}% (interpolated)'),
             font=dict(color='#e76f51', size=9),
             bgcolor='rgba(13,17,23,0.9)',
@@ -1518,10 +1518,10 @@ with st.sidebar:
         st.markdown(GRID_EXPLANATIONS.get(grid_lbl, "No explanation available."), unsafe_allow_html=True)
 
     if "High" in grid_lbl:
-        st.markdown('<div class="warn-box">⚠️ May take 15–30 min. Recommended for final results only.</div>',
+        st.markdown('<div class="warn-box">⚠️ May take 15–30 min or more. Recommended for final results only.</div>',
                     unsafe_allow_html=True)
     elif "Standard" in grid_lbl:
-        st.markdown('<div class="warn-box">⏱️ ~3–8 min depending on securities and derivative type.</div>',
+        st.markdown('<div class="warn-box">⏱️ ~3–8 min or more depending on securities and derivative type.</div>',
                     unsafe_allow_html=True)
 
     st.markdown("\n---\n")
@@ -1648,9 +1648,9 @@ def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
 # ── Finance banner ────────────────────────────────────────────────────────
 st.markdown("<div style='height:0.6rem'></div>", unsafe_allow_html=True)
 st.markdown(f'''
-<div style="width:100%;background:#020c1b;padding:0;margin-bottom:0">
-</div>
-<div style="max-width:900px;margin:0 auto;background:linear-gradient(135deg,#020c1b 0%,#071428 40%,#0a1a35 70%,#020c1b 100%);border-radius:0;overflow:hidden;border:none;display:flex;align-items:stretch;font-family:monospace;margin-bottom:0">
+<div style="width:100%;background:#0a1628;padding:0;margin-bottom:0;display:flex;align-items:stretch;overflow:hidden">
+<div style="flex:1;overflow:hidden;position:relative;min-height:148px;background:#0a1628"><svg viewBox="0 0 200 160" preserveAspectRatio="xMidYMid slice" style="position:absolute;top:0;left:0;width:100%;height:100%" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="160" fill="#0a1628"/><circle cx="200" cy="0" r="130" fill="none" stroke="rgba(74,158,255,0.07)" stroke-width="1.5"/><circle cx="200" cy="0" r="110" fill="none" stroke="rgba(74,158,255,0.06)" stroke-width="1"/><circle cx="200" cy="0" r="88" fill="none" stroke="rgba(74,158,255,0.08)" stroke-width="1"/><circle cx="200" cy="0" r="65" fill="none" stroke="rgba(74,158,255,0.1)" stroke-width="1"/><circle cx="200" cy="0" r="44" fill="none" stroke="rgba(74,158,255,0.09)" stroke-width="1"/><line x1="0" y1="160" x2="160" y2="0" stroke="rgba(74,158,255,0.04)" stroke-width="0.8"/><line x1="40" y1="160" x2="200" y2="0" stroke="rgba(74,158,255,0.04)" stroke-width="0.8"/><circle cx="55" cy="95" r="2.5" fill="rgba(74,158,255,0.35)"/><circle cx="55" cy="95" r="5" fill="none" stroke="rgba(74,158,255,0.15)" stroke-width="0.8"/><circle cx="120" cy="48" r="2" fill="rgba(74,158,255,0.25)"/><circle cx="120" cy="48" r="4" fill="none" stroke="rgba(74,158,255,0.12)" stroke-width="0.8"/><line x1="0" y1="80" x2="180" y2="80" stroke="rgba(74,158,255,0.06)" stroke-width="0.6"/></svg></div>
+<div style="max-width:900px;flex-shrink:0;background:linear-gradient(135deg,#020c1b 0%,#071428 40%,#0a1a35 70%,#020c1b 100%);border-radius:0;overflow:hidden;border:none;display:flex;align-items:stretch;font-family:monospace;margin-bottom:0">
   <div style="flex:1.5;padding:16px 18px;border-right:1px solid #1a3a5c;display:flex;flex-direction:column;justify-content:center;gap:10px">
     <div style="color:#ffffff;font-size:13px;font-weight:700;letter-spacing:0.03em;font-family:Georgia,serif;line-height:1.45">Portfolio Optimiser<br>with Derivatives &amp;<br>Structured Products</div>
     <div style="color:rgba(74,158,255,0.65);font-size:7.5px;letter-spacing:0.22em">BEYOND MEAN-VARIANCE · MENTAL ACCOUNTS FRAMEWORK</div>
@@ -1772,6 +1772,8 @@ st.markdown(f'''
 </div>
 </div>
 </div>
+</div>
+<div style="flex:1;overflow:hidden;position:relative;min-height:148px;background:#0a1628"><svg viewBox="0 0 200 160" preserveAspectRatio="xMidYMid slice" style="position:absolute;top:0;left:0;width:100%;height:100%" xmlns="http://www.w3.org/2000/svg"><rect width="200" height="160" fill="#0a1628"/><circle cx="0" cy="0" r="130" fill="none" stroke="rgba(74,158,255,0.07)" stroke-width="1.5"/><circle cx="0" cy="0" r="110" fill="none" stroke="rgba(74,158,255,0.06)" stroke-width="1"/><circle cx="0" cy="0" r="88" fill="none" stroke="rgba(74,158,255,0.08)" stroke-width="1"/><circle cx="0" cy="0" r="65" fill="none" stroke="rgba(74,158,255,0.1)" stroke-width="1"/><circle cx="0" cy="0" r="44" fill="none" stroke="rgba(74,158,255,0.09)" stroke-width="1"/><line x1="200" y1="160" x2="40" y2="0" stroke="rgba(74,158,255,0.04)" stroke-width="0.8"/><line x1="160" y1="160" x2="0" y2="0" stroke="rgba(74,158,255,0.04)" stroke-width="0.8"/><circle cx="145" cy="95" r="2.5" fill="rgba(74,158,255,0.35)"/><circle cx="145" cy="95" r="5" fill="none" stroke="rgba(74,158,255,0.15)" stroke-width="0.8"/><circle cx="80" cy="48" r="2" fill="rgba(74,158,255,0.25)"/><circle cx="80" cy="48" r="4" fill="none" stroke="rgba(74,158,255,0.12)" stroke-width="0.8"/><line x1="20" y1="80" x2="200" y2="80" stroke="rgba(74,158,255,0.06)" stroke-width="0.6"/></svg></div>
 </div>''', unsafe_allow_html=True)
 
 DONUT_COLORS = ['#e63946','#f4a261','#e9c46a','#2a9d8f','#264653','#023e8a','#e76f51','#457b9d']
@@ -1843,7 +1845,7 @@ with tab1:
     import os
     st.markdown('<h2 style="color:#4a9eff">Beyond Mean-Variance: Portfolio Optimiser with Derivatives &amp; Structured Products — A Mental Accounts Framework</h2>', unsafe_allow_html=True)
     st.markdown(
-        "Most portfolio optimisers stop at stocks and bonds. This app goes further — "
+        "Classical portfolio optimisers stop at stocks and bonds. This app goes further — "
         "incorporating derivatives and structured products, handling **non-normal return distributions**, "
         "and optimising under a risk constraint you define: either the probability of loss below "
         "a threshold (**Value-at-Risk / VaR**) or the expected loss in the worst scenarios "
@@ -1983,31 +1985,83 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
 
         asset_labels=names_in+(["Derivative"] if der_config else [])
 
-        with st.spinner("Computing mean-variance frontier..."):
-            mv_x,mv_y,mv_eq=compute_mv_frontier(
-                tuple(means_in),tuple(map(tuple,cov_mat.tolist())))
+        _ctype = 'es' if use_es else 'var'
+        _alpha = alpha_val if not use_es else 0.05
+        _L     = L_val if use_es else None
 
-        with st.spinner("Behavioural optimiser — no derivative..."):
-            try:
-                _ctype = 'es' if use_es else 'var'
-                _alpha = alpha_val if not use_es else 0.05
-                _L     = L_val if use_es else None
-                nd_xs,nd_ys,nd_lbls=build_frontier(
-                    means_arr,sigs_arr,cov_mat,None,_alpha,m_val,mp_val,
-                    constraint_type=_ctype,L=_L)
-            except Exception as e:
-                st.error(f"Optimizer failed: {e}")
-                nd_xs,nd_ys,nd_lbls=[],[],[]
+        _n_steps = 8 if der_config else 6
+        def _step_html(steps, current):
+            rows = ""
+            for i, (label, desc) in enumerate(steps):
+                if i < current:
+                    rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.15rem 0">'
+                             f'<span style="color:#10b981;font-size:.75rem">✓</span>'
+                             f'<span style="color:#556a8a;font-size:.75rem;text-decoration:line-through">{label}</span>'
+                             f'</div>')
+                elif i == current:
+                    rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.15rem 0;'
+                             f'background:rgba(74,158,255,0.08);border-radius:4px;padding:.2rem .5rem">'
+                             f'<span style="color:#f59e0b;font-size:.8rem">▶</span>'
+                             f'<span style="color:#4a9eff;font-size:.82rem;font-weight:700">{label}</span>'
+                             f'<span style="color:#556a8a;font-size:.72rem"> — {desc}</span>'
+                             f'</div>')
+                else:
+                    rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.15rem 0">'
+                             f'<span style="color:#1a3a5c;font-size:.75rem">○</span>'
+                             f'<span style="color:#3a5a7a;font-size:.75rem">{label}</span>'
+                             f'</div>')
+            return ('<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'
+                    'padding:.6rem 1rem;margin-bottom:.5rem">'                    '<div style="color:#4a9eff;font-weight:700;font-size:.78rem;margin-bottom:.4rem">'
+                    '⚙️ Computation in progress...</div>' + rows + '</div>')
+
+        _steps_base = [
+            ("Mean-variance frontier",       "Markowitz MV sweep over λ"),
+            ("Covariance matrix",             "Building Σ from securities data"),
+            ("State space (no derivative)",   f"Grid {m_val}×{m_val}×{m_val} — {m_val**3:,} states"),
+            ("Gaussian copula probabilities", "Joint distribution via copula"),
+            ("Grid search — no derivative",   f"{mp_val} weight combinations"),
+            ("COBYLA refinement — P(1)",      "Local optimisation from best grid point"),
+        ]
+        _steps_der = [
+            ("Derivative payoff computation", f"Black-Scholes pricing over state space"),
+            ("State space (with derivative)", f"Grid extended to {m_val}×{m_val}×{m_val}×{mp_val} states"),
+            ("Gaussian copula — derivative",  "Joint distribution with derivative returns"),
+            ("Grid search — with derivative", f"{mp_val} weight combinations"),
+            ("COBYLA refinement — P(2)",      "Local optimisation from best grid point"),
+            ("Portfolio (3) interpolation",   "Interpolate derivative frontier at P(1) std dev"),
+        ]
+        _all_steps = _steps_base + (_steps_der if der_config else []) + [
+            ("Chart rendering",               "Plotly efficient frontier chart"),
+            ("Results computation",           "Final portfolio metrics"),
+        ]
+
+        _prog_box = st.empty()
+        _prog_box.markdown(_step_html(_all_steps, 0), unsafe_allow_html=True)
+
+        _prog_box.markdown(_step_html(_all_steps, 0), unsafe_allow_html=True)
+        mv_x,mv_y,mv_eq=compute_mv_frontier(
+            tuple(means_in),tuple(map(tuple,cov_mat.tolist())))
+
+        _prog_box.markdown(_step_html(_all_steps, 2), unsafe_allow_html=True)
+        try:
+            nd_xs,nd_ys,nd_lbls=build_frontier(
+                means_arr,sigs_arr,cov_mat,None,_alpha,m_val,mp_val,
+                constraint_type=_ctype,L=_L)
+        except Exception as e:
+            st.error(f"Optimizer failed: {e}")
+            nd_xs,nd_ys,nd_lbls=[],[],[]
 
         der_xs,der_ys,der_lbls=[],[],[]
         if der_config:
-            with st.spinner(f"Behavioural optimiser — {der_label_sel}..."):
-                try:
-                    der_xs,der_ys,der_lbls=build_frontier(
-                        means_arr,sigs_arr,cov_mat,der_config,_alpha,m_val,mp_val,
-                        constraint_type=_ctype,L=_L)
-                except Exception as e:
-                    st.warning(f"Derivative frontier failed: {e}")
+            _prog_box.markdown(_step_html(_all_steps, 6), unsafe_allow_html=True)
+            try:
+                der_xs,der_ys,der_lbls=build_frontier(
+                    means_arr,sigs_arr,cov_mat,der_config,_alpha,m_val,mp_val,
+                    constraint_type=_ctype,L=_L)
+            except Exception as e:
+                st.warning(f"Derivative frontier failed: {e}")
+
+        _prog_box.markdown(_step_html(_all_steps, len(_all_steps)-2), unsafe_allow_html=True)
 
         # Three portfolio perspectives note
         st.markdown('''
@@ -2061,6 +2115,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                                             nd_res_actual=_nd_res_pre,
                                             lam_actual=_lam_actual)
             st.session_state['_fig_plotly'] = fig_plotly
+            _prog_box.empty()  # Clear progress indicator
             # Store frontier data for matplotlib PDF chart (kaleido not available on Streamlit Cloud)
             st.session_state['_frontier_data'] = {
                 'mv_x': mv_x, 'mv_y': mv_y, 'mv_eq': mv_eq,
@@ -2105,8 +2160,13 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 )
                 _data_src = data_mode.split("(")[0].strip()
                 _securities = ", ".join(names_in)
+                _underlying_name = ""
+                if der_config and 'underlying_index' in der_config:
+                    _ui = der_config['underlying_index']
+                    if _ui < len(names_in):
+                        _underlying_name = f"<br>• Underlying: {names_in[_ui]}"
                 _der_html = (
-                    f'<span style="color:#f59e0b">{der_label_sel}</span>{der_params_str}'
+                    f'<span style="color:#f59e0b">{der_label_sel}</span>{_underlying_name}{der_params_str}'
                     if der_config else
                     '<span style="color:#8896a8">None</span>'
                 )
@@ -2152,8 +2212,13 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
 
     # ── For cache render path: show params + chart from session state ───────
     if _render_from_cache:
+        _underlying_name_c = ""
+        if der_config and 'underlying_index' in der_config:
+            _ui_c = der_config['underlying_index']
+            if _ui_c < len(names_in):
+                _underlying_name_c = f"<br>• Underlying: {names_in[_ui_c]}"
         _der_html_c = (
-            f'<span style="color:#f59e0b">{der_label_sel}</span>'
+            f'<span style="color:#f59e0b">{der_label_sel}</span>{_underlying_name_c}'
             if der_config else
             '<span style="color:#8896a8">None</span>'
         )
