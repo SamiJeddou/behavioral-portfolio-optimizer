@@ -865,7 +865,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                          der_x, der_y, der_lbls,
                          der_label, H_sel, alpha,
                          p3_x=None, p3_y=None,
-                         nd_res_actual=None, lam_actual=None):
+                         nd_res_actual=None, lam_actual=None, L=None):
     """Interactive Plotly version of the frontier chart with hover tooltips."""
     fig = go.Figure()
 
@@ -989,7 +989,8 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         _p1_x = nd_res_actual['std_dev'] * 100
         _p1_y = nd_res_actual['expected_return'] * 100
         _lam_str = f"λ={lam_actual:.4f}" if lam_actual else "λ computed"
-        _h_str = f"H={H_sel:.0%}, α={alpha:.0%}"
+        _h_str = (f"H={H_sel:.0%}, α={alpha:.0%}" if alpha is not None
+                  else (f"H={H_sel:.0%}, L={L:.0%}" if L is not None else f"H={H_sel:.0%}"))
         fig.add_trace(go.Scatter(
             x=[_p1_x], y=[_p1_y], mode='markers',
             name=f'Portfolio (1) — Optimum without derivatives ({_h_str})',
@@ -2149,7 +2150,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                                             der_xs,der_ys,der_lbls,der_label_sel,H_val,alpha_val,
                                             p3_x=_p3_x, p3_y=_p3_y,
                                             nd_res_actual=_nd_res_pre,
-                                            lam_actual=_lam_actual)
+                                            lam_actual=_lam_actual, L=L_val)
             st.session_state['_fig_plotly'] = fig_plotly
             # Record times for chart + results steps
             _chart_t = _time.time() - _step_start
