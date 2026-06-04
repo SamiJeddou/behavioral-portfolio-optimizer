@@ -1530,31 +1530,6 @@ with st.sidebar:
                     unsafe_allow_html=True)
 
     st.markdown("\n---\n")
-    # Inject button style directly before the button
-    st.markdown("""
-<style>
-div[data-testid="stSidebarContent"] button {
-    background: linear-gradient(180deg, #5aabff 0%, #1a6bbf 100%) !important;
-    color: white !important;
-    font-weight: 700 !important;
-    font-size: 1.05rem !important;
-    border-radius: 8px !important;
-    border: none !important;
-    border-bottom: 3px solid #0d4a8f !important;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5) !important;
-}
-div[data-testid="stSidebarContent"] button p {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    color: white !important;
-    font-weight: 700 !important;
-    font-size: 1.05rem !important;
-    padding: 0 !important;
-    margin: 0 !important;
-}
-</style>
-""", unsafe_allow_html=True)
     run_btn=st.button(
         "5  ▶  RUN OPTIMISER",
         type="primary",
