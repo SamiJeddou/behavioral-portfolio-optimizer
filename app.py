@@ -2065,6 +2065,16 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             ("Results computation",           "Final portfolio metrics"),
         ]
 
+        # Three portfolio perspectives note
+        st.markdown('''
+<div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#111111;font-size:.82rem">
+<b style="color:#1a6bbf">Up to three portfolios can be generated as output of the optimisation:</b><br><br>
+<b style="color:#10b981">Portfolio (1)</b> — Optimum portfolio without derivatives: identical to the Markowitz MV optimum, derived through the mental accounting framework (reference portfolio)<br>
+<b style="color:#f59e0b">Portfolio (2)</b> — Optimum portfolio with derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
+<b style="color:#e76f51">Portfolio (3)</b> — Portfolio with derivative and with the same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (indicative only)
+</div>
+''', unsafe_allow_html=True)
+
         _prog_box = st.empty()
         _step_times = {}
         _sim_start = _time.time()
@@ -2101,16 +2111,6 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
         else:
             _step_times[2] = _time.time()-_step_start
         _prog_box.markdown(_step_html(_all_steps, len(_all_steps)-2, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
-
-        # Three portfolio perspectives note
-        st.markdown('''
-<div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#111111;font-size:.82rem">
-<b style="color:#1a6bbf">Up to three portfolios can be generated as output of the optimisation:</b><br><br>
-<b style="color:#10b981">Portfolio (1)</b> — Optimum portfolio without derivatives: identical to the Markowitz MV optimum, derived through the mental accounting framework (reference portfolio)<br>
-<b style="color:#f59e0b">Portfolio (2)</b> — Optimum portfolio with derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
-<b style="color:#e76f51">Portfolio (3)</b> — Portfolio with derivative and with the same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (indicative only)
-</div>
-''', unsafe_allow_html=True)
 
         # ── Pre-compute nd_res — retry up to 3 times for robustness ────────────
         _nd_res_pre = None
