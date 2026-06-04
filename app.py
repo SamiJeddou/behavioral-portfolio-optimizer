@@ -1826,6 +1826,35 @@ def make_donut_svg(weights, labels, colors, size=160):
 st.markdown("<div style='margin-top:2.5rem'></div>", unsafe_allow_html=True)
 tab1,tab2,tab3=st.tabs(["📊 Optimiser","📖 About","📚 Glossary"])
 
+# JS fix for Streamlit sidebar duplication bug — hides duplicate elements after reset button
+st.markdown('''<script>
+(function() {
+    function fixSidebar() {
+        const sidebar = document.querySelector('[data-testid="stSidebar"] [data-testid="stVerticalBlock"]');
+        if (!sidebar) return;
+        const children = Array.from(sidebar.children);
+        // Find the Reset button (last button in sidebar)
+        let resetIdx = -1;
+        for (let i = children.length - 1; i >= 0; i--) {
+            if (children[i].textContent.includes('Reset')) { resetIdx = i; break; }
+        }
+        // Hide everything after the reset button
+        if (resetIdx >= 0) {
+            for (let i = resetIdx + 1; i < children.length; i++) {
+                children[i].style.display = 'none';
+            }
+        }
+    }
+    // Run on load and observe changes
+    fixSidebar();
+    const observer = new MutationObserver(fixSidebar);
+    const root = document.querySelector('[data-testid="stAppViewContainer"]');
+    if (root) observer.observe(root, {childList: true, subtree: true});
+    setTimeout(fixSidebar, 1000);
+    setTimeout(fixSidebar, 3000);
+})();
+</script>''', unsafe_allow_html=True)
+
 with tab1:
     import os
     st.markdown('<h2 style="color:#4a9eff">Beyond Mean-Variance: Portfolio Optimiser with Derivatives &amp; Structured Products — A Mental Accounts Framework</h2>', unsafe_allow_html=True)
