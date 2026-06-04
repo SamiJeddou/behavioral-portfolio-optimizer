@@ -1545,23 +1545,24 @@ with st.sidebar:
         use_container_width=True)
 
     if run_btn:
-        # Run clicked — clear old results and mark as needing fresh computation
-        st.session_state['_run_active'] = True
-        st.session_state['_needs_compute'] = True
-        st.session_state.pop('_cached_results', None)
-        st.session_state.pop('_pdf_bytes', None)
-        st.session_state.pop('_fig_png', None)
-
+        st.session_state['_pending_run'] = True
     if reset_btn:
-        for _k in ['_run_active','_needs_compute','_cached_results',
-                   '_pdf_bytes','_fig_png','_fig_plotly']:
-            st.session_state.pop(_k, None)
         st.session_state['_do_rerun'] = True
 
 
-# Handle reset rerun OUTSIDE sidebar to prevent DOM leak
+# Handle all session state mutations OUTSIDE sidebar to prevent double-render
 if st.session_state.pop('_do_rerun', False):
+    for _k in ['_run_active','_needs_compute','_cached_results',
+               '_pdf_bytes','_fig_png','_fig_plotly']:
+        st.session_state.pop(_k, None)
     st.rerun()
+
+if st.session_state.pop('_pending_run', False):
+    st.session_state['_run_active'] = True
+    st.session_state['_needs_compute'] = True
+    st.session_state.pop('_cached_results', None)
+    st.session_state.pop('_pdf_bytes', None)
+    st.session_state.pop('_fig_png', None)
 
 # ── Session state logic OUTSIDE sidebar to prevent double-render ─────────────
 _run_active = st.session_state.get('_run_active', False)
