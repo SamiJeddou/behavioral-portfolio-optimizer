@@ -1998,26 +1998,30 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
 
         def _step_html(steps, current, step_times=None, total_elapsed=0):
             rows = ""
-            for i, (label, desc) in enumerate(steps):
+            for i, entry in enumerate(steps):
+                label, desc = entry[0], entry[1]
+                is_sub = entry[2] if len(entry) > 2 else False
+                is_timed = entry[3] if len(entry) > 3 else True
+                indent = 'padding-left:1.2rem' if is_sub else ''
                 t_str = (f' <span style="color:#556a8a;font-size:.7rem">'
                          f'(Execution time: {_fmt_t(step_times[i])})</span>'
-                         if step_times and i in step_times else "")
+                         if is_timed and step_times and i in step_times else "")
                 if i < current:
-                    rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.15rem 0">'
+                    rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.1rem 0;{indent}">'
                              f'<span style="color:#10b981;font-size:.75rem">✓</span>'
-                             f'<span style="color:#10b981;font-size:.75rem">{label}</span>{t_str}'
+                             f'<span style="color:#10b981;font-size:.{("72" if is_sub else "75")}rem">{label}</span>{t_str}'
                              f'</div>')
                 elif i == current:
-                    rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.15rem 0;'
-                             f'background:rgba(74,158,255,0.08);border-radius:4px;padding:.2rem .5rem">'
+                    rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.1rem 0;'
+                             f'background:rgba(74,158,255,0.08);border-radius:4px;padding:.2rem .5rem;{indent}">'
                              f'<span style="color:#f59e0b;font-size:.8rem">▶</span>'
                              f'<span style="color:#4a9eff;font-size:.82rem;font-weight:700">{label}</span>'
                              f'<span style="color:#556a8a;font-size:.72rem"> — {desc}</span>'
                              f'</div>')
                 else:
-                    rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.15rem 0">'
+                    rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.1rem 0;{indent}">'
                              f'<span style="color:#1a3a5c;font-size:.75rem">○</span>'
-                             f'<span style="color:#3a5a7a;font-size:.75rem">{label}</span>'
+                             f'<span style="color:#3a5a7a;font-size:.{("72" if is_sub else "75")}rem">{label}</span>'
                              f'</div>')
             t_str_total = (f' <span style="color:#556a8a;font-size:.7rem">'
                            f'(Execution time: {_fmt_t(total_elapsed)})</span>'
@@ -2029,13 +2033,17 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
 
         def _step_html_done(steps, step_times, total_elapsed):
             rows = ""
-            for i, (label, desc) in enumerate(steps):
+            for i, entry in enumerate(steps):
+                label = entry[0]
+                is_sub = entry[2] if len(entry) > 2 else False
+                is_timed = entry[3] if len(entry) > 3 else True
+                indent = 'padding-left:1.2rem' if is_sub else ''
                 t_str = (f' <span style="color:#556a8a;font-size:.7rem">'
                          f'(Execution time: {_fmt_t(step_times[i])})</span>'
-                         if i in step_times else "")
-                rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.15rem 0">'
+                         if is_timed and i in step_times else "")
+                rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.1rem 0;{indent}">'
                          f'<span style="color:#10b981;font-size:.75rem">✓</span>'
-                         f'<span style="color:#10b981;font-size:.75rem">{label}</span>{t_str}'
+                         f'<span style="color:#10b981;font-size:.{("72" if is_sub else "75")}rem">{label}</span>{t_str}'
                          f'</div>')
             t_str_total = (f' <span style="color:#556a8a;font-size:.7rem">'
                            f'(Total execution time: {_fmt_t(total_elapsed)})</span>')
@@ -2044,25 +2052,30 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'                f'padding:.4rem 1rem;margin-bottom:.5rem">'                f'<summary style="cursor:pointer;color:#10b981;font-weight:700;font-size:.78rem;'                f'list-style:none;display:flex;align-items:center;gap:.4rem">'                f'✅ Computation complete{t_str_total}'                f'<span style="color:#c0c8d8;font-size:.7rem;margin-left:auto">▼ click to expand</span>'                f'</summary>'                f'<div style="margin-top:.4rem">' + rows + f'</div></details>'
             )
 
+        # Steps: (label, desc, is_substep, is_timed)
+        # is_timed=True  → shows execution time when done
+        # is_substep=True → indented, no time shown
         _steps_base = [
-            ("Mean-variance frontier",       "Markowitz MV sweep over λ"),
-            ("Covariance matrix",             "Building Σ from securities data"),
-            ("State space (no derivative)",   f"Grid {m_val}×{m_val}×{m_val} — {m_val**3:,} states"),
-            ("Gaussian copula probabilities", "Joint distribution via copula"),
-            ("Grid search — no derivative",   f"{mp_val} weight combinations"),
-            ("COBYLA refinement — P(1)",      "Local optimisation from best grid point"),
+            ("Mean-variance frontier",         "Markowitz MV sweep over λ",          False, True),
+            ("Behavioural frontier (no deriv.)","Building state space & optimising",  False, True),
+            ("  ↳ Covariance matrix",           "Building Σ from securities data",    True,  False),
+            (f"  ↳ State space",                f"Grid {m_val}³ — {m_val**3:,} states", True, False),
+            ("  ↳ Gaussian copula",             "Joint distribution via copula",      True,  False),
+            (f"  ↳ Grid search",                f"{mp_val} weight combinations",      True,  False),
+            ("  ↳ COBYLA refinement — P(1)",    "Local optimisation",                 True,  False),
         ]
         _steps_der = [
-            ("Derivative payoff computation", f"Black-Scholes pricing over state space"),
-            ("State space (with derivative)", f"Grid extended to {m_val}×{m_val}×{m_val}×{mp_val} states"),
-            ("Gaussian copula — derivative",  "Joint distribution with derivative returns"),
-            ("Grid search — with derivative", f"{mp_val} weight combinations"),
-            ("COBYLA refinement — P(2)",      "Local optimisation from best grid point"),
-            ("Portfolio (3) interpolation",   "Interpolate derivative frontier at P(1) std dev"),
+            ("Derivative frontier",             "Building state space & optimising",  False, True),
+            ("  ↳ Payoff computation",          "Black-Scholes pricing over states",  True,  False),
+            (f"  ↳ State space (with deriv.)",  f"Grid {m_val}³×{mp_val} states",    True,  False),
+            ("  ↳ Gaussian copula",             "Joint distribution with derivative", True,  False),
+            (f"  ↳ Grid search",                f"{mp_val} weight combinations",      True,  False),
+            ("  ↳ COBYLA refinement — P(2)",    "Local optimisation",                 True,  False),
+            ("  ↳ Portfolio (3) interpolation", "Interpolate at P(1) std dev",        True,  False),
         ]
         _all_steps = _steps_base + (_steps_der if der_config else []) + [
-            ("Chart rendering",               "Plotly efficient frontier chart"),
-            ("Results computation",           "Final portfolio metrics"),
+            ("Chart rendering",                "Plotly efficient frontier chart",     False, True),
+            ("Results computation",            "Final portfolio metrics",             False, True),
         ]
 
         # Three portfolio perspectives note
@@ -2086,7 +2099,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             tuple(means_in),tuple(map(tuple,cov_mat.tolist())))
 
         _step_times[0] = _time.time()-_step_start; _step_start = _time.time()
-        _prog_box.markdown(_step_html(_all_steps, 2, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
+        _prog_box.markdown(_step_html(_all_steps, 1, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
         try:
             nd_xs,nd_ys,nd_lbls=build_frontier(
                 means_arr,sigs_arr,cov_mat,None,_alpha,m_val,mp_val,
@@ -2095,13 +2108,9 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             st.error(f"Optimizer failed: {e}")
             nd_xs,nd_ys,nd_lbls=[],[],[]
 
-        # Assign nd frontier total time to all sub-steps (1-5)
-        _nd_t = _time.time()-_step_start
-        for _si in range(1, 6): _step_times[_si] = _nd_t
-        _step_start = _time.time()
+        _step_times[2] = _time.time()-_step_start; _step_start = _time.time()
         der_xs,der_ys,der_lbls=[],[],[]
         if der_config:
-            _step_times[2] = _nd_t; _step_start = _time.time()
             _prog_box.markdown(_step_html(_all_steps, 6, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
             try:
                 der_xs,der_ys,der_lbls=build_frontier(
@@ -2111,10 +2120,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 st.warning(f"Derivative frontier failed: {e}")
 
         if der_config:
-            _der_t = _time.time()-_step_start
-            for _si in range(6, 12): _step_times[_si] = _der_t
-        else:
-            pass  # nd times already set above
+            _step_times[7] = _time.time()-_step_start
         _prog_box.markdown(_step_html(_all_steps, len(_all_steps)-2, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
 
         # ── Pre-compute nd_res — retry up to 3 times for robustness ────────────
