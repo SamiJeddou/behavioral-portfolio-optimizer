@@ -331,7 +331,10 @@ h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
         font-size: 1.05rem !important;
         font-weight: 600 !important;
     }
-    .section-header{border-left:4px solid #1a6bbf;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-top:1.2rem;margin-bottom:.5rem;color:#4a9eff;font-weight:600;font-size:1.05rem;letter-spacing:.02em;text-align:center}
+    section[data-testid="stMain"] .block-container {
+    padding-left: 3rem !important;
+}
+.section-header{border-left:4px solid #1a6bbf;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-top:1.2rem;margin-bottom:.5rem;color:#4a9eff;font-weight:600;font-size:1.05rem;letter-spacing:.02em;text-align:center}
 
     .sidebar-divider{border:none;border-top:2px solid #2a3a4a;margin:1rem 0}
     section[data-testid="stSidebar"] div.stButton > button,section[data-testid="stSidebar"] div.stButton > button[kind="primary"]{background:linear-gradient(180deg,#5aabff 0%,#2d7dd2 100%) !important;border:none !important;border-bottom:3px solid #1a5fa0 !important;border-radius:8px !important;color:#ffffff !important;font-size:1.05rem !important;font-weight:700 !important;padding:.6rem 1rem !important;box-shadow:0 4px 8px rgba(0,0,0,0.5) !important;text-shadow:0 1px 2px rgba(0,0,0,0.3) !important;width:100% !important}
@@ -2291,7 +2294,6 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             # Three-column layout: metrics | donut | bars
             col_m, col_d, col_b = st.columns([1.2, 1, 1.4])
             with col_m:
-                st.markdown('<div style="padding-left:1.2rem">', unsafe_allow_html=True)
                 _mr1, _mr2 = st.columns(2)
                 _mr1.metric("Expected return",
                             f"{stats['expected_return']*100:.2f}%",
@@ -2302,7 +2304,6 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 _mr4.metric("Shortfall / ES", f"{stats['shortfall_stat']*100:.2f}%")
                 if method_txt:
                     st.caption(f"Method: {method_txt}")
-                st.markdown('</div>', unsafe_allow_html=True)
             with col_d:
                 _svg = make_donut_svg(weights, labels, colors, size=150)
                 if _svg:
