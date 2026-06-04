@@ -2291,6 +2291,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             # Three-column layout: metrics | donut | bars
             col_m, col_d, col_b = st.columns([1.2, 1, 1.4])
             with col_m:
+                st.markdown('<div style="padding-left:1.2rem">', unsafe_allow_html=True)
                 _mr1, _mr2 = st.columns(2)
                 _mr1.metric("Expected return",
                             f"{stats['expected_return']*100:.2f}%",
@@ -2301,6 +2302,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 _mr4.metric("Shortfall / ES", f"{stats['shortfall_stat']*100:.2f}%")
                 if method_txt:
                     st.caption(f"Method: {method_txt}")
+                st.markdown('</div>', unsafe_allow_html=True)
             with col_d:
                 _svg = make_donut_svg(weights, labels, colors, size=150)
                 if _svg:
