@@ -1230,7 +1230,7 @@ def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
 # ═════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
     st.subheader("⚙️ Optimisation Parameters")
-    st.markdown("\n---\n")
+    st.divider()
 
     # ── 1. Data source ────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">1</span><span style="display:block">📂 PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
@@ -1345,7 +1345,7 @@ with st.sidebar:
                     'differential evolution optimizer will be used automatically.</div>',
                     unsafe_allow_html=True)
 
-    st.markdown("\n---\n")
+    st.divider()
 
     # ── 2. Derivative ─────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">2</span><span style="display:block">📊 DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
@@ -1447,7 +1447,7 @@ with st.sidebar:
             data_valid=False
             st.info("Add at least one component to continue.")
 
-    st.markdown("\n---\n")
+    st.divider()
 
     # ── 3. Constraint ─────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">3</span><span style="display:block">🎯 MENTAL-ACCOUNT CONSTRAINT</span></div>', unsafe_allow_html=True)
@@ -1513,7 +1513,7 @@ with st.sidebar:
     if use_es:
         pass  # no lambda for ES
 
-    st.markdown("\n---\n")
+    st.divider()
 
     # ── 4. Grid ───────────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">4</span><span style="display:block">⚡ GRID RESOLUTION</span></div>', unsafe_allow_html=True)
@@ -1532,7 +1532,7 @@ with st.sidebar:
         st.markdown('<div class="warn-box">⏱️ ~3–8 min or more depending on securities and derivative type.</div>',
                     unsafe_allow_html=True)
 
-    st.markdown("\n---\n")
+    st.divider()
     run_btn=st.button(
         "5  ▶  RUN OPTIMISER",
         type="primary",
