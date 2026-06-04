@@ -2386,7 +2386,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                         _lim2 = round(_alpha*100, 2) if _alpha is not None else None
                         _ok2 = (_lim2 is None) or (_sf2 <= _lim2)
                         _btxt = "✓ meets P(r&lt;H) ≤ α" if _ok2 else "✗ exceeds α"
-                    st.markdown(f'<div style="color:{"#16a34a" if _ok2 else "#dc2626"};'
+                    _mr4.markdown(f'<div style="color:{"#16a34a" if _ok2 else "#dc2626"};'
                                 f'font-size:.74rem;margin-top:-.5rem;margin-bottom:.2rem">{_btxt}</div>',
                                 unsafe_allow_html=True)
                 if method_txt:
