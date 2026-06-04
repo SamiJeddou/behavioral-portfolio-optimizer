@@ -1544,20 +1544,17 @@ with st.sidebar:
         type="secondary",
         use_container_width=True)
 
-    if run_btn:
-        st.session_state['_pending_run'] = True
-    if reset_btn:
-        st.session_state['_do_rerun'] = True
+    # No session_state mutations inside sidebar — handled outside
 
 
 # Handle all session state mutations OUTSIDE sidebar to prevent double-render
-if st.session_state.pop('_do_rerun', False):
+if reset_btn:
     for _k in ['_run_active','_needs_compute','_cached_results',
                '_pdf_bytes','_fig_png','_fig_plotly']:
         st.session_state.pop(_k, None)
     st.rerun()
 
-if st.session_state.pop('_pending_run', False):
+if run_btn:
     st.session_state['_run_active'] = True
     st.session_state['_needs_compute'] = True
     st.session_state.pop('_cached_results', None)
