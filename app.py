@@ -1651,12 +1651,6 @@ def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
 
 # ── Finance banner ────────────────────────────────────────────────────────
 st.markdown("<div style='height:0.6rem'></div>", unsafe_allow_html=True)
-st.markdown('''<style>
-div[data-testid="stMarkdownContainer"]:has(> div[style*="background:#020c1b"]) {
-  padding: 0 !important; margin: 0 !important;
-}
-section[data-testid="stMain"] > div:first-child { padding-left: 0 !important; padding-right: 0 !important; }
-</style>''', unsafe_allow_html=True)
 st.markdown(f'''
 <div style="width:100%;background:#020c1b;padding:0;margin:0">
 
