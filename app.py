@@ -337,6 +337,9 @@ h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
     }
 .section-header{border-left:4px solid #1a6bbf;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-top:1.2rem;margin-bottom:.5rem;color:#4a9eff;font-weight:600;font-size:1.05rem;letter-spacing:.02em;text-align:center;overflow:hidden}
 #sh1 ~ #sh1{display:none !important}
+/* Hide any section-header or h2 that leaks into main content area */
+section[data-testid="stMain"] .section-header {display:none !important}
+section[data-testid="stMain"] h2:has(+ hr) {display:none !important}
 
     .sidebar-divider{border:none;border-top:2px solid #2a3a4a;margin:1rem 0}
     section[data-testid="stSidebar"] div.stButton > button,section[data-testid="stSidebar"] div.stButton > button[kind="primary"]{background:linear-gradient(180deg,#5aabff 0%,#2d7dd2 100%) !important;border:none !important;border-bottom:3px solid #1a5fa0 !important;border-radius:8px !important;color:#ffffff !important;font-size:1.05rem !important;font-weight:700 !important;padding:.6rem 1rem !important;box-shadow:0 4px 8px rgba(0,0,0,0.5) !important;text-shadow:0 1px 2px rgba(0,0,0,0.3) !important;width:100% !important}
