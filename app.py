@@ -1556,10 +1556,7 @@ with st.sidebar:
         for _k in ['_run_active','_needs_compute','_cached_results',
                    '_pdf_bytes','_fig_png','_fig_plotly']:
             st.session_state.pop(_k, None)
-        st.rerun()
-
-    # Sidebar close barrier — prevents HTML from leaking into main area
-    st.markdown('<div style="display:block;clear:both;height:1px;overflow:hidden;font-size:0"> </div>', unsafe_allow_html=True)
+        st.session_state['_do_rerun'] = True
 
     # Only show results if explicitly run — not on slider/widget reruns
     _run_active = st.session_state.get('_run_active', False)
@@ -1600,6 +1597,10 @@ with st.sidebar:
             _has_results = False
             _needs_compute = False
 
+
+# Handle reset rerun OUTSIDE sidebar to prevent DOM leak
+if st.session_state.pop('_do_rerun', False):
+    st.rerun()
 
 # ═════════════════════════════════════════════════════════════════════════════
 # MAIN
