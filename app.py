@@ -320,7 +320,7 @@ st.set_page_config(
 
 st.markdown("""
 <style>
-.main{background:#0d1117}.block-container{padding-top:1.5rem}
+.main{background:#0d1117}.block-container{padding-top:1.5rem;padding-left:2.5rem !important;padding-right:2.5rem !important}
 h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
 .info-box{background:#1a1a2e;border:1px solid #1a6bbf;border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem;color:#ffffff !important}
 .warn-box{background:#1a1200;border:1px solid #f59e0b;border-radius:6px;padding:.5rem 1rem;color:#f59e0b;font-size:.82rem;margin-top:.3rem}
@@ -331,9 +331,10 @@ h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
         font-size: 1.05rem !important;
         font-weight: 600 !important;
     }
-    section[data-testid="stMain"] .block-container {
-    padding-left: 3rem !important;
-}
+    section[data-testid="stMain"] > div > div.block-container {
+        padding-left: 2.5rem !important;
+        padding-right: 2.5rem !important;
+    }
 .section-header{border-left:4px solid #1a6bbf;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-top:1.2rem;margin-bottom:.5rem;color:#4a9eff;font-weight:600;font-size:1.05rem;letter-spacing:.02em;text-align:center}
 
     .sidebar-divider{border:none;border-top:2px solid #2a3a4a;margin:1rem 0}
