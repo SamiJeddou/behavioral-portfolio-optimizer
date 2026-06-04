@@ -2095,9 +2095,13 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             st.error(f"Optimizer failed: {e}")
             nd_xs,nd_ys,nd_lbls=[],[],[]
 
+        # Assign nd frontier total time to all sub-steps (1-5)
+        _nd_t = _time.time()-_step_start
+        for _si in range(1, 6): _step_times[_si] = _nd_t
+        _step_start = _time.time()
         der_xs,der_ys,der_lbls=[],[],[]
         if der_config:
-            _step_times[2] = _time.time()-_step_start; _step_start = _time.time()
+            _step_times[2] = _nd_t; _step_start = _time.time()
             _prog_box.markdown(_step_html(_all_steps, 6, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
             try:
                 der_xs,der_ys,der_lbls=build_frontier(
@@ -2107,9 +2111,10 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 st.warning(f"Derivative frontier failed: {e}")
 
         if der_config:
-            _step_times[6] = _time.time()-_step_start
+            _der_t = _time.time()-_step_start
+            for _si in range(6, 12): _step_times[_si] = _der_t
         else:
-            _step_times[2] = _time.time()-_step_start
+            pass  # nd times already set above
         _prog_box.markdown(_step_html(_all_steps, len(_all_steps)-2, _step_times, _time.time()-_sim_start), unsafe_allow_html=True)
 
         # ── Pre-compute nd_res — retry up to 3 times for robustness ────────────
