@@ -1229,7 +1229,7 @@ def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
 # SIDEBAR
 # ═════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
-    st.subheader("⚙️ Optimisation Parameters")
+    st.markdown("### ⚙️ Optimisation Parameters")
     st.divider()
 
     # ── 1. Data source ────────────────────────────────────────────────────────
