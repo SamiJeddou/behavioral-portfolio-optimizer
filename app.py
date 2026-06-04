@@ -1630,7 +1630,7 @@ div[data-testid="stSidebarContent"] button p {
 # MAIN
 # ═════════════════════════════════════════════════════════════════════════════
 def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
-    with st.expander("📋 Portfolio data used in this simulation", expanded=True):
+    with st.expander("📋 Portfolio data", expanded=True):
         hs = "background:#1a6bbf;color:#ffffff;font-weight:bold;padding:6px 10px;text-align:left"
         cs = "background:#ffffff;color:#111111;padding:5px 10px;border-bottom:1px solid #e0e0e0"
         rows = "".join(
