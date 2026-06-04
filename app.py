@@ -1348,12 +1348,8 @@ with st.sidebar:
 
     # AI tooltip for selected derivative
     if der_type is not None and der_type != "custom":
-        st.markdown(
-            f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
-            f'padding:.6rem .8rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
-            f'<b style="color:#1a3a6b">✨ AI-powered: What is this instrument?</b><br>'
-            f'{get_explanation(der_label_sel)}</div>',
-            unsafe_allow_html=True)
+        with st.expander("✨ AI-powered: What is this instrument?"):
+            st.markdown(get_explanation(der_label_sel), unsafe_allow_html=True)
 
     # Underlying selector (shown for all non-None derivative types)
     if der_type is not None:
@@ -1489,12 +1485,8 @@ with st.sidebar:
                         '⚠️ Implied λ not available — the VaR constraint may be too tight or too loose for the current portfolio.</div>',
                         unsafe_allow_html=True)
         # AI explanation last
-        st.markdown(
-            f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
-            f'padding:.6rem .8rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
-            f'<b style="color:#1a3a6b">✨ AI-powered: What is the VaR constraint?</b><br>'
-            f'{CONSTRAINT_EXPLANATIONS["var"]}</div>',
-            unsafe_allow_html=True)
+        with st.expander("✨ AI-powered: What is the VaR constraint?"):
+            st.markdown(CONSTRAINT_EXPLANATIONS["var"], unsafe_allow_html=True)
     else:
         alpha_val = None
         L_val     = st.slider("ES lower bound L (%)", -50, -1, -15, 1) / 100
@@ -1505,12 +1497,8 @@ with st.sidebar:
             'ES constraint: E[return | return &lt; H] ≥ L</div>',
             unsafe_allow_html=True)
         # AI explanation
-        st.markdown(
-            f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
-            f'padding:.6rem .8rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
-            f'<b style="color:#1a3a6b">✨ AI-powered: What is the ES constraint?</b><br>'
-            f'{CONSTRAINT_EXPLANATIONS["es"]}</div>',
-            unsafe_allow_html=True)
+        with st.expander("✨ AI-powered: What is the ES constraint?"):
+            st.markdown(CONSTRAINT_EXPLANATIONS["es"], unsafe_allow_html=True)
 
     # Implied lambda block already handled above for VaR case
     if use_es:
@@ -1525,12 +1513,8 @@ with st.sidebar:
     m_val,mp_val=GRID_OPTIONS[grid_lbl]
 
     # AI-powered grid explanation
-    st.markdown(
-        f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
-        f'padding:.6rem .8rem;color:#111111;font-size:.82rem;margin-top:.3rem">'
-        f'<b style="color:#1a3a6b">✨ AI-powered: What does this resolution mean?</b><br>'
-        f'{GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")}</div>',
-        unsafe_allow_html=True)
+    with st.expander("✨ AI-powered: What does this resolution mean?"):
+        st.markdown(GRID_EXPLANATIONS.get(grid_lbl, "No explanation available."), unsafe_allow_html=True)
 
     if "High" in grid_lbl:
         st.markdown('<div class="warn-box">⚠️ May take 15–30 min. Recommended for final results only.</div>',
