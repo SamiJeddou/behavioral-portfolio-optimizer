@@ -2041,7 +2041,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                            f'(Total execution time: {_fmt_t(total_elapsed)})</span>')
             uid = "prog_done"
             return (
-                f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'                f'padding:.4rem 1rem;margin-bottom:.5rem">'                f'<summary style="cursor:pointer;color:#10b981;font-weight:700;font-size:.78rem;'                f'list-style:none;display:flex;align-items:center;gap:.4rem">'                f'✅ Computation complete{t_str_total}'                f'<span style="color:#556a8a;font-size:.7rem;margin-left:auto">▼ click to expand</span>'                f'</summary>'                f'<div style="margin-top:.4rem">' + rows + f'</div></details>'
+                f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'                f'padding:.4rem 1rem;margin-bottom:.5rem">'                f'<summary style="cursor:pointer;color:#10b981;font-weight:700;font-size:.78rem;'                f'list-style:none;display:flex;align-items:center;gap:.4rem">'                f'✅ Computation complete{t_str_total}'                f'<span style="color:#c0c8d8;font-size:.7rem;margin-left:auto">▼ click to expand</span>'                f'</summary>'                f'<div style="margin-top:.4rem">' + rows + f'</div></details>'
             )
 
         _steps_base = [
