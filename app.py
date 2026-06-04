@@ -1998,7 +1998,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 if i < current:
                     rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.15rem 0">'
                              f'<span style="color:#10b981;font-size:.75rem">✓</span>'
-                             f'<span style="color:#556a8a;font-size:.75rem;text-decoration:line-through">{label}</span>'
+                             f'<span style="color:#10b981;font-size:.75rem">{label}</span>'
                              f'</div>')
                 elif i == current:
                     rows += (f'<div style="display:flex;align-items:center;gap:.5rem;margin:.15rem 0;'
