@@ -145,7 +145,7 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
                 ['Expected return', f"{res['expected_return']*100:.2f}%"],
                 ['Std deviation',   f"{res['std_dev']*100:.2f}%"],
                 ['Skewness',        f"{res['skewness']:.3f}"],
-                ['Expected shortfall E[r|r<H]' if use_es else 'Shortfall prob P(r<H)',  f"{res['shortfall_stat']*100:.2f}%"],
+                ['Realised ES E[r|r<H]' if use_es else 'Realised P(r<H)',  f"{res['shortfall_stat']*100:.2f}%"],
             ]
         t = Table(data, colWidths=[8*cm, 4*cm])
         t.setStyle(TableStyle([
@@ -180,7 +180,7 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
         ['Derivative', der_label_sel if der_label_sel else 'None'],
         ['Constraint type', 'Expected Shortfall' if use_es else 'Value-at-Risk (VaR)'],
         ['Threshold H', f'{H_val:.0%}'],
-        ['Shortfall prob α' if not use_es else 'Tail limit L', f'{_alpha:.0%}' if not use_es else f'{_L:.0%}'],
+        ['Max shortfall prob (α)' if not use_es else 'Min ES (L)', f'{_alpha:.0%}' if not use_es else f'{_L:.0%}'],
         ['Implied risk-aversion λ', lam_summary],
         ['Grid resolution', grid_lbl.split('(')[0].strip()],
     ]
@@ -1504,7 +1504,7 @@ with st.sidebar:
         unsafe_allow_html=True)
 
     if not use_es:
-        alpha_val = st.slider("Shortfall probability α (%)", 1, 15, 5, 1) / 100
+        alpha_val = st.slider("Max shortfall probability α (%)", 1, 15, 5, 1) / 100
         L_val     = None
         # Formula box — white background
         st.markdown(
@@ -2374,7 +2374,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 _mr2.metric("Std deviation", f"{stats['std_dev']*100:.2f}%")
                 _mr3, _mr4 = st.columns(2)
                 _mr3.metric("Skewness", f"{stats['skewness']:.3f}")
-                _mr4.metric("Exp. shortfall" if use_es else "Shortfall prob",
+                _mr4.metric("Realised ES" if use_es else "Realised P(r<H)",
                             f"{stats['shortfall_stat']*100:.2f}%",
                             help=("Realized expected shortfall E[r | r<H] at this optimal "
                                   "portfolio (average return in the tail below H). The ES "
