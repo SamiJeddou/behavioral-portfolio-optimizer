@@ -336,6 +336,14 @@ def optimize_portfolio(U, n_securities, constraint_type='var',
     method : 'auto'  — grid search if n<=4, differential evolution if n>=5
              'grid'  — force grid search (slow for n>=5)
              'de'    — force differential evolution
+
+    penalty : quadratic penalty scalar applied when the shortfall constraint
+              P(return < H) > alpha is violated. Set to 1e18 (effectively
+              infinite) to enforce hard feasibility. This is a numerical
+              implementation detail with no financial interpretation — do not
+              expose to end users. Lowering it risks ignoring the constraint;
+              raising it risks numerical overflow. Tune only in source if
+              experiencing solver instability with specific security configurations.
     """
     probs          = U[:, -1]
     returns_matrix = U[:, :n_securities]
