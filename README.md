@@ -14,6 +14,7 @@ This project implements a **behavioural portfolio optimisation algorithm** that 
 - Using a **mental-accounting framework** with a downside risk constraint: the probability of the portfolio return falling below a threshold H must not exceed α
 - Handling **non-normal return distributions** via Gaussian and Student-t copulas
 - Proving the **equivalence between mean-variance and mental-accounting** optimisation at a given implied risk-aversion coefficient λ
+- Embedding a **hedging benefit** within the portfolio construction process itself — incorporating derivatives can simultaneously improve expected return and provide downside protection, with the optimal derivative weight endogenously determined by the downside constraint rather than imposed as an external hedge ratio
 
 The app provides three portfolio perspectives for comparison:
 
@@ -36,9 +37,11 @@ This work is based on the mental-accounting portfolio theory introduced in:
 
 The MVT/MAT equivalence — first proven in Das, Markowitz, Scheid & Statman (2010) JFQA and applied in Chapter 4 of Jeddou (2012) — shows that for a given threshold H and shortfall probability α, there exists an implied risk-aversion coefficient λ such that the mean-variance optimal portfolio and the behavioural optimal portfolio are identical — **when no derivatives are present**. Adding derivatives breaks this equivalence and reveals the superiority of the behavioural approach.
 
-This Python implementation is a translation and extension of the original R program developed as part of:
+This Python implementation is based on the original R program developed as part of:
 
 > **Sami Jeddou** (2012) — *"Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios"*, Master in Finance Thesis, Università della Svizzera italiana (USI Lugano), supervised by Prof. Enrico De Giorgi
+
+The thesis extended the empirical analysis of Das & Statman (2009) through additional derivative simulations and broader parameter analysis. This app further develops that work with live market data connectivity, an expanded derivative library, an interactive optimisation interface, and PDF export.
 
 ---
 
@@ -185,6 +188,16 @@ Senior Financial Services Executive — Transformation, Risk & Capital Markets |
 
 - 🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404)
 - 📧 sami.jeddou@protonmail.com
+
+---
+
+## ⚠️ Disclaimer
+
+This application is based on the mental accounts portfolio optimisation framework of Das & Statman (2009) and Das, Markowitz, Scheid & Statman (2010), as extended in Jeddou (2012) through additional derivative simulations and parameter analysis. The app further develops this work with live market data connectivity, an expanded derivative library, and an interactive optimisation interface.
+
+It is provided for **educational and research purposes only** and does not constitute financial advice, investment recommendations, or a solicitation to buy or sell any financial instrument. Results are purely illustrative and should not be used as the basis for any investment decision. Past performance and modelled outputs are not indicative of future results.
+
+The framework is designed to be extensible — future versions may incorporate additional derivative structures, alternative risk measures, and API connectivity for institutional workflows.
 
 ---
 

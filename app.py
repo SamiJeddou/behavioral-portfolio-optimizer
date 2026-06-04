@@ -1357,7 +1357,7 @@ with st.sidebar:
     # AI tooltip for selected derivative — use details/summary to avoid sidebar duplication bug
     if der_type is not None and der_type != "custom":
         st.markdown(
-            f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is this instrument?</summary>'            f'<div style="color:#c0c8d8;margin-top:.4rem">{get_explanation(der_label_sel)}</div></details>',
+            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is this instrument?</summary>'            f'<div style="color:#1a3a5c;margin-top:.4rem">{get_explanation(der_label_sel)}</div></details>',
             unsafe_allow_html=True)
 
     # Underlying selector (shown for all non-None derivative types)
@@ -1496,7 +1496,7 @@ with st.sidebar:
                         unsafe_allow_html=True)
         # AI explanation last
         st.markdown(
-            f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is the VaR constraint?</summary>'            f'<div style="color:#c0c8d8;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS["var"]}</div></details>',
+            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is the VaR constraint?</summary>'            f'<div style="color:#1a3a5c;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS["var"]}</div></details>',
             unsafe_allow_html=True)
     else:
         alpha_val = None
@@ -1509,7 +1509,7 @@ with st.sidebar:
             unsafe_allow_html=True)
         # AI explanation
         st.markdown(
-            f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is the ES constraint?</summary>'            f'<div style="color:#c0c8d8;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS["es"]}</div></details>',
+            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is the ES constraint?</summary>'            f'<div style="color:#1a3a5c;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS["es"]}</div></details>',
             unsafe_allow_html=True)
 
     # Implied lambda block already handled above for VaR case
@@ -1526,7 +1526,7 @@ with st.sidebar:
 
     # AI-powered grid explanation
     st.markdown(
-        f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'        '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What does this resolution mean?</summary>'        f'<div style="color:#c0c8d8;margin-top:.4rem">{GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")}</div></details>',
+        f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'        '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What does this resolution mean?</summary>'        f'<div style="color:#1a3a5c;margin-top:.4rem">{GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")}</div></details>',
         unsafe_allow_html=True)
 
     if "High" in grid_lbl:
@@ -2739,6 +2739,13 @@ I would be glad to hear from you.
             else:
                 st.warning("Please fill in all fields before sending.")
 
+    st.markdown(
+        '<div style="text-align:center;color:#556a8a;font-size:.75rem;margin-top:2rem;padding:.6rem">'
+        '⚠️ For educational &amp; research purposes only — not financial advice. '
+        'Based on Das &amp; Statman (2009), Das, Markowitz, Scheid &amp; Statman (2010) and Jeddou (2012). '
+        'See <b>About</b> tab for full disclaimer.</div>',
+        unsafe_allow_html=True)
+
 with tab2:
     import os as _os
     col_a, col_b = st.columns([1, 3])
@@ -2778,6 +2785,12 @@ with tab2:
         "for live market data, a custom structured product composer, and an extended optimizer for "
         "larger portfolios using differential evolution. It is based on the foundational work of "
         "Das, Markowitz, Scheid & Statman (2010).")
+    st.markdown(
+        "Incorporating derivatives into the optimisation framework can simultaneously improve expected return "
+        "and provide downside protection — effectively embedding a **hedging benefit** within the portfolio "
+        "construction process itself, rather than as a separate overlay. The optimal derivative weight is "
+        "endogenously determined by the downside constraint, unifying return-seeking and risk-limiting in "
+        "a single optimisation step.")
 
     st.markdown("### Professional background")
     st.markdown(
@@ -2878,6 +2891,18 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
 - **Das, Sanjiv, Harry Markowitz, Jonathan Scheid and Meir Statman (2010)** — *Portfolio Optimization with Mental Accounts*, Journal of Financial and Quantitative Analysis, Vol. 45, No. 2, pp. 311–334
 - **Jeddou, Sami (2012)** — *Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios*, MSc Finance Thesis, Università della Svizzera italiana (USI Lugano), supervised by Prof. Enrico De Giorgi. Available on [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404)
 """)
+
+    st.markdown("---")
+    st.markdown("""
+<div style="background:#0d1a2e;border:1px solid #f59e0b;border-radius:8px;padding:1rem 1.4rem;color:#c0c8d8;font-size:.85rem">
+
+⚠️ <b style="color:#f59e0b">Legal Disclaimer</b><br><br>
+This application is based on the mental accounts portfolio optimisation framework of Das &amp; Statman (2009) and Das, Markowitz, Scheid &amp; Statman (2010), as extended in Jeddou (2012) through additional derivative simulations and parameter analysis. The app further develops this work with live market data connectivity, an expanded derivative library, and an interactive optimisation interface.<br><br>
+It is provided for <b>educational and research purposes only</b> and does not constitute financial advice, investment recommendations, or a solicitation to buy or sell any financial instrument. Results are purely illustrative and should not be used as the basis for any investment decision. Past performance and modelled outputs are not indicative of future results.<br><br>
+The framework is designed to be extensible — future versions may incorporate additional derivative structures, alternative risk measures, and API connectivity for institutional workflows.
+
+</div>
+""", unsafe_allow_html=True)
 
     st.markdown("---")
     st.markdown("""
