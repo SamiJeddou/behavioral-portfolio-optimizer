@@ -140,6 +140,8 @@ The Streamlit dashboard allows you to:
 
 🔗 **Live app**: [sami-jeddou-behavioral-portfolio-optimizer.streamlit.app](https://sami-jeddou-behavioral-portfolio-optimizer.streamlit.app)
 
+📄 **[User Guide (PDF)](https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf)** — step-by-step guide to using the app
+
 ### API
 
 The FastAPI endpoint exposes the optimiser as a REST service:
