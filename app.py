@@ -3491,7 +3491,10 @@ with tab_bt:
             "- **Instruments in v1.** Vanilla options, straddle, strangle, and the "
             "spreads/certificates — all with a strictly positive net entry premium. Collars, "
             "capital-guaranteed notes and barrier-M notes are deferred (special normalisations).\n"
-            "- **Constraint.** v1 backtests the VaR-style constraint P(r<H) ≤ α."
+            "- **Constraint.** You can build under Value-at-Risk (P(r<H) ≤ α), thesis "
+            "Expected Shortfall, or Rigorous ES (E[r|r<H] ≥ L). These change the *construction* "
+            "weights; the *realised* tail check stays a single-window outcome (a true realised "
+            "ES needs the multi-window walk-forward extension)."
         )
 
     st.markdown("---")
@@ -3555,13 +3558,37 @@ with tab_bt:
 
     bt_params = _bt_param_inputs(bt_dtype)
 
+    # Underlying security for the derivative (default: auto = highest volatility)
+    _bt_tk = [t.strip().upper() for t in bt_tickers_raw.split(",") if t.strip()]
+    bt_undl_choice = st.selectbox(
+        "Underlying security (for the derivative)",
+        ["Auto — highest volatility"] + _bt_tk, index=0, key="bt_undl",
+        help="Which security the option is written on. Auto picks the highest-volatility "
+             "holding (thesis convention); or pin it to a specific ticker.")
+
     c5, c6 = st.columns(2)
     with c5:
         bt_H = st.slider("Loss threshold H (horizon return)", -0.40, 0.00, -0.10, 0.01,
                          format="%.0f%%", key="bt_H")
     with c6:
-        bt_alpha = st.slider("Target shortfall probability α", 0.01, 0.25, 0.05, 0.01,
-                             format="%.0f%%", key="bt_alpha")
+        bt_method = st.selectbox(
+            "Risk measure (constraint)",
+            ["Value-at-Risk (VaR)", "Expected Shortfall — thesis", "Rigorous ES — beyond thesis"],
+            index=0, key="bt_method",
+            help="VaR caps the probability of finishing below H; ES floors the average loss in "
+                 "that tail. Rigorous ES enforces the ES floor in the optimisation itself "
+                 "(runs at high precision, m=51).")
+    bt_ct = {"Value-at-Risk (VaR)": "var",
+             "Expected Shortfall — thesis": "es",
+             "Rigorous ES — beyond thesis": "es_rigorous"}[bt_method]
+    if bt_ct == "var":
+        bt_alpha = st.slider("Target shortfall probability α  (P(r < H) ≤ α)",
+                             0.01, 0.25, 0.05, 0.01, format="%.0f%%", key="bt_alpha")
+        bt_L = None
+    else:
+        bt_L = st.slider("Minimum Expected Shortfall L  (E[r | r < H] ≥ L)",
+                         -0.40, 0.00, -0.15, 0.01, format="%.0f%%", key="bt_L")
+        bt_alpha = 0.05
 
     run_bt = st.button("▶  Run backtest", type="primary", key="bt_run")
 
@@ -3587,15 +3614,22 @@ with tab_bt:
                 if len(names) < 2:
                     raise RuntimeError("Fewer than two usable securities after cleaning.")
                 cov = corr_to_cov(sigs, corr)
-                u_idx = int(np.argmax(sigs))
+                if bt_undl_choice.startswith("Auto"):
+                    u_idx = int(np.argmax(sigs))
+                elif bt_undl_choice in names:
+                    u_idx = names.index(bt_undl_choice)
+                else:
+                    u_idx = int(np.argmax(sigs))
+                    st.warning(f"{bt_undl_choice} unavailable after cleaning — using "
+                               f"highest-volatility security {names[u_idx]} instead.")
                 vol_u = float(sigs[u_idx])
                 bt_params["vol"] = vol_u
                 bt_params["r"] = 0.03
                 bt_params["T"] = T_years
                 der_cfg = build_der_config(bt_dtype, bt_params, sigs, u_idx)
 
-                nd_res, _ = run_opt(means, sigs, cov, None, bt_H, bt_alpha, m_bt, mp_bt, 'var')
-                dr_res, _ = run_opt(means, sigs, cov, der_cfg, bt_H, bt_alpha, m_bt, mp_bt, 'var')
+                nd_res, _ = run_opt(means, sigs, cov, None,    bt_H, bt_alpha, m_bt, mp_bt, bt_ct, L=bt_L)
+                dr_res, _ = run_opt(means, sigs, cov, der_cfg, bt_H, bt_alpha, m_bt, mp_bt, bt_ct, L=bt_L)
 
             with st.spinner("Holding the fixed portfolio over the evaluation period…"):
                 ev_px, err = fetch_close_prices(tickers, bt_eval_start, bt_eval_end)
@@ -3626,23 +3660,30 @@ with tab_bt:
 
             st.markdown("---")
             st.markdown("#### Results")
+            _con_txt = (f"P(r < {bt_H:.0%}) ≤ {bt_alpha:.0%}" if bt_ct == "var"
+                        else f"E[r | r < {bt_H:.0%}] ≥ {bt_L:.0%}  ({bt_method})")
+            _undl_note = "highest volatility" if bt_undl_choice.startswith("Auto") else "selected"
             st.caption(
-                f"Underlying for the derivative: **{names[u_idx]}** (highest volatility, "
+                f"Underlying for the derivative: **{names[u_idx]}** ({_undl_note}, "
                 f"σ = {vol_u:.1%}).  Optimal derivative weight in P2: **{w2_der:.1%}**.  "
-                f"Option life T = {T_years:.2f}y.  Constraint: P(r < {bt_H:.0%}) ≤ {bt_alpha:.0%}.")
+                f"Option life T = {T_years:.2f}y.  Constraint: {_con_txt}.")
 
+            _tail_label = "Model P(r<H)" if bt_ct == "var" else "Model E[r|r<H] (tail avg)"
             table = pd.DataFrame({
                 "Metric": ["Expected annual return", "Realised annual return",
                            "Expected annual volatility", "Realised annual volatility",
+                           _tail_label,
                            f"Window return (vs H = {bt_H:.0%})"],
                 "No derivative (P1)": [
                     f"{nd_res['expected_return']:.2%}", f"{ann1:.2%}",
                     f"{nd_res['std_dev']:.2%}", f"{vol1:.2%}",
-                    f"{cum1:.2%}  {'⚠ breached' if br1 else '✓'}"],
+                    f"{nd_res['shortfall_stat']:.2%}",
+                    f"{cum1:.2%}  {'⚠ below H' if br1 else '✓'}"],
                 "With derivative (P2)": [
                     f"{dr_res['expected_return']:.2%}", f"{ann2:.2%}",
                     f"{dr_res['std_dev']:.2%}", f"{vol2:.2%}",
-                    f"{cum2:.2%}  {'⚠ breached' if br2 else '✓'}"],
+                    f"{dr_res['shortfall_stat']:.2%}",
+                    f"{cum2:.2%}  {'⚠ below H' if br2 else '✓'}"],
             })
             st.table(table.set_index("Metric"))
 
@@ -3679,8 +3720,8 @@ with tab_bt:
             elif br1 and br2:
                 verdict.append(f"Both portfolios finished below the {bt_H:.0%} threshold.")
             else:
-                verdict.append(f"Neither portfolio breached the {bt_H:.0%} threshold "
-                               f"(model target: ≤ {bt_alpha:.0%} chance).")
+                _tgt = (f" (model target: ≤ {bt_alpha:.0%} chance)" if bt_ct == "var" else "")
+                verdict.append(f"Neither portfolio finished below the {bt_H:.0%} threshold{_tgt}.")
             for which, exp_r, real_r in [("P1", nd_res['expected_return'], ann1),
                                          ("P2", dr_res['expected_return'], ann2)]:
                 gap = real_r - exp_r
@@ -3688,9 +3729,13 @@ with tab_bt:
                 verdict.append(f"{which} realised {abs(gap):.2%} {tone} its expected annual return.")
 
             st.markdown("#### Verdict")
+            _es_note = ("" if bt_ct == "var" else
+                        " A realised Expected Shortfall (a tail average) needs a distribution of "
+                        "outcomes, so it isn't estimable from one window — the *construction* "
+                        "objective is ES here, but the realised check stays single-draw.")
             st.info("  ".join(verdict) +
                     "\n\n*One evaluation window is a single draw — read the loss-threshold "
-                    "outcome as one realisation, not a probability.*")
+                    "outcome as one realisation, not a probability." + _es_note + "*")
 
         except Exception as _e:
             st.error(str(_e))
