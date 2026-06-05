@@ -905,7 +905,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     # ── Mean-variance frontier ────────────────────────────────────────────────
     fig.add_trace(go.Scatter(
         x=mv_x, y=mv_y, mode='lines',
-        name='Mean-variance efficient frontier (Markowitz)',
+        name='Mean-variance efficient frontier (Markowitz) — no derivative',
         legendrank=1,
         line=dict(color='#a855f7', width=2, dash='dash'),
         hovertemplate='<b>Mean-Variance Efficient Frontier (Markowitz)</b><br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
@@ -1054,18 +1054,18 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     if mv_eq:
         fig.add_trace(go.Scatter(
             x=[mv_eq[0]], y=[mv_eq[1]], mode='markers',
-            name='Markowitz MV optimum (λ=3.795, unconstrained by H/α)',
-            legendrank=6,
-            marker=dict(size=14, color='#3b82f6', symbol='circle',
+            name='Portfolio (0) — Markowitz MV optimum (λ=3.795, unconstrained by H/α)',
+            legendrank=4,
+            marker=dict(size=14, color='#a855f7', symbol='circle',
                         line=dict(width=2, color='#ffffff')),
             showlegend=True,
-            hovertemplate='<b>Markowitz MV optimum</b><br>Unconstrained mean-variance optimum (λ=3.795)<br>Does not enforce the downside constraint (H, α)<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
+            hovertemplate='<b>Portfolio (0) — Markowitz MV optimum</b><br>Unconstrained mean-variance optimum (λ=3.795)<br>Does not enforce the downside constraint (H, α)<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
         ))
 
     if not nd_res_actual:
         fig.add_annotation(
             xref='paper', yref='paper', x=0.5, y=0.5,
-            text='No feasible Portfolio (1) at the selected H, alpha.<br>The blue point is the Markowitz MV optimum (it ignores the downside constraint).',
+            text='No feasible Portfolio (1) at the selected H, alpha.<br>The purple point is the Markowitz MV optimum (it ignores the downside constraint).',
             showarrow=False,
             font=dict(color='#f0a500', size=11),
             bgcolor='rgba(13,17,23,0.9)', bordercolor='#f0a500', borderwidth=1,
@@ -1295,6 +1295,8 @@ with st.sidebar:
         d_start=col1.date_input("From", value=date(2020,1,1))
         d_end  =col2.date_input("To",   value=date.today()-timedelta(days=1))
         freq   =st.radio("Return frequency",["Daily","Monthly"],horizontal=True)
+        st.session_state['_live_period'] = f"{d_start.isoformat()} → {d_end.isoformat()}"
+        st.session_state['_live_freq'] = freq
         fetch_btn=st.button("🔄 Fetch data", use_container_width=True)
         if fetch_btn:
             tickers=[t.strip().upper() for t in ticker_str.split(",") if t.strip()]
@@ -1943,7 +1945,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
 <tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Curves</td></tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🟣 <strong>Purple dashed</strong></td>
-  <td style="padding:.3rem .5rem">Mean-variance efficient frontier (Markowitz)</td>
+  <td style="padding:.3rem .5rem">Mean-variance efficient frontier (Markowitz) — no derivative</td>
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🔵 <strong>Blue dots</strong></td>
@@ -1959,8 +1961,8 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
   <td style="padding:.3rem .5rem"><strong>Portfolio (1)</strong> — Behavioural optimum without derivatives at the selected H and α constraint. Shown only when a feasible portfolio exists; when it coincides with the Markowitz MV optimum it confirms the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010).</td>
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
-  <td style="padding:.3rem .5rem;white-space:nowrap">🔵 <strong>Blue dot (white frame)</strong></td>
-  <td style="padding:.3rem .5rem"><strong>Markowitz MV optimum</strong> — the unconstrained mean-variance optimum at the reference risk-aversion (λ=3.795). Always shown, even when no behavioural optimum is feasible; it does not enforce the downside constraint (H, α).</td>
+  <td style="padding:.3rem .5rem;white-space:nowrap">🟣 <strong>Purple dot (white frame)</strong></td>
+  <td style="padding:.3rem .5rem"><strong>Portfolio (0) — Markowitz MV optimum</strong> — the unconstrained mean-variance optimum at the reference risk-aversion (λ=3.795). Always shown, even when no behavioural optimum is feasible; it does not enforce the downside constraint (H, α).</td>
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🟠 <strong>Orange square (white frame)</strong></td>
@@ -2305,6 +2307,9 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                     '<span style="color:#8896a8">None</span>'
                 )
                 _resolution = grid_lbl.split("(")[0].strip()
+                _is_live = str(data_mode).startswith("Live")
+                _period = st.session_state.get('_live_period', '—')
+                _freq = st.session_state.get('_live_freq', '—')
                 def _lbl(t): return f'<div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">{t}</div>'
                 def _val(v): return f'<div style="margin-bottom:.6rem">{v}</div>'
                 _html = (
@@ -2314,6 +2319,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                     'margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">'
                     '📌 Optimisation Parameters <span style="color:#556a8a;font-size:.65rem;font-weight:400">(summary)</span></div>'
                     + _lbl("DATA SOURCE") + _val(_data_src)
+                    + ((_lbl("PERIOD") + _val(_period) + _lbl("FREQUENCY") + _val(_freq)) if _is_live else "")
                     + _lbl("SECURITIES") + _val(_securities)
                     + _lbl("DERIVATIVE") + _val(_der_html)
                     + _lbl("CONSTRAINT") + _val(constraint_str)
@@ -2337,10 +2343,12 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             'confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010). '
             'With derivatives, the frontiers may diverge — this is expected and is the core contribution of the framework: '
             'derivatives allow the behavioural approach to reach portfolios that mean-variance optimisation cannot. '
-            'Some behavioural points may appear below the MV frontier at certain risk levels — this reflects the binding '
-            'nature of the downside constraint at those H values, not a failure of the method. '
-            '<b style="color:#d97706">Fast resolution</b> uses a coarse grid and may introduce small approximation errors — '
-            'use Standard or High precision for publication-quality results.</div>',
+            'Small gaps below the MV frontier are grid discretisation. A blue point sitting <i>well</i> below it, however, '
+            'means the optimiser missed the true optimum for that H — in the no-derivative case the behavioural optimum is '
+            'mean-variance efficient and should lie on the purple frontier. This happens most often with '
+            '<b style="color:#d97706">Turbo</b>, whose coarse grid can be unreliable near the feasibility boundary; switch to '
+            'Standard or High precision for a clean frontier. (With derivatives, genuine divergence from the MV frontier is '
+            'expected and is the point of the framework.)</div>',
             unsafe_allow_html=True)
 
 
@@ -2364,6 +2372,9 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                    'margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">'
                    '📌 Optimisation Parameters <span style="color:#556a8a;font-size:.65rem;font-weight:400">(summary)</span></div>'
                    + _lbl_c('DATA SOURCE') + _val_c(data_mode.split('(')[0].strip())
+                   + ((_lbl_c('PERIOD') + _val_c(st.session_state.get('_live_period','—'))
+                       + _lbl_c('FREQUENCY') + _val_c(st.session_state.get('_live_freq','—')))
+                      if str(data_mode).startswith('Live') else "")
                    + _lbl_c('SECURITIES') + _val_c(', '.join(names_in))
                    + _lbl_c('DERIVATIVE') + _val_c(_der_html_c)
                    + _lbl_c('CONSTRAINT') + _val_c(constraint_str)
