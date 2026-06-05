@@ -2056,18 +2056,19 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
 """, unsafe_allow_html=True)
         # Sample chart
         import os
-        if os.path.exists("sample_output.png"):
+        _sample_img = "sample_output_annotated.png" if os.path.exists("sample_output_annotated.png") else "sample_output.png"
+        if os.path.exists(_sample_img):
             st.markdown(
                 '<div style="text-align:center;margin:1rem 0 .6rem 0">'
                 '<span style="font-size:1.3rem;font-weight:700;color:#4a9eff">'
                 '🖼️ Sample Output</span><br>'
                 '<span style="font-size:.85rem;color:#c0c8d8">'
-                'Straddle — mean-variance vs behavioural frontiers with Portfolios (0)–(3), annotation boxes and a results summary table</span>'
+                'Annotated example showing what each section looks like after a run — illustrative only, not live results</span>'
                 '</div>',
                 unsafe_allow_html=True)
             _col_l2, _col_img, _col_r2 = st.columns([1, 4, 1])
             with _col_img:
-                st.image("sample_output.png", use_container_width=True)
+                st.image(_sample_img, use_container_width=True)
 
         pass  # welcome screen shown, About tab still renders
 
