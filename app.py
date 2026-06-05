@@ -1045,7 +1045,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             bordercolor='#10b981', borderwidth=1,
             align='left', xanchor='left'
         )
-    elif mv_eq:
+    elif mv_eq and False:  # disabled: the unconstrained MV optimum is NOT a feasible Portfolio (1); plotting it here contradicted the results table when the constrained optimum is infeasible. See the annotation below.
         fig.add_trace(go.Scatter(
             x=[mv_eq[0]], y=[mv_eq[1]], mode='markers',
             name='Portfolio (1) — Equivalence point: MV = Behavioural (no derivatives) ↔ H=-10%, α=5%',
@@ -1066,6 +1066,16 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             bgcolor='rgba(13,17,23,0.9)',
             bordercolor='#10b981', borderwidth=1,
             align='left', xanchor='left'
+        )
+
+    if not nd_res_actual:
+        fig.add_annotation(
+            xref='paper', yref='paper', x=0.5, y=0.5,
+            text='No feasible Portfolio (1) at the selected H, alpha.<br>Widen H or relax alpha (see the panel below).',
+            showarrow=False,
+            font=dict(color='#f0a500', size=11),
+            bgcolor='rgba(13,17,23,0.9)', bordercolor='#f0a500', borderwidth=1,
+            xanchor='center', yanchor='middle'
         )
 
     # ── MVT/MAT note ──────────────────────────────────────────────────────────
@@ -2183,6 +2193,19 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 if _r is not None:
                     _nd_res_pre = _r
                     break
+            except Exception:
+                pass
+
+        # Turbo's coarse grid can miss a thin feasible region near the
+        # feasibility boundary and wrongly report no eligible portfolio. If
+        # Turbo was selected and returned nothing, confirm with the dense
+        # High-precision grid before concluding the problem is infeasible.
+        if _nd_res_pre is None and mp_val == 'turbo':
+            try:
+                _r, _ = run_opt(means_arr, sigs_arr, cov_mat, None, H_val, _alpha,
+                                51, 99, constraint_type=_ctype, L=_L)
+                if _r is not None:
+                    _nd_res_pre = _r
             except Exception:
                 pass
 
