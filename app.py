@@ -1719,6 +1719,9 @@ with st.sidebar:
     # ── 3. Constraint ─────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">3</span><span style="display:block">🎯 MENTAL-ACCOUNT CONSTRAINT</span></div>', unsafe_allow_html=True)
 
+    # AI explanation renders here — right after the title, above the choices.
+    _con_box = st.container()
+
     # VaR / ES toggle
     constraint_type = st.radio(
         "Constraint type",
@@ -1726,6 +1729,19 @@ with st.sidebar:
         index=0, horizontal=True)
     use_es = constraint_type.startswith("ES")
     use_es_rigorous = "Rigorous" in constraint_type
+
+    # Fill the box reserved above (under the title) with the matching explanation.
+    with _con_box:
+        if not use_es:
+            _ckey, _clabel = "var", "What is the VaR constraint?"
+        else:
+            _ckey   = "es_rigorous" if use_es_rigorous else "es"
+            _clabel = "What is the ES constraint?"
+        st.markdown(
+            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0 .6rem 0;font-size:.82rem">'
+            f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: {_clabel}</summary>'
+            f'<div style="color:#1a3a5c;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS[_ckey]}</div></details>',
+            unsafe_allow_html=True)
 
     H_val = st.slider("Threshold H (%)", -40, -1, -10, 1) / 100
     st.markdown(
@@ -1761,10 +1777,6 @@ with st.sidebar:
                         'padding:.4rem 1rem;color:#7a4f00;font-size:.78rem;margin-top:.3rem">'
                         '⚠️ Implied λ not available — the VaR constraint may be too tight or too loose for the current portfolio.</div>',
                         unsafe_allow_html=True)
-        # AI explanation last
-        st.markdown(
-            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is the VaR constraint?</summary>'            f'<div style="color:#1a3a5c;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS["var"]}</div></details>',
-            unsafe_allow_html=True)
     else:
         alpha_val = None
         L_val     = st.slider("ES lower bound L (%)", -50, -1, -15, 1) / 100
@@ -1773,10 +1785,6 @@ with st.sidebar:
             '<div style="background:#ffffff;border:1px solid #3a3a5a;border-radius:6px;'
             'padding:.4rem 1rem;color:#333333;font-size:.78rem;margin-top:.3rem">'
             'ES constraint: E[return | return &lt; H] ≥ L</div>',
-            unsafe_allow_html=True)
-        # AI explanation
-        st.markdown(
-            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is the ES constraint?</summary>'            f'<div style="color:#1a3a5c;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS["es_rigorous" if use_es_rigorous else "es"]}</div></details>',
             unsafe_allow_html=True)
 
     # Implied lambda block already handled above for VaR case
