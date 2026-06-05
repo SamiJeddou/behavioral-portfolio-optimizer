@@ -1820,7 +1820,7 @@ st.markdown(f'''
         </svg>
       </div>
       <div style="padding:7px 10px;height:68px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;text-align:center">
-        <div style="color:rgba(200,220,255,0.9);font-size:7.5px;font-weight:600;letter-spacing:0.12em;margin-bottom:3px;min-height:18px">RETURN — WITH CGN</div>
+        <div style="color:rgba(200,220,255,0.9);font-size:7.5px;font-weight:600;letter-spacing:0.12em;margin-bottom:3px;min-height:18px">RETURN — WITH DERIVATIVE</div>
         <div style="font-size:19px;font-weight:700;font-family:Georgia,serif;color:#f59e0b">11.4%</div>
         <div style="font-size:8px;margin-top:3px;color:#10b981">+1.2 pp vs no derivative</div>
         <div style="height:2px;margin-top:5px;border-radius:1px;background:#1a3a5c"><div style="width:100%;height:100%;border-radius:1px;background:#f59e0b"></div></div>
