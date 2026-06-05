@@ -420,20 +420,25 @@ EXPLANATIONS = {
         "useful when extreme but not moderate moves are expected."
     ),
     "Capital-guaranteed note — uncapped": (
-        "A capital-guaranteed note (CGN) is a structured product that guarantees return of capital "
+        "A capital-guaranteed note (CGN) is a structured product that returns your invested capital "
         "(plus a floor F) at maturity, while providing participation in the upside of an underlying asset. "
-        "The uncapped version has no ceiling on the upside participation. "
-        "In a behavioural portfolio it is extremely powerful: the capital guarantee directly satisfies "
-        "the mental-account downside constraint, freeing the optimizer to allocate heavily to the CGN "
-        "and achieve significantly higher expected returns than a portfolio of primary securities alone."
+        "The uncapped version places no ceiling on that upside participation. "
+        "In a behavioural portfolio its role is structural rather than return-maximising: the capital "
+        "guarantee directly satisfies the mental-account downside constraint (the chance of finishing "
+        "below the safety threshold H stays within the tolerance α), so the optimizer can hold the note "
+        "without breaching that limit. But the protection is not free — its cost is embedded in the "
+        "note's price. Once the CGN is priced correctly, the expected-return gain over a portfolio of "
+        "primary securities alone is typically modest: the CGN buys downside safety, not a large return premium."
     ),
     "Capital-guaranteed note — capped": (
         "A capped CGN is identical to the uncapped version but limits upside participation above a cap level. "
         "The cap reduces the cost of the product (the issuer saves on the call spread), making it cheaper "
         "than the uncapped version. "
         "The trade-off is sacrificed upside beyond the cap. "
-        "In a behavioural portfolio, it still provides strong downside protection but produces lower "
-        "expected returns than the uncapped version when the underlying performs very strongly."
+        "In a behavioural portfolio it offers the same structural benefit as the uncapped note — the "
+        "capital guarantee satisfies the mental-account downside constraint — at lower cost, though with "
+        "a smaller expected-return contribution when the underlying performs strongly. As with the uncapped "
+        "note, that contribution is modest once the product is priced correctly."
     ),
     "Barrier-M note": (
         "A barrier-M note pays the absolute value of the underlying return when that return stays "
@@ -1816,8 +1821,8 @@ st.markdown(f'''
       </div>
       <div style="padding:7px 10px;height:68px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;text-align:center">
         <div style="color:rgba(200,220,255,0.9);font-size:7.5px;font-weight:600;letter-spacing:0.12em;margin-bottom:3px;min-height:18px">RETURN — WITH CGN</div>
-        <div style="font-size:19px;font-weight:700;font-family:Georgia,serif;color:#f59e0b">33.6%</div>
-        <div style="font-size:8px;margin-top:3px;color:#10b981">+23.4 pp vs no derivative</div>
+        <div style="font-size:19px;font-weight:700;font-family:Georgia,serif;color:#f59e0b">11.4%</div>
+        <div style="font-size:8px;margin-top:3px;color:#10b981">+1.2 pp vs no derivative</div>
         <div style="height:2px;margin-top:5px;border-radius:1px;background:#1a3a5c"><div style="width:100%;height:100%;border-radius:1px;background:#f59e0b"></div></div>
       </div>
     </div>
