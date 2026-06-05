@@ -1061,6 +1061,18 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             showlegend=True,
             hovertemplate='<b>Portfolio (0) — Markowitz MV optimum</b><br>Unconstrained mean-variance optimum (λ=3.795)<br>Does not enforce the downside constraint (H, α)<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
         ))
+        fig.add_annotation(
+            x=mv_eq[0], y=mv_eq[1],
+            ax=80, ay=-70,
+            xref='x', yref='y', axref='pixel', ayref='pixel',
+            showarrow=True, arrowhead=2, arrowcolor='#a855f7',
+            arrowwidth=1.5,
+            text=f'<b>Portfolio (0)</b><br>Markowitz MV optimum<br>λ=3.795 (unconstrained by H, α)<br>Return = {mv_eq[1]:.1f}%  |  Std dev = {mv_eq[0]:.1f}%',
+            font=dict(color='#a855f7', size=9),
+            bgcolor='rgba(13,17,23,0.9)',
+            bordercolor='#a855f7', borderwidth=1,
+            align='left', xanchor='left'
+        )
 
     if not nd_res_actual:
         fig.add_annotation(
