@@ -1341,6 +1341,32 @@ def plot_payoff(components, vol, S0, r, T, asset_name):
     plt.tight_layout()
     return fig
 
+def plot_named_payoff(der_config, asset_name, x_lo=-0.8, x_hi=1.5, N=241):
+    """Payoff/return diagram for any instrument, computed straight from the
+    engine so it matches exactly what the optimiser prices."""
+    span = x_hi - x_lo
+    mean = (x_lo + x_hi) / 2.0
+    sig  = span / 10.0  # ±5σ spans [x_lo, x_hi]
+    cfg  = {**der_config, "underlying_index": 0}
+    U, _ = build_state_space([mean], [sig], m=N, derivative_config=cfg)
+    x = U[:, 0]; y = U[:, 1]
+    order = np.argsort(x); x, y = x[order], y[order]
+    fig, ax = plt.subplots(figsize=(8, 3.5))
+    fig.patch.set_facecolor("#0d1117"); ax.set_facecolor("#0d1117")
+    ax.axhline(0, color="#3a3a5a", linewidth=0.8, linestyle="--")
+    ax.axvline(0, color="#3a3a5a", linewidth=0.8, linestyle="--")
+    ax.fill_between(x*100, y*100, where=(y >= 0), color="#10b981", alpha=0.25)
+    ax.fill_between(x*100, y*100, where=(y < 0),  color="#ef4444", alpha=0.25)
+    ax.plot(x*100, y*100, color="#f59e0b", linewidth=2)
+    ax.set_xlabel(f"Return of {asset_name} (%)", color="#c0c8d8", fontsize=10)
+    ax.set_ylabel("Derivative return (%)", color="#c0c8d8", fontsize=10)
+    ax.set_title("Payoff diagram", color="white", fontsize=11, fontweight="bold")
+    ax.tick_params(colors="#8896a8", labelsize=8)
+    for sp in ax.spines.values(): sp.set_edgecolor("#2a2a3a")
+    ax.grid(True, color="#1e2130", linewidth=0.5, linestyle="--", alpha=0.7)
+    plt.tight_layout()
+    return fig
+
 def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
                   der_x,der_y,der_lbls,der_label,H_sel,alpha):
     fig,ax=plt.subplots(figsize=(11,6.5))
@@ -1663,15 +1689,18 @@ with st.sidebar:
             data_valid=False
             st.info("Add at least one component to continue.")
 
-    if der_type in _COMPONENT_PRESETS and "underlying_idx" in der_params:
-        _volp = der_params.get("vol", sigs_in[der_params["underlying_idx"]])
+    # Live payoff diagram for every preset & built-in instrument
+    # (the interactive custom composer draws its own diagram above).
+    if der_type is not None and der_type != "custom" and "underlying_idx" in der_params:
         try:
-            _figp = plot_payoff(
-                preset_components(der_type, der_params), _volp, 1.0,
-                der_params.get("r", 0.03), der_params.get("T", 1.0),
-                names_in[der_params["underlying_idx"]])
-            st.pyplot(_figp, use_container_width=True)
-            plt.close(_figp)
+            _cfg = build_der_config(der_type, der_params,
+                                    np.array(sigs_in), der_params["underlying_idx"])
+            if _cfg:
+                _cfg["r"] = der_params.get("r", 0.03)
+                _cfg["T"] = der_params.get("T", 1.0)
+                _figp = plot_named_payoff(_cfg, names_in[der_params["underlying_idx"]])
+                st.pyplot(_figp, use_container_width=True)
+                plt.close(_figp)
         except Exception:
             pass
 
