@@ -3514,7 +3514,12 @@ with tab_bt:
     with c3:
         bt_freq = st.selectbox("Return frequency", ["Daily", "Monthly"], index=0, key="bt_freq")
     with c4:
-        bt_res = st.selectbox("Optimiser resolution", ["Fast", "Standard", "High"], index=1, key="bt_res")
+        bt_res = st.selectbox(
+            "Grid resolution", ["Fast", "Standard", "High"], index=1, key="bt_res",
+            help="Weight-grid precision for the construction optimiser "
+                 "(Fast m=21 / Standard m=35 / High m=51). Turbo is omitted here — it is "
+                 "unreliable when a derivative is in the portfolio, which the backtest always "
+                 "builds — and Rigorous ES is selected in the Risk measure section below.")
 
     st.markdown(_BT_RULE, unsafe_allow_html=True)
     c1, c2 = st.columns(2)
@@ -3600,7 +3605,13 @@ with tab_bt:
         bt_alpha = 0.05
 
     st.markdown(_BT_RULE, unsafe_allow_html=True)
-    run_bt = st.button("▶  Run backtest", type="primary", key="bt_run")
+    st.markdown(
+        "<style>.st-key-bt_run button{font-size:1.1rem;font-weight:700;"
+        "padding:0.85rem 1rem;border-radius:8px;}</style>", unsafe_allow_html=True)
+    _rb = st.columns([1, 2, 1])
+    with _rb[1]:
+        run_bt = st.button("▶  Run backtest", type="primary", key="bt_run",
+                           use_container_width=True)
 
     if run_bt:
         try:
