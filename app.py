@@ -2605,7 +2605,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             return f'{("+" if _d >= 0 else "")}{_d:.2f} pp'
         _sum_rows = []
         if _p0_stats is not None:
-            _sum_rows.append(("#a78bfa", "Portfolio (0) — Markowitz MV optimum (no derivative)",
+            _sum_rows.append(("#a855f7", "Portfolio (0) — Markowitz MV optimum (no derivative)",
                               _p0_stats['expected_return'] * 100, _p0_stats['std_dev'] * 100,
                               "0.000", _delta_pp(_p0_stats['expected_return'] * 100)))
         if nd_res:
@@ -2651,6 +2651,29 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 '</div>')
             st.markdown(_summary_html, unsafe_allow_html=True)
 
+        # ── Portfolio (0) — Markowitz MV optimum (detailed view) ─────────────
+        if _p0_stats is not None and _p0_weights is not None:
+            with st.container():
+                _p0_labels = [names_in[i] if i < len(names_in) else f"Asset {i+1}"
+                              for i in range(len(_p0_weights))]
+                _p0_colors = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_p0_weights))]
+                _render_portfolio(
+                    border_color="#a855f7",
+                    show_feasibility=False,
+                    header_html=(
+                        '<div style="background:#0d1a2e;border:1px solid #a855f7;border-radius:8px;'
+                        'padding:.6rem 1rem;margin-bottom:.4rem;text-align:center">'
+                        '<span style="color:#a855f7;font-weight:700;font-size:.95rem">'
+                        '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;background:#a855f7;border:2px solid white;margin-right:.4rem;vertical-align:middle"></span>'
+                        'Optimal portfolio (0) — Markowitz MV optimum (no derivative)</span></div>'
+                    ),
+                    caption_txt=("Minimum-variance portfolio at Portfolio (1)'s expected return — "
+                                 "coincides with Portfolio (1) when it is mean-variance efficient "
+                                 "(the MVT/MAT equivalence). Gaussian construct: skewness 0, tail "
+                                 "probability (chance of finishing below H) from the normal model."),
+                    weights=_p0_weights, labels=_p0_labels, colors=_p0_colors,
+                    stats=_p0_stats, method_txt="Markowitz mean-variance (SLSQP)")
+
         with st.container():
             if nd_res:
                 _nd_weights = nd_res["weights"]
@@ -2668,13 +2691,13 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                         '<div style="background:#0d1a2e;border:1px solid #10b981;border-radius:8px;'
                         'padding:.6rem 1rem;margin-bottom:.4rem;text-align:center">'
                         '<span style="color:#10b981;font-weight:700;font-size:.95rem">'
-                        '<span style="color:#10b981;margin-right:.4rem">◆</span>Optimal portfolio (1) — no derivative</span></div>'
+                        '<span style="color:#10b981;margin-right:.4rem">◆</span>Behavioural optimal portfolio (1) — no derivative</span></div>'
                     ),
                     caption_txt="Maximises return subject to the downside constraint — reference portfolio (equivalent to Markowitz MV optimum)",
                     weights=_nd_weights, labels=_nd_labels, colors=_nd_colors,
                     stats=nd_res, method_txt=_method)
             else:
-                st.markdown("**Optimal portfolio (1) — no derivative**")
+                st.markdown("**Behavioural optimal portfolio (1) — no derivative**")
                 # Suggest a wider constraint based on current securities volatility.
                 # sigs_arr is set on the fresh-compute path and restored from cache
                 # on rerun; guard against an older cache that lacks it.
@@ -2689,29 +2712,6 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                     st.warning(
                         f"⚠️ No eligible portfolio found at H={H_val:.0%}, α={_alpha:.0%}. "
                         f"Try a wider threshold (e.g. H=-40%) or switch to Standard resolution.")
-
-        # ── Portfolio (0) — Markowitz MV optimum (detailed view) ─────────────
-        if _p0_stats is not None and _p0_weights is not None:
-            with st.container():
-                _p0_labels = [names_in[i] if i < len(names_in) else f"Asset {i+1}"
-                              for i in range(len(_p0_weights))]
-                _p0_colors = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_p0_weights))]
-                _render_portfolio(
-                    border_color="#a78bfa",
-                    show_feasibility=False,
-                    header_html=(
-                        '<div style="background:#0d1a2e;border:1px solid #a78bfa;border-radius:8px;'
-                        'padding:.6rem 1rem;margin-bottom:.4rem;text-align:center">'
-                        '<span style="color:#a78bfa;font-weight:700;font-size:.95rem">'
-                        '<span style="color:#a78bfa;margin-right:.4rem">&#9671;</span>'
-                        'Optimal portfolio (0) — Markowitz MV optimum (no derivative)</span></div>'
-                    ),
-                    caption_txt=("Minimum-variance portfolio at Portfolio (1)'s expected return — "
-                                 "coincides with Portfolio (1) when it is mean-variance efficient "
-                                 "(the MVT/MAT equivalence). Gaussian construct: skewness 0, tail "
-                                 "probability (chance of finishing below H) from the normal model."),
-                    weights=_p0_weights, labels=_p0_labels, colors=_p0_colors,
-                    stats=_p0_stats, method_txt="Markowitz mean-variance (SLSQP)")
 
         with st.container():
             if der_config:
@@ -2747,14 +2747,14 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                             f'<div style="background:#0d1a2e;border:1px solid #f59e0b;border-radius:8px;'
                             f'padding:.6rem 1rem;margin-bottom:.4rem;text-align:center">'
                             f'<span style="color:#f59e0b;font-weight:700;font-size:.95rem">'
-                            f'<span style="display:inline-block;width:12px;height:12px;background:#ff6b00;border:2px solid white;margin-right:.4rem;vertical-align:middle"></span>Optimal portfolio (2) — with {der_label_sel}</span></div>'
+                            f'<span style="display:inline-block;width:12px;height:12px;background:#ff6b00;border:2px solid white;margin-right:.4rem;vertical-align:middle"></span>Behavioural optimal portfolio (2) — with {der_label_sel}</span></div>'
                         ),
                         caption_txt=f"Same mental-accounting & risk-aversion constraint (H={H_val:.0%}, α={_alpha:.0%} ↔ λ) — results may vary",
                         weights=_dr_weights, labels=_dr_labels, colors=_dr_colors,
                         stats=dr_res, delta_txt=f"{_p2_sign}{_p2_diff:.2f}pp vs portfolio (1)",
                         method_txt=_method, note_html=_p2_note)
                 else:
-                    st.markdown(f"**Optimal portfolio (2) — with {der_label_sel}**")
+                    st.markdown(f"**Behavioural optimal portfolio (2) — with {der_label_sel}**")
                     st.warning("⚠️ No eligible portfolio found with this derivative. Try different parameters.")
             else:
                 st.info("Select a derivative in the sidebar to see Portfolio (2).")
