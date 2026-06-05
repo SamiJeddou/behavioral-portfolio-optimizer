@@ -284,6 +284,24 @@ from es_rigorous import optimize_portfolio_es_rigorous
 from scipy.stats import norm as _norm
 from scipy.optimize import brentq as _brentq
 
+def mv_optimum(means, cov, lam):
+    """Long-only Markowitz mean-variance optimum at risk-aversion `lam`.
+    Returns (std_dev_pct, expected_return_pct) — same scale as the MV frontier."""
+    means = np.asarray(means, dtype=float); cov = np.asarray(cov, dtype=float)
+    n = len(means)
+    def obj(w): return -(w @ means - (lam / 2.0) * (w @ cov @ w))
+    best = None
+    for x0 in [np.ones(n)/n] + [np.eye(n)[i] for i in range(n)]:
+        r = minimize(obj, x0, method="SLSQP", bounds=[(0, 1)]*n,
+                     constraints=[{"type": "eq", "fun": lambda w: w.sum()-1}])
+        if r.success and (best is None or r.fun < best.fun):
+            best = r
+    if best is None:
+        return None
+    w = best.x
+    return float(np.sqrt(max(w @ cov @ w, 1e-12)))*100, float(w @ means)*100
+
+
 def implied_lambda(H, alpha, means, cov_matrix, lam_lo=0.01, lam_hi=500):
     """Find implied risk-aversion lambda such that VaR constraint binds at (H, alpha)."""
     def mv_w(lam):
@@ -898,7 +916,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                          der_x, der_y, der_lbls,
                          der_label, H_sel, alpha,
                          p3_x=None, p3_y=None,
-                         nd_res_actual=None, lam_actual=None, L=None):
+                         nd_res_actual=None, lam_actual=None, L=None, mv_eq_lam_str=''):
     """Interactive Plotly version of the frontier chart with hover tooltips."""
     fig = go.Figure()
 
@@ -1054,12 +1072,12 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     if mv_eq:
         fig.add_trace(go.Scatter(
             x=[mv_eq[0]], y=[mv_eq[1]], mode='markers',
-            name='Portfolio (0) — Markowitz MV optimum (λ=3.795, unconstrained by H/α)',
+            name='Portfolio (0) — Markowitz MV optimum',
             legendrank=4,
             marker=dict(size=14, color='#a855f7', symbol='circle',
                         line=dict(width=2, color='#ffffff')),
             showlegend=True,
-            hovertemplate='<b>Portfolio (0) — Markowitz MV optimum</b><br>Unconstrained mean-variance optimum (λ=3.795)<br>Does not enforce the downside constraint (H, α)<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
+            hovertemplate=f'<b>Portfolio (0) — Markowitz MV optimum</b><br>Pure mean-variance optimum at the risk aversion implied by the constraint<br>{mv_eq_lam_str}<br>Coincides with Portfolio (1) — the MVT/MAT equivalence<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
         ))
         fig.add_annotation(
             x=mv_eq[0], y=mv_eq[1],
@@ -1067,7 +1085,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             xref='x', yref='y', axref='pixel', ayref='pixel',
             showarrow=True, arrowhead=2, arrowcolor='#a855f7',
             arrowwidth=1.5,
-            text=f'<b>Portfolio (0)</b><br>Markowitz MV optimum<br>λ=3.795 (unconstrained by H, α)<br>Return = {mv_eq[1]:.1f}%  |  Std dev = {mv_eq[0]:.1f}%',
+            text=f'<b>Portfolio (0)</b><br>Markowitz MV optimum<br>{mv_eq_lam_str}<br>Return = {mv_eq[1]:.1f}%  |  Std dev = {mv_eq[0]:.1f}%',
             font=dict(color='#a855f7', size=9),
             bgcolor='rgba(13,17,23,0.9)',
             bordercolor='#a855f7', borderwidth=1,
@@ -1077,7 +1095,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     if not nd_res_actual:
         fig.add_annotation(
             xref='paper', yref='paper', x=0.5, y=0.5,
-            text='No feasible Portfolio (1) at the selected H, alpha.<br>The purple point is the Markowitz MV optimum (it ignores the downside constraint).',
+            text='No feasible Portfolio (1) at the selected H, alpha.<br>Widen H or relax alpha (see the panel below).',
             showarrow=False,
             font=dict(color='#f0a500', size=11),
             bgcolor='rgba(13,17,23,0.9)', bordercolor='#f0a500', borderwidth=1,
@@ -1974,7 +1992,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🟣 <strong>Purple dot (white frame)</strong></td>
-  <td style="padding:.3rem .5rem"><strong>Portfolio (0) — Markowitz MV optimum</strong> — the unconstrained mean-variance optimum at the reference risk-aversion (λ=3.795). Always shown, even when no behavioural optimum is feasible; it does not enforce the downside constraint (H, α).</td>
+  <td style="padding:.3rem .5rem"><strong>Portfolio (0) — Markowitz MV optimum</strong> — the pure mean-variance optimum at the risk-aversion λ implied by your (H, α). It should land on the same point as Portfolio (1) — two different methods, one result — demonstrating the MVT/MAT equivalence. Shown whenever Portfolio (1) exists.</td>
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🟠 <strong>Orange square (white frame)</strong></td>
@@ -2155,7 +2173,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
         st.markdown('''
 <div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#111111;font-size:.82rem">
 <b style="color:#1a6bbf">Up to four portfolios can be generated as output of the optimisation:</b><br><br>
-<b style="color:#a855f7">Portfolio (0)</b> — Markowitz mean-variance optimum (no derivative): the unconstrained MV optimum at the reference risk-aversion λ=3.795. Always shown as a reference point; it does <i>not</i> enforce the downside constraint (H, α)<br>
+<b style="color:#a855f7">Portfolio (0)</b> — Markowitz mean-variance optimum (no derivative): the pure MV optimum at the risk-aversion λ implied by your (H, α). It should coincide with Portfolio (1) — the same point reached by two different methods — directly demonstrating the MVT/MAT equivalence (shown whenever Portfolio (1) exists)<br>
 <b style="color:#10b981">Portfolio (1)</b> — Optimum portfolio without derivatives at the chosen constraint (H, α): mean-variance efficient via the mental-accounting framework, and coincides with Portfolio (0) when the implied λ equals 3.795 (the MVT/MAT equivalence)<br>
 <b style="color:#f59e0b">Portfolio (2)</b> — Optimum portfolio with derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
 <b style="color:#e76f51">Portfolio (3)</b> — Portfolio with derivative and with the same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (indicative only)
@@ -2250,11 +2268,30 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             except Exception:
                 pass
 
-            fig_plotly=plot_frontier_plotly(mv_x,mv_y,mv_eq,nd_xs,nd_ys,nd_lbls,
+            # Portfolio (0): the MV-method counterpart to Portfolio (1). Placed
+            # at the MV optimum of the constraint's implied lambda so it
+            # coincides with Portfolio (1) and demonstrates the MVT/MAT
+            # equivalence (two methods, one point). When the VaR constraint is
+            # non-binding (no implied lambda) but Portfolio (1) still exists, the
+            # matching point is the max-return endpoint (lambda -> 0). When the
+            # problem is infeasible (no Portfolio (1)), Portfolio (0) is hidden.
+            _p0 = None
+            _p0_lam_str = ""
+            if not use_es:
+                if _lam_actual is not None:
+                    _p0 = mv_optimum(means_arr, cov_mat, _lam_actual)
+                    _p0_lam_str = f"λ={_lam_actual:.3f} (implied by H, α)"
+                elif _nd_res_pre is not None:
+                    _i0 = int(np.argmax(means_arr))
+                    _p0 = (float(sigs_arr[_i0])*100, float(means_arr[_i0])*100)
+                    _p0_lam_str = "λ→0 (constraint non-binding)"
+
+            fig_plotly=plot_frontier_plotly(mv_x,mv_y,_p0,nd_xs,nd_ys,nd_lbls,
                                             der_xs,der_ys,der_lbls,der_label_sel,H_val,alpha_val,
                                             p3_x=_p3_x, p3_y=_p3_y,
                                             nd_res_actual=_nd_res_pre,
-                                            lam_actual=_lam_actual, L=L_val)
+                                            lam_actual=_lam_actual, L=L_val,
+                                            mv_eq_lam_str=_p0_lam_str)
             st.session_state['_fig_plotly'] = fig_plotly
             # Record times for chart + results steps
             _chart_t = _time.time() - _step_start
@@ -2267,7 +2304,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 unsafe_allow_html=True)
             # Store frontier data for matplotlib PDF chart (kaleido not available on Streamlit Cloud)
             st.session_state['_frontier_data'] = {
-                'mv_x': mv_x, 'mv_y': mv_y, 'mv_eq': mv_eq,
+                'mv_x': mv_x, 'mv_y': mv_y, 'mv_eq': _p0,
                 'nd_xs': nd_xs, 'nd_ys': nd_ys,
                 'der_xs': der_xs, 'der_ys': der_ys,
                 'der_label': der_label_sel,
