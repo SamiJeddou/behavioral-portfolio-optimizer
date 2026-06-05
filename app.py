@@ -284,10 +284,11 @@ from es_rigorous import optimize_portfolio_es_rigorous
 from scipy.stats import norm as _norm
 from scipy.optimize import brentq as _brentq
 
-def mv_frontier_at_return(means, cov, target_ret):
+def mv_frontier_at_return(means, cov, target_ret, return_weights=False):
     """Minimum-variance long-only portfolio achieving expected return `target_ret`
     (decimal) — i.e. the mean-variance-efficient portfolio at that return level.
-    Returns (std_dev_pct, expected_return_pct) or None. This is Portfolio (1)'s
+    Returns (std_dev_pct, expected_return_pct), or (std_dev_pct, expected_return_pct,
+    weights) when return_weights=True, or None. This is Portfolio (1)'s
     Markowitz counterpart: it coincides with Portfolio (1) exactly when Portfolio
     (1) is mean-variance efficient (the MVT/MAT equivalence)."""
     means = np.asarray(means, dtype=float); cov = np.asarray(cov, dtype=float)
@@ -304,7 +305,11 @@ def mv_frontier_at_return(means, cov, target_ret):
     if best is None:
         return None
     w = best.x
-    return float(np.sqrt(max(w @ cov @ w, 1e-12)))*100, float(w @ means)*100
+    _std_pct = float(np.sqrt(max(w @ cov @ w, 1e-12)))*100
+    _ret_pct = float(w @ means)*100
+    if return_weights:
+        return _std_pct, _ret_pct, w
+    return _std_pct, _ret_pct
 
 
 def implied_lambda(H, alpha, means, cov_matrix, lam_lo=0.01, lam_hi=500):
@@ -2571,6 +2576,81 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 pass
 
         # ── Render Portfolio (1) and (2) side by side ────────────────────────
+        # ── Portfolio (0) stats (Markowitz MV optimum) — for table + detail card
+        _p0_stats = None
+        _p0_weights = None
+        if (not use_es) and nd_res:
+            try:
+                _p0_out = mv_frontier_at_return(
+                    means_arr, cov_mat, float(nd_res['expected_return']),
+                    return_weights=True)
+                if _p0_out is not None:
+                    _p0_std_pct, _p0_ret_pct, _p0_w = _p0_out
+                    _p0_mu = _p0_ret_pct / 100.0
+                    _p0_sd = _p0_std_pct / 100.0
+                    _p0_pH = float(_norm.cdf((H_val - _p0_mu) / _p0_sd)) if _p0_sd > 0 else 0.0
+                    _p0_stats = {'expected_return': _p0_mu, 'std_dev': _p0_sd,
+                                 'skewness': 0.0, 'shortfall_stat': _p0_pH}
+                    _p0_weights = _p0_w
+            except Exception:
+                _p0_stats = None
+                _p0_weights = None
+
+        # ── Summary overview table (quick comparison of resulting portfolios) ──
+        _p1_ret_ref = nd_res['expected_return'] * 100 if nd_res else None
+        def _delta_pp(ret_pct):
+            if _p1_ret_ref is None or ret_pct is None:
+                return "—"
+            _d = ret_pct - _p1_ret_ref
+            return f'{("+" if _d >= 0 else "")}{_d:.2f} pp'
+        _sum_rows = []
+        if _p0_stats is not None:
+            _sum_rows.append(("#a78bfa", "Portfolio (0) — Markowitz MV optimum (no derivative)",
+                              _p0_stats['expected_return'] * 100, _p0_stats['std_dev'] * 100,
+                              "0.000", _delta_pp(_p0_stats['expected_return'] * 100)))
+        if nd_res:
+            _sum_rows.append(("#10b981", "Portfolio (1) — Behavioural optimum, no derivative",
+                              nd_res['expected_return'] * 100, nd_res['std_dev'] * 100,
+                              f"{nd_res['skewness']:.3f}", "—"))
+        if der_config and dr_res:
+            _sum_rows.append(("#f59e0b", f"Portfolio (2) — Behavioural optimum, with {der_label_sel}",
+                              dr_res['expected_return'] * 100, dr_res['std_dev'] * 100,
+                              f"{dr_res['skewness']:.3f}", _delta_pp(dr_res['expected_return'] * 100)))
+        if der_config and (p3_return is not None) and (p3_std is not None):
+            _sum_rows.append(("#e76f51", f"Portfolio (3) — Same variance as Portfolio (1), with {der_label_sel}",
+                              p3_return, p3_std, "—", _delta_pp(p3_return)))
+        if _sum_rows:
+            _trs = ""
+            for _clr, _name, _ret, _std, _skew, _dlt in _sum_rows:
+                _trs += (
+                    f'<tr style="border-top:1px solid #1a2a3a">'
+                    f'<td style="padding:.4rem .7rem"><span style="color:{_clr};font-weight:700">&#9679;</span> '
+                    f'<span style="color:#dbe7ff">{_name}</span></td>'
+                    f'<td style="padding:.4rem .7rem;text-align:right;color:#dbe7ff">{_ret:.2f}%</td>'
+                    f'<td style="padding:.4rem .7rem;text-align:right;color:#dbe7ff">{_std:.2f}%</td>'
+                    f'<td style="padding:.4rem .7rem;text-align:right;color:#9fb3d1">{_skew}</td>'
+                    f'<td style="padding:.4rem .7rem;text-align:right;color:#dbe7ff">{_dlt}</td>'
+                    f'</tr>')
+            _summary_html = (
+                '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'
+                'padding:.6rem .8rem;margin:.2rem 0 1rem 0;overflow-x:auto">'
+                '<div style="color:#4a9eff;font-weight:700;font-size:.9rem;margin-bottom:.4rem;text-align:center">'
+                'Summary — resulting portfolios</div>'
+                '<table style="width:100%;border-collapse:collapse;font-size:.82rem">'
+                '<thead><tr style="color:#9fb3d1">'
+                '<th style="padding:.3rem .7rem;text-align:left">Portfolio</th>'
+                '<th style="padding:.3rem .7rem;text-align:right">Expected return</th>'
+                '<th style="padding:.3rem .7rem;text-align:right">Std deviation</th>'
+                '<th style="padding:.3rem .7rem;text-align:right">Skewness</th>'
+                '<th style="padding:.3rem .7rem;text-align:right">&Delta; vs (1)</th>'
+                '</tr></thead><tbody>' + _trs + '</tbody></table>'
+                '<div style="color:#6b7f99;font-size:.7rem;margin-top:.4rem">'
+                '&Delta; vs (1) = expected-return gap relative to Portfolio (1). '
+                'Portfolio (0) is a Gaussian mean-variance construct (skewness 0). '
+                'Portfolio (3) is interpolated from the derivative frontier (indicative only).</div>'
+                '</div>')
+            st.markdown(_summary_html, unsafe_allow_html=True)
+
         with st.container():
             if nd_res:
                 _nd_weights = nd_res["weights"]
@@ -2609,6 +2689,29 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                     st.warning(
                         f"⚠️ No eligible portfolio found at H={H_val:.0%}, α={_alpha:.0%}. "
                         f"Try a wider threshold (e.g. H=-40%) or switch to Standard resolution.")
+
+        # ── Portfolio (0) — Markowitz MV optimum (detailed view) ─────────────
+        if _p0_stats is not None and _p0_weights is not None:
+            with st.container():
+                _p0_labels = [names_in[i] if i < len(names_in) else f"Asset {i+1}"
+                              for i in range(len(_p0_weights))]
+                _p0_colors = [DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_p0_weights))]
+                _render_portfolio(
+                    border_color="#a78bfa",
+                    show_feasibility=False,
+                    header_html=(
+                        '<div style="background:#0d1a2e;border:1px solid #a78bfa;border-radius:8px;'
+                        'padding:.6rem 1rem;margin-bottom:.4rem;text-align:center">'
+                        '<span style="color:#a78bfa;font-weight:700;font-size:.95rem">'
+                        '<span style="color:#a78bfa;margin-right:.4rem">&#9671;</span>'
+                        'Optimal portfolio (0) — Markowitz MV optimum (no derivative)</span></div>'
+                    ),
+                    caption_txt=("Minimum-variance portfolio at Portfolio (1)'s expected return — "
+                                 "coincides with Portfolio (1) when it is mean-variance efficient "
+                                 "(the MVT/MAT equivalence). Gaussian construct: skewness 0, tail "
+                                 "probability (chance of finishing below H) from the normal model."),
+                    weights=_p0_weights, labels=_p0_labels, colors=_p0_colors,
+                    stats=_p0_stats, method_txt="Markowitz mean-variance (SLSQP)")
 
         with st.container():
             if der_config:
