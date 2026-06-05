@@ -1565,12 +1565,6 @@ with st.sidebar:
     der_type=PREDEFINED_DERIVATIVES[der_label_sel]
     der_params={}
 
-    # AI tooltip for selected derivative — use details/summary to avoid sidebar duplication bug
-    if der_type is not None and der_type != "custom":
-        st.markdown(
-            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'            f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is this instrument?</summary>'            f'<div style="color:#1a3a5c;margin-top:.4rem">{get_explanation(der_label_sel)}</div></details>',
-            unsafe_allow_html=True)
-
     # Underlying selector (shown for all non-None derivative types)
     if der_type is not None:
         underlying_idx=st.selectbox(
@@ -1703,6 +1697,14 @@ with st.sidebar:
                 plt.close(_figp)
         except Exception:
             pass
+
+    # ✨ AI-powered explanation — sits directly underneath the payoff diagram
+    if der_type is not None and der_type != "custom":
+        st.markdown(
+            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
+            f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is this instrument?</summary>'
+            f'<div style="color:#1a3a5c;margin-top:.4rem">{get_explanation(der_label_sel)}</div></details>',
+            unsafe_allow_html=True)
 
     st.divider()
 
