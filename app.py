@@ -2002,12 +2002,12 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
 </tr>
 <tr><td colspan="2" style="padding:.5rem .5rem .3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Portfolio markers</td></tr>
 <tr style="border-bottom:1px solid #2a2a3a">
-  <td style="padding:.3rem .5rem;white-space:nowrap">🟢 <strong>Green diamond</strong></td>
-  <td style="padding:.3rem .5rem"><strong>Portfolio (1)</strong> — Behavioural optimum without derivatives at the selected H and α constraint. Shown only when a feasible portfolio exists; when it coincides with the Markowitz MV optimum it confirms the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010).</td>
-</tr>
-<tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🟣 <strong>Purple dot (white frame)</strong></td>
   <td style="padding:.3rem .5rem"><strong>Portfolio (0) — Markowitz MV optimum</strong> — the minimum-variance (mean-variance-efficient) portfolio at Portfolio (1)'s expected return. It lands on Portfolio (1) when Portfolio (1) is mean-variance efficient — the MVT/MAT equivalence. Shown whenever Portfolio (1) exists.</td>
+</tr>
+<tr style="border-bottom:1px solid #2a2a3a">
+  <td style="padding:.3rem .5rem;white-space:nowrap">🟢 <strong>Green diamond</strong></td>
+  <td style="padding:.3rem .5rem"><strong>Portfolio (1)</strong> — Behavioural optimum without derivatives at the selected H and α constraint. Shown only when a feasible portfolio exists; when it coincides with the Markowitz MV optimum it confirms the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010).</td>
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🟠 <strong>Orange square (white frame)</strong></td>
