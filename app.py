@@ -284,16 +284,21 @@ from es_rigorous import optimize_portfolio_es_rigorous
 from scipy.stats import norm as _norm
 from scipy.optimize import brentq as _brentq
 
-def mv_optimum(means, cov, lam):
-    """Long-only Markowitz mean-variance optimum at risk-aversion `lam`.
-    Returns (std_dev_pct, expected_return_pct) — same scale as the MV frontier."""
+def mv_frontier_at_return(means, cov, target_ret):
+    """Minimum-variance long-only portfolio achieving expected return `target_ret`
+    (decimal) — i.e. the mean-variance-efficient portfolio at that return level.
+    Returns (std_dev_pct, expected_return_pct) or None. This is Portfolio (1)'s
+    Markowitz counterpart: it coincides with Portfolio (1) exactly when Portfolio
+    (1) is mean-variance efficient (the MVT/MAT equivalence)."""
     means = np.asarray(means, dtype=float); cov = np.asarray(cov, dtype=float)
     n = len(means)
-    def obj(w): return -(w @ means - (lam / 2.0) * (w @ cov @ w))
+    target = min(max(float(target_ret), float(means.min())), float(means.max()))
+    def var(w): return float(w @ cov @ w)
+    cons = [{"type": "eq", "fun": lambda w: w.sum() - 1.0},
+            {"type": "eq", "fun": lambda w, t=target: float(w @ means) - t}]
     best = None
     for x0 in [np.ones(n)/n] + [np.eye(n)[i] for i in range(n)]:
-        r = minimize(obj, x0, method="SLSQP", bounds=[(0, 1)]*n,
-                     constraints=[{"type": "eq", "fun": lambda w: w.sum()-1}])
+        r = minimize(var, x0, method="SLSQP", bounds=[(0, 1)]*n, constraints=cons)
         if r.success and (best is None or r.fun < best.fun):
             best = r
     if best is None:
@@ -1039,7 +1044,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     if nd_res_actual:
         _p1_x = nd_res_actual['std_dev'] * 100
         _p1_y = nd_res_actual['expected_return'] * 100
-        _lam_str = f"λ={lam_actual:.4f}" if lam_actual else "λ computed"
+        _lam_str = f"λ={lam_actual:.4f}" if lam_actual else "λ undefined (constraint non-binding)"
         _h_str = (f"H={H_sel:.0%}, α={alpha:.0%}" if alpha is not None
                   else (f"H={H_sel:.0%}, L={L:.0%}" if L is not None else f"H={H_sel:.0%}"))
         fig.add_trace(go.Scatter(
@@ -1077,7 +1082,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             marker=dict(size=14, color='#a855f7', symbol='circle',
                         line=dict(width=2, color='#ffffff')),
             showlegend=True,
-            hovertemplate=f'<b>Portfolio (0) — Markowitz MV optimum</b><br>Pure mean-variance optimum at the risk aversion implied by the constraint<br>{mv_eq_lam_str}<br>Coincides with Portfolio (1) — the MVT/MAT equivalence<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
+            hovertemplate=f'<b>Portfolio (0) — Markowitz MV optimum</b><br>Minimum-variance portfolio at the expected return of Portfolio (1)<br>{mv_eq_lam_str}<br>Coincides with Portfolio (1) when it is MV-efficient — the MVT/MAT equivalence<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
         ))
         fig.add_annotation(
             x=mv_eq[0], y=mv_eq[1],
@@ -1992,7 +1997,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🟣 <strong>Purple dot (white frame)</strong></td>
-  <td style="padding:.3rem .5rem"><strong>Portfolio (0) — Markowitz MV optimum</strong> — the pure mean-variance optimum at the risk-aversion λ implied by your (H, α). It should land on the same point as Portfolio (1) — two different methods, one result — demonstrating the MVT/MAT equivalence. Shown whenever Portfolio (1) exists.</td>
+  <td style="padding:.3rem .5rem"><strong>Portfolio (0) — Markowitz MV optimum</strong> — the minimum-variance (mean-variance-efficient) portfolio at Portfolio (1)'s expected return. It lands on Portfolio (1) when Portfolio (1) is mean-variance efficient — the MVT/MAT equivalence. Shown whenever Portfolio (1) exists.</td>
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🟠 <strong>Orange square (white frame)</strong></td>
@@ -2173,7 +2178,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
         st.markdown('''
 <div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#111111;font-size:.82rem">
 <b style="color:#1a6bbf">Up to four portfolios can be generated as output of the optimisation:</b><br><br>
-<b style="color:#a855f7">Portfolio (0)</b> — Markowitz mean-variance optimum (no derivative): the pure MV optimum at the risk-aversion λ implied by your (H, α). It should coincide with Portfolio (1) — the same point reached by two different methods — directly demonstrating the MVT/MAT equivalence (shown whenever Portfolio (1) exists)<br>
+<b style="color:#a855f7">Portfolio (0)</b> — Markowitz mean-variance optimum (no derivative): the minimum-variance portfolio at Portfolio (1)'s expected return. It coincides with Portfolio (1) when Portfolio (1) is mean-variance efficient — directly demonstrating the MVT/MAT equivalence (shown whenever Portfolio (1) exists)<br>
 <b style="color:#10b981">Portfolio (1)</b> — Optimum portfolio without derivatives at the chosen constraint (H, α): mean-variance efficient via the mental-accounting framework, and coincides with Portfolio (0) when the implied λ equals 3.795 (the MVT/MAT equivalence)<br>
 <b style="color:#f59e0b">Portfolio (2)</b> — Optimum portfolio with derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
 <b style="color:#e76f51">Portfolio (3)</b> — Portfolio with derivative and with the same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (indicative only)
@@ -2268,23 +2273,24 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             except Exception:
                 pass
 
-            # Portfolio (0): the MV-method counterpart to Portfolio (1). Placed
-            # at the MV optimum of the constraint's implied lambda so it
-            # coincides with Portfolio (1) and demonstrates the MVT/MAT
-            # equivalence (two methods, one point). When the VaR constraint is
-            # non-binding (no implied lambda) but Portfolio (1) still exists, the
-            # matching point is the max-return endpoint (lambda -> 0). When the
-            # problem is infeasible (no Portfolio (1)), Portfolio (0) is hidden.
+            # Portfolio (0): the Markowitz counterpart to Portfolio (1). It is
+            # the minimum-variance (mean-variance-efficient) portfolio at the
+            # SAME expected return as Portfolio (1). By construction it sits on
+            # the MV frontier; it coincides with Portfolio (1) exactly when
+            # Portfolio (1) is mean-variance efficient — which is the MVT/MAT
+            # equivalence. Anchoring to Portfolio (1)'s realised return (rather
+            # than an analytic implied λ) keeps the two methods consistent even
+            # when the constraint is non-binding or the resolution is coarse.
+            # Hidden when Portfolio (1) is infeasible (nothing to match).
             _p0 = None
             _p0_lam_str = ""
-            if not use_es:
+            if not use_es and _nd_res_pre is not None:
+                _p0 = mv_frontier_at_return(means_arr, cov_mat,
+                                            float(_nd_res_pre['expected_return']))
                 if _lam_actual is not None:
-                    _p0 = mv_optimum(means_arr, cov_mat, _lam_actual)
                     _p0_lam_str = f"λ={_lam_actual:.3f} (implied by H, α)"
-                elif _nd_res_pre is not None:
-                    _i0 = int(np.argmax(means_arr))
-                    _p0 = (float(sigs_arr[_i0])*100, float(means_arr[_i0])*100)
-                    _p0_lam_str = "λ→0 (constraint non-binding)"
+                else:
+                    _p0_lam_str = "matched to Portfolio (1)'s expected return"
 
             fig_plotly=plot_frontier_plotly(mv_x,mv_y,_p0,nd_xs,nd_ys,nd_lbls,
                                             der_xs,der_ys,der_lbls,der_label_sel,H_val,alpha_val,
