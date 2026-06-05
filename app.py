@@ -3566,28 +3566,26 @@ with tab_bt:
         help="Which security the option is written on. Auto picks the highest-volatility "
              "holding (thesis convention); or pin it to a specific ticker.")
 
-    c5, c6 = st.columns(2)
-    with c5:
-        bt_H = st.slider("Loss threshold H (horizon return)", -0.40, 0.00, -0.10, 0.01,
-                         format="%.0f%%", key="bt_H")
-    with c6:
-        bt_method = st.selectbox(
-            "Risk measure (constraint)",
-            ["Value-at-Risk (VaR)", "Expected Shortfall — thesis", "Rigorous ES — beyond thesis"],
-            index=0, key="bt_method",
-            help="VaR caps the probability of finishing below H; ES floors the average loss in "
-                 "that tail. Rigorous ES enforces the ES floor in the optimisation itself "
-                 "(runs at high precision, m=51).")
+    bt_method = st.selectbox(
+        "Risk measure (constraint)",
+        ["Value-at-Risk (VaR)", "Expected Shortfall — thesis", "Rigorous ES — beyond thesis"],
+        index=0, key="bt_method",
+        help="VaR caps the probability of finishing below H; ES floors the average loss in "
+             "that tail. Rigorous ES enforces the ES floor in the optimisation itself "
+             "(runs at high precision, m=51).")
     bt_ct = {"Value-at-Risk (VaR)": "var",
              "Expected Shortfall — thesis": "es",
              "Rigorous ES — beyond thesis": "es_rigorous"}[bt_method]
+
+    bt_H = st.slider("Loss threshold H (horizon return)", -40, 0, -10, 1,
+                     format="%d%%", key="bt_H") / 100.0
     if bt_ct == "var":
         bt_alpha = st.slider("Target shortfall probability α  (P(r < H) ≤ α)",
-                             0.01, 0.25, 0.05, 0.01, format="%.0f%%", key="bt_alpha")
+                             1, 25, 5, 1, format="%d%%", key="bt_alpha") / 100.0
         bt_L = None
     else:
         bt_L = st.slider("Minimum Expected Shortfall L  (E[r | r < H] ≥ L)",
-                         -0.40, 0.00, -0.15, 0.01, format="%.0f%%", key="bt_L")
+                         -40, 0, -15, 1, format="%d%%", key="bt_L") / 100.0
         bt_alpha = 0.05
 
     run_bt = st.button("▶  Run backtest", type="primary", key="bt_run")
