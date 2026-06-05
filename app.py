@@ -1984,7 +1984,7 @@ Follow these steps in the sidebar:
 </tr>
 </table>
 
-The chart shows the efficient frontiers and up to three portfolio markers (see sample output at the bottom of this section):
+The chart shows the efficient frontiers and up to four portfolio markers (see sample output at the bottom of this section):
 
 <table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
 <tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Curves</td></tr>
@@ -2039,7 +2039,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                 '<span style="font-size:1.3rem;font-weight:700;color:#4a9eff">'
                 '🖼️ Sample Output</span><br>'
                 '<span style="font-size:.85rem;color:#c0c8d8">'
-                'Safety collar — showing all three portfolio perspectives with annotation boxes</span>'
+                'Straddle — mean-variance vs behavioural frontiers with Portfolios (0)–(3), annotation boxes and a results summary table</span>'
                 '</div>',
                 unsafe_allow_html=True)
             _col_l2, _col_img, _col_r2 = st.columns([1, 4, 1])
