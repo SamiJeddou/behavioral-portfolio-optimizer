@@ -1984,6 +1984,11 @@ Follow these steps in the sidebar:
 </tr>
 </table>
 
+</div>
+""", unsafe_allow_html=True)
+        st.markdown("""
+<div class="info-box" style="color:#ffffff !important">
+
 The chart shows the efficient frontiers and up to four portfolio markers (see sample output at the bottom of this section):
 
 <table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
@@ -2022,6 +2027,11 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
   <td style="padding:.3rem .5rem">Return gap between Portfolio (1) and Portfolio (2) at the selected H and α constraint — illustrates the return uplift (or reduction) from adding derivatives.</td>
 </tr>
 </table>
+
+</div>
+""", unsafe_allow_html=True)
+        st.markdown("""
+<div style="border:1px solid #2a4a6a;border-radius:8px;padding:.9rem 1.2rem;margin-top:.6rem;color:#e8edf5">
 
 <span style="color:#4a9eff;font-weight:700">MVT/MAT equivalence:</span><br>At the equivalence point (λ=3.795, H=-10%, α=5%), the purple and blue curves meet exactly — confirming the MVT/MAT equivalence proven in Das, Markowitz, Scheid & Statman (2010). Adding derivatives shifts the frontier upward (gold squares above blue dots), revealing what the behavioural approach with derivatives can unlock beyond mean-variance.
 
