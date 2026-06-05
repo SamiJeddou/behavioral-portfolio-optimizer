@@ -236,21 +236,25 @@ def build_state_space(means, sigs, m=51, derivative_config=None):
                 UpsPayoff = participation * (
                     bs_call(vol, S0, r, T, StrikeC1) -
                     bs_call(vol, S0, r, T, StrikeC2))
+            # No-arbitrage replication cost of the note: a zero-coupon bond
+            # paying (1+floor) at maturity, plus the participation upside
+            # call(s). The note's return is measured against THIS cost (CG0),
+            # consistent with every other derivative here (put/call/collar/
+            # straddle each divide by their fair premium). Previously the note
+            # was priced at par (cost 1.0), which underpriced it by CG0-1
+            # (~7-11% at typical equity vols) because the full-participation
+            # upside call was never funded — inflating every portfolio that
+            # held it and lifting the derivative frontier above the MV frontier.
             CG0      = (PVNotional + UpsPayoff) * (1 + premium)
-            EffFloor = floor / max(CG0, 1e-8)
-            StrikeC1Eff = 1 + EffFloor
-            Notional    = 1 + EffFloor
-            spot_T      = 1 + mesh[:, sec_idx]
+            spot_T   = 1 + mesh[:, sec_idx]
             if cap is None:
-                ups = participation * np.maximum(0, spot_T - StrikeC1Eff)
+                ups = participation * np.maximum(0, spot_T - StrikeC1)
             else:
-                EffCap      = cap / max(CG0, 1e-8)
-                StrikeC2Eff = 1 + EffCap
                 ups = participation * (
-                    np.maximum(0, spot_T - StrikeC1Eff) -
-                    np.maximum(0, spot_T - StrikeC2Eff))
-            CGU = Notional + ups
-            U[:, n_prime] = (CGU - 1.0) / 1.0
+                    np.maximum(0, spot_T - StrikeC1) -
+                    np.maximum(0, spot_T - StrikeC2))
+            CGU = (1 + floor) + ups
+            U[:, n_prime] = (CGU - CG0) / max(CG0, 1e-8)
 
         elif dtype == 'barrier_m':
             M          = derivative_config.get('M', 0.40)
