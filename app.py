@@ -2128,7 +2128,162 @@ def make_donut_svg(weights, labels, colors, size=160):
     return svg
 
 st.markdown("<div style='margin-top:2.5rem'></div>", unsafe_allow_html=True)
-tab1,tab2,tab3=st.tabs(["📊 Optimiser","📖 About","📚 Glossary"])
+# ═══════════════════════════════════════════════════════════════════════════════
+# Backtest engine — out-of-sample validation (pure computation, no LLM)
+# ═══════════════════════════════════════════════════════════════════════════════
+# Instruments supported in the v1 backtest are those carrying a strictly positive
+# net entry premium, so the mark-to-market gross-return path V_t / paid is stable.
+# Collars (near-zero / signed net premium), CGN and barrier-M use bespoke
+# normalisations and are deferred to a later iteration.
+_BT_SUPPORTED = {
+    "put", "call", "straddle", "strangle",
+    "bull_call_spread", "bear_put_spread", "butterfly_call", "condor_call",
+    "reverse_convertible", "discount_certificate", "outperformance_certificate",
+}
+
+def fetch_close_prices(tickers, start, end):
+    """Return (clean Close-price DataFrame in requested ticker order, error_or_None)."""
+    try:
+        import yfinance as yf
+        raw_full = yf.download(tickers, start=str(start), end=str(end),
+                               auto_adjust=True, progress=False, group_by='column')
+        if raw_full is None or raw_full.empty:
+            return None, "No data returned — check tickers and date range."
+        if isinstance(raw_full.columns, pd.MultiIndex):
+            lvl0 = raw_full.columns.get_level_values(0)
+            if 'Close' in lvl0:
+                raw = raw_full['Close'].copy()
+            elif 'Adj Close' in lvl0:
+                raw = raw_full['Adj Close'].copy()
+            else:
+                raw = raw_full.iloc[:, :len(tickers)]
+        else:
+            if 'Close' in raw_full.columns:
+                raw = raw_full[['Close']].copy(); raw.columns = [tickers[0]]
+            elif 'Adj Close' in raw_full.columns:
+                raw = raw_full[['Adj Close']].copy(); raw.columns = [tickers[0]]
+            else:
+                raw = raw_full.copy()
+        if isinstance(raw, pd.Series):
+            raw = raw.to_frame(tickers[0])
+        available = [t for t in tickers if t in raw.columns]
+        if not available:
+            return None, f"No Close price data found for tickers: {tickers}"
+        raw = raw[available].dropna(how='all').dropna(axis=1, how='all')
+        if raw.empty or len(raw) < 5:
+            return None, "Insufficient data — try a wider date range."
+        return raw, None
+    except Exception as e:
+        return None, str(e)
+
+def stats_from_prices(prices, freq):
+    """Annualised means, sigs, corr, names, factor from a Close-price DataFrame."""
+    raw = prices.copy()
+    if freq == "Monthly":
+        raw = raw.resample('ME').last()
+    rets = raw.pct_change().dropna()
+    rets, _ = clean_returns(rets.copy())
+    factor = 252 if freq == "Daily" else 12
+    means = (rets.mean() * factor).tolist()
+    sigs  = (rets.std()  * np.sqrt(factor)).tolist()
+    corr  = rets.corr().values.tolist()
+    names = list(rets.columns)
+    return means, sigs, corr, names, factor
+
+def _bt_legs(der_type, der_params):
+    """Return (legs, premium) for the v1 backtest, or (None, None) if unsupported.
+    Strikes are expressed as fractions of the entry spot (S0 = 1)."""
+    prem = float(der_params.get("premium", 0.0))
+    if der_type == "call":
+        return [{"type": "long_call", "strike": der_params["strike"]}], 0.0
+    if der_type == "put":
+        return [{"type": "long_put", "strike": der_params["strike"]}], 0.0
+    if der_type == "straddle":
+        K = der_params["strike"]
+        return [{"type": "long_call", "strike": K}, {"type": "long_put", "strike": K}], 0.0
+    if der_type == "strangle":
+        return [{"type": "long_put", "strike": der_params["strike_kp"]},
+                {"type": "long_call", "strike": der_params["strike_kc"]}], 0.0
+    if der_type in _COMPONENT_PRESETS:
+        return preset_components(der_type, der_params), prem
+    return None, None
+
+def _leg_value(leg, s, remT, vol, r):
+    """Signed Black-Scholes value of one leg at spot s with remaining maturity remT."""
+    t = leg["type"]
+    if t == "zcb":
+        return float(leg.get("notional", 1.0)) * np.exp(-r * remT)
+    K = leg["strike"]
+    if t == "long_call":  return  bs_call(vol, s, r, remT, K)
+    if t == "short_call": return -bs_call(vol, s, r, remT, K)
+    if t == "long_put":   return  bs_put(vol, s, r, remT, K)
+    if t == "short_put":  return -bs_put(vol, s, r, remT, K)
+    return 0.0
+
+def mtm_gross_path(legs, prem, spot_path, T, vol, r):
+    """Mark-to-market gross-return path of the derivative over a realised underlying
+    price path. Entry spot is normalised to 1.0; remaining maturity shrinks linearly
+    across the window (option entered at the start, expiring at the end); V_t is the
+    signed Black-Scholes value of the legs; paid = fair value * (1 + premium).
+    Returns g_t = V_t / paid, the gross return on capital invested in the option."""
+    spot_path = np.asarray(spot_path, dtype=float)
+    s_rel = spot_path / float(spot_path[0])
+    n = len(s_rel)
+    V0 = sum(_leg_value(lg, 1.0, T, vol, r) for lg in legs)
+    paid = V0 * (1.0 + prem)
+    if paid <= 1e-9:
+        return None
+    remT = np.maximum(T * (1.0 - np.linspace(0.0, 1.0, n)), 1e-6)
+    V = np.array([sum(_leg_value(lg, s_rel[i], remT[i], vol, r) for lg in legs)
+                  for i in range(n)])
+    return V / paid
+
+def _bt_portfolio_path(sec_gross, w_sec, der_gross=None, w_der=0.0):
+    """Buy-and-hold portfolio value path, normalised to start at 1.0."""
+    pv = (np.asarray(sec_gross, dtype=float) * np.asarray(w_sec, dtype=float)).sum(axis=1)
+    if der_gross is not None:
+        pv = pv + float(w_der) * np.asarray(der_gross, dtype=float)
+    pv = pv / pv[0]
+    return pv
+
+def _bt_metrics(pv, factor, H, T_years):
+    """Realised window return, annualised return, annualised vol, breach flag."""
+    rets = pv[1:] / pv[:-1] - 1.0
+    cum = float(pv[-1] / pv[0] - 1.0)
+    ann_ret = float((1.0 + cum) ** (1.0 / max(T_years, 1e-6)) - 1.0)
+    ann_vol = float(np.std(rets, ddof=1) * np.sqrt(factor)) if len(rets) > 1 else float('nan')
+    return cum, ann_ret, ann_vol, bool(cum < H)
+
+def plot_backtest_paths(dates, pv1, pv2, label2):
+    """Dark-themed cumulative value chart: no-derivative vs with-derivative."""
+    import matplotlib.pyplot as plt
+    import matplotlib.dates as mdates
+    fig, ax = plt.subplots(figsize=(7.2, 3.6), dpi=130)
+    fig.patch.set_facecolor('#0d1117'); ax.set_facecolor('#0d1117')
+    x = np.asarray(dates)
+    ax.axhline(100, color='#30363d', lw=1, ls=(0, (4, 4)))
+    ax.plot(x, 100.0 * np.asarray(pv1), color='#10b981', lw=2.2, label='No derivative (P1)')
+    if pv2 is not None:
+        ax.plot(x, 100.0 * np.asarray(pv2), color='#f59e0b', lw=2.2, label=label2)
+    for sp in ax.spines.values():
+        sp.set_color('#30363d')
+    ax.tick_params(colors='#8b949e', labelsize=8)
+    ax.set_ylabel('Portfolio value (entry = 100)', color='#c9d1d9', fontsize=9)
+    ax.set_title('Out-of-sample buy-and-hold performance', color='#c9d1d9', fontsize=10, pad=8)
+    ax.legend(facecolor='#161b22', edgecolor='#30363d', labelcolor='#c9d1d9',
+              fontsize=8, loc='best')
+    try:
+        ax.xaxis.set_major_locator(mdates.AutoDateLocator())
+        ax.xaxis.set_major_formatter(mdates.DateFormatter('%b %Y'))
+        fig.autofmt_xdate(rotation=0, ha='center')
+    except Exception:
+        pass
+    ax.grid(True, color='#21262d', lw=0.6)
+    fig.tight_layout()
+    return fig
+
+
+tab1,tab_bt,tab2,tab3=st.tabs(["📊 Optimiser","🔬 Backtest","📖 About","📚 Glossary"])
 
 
 with tab1:
@@ -3261,6 +3416,289 @@ I would be glad to hear from you.
         'Based on Das &amp; Statman (2009), Das, Markowitz, Scheid &amp; Statman (2010) and Jeddou (2012). '
         'See <b>About</b> tab for full disclaimer.</div>',
         unsafe_allow_html=True)
+
+with tab_bt:
+    import datetime as _dt
+    st.markdown('<h2 style="color:#4a9eff">🔬 Out-of-Sample Backtest</h2>', unsafe_allow_html=True)
+    st.markdown(
+        "This tab is **self-contained and independent of the Optimiser tab** — it has its "
+        "own inputs. It builds the optimal portfolio on a **construction period**, then "
+        "holds those fixed weights through a later **evaluation period**, and compares what "
+        "the model *expected* with what actually *happened* — for both a no-derivative "
+        "portfolio (P1) and a with-derivative portfolio (P2)."
+    )
+
+    with st.expander("ℹ️  How this backtest works — and why the derivative is marked to market", expanded=True):
+        st.markdown(
+            "**The procedure (walk-forward, single horizon):**\n"
+            "1. **Construction period** — download prices, estimate annualised means, "
+            "volatilities and correlations, and run the optimiser to get the optimal weights "
+            "*with* and *without* the derivative, subject to your mental-account constraint "
+            "P(return < H) ≤ α.\n"
+            "2. **Evaluation period** — freeze those weights and **buy-and-hold** them (no "
+            "rebalancing) over a later, completely separate window.\n"
+            "3. Compare **expected vs realised** return, volatility and the loss-threshold "
+            "outcome, for P1 and P2.\n\n"
+            "**Why the derivative is marked to market mid-life (not just held to maturity):**\n\n"
+            "You asked the backtest to measure **risk**, not just return — and risk is a "
+            "property of the *path*, not the endpoint. The securities naturally give a return "
+            "*series* over the evaluation window (one return per period), from which realised "
+            "volatility follows. A held-to-maturity option, by contrast, gives only a *single* "
+            "number — its payoff at expiry versus the entry price — which has no volatility and "
+            "no distribution.\n\n"
+            "To compute the **portfolio's** realised return series, every component must have a "
+            "value at every date so they can be summed into one portfolio value each period. "
+            "The securities have a price each period; the option therefore also needs a value "
+            "each period. **Marking to market** — repricing the option with Black-Scholes at the "
+            "current spot, the shrinking remaining maturity, and the volatility assumption — is "
+            "exactly what supplies that intermediate value, giving the derivative its own "
+            "period-return series.\n\n"
+            "This matters *more* for options than for the stocks, because options are "
+            "non-linear and time-decaying: their value swings with the underlying (delta/gamma) "
+            "and bleeds with time (theta). A held-to-maturity view hides all of that "
+            "intra-window behaviour; marking to market is what lets you see whether the realised "
+            "return distribution matched the modelled one. And since the mental-account "
+            "constraint is itself distributional (a probability of finishing below H), it can "
+            "only be checked against a distribution of realised returns.\n\n"
+            "In short: held-to-maturity answers *“did it end up where we expected?”*; "
+            "mark-to-market answers *“did it **behave** — return **and** risk — the way we "
+            "expected along the way?”*"
+        )
+
+    with st.expander("⚠️  Assumptions & limitations"):
+        st.markdown(
+            "- **Model mark, not market quotes.** The derivative leg is valued with "
+            "Black-Scholes on the *realised underlying price path* — Yahoo Finance gives the "
+            "stock path, not the option's traded quotes. This is the standard approach for an "
+            "academic out-of-sample test, but the derivative leg is **model-valued**, not "
+            "marked against observed option prices.\n"
+            "- **Pricing inputs.** The option is priced and marked with the **construction-period "
+            "volatility** of the underlying (the model's own assumption), risk-free rate r = 3%, "
+            "entry spot normalised to 1.0, strikes as fractions of that spot. Holding the vol "
+            "assumption fixed isolates the effect of the realised *price path*.\n"
+            "- **Underlying = highest-volatility security**, following the thesis convention "
+            "(the derivative is written on the riskiest holding).\n"
+            "- **Option life = evaluation window.** The option is entered at the start of the "
+            "evaluation window and expires at its end, so the buy-and-hold position is held to "
+            "expiry. Remaining maturity shrinks linearly across the window.\n"
+            "- **Buy-and-hold, no rebalancing.** Weights are fixed at construction; the value "
+            "path lets the weights drift naturally (true buy-and-hold). No transaction costs, "
+            "no dividends beyond what auto-adjusted prices already reflect.\n"
+            "- **Single horizon.** The evaluation window is one option horizon, so the "
+            "loss-threshold check is a *single realised outcome* versus the modelled probability "
+            "α — not a frequency. A multi-window walk-forward (a richer realised P(r<H)) is a "
+            "planned extension.\n"
+            "- **Instruments in v1.** Vanilla options, straddle, strangle, and the "
+            "spreads/certificates — all with a strictly positive net entry premium. Collars, "
+            "capital-guaranteed notes and barrier-M notes are deferred (special normalisations).\n"
+            "- **Constraint.** v1 backtests the VaR-style constraint P(r<H) ≤ α."
+        )
+
+    st.markdown("---")
+    st.markdown("#### Inputs")
+
+    bt_tickers_raw = st.text_input(
+        "Tickers (comma-separated)", value="AAPL, MSFT, JPM, TLT", key="bt_tickers",
+        help="Yahoo Finance symbols. The riskiest one is used as the derivative's underlying.")
+
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("**Construction period**  \n*the portfolio is built using data from this period*")
+        bt_con_start = st.date_input("From", value=_dt.date(2012, 1, 1), key="bt_con_start")
+        bt_con_end   = st.date_input("To",   value=_dt.date(2016, 12, 31), key="bt_con_end")
+    with c2:
+        st.markdown("**Evaluation period**  \n*the fixed portfolio is then held and measured over this period*")
+        bt_eval_start = st.date_input("From", value=_dt.date(2017, 1, 1), key="bt_eval_start")
+        bt_eval_end   = st.date_input("To",   value=_dt.date(2017, 12, 31), key="bt_eval_end")
+
+    c3, c4 = st.columns(2)
+    with c3:
+        bt_freq = st.selectbox("Return frequency", ["Daily", "Monthly"], index=0, key="bt_freq")
+    with c4:
+        bt_res = st.selectbox("Optimiser resolution", ["Fast", "Standard", "High"], index=1, key="bt_res")
+
+    bt_labels = [lbl for lbl, t in PREDEFINED_DERIVATIVES.items() if t in _BT_SUPPORTED]
+    bt_label = st.selectbox("Derivative", bt_labels, index=bt_labels.index("Put option")
+                            if "Put option" in bt_labels else 0, key="bt_der")
+    bt_dtype = PREDEFINED_DERIVATIVES[bt_label]
+
+    def _bt_param_inputs(dtype):
+        p = {}
+        if dtype in ("put", "call", "straddle"):
+            default = 0.9 if dtype == "put" else 1.2
+            p["strike"] = st.slider("Strike (× entry spot)", 0.50, 1.60, default, 0.05, key="bt_k")
+        elif dtype == "strangle":
+            p["strike_kp"] = st.slider("Put strike (×)", 0.50, 1.00, 0.85, 0.05, key="bt_kp")
+            p["strike_kc"] = st.slider("Call strike (×)", 1.00, 1.60, 1.15, 0.05, key="bt_kc")
+        elif dtype == "bull_call_spread":
+            p["k1"] = st.slider("Long call strike (×)", 0.70, 1.20, 1.00, 0.05, key="bt_b1")
+            p["k2"] = st.slider("Short call strike (×, higher)", 1.00, 1.60, 1.20, 0.05, key="bt_b2")
+        elif dtype == "bear_put_spread":
+            p["k1"] = st.slider("Long put strike (×, higher)", 0.90, 1.30, 1.10, 0.05, key="bt_bp1")
+            p["k2"] = st.slider("Short put strike (×, lower)", 0.60, 1.00, 0.90, 0.05, key="bt_bp2")
+        elif dtype == "butterfly_call":
+            p["center"] = st.slider("Centre strike (×)", 0.80, 1.30, 1.00, 0.05, key="bt_fc")
+            p["width"]  = st.slider("Wing width (×)", 0.10, 0.40, 0.20, 0.05, key="bt_fw")
+        elif dtype == "condor_call":
+            p["center"] = st.slider("Centre (×)", 0.80, 1.30, 1.00, 0.05, key="bt_cc")
+            p["w_in"]   = st.slider("Inner half-width (×)", 0.05, 0.30, 0.10, 0.05, key="bt_ci")
+            p["w_out"]  = st.slider("Outer half-width (×)", 0.20, 0.60, 0.30, 0.05, key="bt_co")
+        elif dtype == "reverse_convertible":
+            p["kp"] = st.slider("Short put strike (×)", 0.60, 1.00, 0.90, 0.05, key="bt_rc")
+        elif dtype == "discount_certificate":
+            p["kc"] = st.slider("Cap strike (×)", 1.00, 1.60, 1.20, 0.05, key="bt_dc")
+            p["premium"] = st.slider("Issuer premium", 0.00, 0.10, 0.00, 0.01, key="bt_dcp")
+        elif dtype == "outperformance_certificate":
+            p["k"] = st.slider("Participation strike (×)", 0.80, 1.30, 1.00, 0.05, key="bt_oc")
+            p["premium"] = st.slider("Issuer premium", 0.00, 0.10, 0.00, 0.01, key="bt_ocp")
+        return p
+
+    bt_params = _bt_param_inputs(bt_dtype)
+
+    c5, c6 = st.columns(2)
+    with c5:
+        bt_H = st.slider("Loss threshold H (horizon return)", -0.40, 0.00, -0.10, 0.01,
+                         format="%.0f%%", key="bt_H")
+    with c6:
+        bt_alpha = st.slider("Target shortfall probability α", 0.01, 0.25, 0.05, 0.01,
+                             format="%.0f%%", key="bt_alpha")
+
+    run_bt = st.button("▶  Run backtest", type="primary", key="bt_run")
+
+    if run_bt:
+        try:
+            tickers = [t.strip().upper() for t in bt_tickers_raw.split(",") if t.strip()]
+            if len(tickers) < 2:
+                raise RuntimeError("Please enter at least two tickers.")
+            if not (bt_con_start < bt_con_end <= bt_eval_start < bt_eval_end):
+                raise RuntimeError("Dates must satisfy: construction start < construction end "
+                                   "<= evaluation start < evaluation end.")
+
+            res_map = {"Fast": (21, 15), "Standard": (35, 50), "High": (51, 99)}
+            m_bt, mp_bt = res_map[bt_res]
+            T_years = (bt_eval_end - bt_eval_start).days / 365.25
+            factor_eval = 252 if bt_freq == "Daily" else 12
+
+            with st.spinner("Building portfolio on the construction period…"):
+                con_px, err = fetch_close_prices(tickers, bt_con_start, bt_con_end)
+                if err:
+                    raise RuntimeError(f"Construction data: {err}")
+                means, sigs, corr, names, _ = stats_from_prices(con_px, bt_freq)
+                if len(names) < 2:
+                    raise RuntimeError("Fewer than two usable securities after cleaning.")
+                cov = corr_to_cov(sigs, corr)
+                u_idx = int(np.argmax(sigs))
+                vol_u = float(sigs[u_idx])
+                bt_params["vol"] = vol_u
+                bt_params["r"] = 0.03
+                bt_params["T"] = T_years
+                der_cfg = build_der_config(bt_dtype, bt_params, sigs, u_idx)
+
+                nd_res, _ = run_opt(means, sigs, cov, None, bt_H, bt_alpha, m_bt, mp_bt, 'var')
+                dr_res, _ = run_opt(means, sigs, cov, der_cfg, bt_H, bt_alpha, m_bt, mp_bt, 'var')
+
+            with st.spinner("Holding the fixed portfolio over the evaluation period…"):
+                ev_px, err = fetch_close_prices(tickers, bt_eval_start, bt_eval_end)
+                if err:
+                    raise RuntimeError(f"Evaluation data: {err}")
+                missing = [nm for nm in names if nm not in ev_px.columns]
+                if missing:
+                    raise RuntimeError(f"No evaluation-period data for: {missing}")
+                ev_px = ev_px[names].ffill().dropna()
+                if bt_freq == "Monthly":
+                    ev_px = ev_px.resample('ME').last().dropna()
+                if len(ev_px) < 3:
+                    raise RuntimeError("Insufficient evaluation-period observations.")
+
+                sec_gross = ev_px.values / ev_px.values[0]
+                spot_path = ev_px[names[u_idx]].values
+                legs, prem = _bt_legs(bt_dtype, bt_params)
+                g_path = mtm_gross_path(legs, prem, spot_path, T_years, vol_u, 0.03)
+
+                w1 = np.asarray(nd_res["weights"], dtype=float)
+                w2 = np.asarray(dr_res["weights"], dtype=float)
+                w2_sec, w2_der = w2[:-1], float(w2[-1])
+                pv1 = _bt_portfolio_path(sec_gross, w1)
+                pv2 = _bt_portfolio_path(sec_gross, w2_sec, der_gross=g_path, w_der=w2_der)
+
+                cum1, ann1, vol1, br1 = _bt_metrics(pv1, factor_eval, bt_H, T_years)
+                cum2, ann2, vol2, br2 = _bt_metrics(pv2, factor_eval, bt_H, T_years)
+
+            st.markdown("---")
+            st.markdown("#### Results")
+            st.caption(
+                f"Underlying for the derivative: **{names[u_idx]}** (highest volatility, "
+                f"σ = {vol_u:.1%}).  Optimal derivative weight in P2: **{w2_der:.1%}**.  "
+                f"Option life T = {T_years:.2f}y.  Constraint: P(r < {bt_H:.0%}) ≤ {bt_alpha:.0%}.")
+
+            table = pd.DataFrame({
+                "Metric": ["Expected annual return", "Realised annual return",
+                           "Expected annual volatility", "Realised annual volatility",
+                           f"Window return (vs H = {bt_H:.0%})"],
+                "No derivative (P1)": [
+                    f"{nd_res['expected_return']:.2%}", f"{ann1:.2%}",
+                    f"{nd_res['std_dev']:.2%}", f"{vol1:.2%}",
+                    f"{cum1:.2%}  {'⚠ breached' if br1 else '✓'}"],
+                "With derivative (P2)": [
+                    f"{dr_res['expected_return']:.2%}", f"{ann2:.2%}",
+                    f"{dr_res['std_dev']:.2%}", f"{vol2:.2%}",
+                    f"{cum2:.2%}  {'⚠ breached' if br2 else '✓'}"],
+            })
+            st.table(table.set_index("Metric"))
+
+            try:
+                fig = plot_backtest_paths(ev_px.index, pv1, pv2, f"With derivative (P2) — {bt_label}")
+                st.pyplot(fig, use_container_width=True)
+                import matplotlib.pyplot as _plt
+                _plt.close(fig)
+            except Exception as _ce:
+                st.warning(f"Chart unavailable: {_ce}")
+
+            # Rule-based verdict (no LLM)
+            verdict = []
+            d_ret = ann2 - ann1
+            d_vol = vol2 - vol1
+            if d_ret > 0.005:
+                verdict.append(f"The derivative **added {d_ret:.2%}** of realised annual return "
+                               f"versus the no-derivative portfolio.")
+            elif d_ret < -0.005:
+                verdict.append(f"The derivative **cost {-d_ret:.2%}** of realised annual return "
+                               f"this window.")
+            else:
+                verdict.append("Realised returns of the two portfolios were broadly similar.")
+            if not np.isnan(d_vol):
+                if d_vol < -0.005:
+                    verdict.append(f"It also **reduced realised volatility** by {-d_vol:.2%}.")
+                elif d_vol > 0.005:
+                    verdict.append(f"It **raised realised volatility** by {d_vol:.2%}.")
+            if br1 and not br2:
+                verdict.append(f"P1 breached the {bt_H:.0%} loss threshold while **P2 did not** — "
+                               f"the protection held this window.")
+            elif br2 and not br1:
+                verdict.append(f"P2 breached the {bt_H:.0%} threshold while P1 did not.")
+            elif br1 and br2:
+                verdict.append(f"Both portfolios finished below the {bt_H:.0%} threshold.")
+            else:
+                verdict.append(f"Neither portfolio breached the {bt_H:.0%} threshold "
+                               f"(model target: ≤ {bt_alpha:.0%} chance).")
+            for which, exp_r, real_r in [("P1", nd_res['expected_return'], ann1),
+                                         ("P2", dr_res['expected_return'], ann2)]:
+                gap = real_r - exp_r
+                tone = "above" if gap > 0 else "below"
+                verdict.append(f"{which} realised {abs(gap):.2%} {tone} its expected annual return.")
+
+            st.markdown("#### Verdict")
+            st.info("  ".join(verdict) +
+                    "\n\n*One evaluation window is a single draw — read the loss-threshold "
+                    "outcome as one realisation, not a probability.*")
+
+        except Exception as _e:
+            st.error(str(_e))
+            import traceback as _tb
+            with st.expander("Traceback"):
+                st.code(_tb.format_exc())
+
+
 
 with tab2:
     import os as _os
