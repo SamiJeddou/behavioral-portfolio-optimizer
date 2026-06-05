@@ -2,7 +2,7 @@
 
 > Extending Markowitz mean-variance theory to portfolios with derivatives and structured products using a mental-accounting framework.
 
-![Portfolio Optimiser Output — Mean-variance vs behavioural efficient frontier with Portfolios (0)–(3), a Straddle, annotation boxes and a results summary table](sample_output.png)
+![Portfolio Optimiser Output — annotated sample showing each section of a run (chart, summary of portfolios, and per-portfolio details); illustrative only, not live results](sample_output_annotated.png)
 
 ---
 
