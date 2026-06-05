@@ -1443,6 +1443,11 @@ with st.sidebar:
 
     # ── 1. Data source ────────────────────────────────────────────────────────
     st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">1</span><span style="display:block">📂 PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
+    st.markdown(
+        '<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0 .6rem 0;font-size:.82rem">'
+        '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: How these inputs are built</summary>'
+        '<div style="color:#1a3a5c;margin-top:.4rem">From the prices of your chosen securities, the app computes period returns, cleans them (drops stale rows, winsorises ±5σ outliers), and annualises them into the three inputs the optimiser needs — expected returns, volatilities, and the correlation matrix (×252 for daily data, ×12 for monthly). These primary securities are assumed <b>multivariate normal</b>, the foundation of the framework; any derivative is then priced by Black-Scholes on the <b>highest-volatility security</b> and layered on top, which is how non-normal payoffs enter an otherwise Gaussian portfolio.</div></details>',
+        unsafe_allow_html=True)
     data_mode = st.radio("Data source",
         ["Default (3-asset sample case)",
          "Live market data (Yahoo Finance)",
