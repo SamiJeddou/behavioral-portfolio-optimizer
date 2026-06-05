@@ -1565,6 +1565,10 @@ with st.sidebar:
     der_type=PREDEFINED_DERIVATIVES[der_label_sel]
     der_params={}
 
+    # Payoff diagram + AI explanation render here — directly under the dropdown,
+    # above the parameters. Filled in after the sliders below set the params.
+    _diag_box = st.container()
+
     # Underlying selector (shown for all non-None derivative types)
     if der_type is not None:
         underlying_idx=st.selectbox(
@@ -1683,28 +1687,27 @@ with st.sidebar:
             data_valid=False
             st.info("Add at least one component to continue.")
 
-    # Live payoff diagram for every preset & built-in instrument
-    # (the interactive custom composer draws its own diagram above).
-    if der_type is not None and der_type != "custom" and "underlying_idx" in der_params:
-        try:
-            _cfg = build_der_config(der_type, der_params,
-                                    np.array(sigs_in), der_params["underlying_idx"])
-            if _cfg:
-                _cfg["r"] = der_params.get("r", 0.03)
-                _cfg["T"] = der_params.get("T", 1.0)
-                _figp = plot_named_payoff(_cfg, names_in[der_params["underlying_idx"]])
-                st.pyplot(_figp, use_container_width=True)
-                plt.close(_figp)
-        except Exception:
-            pass
-
-    # ✨ AI-powered explanation — sits directly underneath the payoff diagram
+    # Render the payoff diagram + AI explanation into the box reserved directly
+    # under the dropdown (above the parameters). Computed here so der_params is set.
     if der_type is not None and der_type != "custom":
-        st.markdown(
-            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
-            f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is this instrument?</summary>'
-            f'<div style="color:#1a3a5c;margin-top:.4rem">{get_explanation(der_label_sel)}</div></details>',
-            unsafe_allow_html=True)
+        with _diag_box:
+            if "underlying_idx" in der_params:
+                try:
+                    _cfg = build_der_config(der_type, der_params,
+                                            np.array(sigs_in), der_params["underlying_idx"])
+                    if _cfg:
+                        _cfg["r"] = der_params.get("r", 0.03)
+                        _cfg["T"] = der_params.get("T", 1.0)
+                        _figp = plot_named_payoff(_cfg, names_in[der_params["underlying_idx"]])
+                        st.pyplot(_figp, use_container_width=True)
+                        plt.close(_figp)
+                except Exception:
+                    pass
+            st.markdown(
+                f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
+                f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is this instrument?</summary>'
+                f'<div style="color:#1a3a5c;margin-top:.4rem">{get_explanation(der_label_sel)}</div></details>',
+                unsafe_allow_html=True)
 
     st.divider()
 
