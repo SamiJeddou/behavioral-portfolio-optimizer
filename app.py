@@ -2018,6 +2018,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
         _L = _cache['_L']
         lam_summary = _cache.get('lam_summary', '—')
         names_in = _cache.get('names_in', [])
+        sigs_arr = _cache.get('sigs_arr', None)
         asset_labels = _cache.get('asset_labels', [])
         constraint_str = _cache.get('constraint_str', '')
         grid_lbl = _cache.get('grid_lbl', '')
@@ -2522,14 +2523,20 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
                     stats=nd_res, method_txt=_method)
             else:
                 st.markdown("**Optimal portfolio (1) — no derivative**")
-                # Suggest a wider constraint based on current securities volatility
-                _avg_sig = float(np.mean(sigs_arr)) * 100
-                _suggested_H_val = min(40, max(15, int(_avg_sig * 1.5)))
-                _suggested_H = f"-{_suggested_H_val}%"
-                st.warning(
-                    f"⚠️ No eligible portfolio found at H={H_val:.0%}, α={_alpha:.0%}. "
-                    f"With live market data (avg volatility {_avg_sig:.1f}%), "
-                    f"try a wider threshold such as H={_suggested_H} or switch to Standard resolution.")
+                # Suggest a wider constraint based on current securities volatility.
+                # sigs_arr is set on the fresh-compute path and restored from cache
+                # on rerun; guard against an older cache that lacks it.
+                try:
+                    _avg_sig = float(np.mean(sigs_arr)) * 100
+                    _suggested_H_val = min(40, max(15, int(_avg_sig * 1.5)))
+                    st.warning(
+                        f"⚠️ No eligible portfolio found at H={H_val:.0%}, α={_alpha:.0%}. "
+                        f"With live market data (avg volatility {_avg_sig:.1f}%), "
+                        f"try a wider threshold such as H=-{_suggested_H_val}% or switch to Standard resolution.")
+                except Exception:
+                    st.warning(
+                        f"⚠️ No eligible portfolio found at H={H_val:.0%}, α={_alpha:.0%}. "
+                        f"Try a wider threshold (e.g. H=-40%) or switch to Standard resolution.")
 
         with st.container():
             if der_config:
@@ -2754,6 +2761,7 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
             'data_mode': data_mode,
             'lam_summary': lam_summary,
             'names_in': names_in,
+            'sigs_arr': sigs_arr,
             'asset_labels': asset_labels,
             'constraint_str': constraint_str,
             'grid_lbl': grid_lbl,
