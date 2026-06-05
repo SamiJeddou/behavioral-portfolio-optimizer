@@ -3494,7 +3494,12 @@ with tab_bt:
             "- **Constraint.** You can build under Value-at-Risk (P(r<H) ≤ α), thesis "
             "Expected Shortfall, or Rigorous ES (E[r|r<H] ≥ L). These change the *construction* "
             "weights; the *realised* tail check stays a single-window outcome (a true realised "
-            "ES needs the multi-window walk-forward extension)."
+            "ES needs the multi-window walk-forward extension).\n"
+            "- **Grid resolution.** Fast / Standard / High only. Unlike the Optimiser tab, "
+            "**Turbo is not offered here** even under VaR: Turbo is VaR-only and becomes "
+            "unreliable once a derivative is in the portfolio — and the backtest always builds "
+            "one — so it would silently fall back to the slower solver. (Rigorous ES likewise "
+            "runs at a fixed m=51 and is chosen in the Risk measure section, not as a resolution.)"
         )
 
     st.markdown("---")
