@@ -220,7 +220,7 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
 
     # ── Portfolio (1) ─────────────────────────────────────────────────────────
     if nd_res:
-        story += section_header('Portfolio (1) — Optimum without derivatives', green)
+        story += section_header('Portfolio (1) — Behavioural optimum without derivatives', green)
         story.append(metrics_table(nd_res))
         story.append(Spacer(1, 4))
         story.append(weights_table(nd_labels, nd_weights, nd_colors, 'Security'))
@@ -976,11 +976,11 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                             pass
                 fig.add_trace(go.Scatter(
                     x=[der_x[_i2]], y=[der_y[_i2]], mode='markers',
-                    name=f'Portfolio (2) — optimum with {der_label} at H={H_sel:.0%}',
+                    name=f'Portfolio (2) — behavioural optimum with {der_label} at H={H_sel:.0%}',
                     legendrank=6,
                     marker=dict(size=14, color='#ff6b00', symbol='square',
                                line=dict(color='white', width=1.5)),
-                    hovertemplate=(f'<b>Portfolio (2)</b><br>Optimum with {der_label}<br>'
+                    hovertemplate=(f'<b>Portfolio (2)</b><br>Behavioural optimum with {der_label}<br>'
                                   f'Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>')
                 ))
                 fig.add_annotation(
@@ -990,7 +990,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                     showarrow=True, arrowhead=2, arrowsize=1.0,
                     arrowwidth=1.5, arrowcolor='#ff6b00',
                     text=(f'<b>Portfolio (2)</b><br>'
-                          f'Optimum with {der_label}<br>'
+                          f'Behavioural optimum with {der_label}<br>'
                           f'H={H_sel:.0%}, same constraint as (1)<br>'
                           f'Return = {der_y[_i2]:.1f}%  |  Std dev = {der_x[_i2]:.1f}%'),
                     font=dict(color='#ff6b00', size=9),
@@ -1049,12 +1049,12 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                   else (f"H={H_sel:.0%}, L={L:.0%}" if L is not None else f"H={H_sel:.0%}"))
         fig.add_trace(go.Scatter(
             x=[_p1_x], y=[_p1_y], mode='markers',
-            name=f'Portfolio (1) — Optimum without derivatives ({_h_str})',
+            name=f'Portfolio (1) — Behavioural optimum without derivatives ({_h_str})',
             legendrank=5,
             marker=dict(size=13, color='#10b981', symbol='diamond',
                         line=dict(width=0)),
             showlegend=True,
-            hovertemplate=f'<b>Portfolio (1)</b><br>Optimum without derivatives<br>{_h_str} ↔ {_lam_str}<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
+            hovertemplate=f'<b>Portfolio (1)</b><br>Behavioural optimum without derivatives<br>{_h_str} ↔ {_lam_str}<br>Std Dev: %{{x:.2f}}%<br>Expected Return: %{{y:.2f}}%<extra></extra>'
         ))
         fig.add_annotation(
             x=_p1_x, y=_p1_y,
@@ -1062,7 +1062,7 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             xref='x', yref='y', axref='pixel', ayref='pixel',
             showarrow=True, arrowhead=2, arrowcolor='#10b981',
             arrowwidth=1.5,
-            text=f'<b>Portfolio (1)</b><br>Optimum — no derivative<br>{_h_str} ↔ {_lam_str}<br>Return = {_p1_y:.1f}%  |  Std dev = {_p1_x:.1f}%',
+            text=f'<b>Portfolio (1)</b><br>Behavioural optimum — no derivative<br>{_h_str} ↔ {_lam_str}<br>Return = {_p1_y:.1f}%  |  Std dev = {_p1_x:.1f}%',
             font=dict(color='#10b981', size=9),
             bgcolor='rgba(13,17,23,0.9)',
             bordercolor='#10b981', borderwidth=1,
@@ -2179,8 +2179,8 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
 <div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#111111;font-size:.82rem">
 <b style="color:#1a6bbf">Up to four portfolios can be generated as output of the optimisation:</b><br><br>
 <b style="color:#a855f7">Portfolio (0)</b> — Markowitz mean-variance optimum (no derivative): the minimum-variance portfolio at Portfolio (1)'s expected return. It coincides with Portfolio (1) when Portfolio (1) is mean-variance efficient — directly demonstrating the MVT/MAT equivalence (shown whenever Portfolio (1) exists)<br>
-<b style="color:#10b981">Portfolio (1)</b> — Optimum portfolio without derivatives at the chosen constraint (H, α): mean-variance efficient via the mental-accounting framework, and coincides with Portfolio (0) when the implied λ equals 3.795 (the MVT/MAT equivalence)<br>
-<b style="color:#f59e0b">Portfolio (2)</b> — Optimum portfolio with derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
+<b style="color:#10b981">Portfolio (1)</b> — Behavioural optimum without derivatives at the chosen constraint (H, α): mean-variance efficient via the mental-accounting framework, and coincides with Portfolio (0) when the implied λ equals 3.795 (the MVT/MAT equivalence)<br>
+<b style="color:#f59e0b">Portfolio (2)</b> — Behavioural optimum with derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
 <b style="color:#e76f51">Portfolio (3)</b> — Portfolio with derivative and with the same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (indicative only)
 </div>
 ''', unsafe_allow_html=True)
