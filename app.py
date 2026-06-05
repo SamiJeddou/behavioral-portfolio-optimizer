@@ -453,6 +453,48 @@ EXPLANATIONS = {
         "In a behavioural portfolio it is useful when low-volatility environments are expected, "
         "providing income from small fluctuations while the mental-account constraint limits tail risk."
     ),
+    "Bull call spread (long call + short higher call)": (
+        "A bull call spread is long a call at a lower strike and short a call at a higher strike. "
+        "It gives bullish upside between the two strikes at a lower cost than a plain call, but caps "
+        "the gain above the upper strike. In a behavioural portfolio it offers cheaper, capped "
+        "participation in the underlying's rise while keeping the downside premium small."
+    ),
+    "Bear put spread (long put + short lower put)": (
+        "A bear put spread is long a put at a higher strike and short a put at a lower strike. "
+        "It provides downside protection (or a bearish bet) between the strikes at a lower cost than a "
+        "single put, with the protection capped below the lower strike. It is a cheaper way to satisfy "
+        "a mental-account downside constraint when only moderate declines are expected."
+    ),
+    "Long butterfly (calls)": (
+        "A long call butterfly is long one call at a low strike, short two calls at a middle strike, and "
+        "long one call at a high strike. It is a very low-cost bet that the underlying finishes near the "
+        "middle strike (a 'pin'), paying its maximum there and expiring worthless in the wings. It adds "
+        "a sharply peaked, positively skewed payoff to the portfolio at minimal premium."
+    ),
+    "Call condor": (
+        "A call condor is long a call at a low strike, short two calls at two middle strikes, and long a "
+        "call at a high strike. Like a butterfly but with a flat plateau of maximum payoff between the "
+        "inner strikes, it bets on the underlying staying within a range, at low cost and with capped "
+        "risk on both sides."
+    ),
+    "Reverse convertible (bond − short put)": (
+        "A reverse convertible combines a zero-coupon bond with a short put on the underlying. It pays a "
+        "high fixed coupon (the bond plus the put premium received) in exchange for taking the downside "
+        "below the put strike — the mirror image of a capital-guaranteed note. Upside is capped at the "
+        "coupon; principal is at risk if the underlying falls. A premium reflects the issuer's markup."
+    ),
+    "Discount certificate (capped underlying)": (
+        "A discount certificate gives exposure to the underlying purchased at a discount (financed by "
+        "selling a call), in exchange for capping the upside at the call strike. The discount provides a "
+        "partial downside buffer. It is built from a synthetic long underlying plus a short call, and an "
+        "optional premium reflects the issuer's markup."
+    ),
+    "Outperformance certificate (geared upside)": (
+        "An outperformance (participation) certificate gives full exposure to the underlying plus extra "
+        "geared participation above a strike (an additional long call), so it outperforms the underlying "
+        "on the upside while retaining full downside. It is built from a synthetic long underlying plus "
+        "an extra long call, with an optional premium for the issuer's markup."
+    ),
     # ── Risk measures ─────────────────────────────────────────────────────────
     "Value at Risk (VaR)": (
         "Value at Risk (VaR) at level α is the return threshold H such that losses exceed H with "
@@ -585,7 +627,9 @@ EXPLANATIONS = {
         "This thesis implements the full Das & Statman (2009) algorithm in R and extends it to "
         "all major derivative and structured product types: puts, calls, safety and aggressive collars, "
         "straddles, strangles, capital-guaranteed notes (capped and uncapped), and barrier-M notes. "
-        "This app is a Python reimplementation and extension of that work."
+        "This app is a Python reimplementation and extension of that work, adding further "
+        "instruments built on the same Black-Scholes pricing principle: bull and bear spreads, "
+        "a long butterfly and call condor, a reverse convertible, and discount and outperformance certificates."
     ),
 }
 
@@ -709,6 +753,13 @@ PREDEFINED_DERIVATIVES = {
     "Capital-guaranteed note — uncapped":            "cgn_uncapped",
     "Capital-guaranteed note — capped":              "cgn_capped",
     "Barrier-M note":                                "barrier_m",
+    "Bull call spread (long call + short higher call)": "bull_call_spread",
+    "Bear put spread (long put + short lower put)":   "bear_put_spread",
+    "Long butterfly (calls)":                         "butterfly_call",
+    "Call condor":                                    "condor_call",
+    "Reverse convertible (bond − short put)":         "reverse_convertible",
+    "Discount certificate (capped underlying)":       "discount_certificate",
+    "Outperformance certificate (geared upside)":     "outperformance_certificate",
     "🔧 Custom structured product":                  "custom",
 }
 
@@ -838,9 +889,54 @@ def fetch_tickers(tickers, start, end, freq):
     except Exception as e:
         return None, None, None, None, None, str(e), {}
 
+# Synthetic long underlying via put-call parity (prices to exactly 1.0, payoff = spot_T)
+_SYN_UNDERLYING = [
+    {"type": "long_call", "strike": 1.0},
+    {"type": "short_put",  "strike": 1.0},
+    {"type": "zcb",        "notional": 1.0},
+]
+_COMPONENT_PRESETS = {
+    "bull_call_spread", "bear_put_spread", "butterfly_call", "condor_call",
+    "reverse_convertible", "discount_certificate", "outperformance_certificate",
+}
+
+def preset_components(der_type, p):
+    """Map a preset instrument + its params to a list of pricer components."""
+    if der_type == "bull_call_spread":
+        return [{"type": "long_call", "strike": p["k1"]},
+                {"type": "short_call", "strike": p["k2"]}]
+    if der_type == "bear_put_spread":
+        return [{"type": "long_put", "strike": p["k1"]},
+                {"type": "short_put", "strike": p["k2"]}]
+    if der_type == "butterfly_call":
+        c, w = p["center"], p["width"]
+        return [{"type": "long_call", "strike": c - w},
+                {"type": "short_call", "strike": c},
+                {"type": "short_call", "strike": c},
+                {"type": "long_call", "strike": c + w}]
+    if der_type == "condor_call":
+        c, wi, wo = p["center"], p["w_in"], p["w_out"]
+        return [{"type": "long_call", "strike": c - wo},
+                {"type": "short_call", "strike": c - wi},
+                {"type": "short_call", "strike": c + wi},
+                {"type": "long_call", "strike": c + wo}]
+    if der_type == "reverse_convertible":
+        return [{"type": "zcb", "notional": 1.0},
+                {"type": "short_put", "strike": p["kp"]}]
+    if der_type == "discount_certificate":
+        return _SYN_UNDERLYING + [{"type": "short_call", "strike": p["kc"]}]
+    if der_type == "outperformance_certificate":
+        return _SYN_UNDERLYING + [{"type": "long_call", "strike": p["k"]}]
+    return []
+
 def build_der_config(der_type, der_params, sigs, underlying_idx):
+    # Defaults follow the thesis (vol = underlying's std dev, r = 3%, T = 1y);
+    # the sidebar sliders can override each of them.
     base = {"underlying_index": underlying_idx,
-            "vol": sigs[underlying_idx], "S0":1.0, "r":0.03, "T":1.0}
+            "vol": der_params.get("vol", sigs[underlying_idx]),
+            "S0": 1.0,
+            "r":  der_params.get("r", 0.03),
+            "T":  der_params.get("T", 1.0)}
     if der_type == "put":
         return {**base, "type":"put", "strike":der_params["strike"]}
     elif der_type == "call":
@@ -867,6 +963,10 @@ def build_der_config(der_type, der_params, sigs, underlying_idx):
     elif der_type == "barrier_m":
         return {**base, "type":"barrier_m",
                 "M":der_params["M"],"premium_bm":der_params["premium_bm"]}
+    elif der_type in _COMPONENT_PRESETS:
+        return {**base, "type": "custom",
+                "components": preset_components(der_type, der_params),
+                "premium": der_params.get("premium", 0.0)}
     elif der_type == "custom":
         return {**base, "type":"custom","components":der_params["components"]}
     return None
@@ -1488,6 +1588,36 @@ with st.sidebar:
         der_params["M"]         =st.slider("Barrier M (%)",10,60,40,5)/100
         der_params["premium_bm"]=st.slider("Premium (%)",0.0,20.0,10.0,1.0)/100
 
+    elif der_type=="bull_call_spread":
+        der_params["k1"]=st.slider("Lower call strike (K₁)",0.7,1.3,1.0,0.05)
+        der_params["k2"]=st.slider("Upper call strike (K₂)",0.9,2.0,1.3,0.05)
+        st.caption("Bullish, capped. Keep K₂ > K₁.")
+    elif der_type=="bear_put_spread":
+        der_params["k1"]=st.slider("Upper put strike (K₁)",0.7,1.3,1.0,0.05)
+        der_params["k2"]=st.slider("Lower put strike (K₂)",0.4,1.1,0.8,0.05)
+        st.caption("Bearish / cheaper hedge, capped. Keep K₂ < K₁.")
+    elif der_type=="butterfly_call":
+        der_params["center"]=st.slider("Centre strike",0.7,1.4,1.0,0.05)
+        der_params["width"] =st.slider("Wing width",0.05,0.5,0.15,0.05)
+        st.caption("Pays most when the underlying finishes near the centre strike.")
+    elif der_type=="condor_call":
+        der_params["center"]=st.slider("Centre strike",0.7,1.4,1.0,0.05)
+        der_params["w_in"] =st.slider("Inner half-width",0.05,0.30,0.10,0.05)
+        der_params["w_out"]=st.slider("Outer half-width",0.15,0.60,0.25,0.05)
+        st.caption("Flat maximum payoff between the inner strikes. Keep outer > inner.")
+    elif der_type=="reverse_convertible":
+        der_params["kp"]     =st.slider("Put strike (Kp)",0.5,1.1,0.9,0.05)
+        der_params["premium"]=st.slider("Issuer premium (%)",0.0,20.0,0.0,1.0)/100
+        st.caption("High coupon, capped upside; principal at risk below Kp.")
+    elif der_type=="discount_certificate":
+        der_params["kc"]     =st.slider("Cap — call strike (Kc)",1.0,1.8,1.2,0.05)
+        der_params["premium"]=st.slider("Issuer premium (%)",0.0,20.0,0.0,1.0)/100
+        st.caption("Underlying bought at a discount, upside capped at Kc.")
+    elif der_type=="outperformance_certificate":
+        der_params["k"]      =st.slider("Participation strike (K)",0.8,1.5,1.0,0.05)
+        der_params["premium"]=st.slider("Issuer premium (%)",0.0,20.0,0.0,1.0)/100
+        st.caption("Full downside, geared (>100%) upside above K.")
+
     elif der_type=="custom":
         st.markdown("**Build your structured product**")
         st.markdown("*Add components one by one:*")
@@ -1532,6 +1662,18 @@ with st.sidebar:
         else:
             data_valid=False
             st.info("Add at least one component to continue.")
+
+    if der_type in _COMPONENT_PRESETS and "underlying_idx" in der_params:
+        _volp = der_params.get("vol", sigs_in[der_params["underlying_idx"]])
+        try:
+            _figp = plot_payoff(
+                preset_components(der_type, der_params), _volp, 1.0,
+                der_params.get("r", 0.03), der_params.get("T", 1.0),
+                names_in[der_params["underlying_idx"]])
+            st.pyplot(_figp, use_container_width=True)
+            plt.close(_figp)
+        except Exception:
+            pass
 
     st.divider()
 
@@ -1868,7 +2010,7 @@ st.markdown(f'''
       <div style="padding:7px 10px;height:68px;display:flex;flex-direction:column;justify-content:flex-start;align-items:center;text-align:center">
         <div style="color:rgba(200,220,255,0.9);font-size:7.5px;font-weight:600;letter-spacing:0.12em;margin-bottom:3px;min-height:18px">DERIVATIVE TYPES</div>
         <div style="font-size:19px;font-weight:700;font-family:Georgia,serif;color:#a855f7">9+</div>
-        <div style="font-size:8px;margin-top:3px;color:rgba(150,180,220,0.55)">puts · calls · CGNs · barrier</div>
+        <div style="font-size:8px;margin-top:3px;color:rgba(150,180,220,0.55)">options · spreads · collars · notes · certificates</div>
         <div style="height:2px;margin-top:5px;border-radius:1px;background:#1a3a5c"><div style="width:85%;height:100%;border-radius:1px;background:#a855f7"></div></div>
       </div>
   </div>
@@ -3225,7 +3367,7 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
         unsafe_allow_html=True)
 
     st.markdown("### Supported derivatives & structured products")
-    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Type</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Description</th></tr></thead><tbody><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Put / Call</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Standard European options</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Safety collar</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long put + short call</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Aggressive collar</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + short put</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Straddle / Strangle</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + long put (same or different strikes)</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Capital-guaranteed note</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Uncapped or capped, with floor and participation rate</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Barrier-M note</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Corridor note with digital components</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Custom composer</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Build any payoff from calls, puts, digitals, and zero-coupon bonds</td></tr></tbody></table>''', unsafe_allow_html=True)
+    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Type</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Description</th></tr></thead><tbody><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Put / Call</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Standard European options</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Safety collar</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long put + short call</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Aggressive collar</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + short put</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Straddle / Strangle</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + long put (same or different strikes)</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Capital-guaranteed note</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Uncapped or capped, with floor and participation rate</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Barrier-M note</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Corridor note with digital components</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Bull call spread</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + short higher call — bullish, capped, lower cost than a call</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Bear put spread</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long put + short lower put — cheaper bearish hedge, capped</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long butterfly (calls)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long–short²–long calls — low-volatility &#8220;pin&#8221; bet, very cheap</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Call condor</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Four-strike range bet with a flat maximum payoff between the inner strikes</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Reverse convertible</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Zero-coupon bond − short put — high coupon, capped upside, principal at risk</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Discount certificate</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Synthetic underlying − short call — bought at a discount, upside capped</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Outperformance certificate</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Synthetic underlying + extra call — full downside, geared (&gt;100%) upside</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Custom composer</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Build any payoff from calls, puts, digitals, and zero-coupon bonds</td></tr></tbody></table>''', unsafe_allow_html=True)
 
     st.markdown("### Academic references")
     st.markdown("""
@@ -3271,6 +3413,8 @@ with tab3:
         "Derivatives & structured products": [
             "Put option", "Call option", "Safety collar", "Aggressive collar",
             "Straddle", "Strangle", "Capital-guaranteed note (CGN)", "Barrier-M note",
+            "Bull call spread", "Bear put spread", "Long butterfly", "Call condor",
+            "Reverse convertible", "Discount certificate", "Outperformance certificate",
             "Digital option", "Zero-coupon bond"
         ],
         "Risk measures": [
