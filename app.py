@@ -1045,33 +1045,27 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             bordercolor='#10b981', borderwidth=1,
             align='left', xanchor='left'
         )
-    elif mv_eq and False:  # disabled: the unconstrained MV optimum is NOT a feasible Portfolio (1); plotting it here contradicted the results table when the constrained optimum is infeasible. See the annotation below.
+    # ── Markowitz MV optimum (always shown when available) ───────────────────
+    # Distinct from the behavioural Portfolio (1): this is the unconstrained
+    # mean-variance optimum at the reference risk-aversion (lambda = 3.795),
+    # shown even when no behavioural optimum is feasible so the Markowitz
+    # reference is always visible. When a behavioural optimum exists and
+    # coincides with it (the equivalence case), the green diamond overlays it.
+    if mv_eq:
         fig.add_trace(go.Scatter(
             x=[mv_eq[0]], y=[mv_eq[1]], mode='markers',
-            name='Portfolio (1) — Equivalence point: MV = Behavioural (no derivatives) ↔ H=-10%, α=5%',
-            legendrank=5,
-            marker=dict(size=13, color='#10b981', symbol='diamond',
-                        line=dict(width=0)),
+            name='Markowitz MV optimum (λ=3.795, unconstrained by H/α)',
+            legendrank=6,
+            marker=dict(size=14, color='#3b82f6', symbol='circle',
+                        line=dict(width=2, color='#ffffff')),
             showlegend=True,
-            hovertemplate='<b>Portfolio (1) — Equivalence point</b><br>MV = Behavioural (no derivatives)<br>where λ=3.795 ↔ H=-10%, α=5%<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
+            hovertemplate='<b>Markowitz MV optimum</b><br>Unconstrained mean-variance optimum (λ=3.795)<br>Does not enforce the downside constraint (H, α)<br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
         ))
-        fig.add_annotation(
-            x=mv_eq[0], y=mv_eq[1],
-            ax=80, ay=70,
-            xref='x', yref='y', axref='pixel', ayref='pixel',
-            showarrow=True, arrowhead=2, arrowcolor='#10b981',
-            arrowwidth=1.5,
-            text=f'Portfolio (1) — Equivalence point<br>MV = Behavioural (no derivatives)<br>λ=3.795 ↔ H=-10%, α=5%<br>Return = {mv_eq[1]:.1f}%  |  Std dev = {mv_eq[0]:.1f}%',
-            font=dict(color='#10b981', size=9),
-            bgcolor='rgba(13,17,23,0.9)',
-            bordercolor='#10b981', borderwidth=1,
-            align='left', xanchor='left'
-        )
 
     if not nd_res_actual:
         fig.add_annotation(
             xref='paper', yref='paper', x=0.5, y=0.5,
-            text='No feasible Portfolio (1) at the selected H, alpha.<br>Widen H or relax alpha (see the panel below).',
+            text='No feasible Portfolio (1) at the selected H, alpha.<br>The blue point is the Markowitz MV optimum (it ignores the downside constraint).',
             showarrow=False,
             font=dict(color='#f0a500', size=11),
             bgcolor='rgba(13,17,23,0.9)', bordercolor='#f0a500', borderwidth=1,
@@ -1962,7 +1956,11 @@ The chart shows the efficient frontiers and up to three portfolio markers (see s
 <tr><td colspan="2" style="padding:.5rem .5rem .3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Portfolio markers</td></tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🟢 <strong>Green diamond</strong></td>
-  <td style="padding:.3rem .5rem"><strong>Portfolio (1)</strong> — Equivalence point: the unique portfolio where mean-variance and behavioural approaches yield exactly the same result. At H=-10%, α=5%, the implied risk-aversion is λ=3.795. Both curves meet here, confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010).</td>
+  <td style="padding:.3rem .5rem"><strong>Portfolio (1)</strong> — Behavioural optimum without derivatives at the selected H and α constraint. Shown only when a feasible portfolio exists; when it coincides with the Markowitz MV optimum it confirms the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010).</td>
+</tr>
+<tr style="border-bottom:1px solid #2a2a3a">
+  <td style="padding:.3rem .5rem;white-space:nowrap">🔵 <strong>Blue dot (white frame)</strong></td>
+  <td style="padding:.3rem .5rem"><strong>Markowitz MV optimum</strong> — the unconstrained mean-variance optimum at the reference risk-aversion (λ=3.795). Always shown, even when no behavioural optimum is feasible; it does not enforce the downside constraint (H, α).</td>
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🟠 <strong>Orange square (white frame)</strong></td>
