@@ -2285,6 +2285,19 @@ def plot_backtest_paths(dates, pv1, pv2, label2):
 
 tab1,tab_bt,tab2,tab3=st.tabs(["📊 Optimiser","🔬 Backtest","📖 About","📚 Glossary"])
 
+# Show the input sidebar only on the Optimiser tab. The active tab is client-side
+# state, so this is done in CSS: when any tab other than the first is selected,
+# hide the sidebar (and its collapsed reopen control). Purely cosmetic — the
+# optimiser's widgets still exist and work when you return to the Optimiser tab.
+# Requires Optimiser to remain the first tab; depends on Streamlit's tab DOM.
+st.markdown(
+    "<style>"
+    'body:has([data-baseweb="tab-list"] button[role="tab"]:not(:first-of-type)[aria-selected="true"]) section[data-testid="stSidebar"],'
+    'body:has([data-baseweb="tab-list"] button[role="tab"]:not(:first-of-type)[aria-selected="true"]) [data-testid="stSidebarCollapsedControl"]'
+    "{display:none !important;}"
+    "</style>",
+    unsafe_allow_html=True)
+
 
 with tab1:
     import os
