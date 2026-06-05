@@ -59,7 +59,7 @@ def con_put(vol, S0, r, T, K):
 # CUSTOM STRUCTURED PRODUCT PAYOFF
 # =============================================================================
 
-def compute_structured_payoff(spot_returns, components, vol, S0, r, T):
+def compute_structured_payoff(spot_returns, components, vol, S0, r, T, premium=0.0):
     """
     Compute returns of a custom structured product for each state.
 
@@ -116,6 +116,7 @@ def compute_structured_payoff(spot_returns, components, vol, S0, r, T):
     if price0 <= 0:
         price0 = 1.0  # fallback to avoid division by zero
 
+    price0 = price0 * (1.0 + premium)  # institutional markup over replication cost
     der_returns = (payoff - price0) / price0
     return der_returns, price0
 
@@ -164,7 +165,8 @@ def build_state_space(means, sigs, m=51, derivative_config=None):
         if dtype == 'custom':
             components = derivative_config['components']
             der_returns, _ = compute_structured_payoff(
-                mesh[:, sec_idx], components, vol, S0, r, T)
+                mesh[:, sec_idx], components, vol, S0, r, T,
+                premium=derivative_config.get('premium', 0.0))
             U[:, n_prime] = der_returns
 
         elif dtype == 'put':
