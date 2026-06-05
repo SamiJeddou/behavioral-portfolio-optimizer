@@ -561,8 +561,8 @@ EXPLANATIONS = {
         "This paper introduces the core algorithm used in this app. It shows how to construct "
         "optimal portfolios including derivatives under a mental-accounting downside constraint, "
         "using a discrete state space with Gaussian copula probabilities and a grid search optimizer. "
-        "It demonstrates that derivatives — especially capital-guaranteed notes — can substantially "
-        "improve portfolio expected returns while satisfying the same downside constraint."
+        "It demonstrates that including derivatives can improve "
+        "portfolio expected returns while satisfying the same downside constraint."
     ),
     "Das, Markowitz, Scheid & Statman (2010) JFQA": (
         "Das, Sanjiv, Harry Markowitz, Jonathan Scheid and Meir Statman (2010) — "

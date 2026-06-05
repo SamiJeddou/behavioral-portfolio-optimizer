@@ -23,7 +23,7 @@ The optimisation produces up to four portfolios for comparison:
 - **Portfolio (2) — Behavioural optimum with derivative, same mental-accounting & risk-aversion constraint (H, α ↔ λ)** — may reach higher expected returns by exploiting asymmetric derivative payoffs
 - **Portfolio (3) — Portfolio with derivative, same variance as Portfolio (1)** — interpolated from the derivative frontier at an equivalent risk level (indicative only)
 
-Under the default base case (H = -10%, α = 5%), a portfolio including an uncapped Capital-Guaranteed Note achieves **33.6% expected return** versus **10.2% without derivatives** under the same downside constraint.
+Under the default base case (H = -10%, α = 5%), the no-derivative behavioural optimum returns **10.2%**. Adding a derivative gives a modest improvement under the same downside constraint: an uncapped Capital-Guaranteed Note reaches about **11.4%** (+1.2pp), while the largest gain among the available instruments — a straddle — reaches about **12.1%** (+1.9pp).
 
 The threshold H ranges from -40% to -1%, making the framework applicable to highly volatile assets including **cryptocurrencies and digital assets**, emerging market equities, and other non-traditional instruments — extending the mental-accounting approach to today's broader investment universe.
 
@@ -194,7 +194,8 @@ POST /optimize
 | Configuration | Expected Return | Std Dev | Skewness |
 |---|---|---|---|
 | No derivative (H=-10%, α=5%) | 10.21% | 12.29% | 0.00 |
-| With CGN — floor=0%, uncapped (H=-10%, α=5%) | 33.57% | 35.35% | 1.03 |
+| With CGN — floor=0%, uncapped (H=-10%, α=5%) | 11.36% | 20.50% | — |
+| Best derivative — straddle (H=-10%, α=5%) | 12.12% | 15.90% | — |
 | Equivalence point: λ=3.795 ↔ H=-10%, α=5% | 10.23% | 12.30% | — |
 
 The baseline result (10.21%) matches the thesis mean-variance result (10.23%) to within **2 basis points**, confirming correct algorithm calibration.
