@@ -61,6 +61,34 @@ Each state is assigned a probability using a Gaussian (or Student-t) copula, cor
 
 ---
 
+## Constraint Methods & Resolutions
+
+There are two independent choices — the **constraint method** (what downside rule is enforced) and the **resolution / solver** (how the optimiser searches). Two routing conditions can override the resolution choice: the number of securities, and whether a derivative is present.
+
+### The three constraint / objective methods
+
+| Method | What it optimises | Best / recommended for |
+|---|---|---|
+| **VaR** (Method I) | max E[r] s.t. P(r < H) ≤ α — a probability-of-shortfall threshold | The thesis's primary method; most cases |
+| **ES — thesis-faithful** (default Method II) | ES-eligible grid seed, but the COBYLA refinement still targets the **VaR** penalty — faithfully reproduces the original R thesis | Reproducing the thesis tables exactly |
+| **Rigorous ES** | max E[r] s.t. ES ≥ L, with a genuinely **ES-aware** COBYLA penalty | Real decision-making — recovers up to ~2.4pp of E[r] the thesis method leaves unused (e.g. L = −15%: 15.5% vs 13.2%) |
+
+### The four resolutions / solvers — and where each applies
+
+| Resolution | VaR | ES (thesis) | Rigorous ES | Grid (m / m') | Speed / reliability | Best for |
+|---|---|---|---|---|---|---|
+| **Fast** | ✓ | ✓ | — | 21 / 15 | fastest; coarse, visible discretisation error | quick previews |
+| **Standard** | ✓ | ✓ | — | 35 / 50 | moderate; safe with derivatives | daily work, derivative cases |
+| **High precision** | ✓ | ✓ | — | 51 / 99 | slow (~15–30 min full frontier); thesis-grade | publication numbers, validation, derivative cases |
+| **Turbo** | ✓ *(n ≤ 4, no-derivative)* | ✗ | — | 51, coarse-to-fine | ~seconds (~60× faster than High); **unreliable with a derivative** (up to 32% disagreement) | fast no-derivative VaR frontier exploration |
+| **Rigorous-ES** (own mode, resolution fixed) | — | — | ✓ | 51 (fixed) | ~seconds; ES-aware | ES decision-making |
+
+*Legend: ✓ available · ✗ deliberately disabled · — not applicable (separate fixed-resolution mode).*
+
+**Routing rules that override the resolution choice.** Fast / Standard / High serve both **VaR** and **thesis-ES**; **Turbo** is **VaR-only** and live only for **≤ 4 total securities with no derivative** (it is hidden for ES and for 5+ securities); **Rigorous-ES** is a separate mode whose resolution is fixed at m = 51. The derivative counts toward the security total: **n ≤ 4 → exhaustive grid search**, **n ≥ 5 → differential evolution** (a stochastic global optimiser). Only Turbo's and Rigorous-ES's coarse-to-fine seeding is exposed to derivative basin-miss errors; the exhaustive-grid resolutions are immune to that and limited only by grid coarseness.
+
+---
+
 ## Supported Derivatives
 
 | Type | Description |
