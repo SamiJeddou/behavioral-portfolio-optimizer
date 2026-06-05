@@ -2032,6 +2032,15 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
 
 </div>
 """, unsafe_allow_html=True)
+        st.markdown('''
+<div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#111111;font-size:.82rem">
+<b style="color:#1a6bbf">Up to four portfolios can be generated as output of the optimisation:</b><br><br>
+<b style="color:#a855f7">Portfolio (0)</b> — Markowitz mean-variance optimum (no derivative): the minimum-variance portfolio at Portfolio (1)'s expected return. It coincides with Portfolio (1) when Portfolio (1) is mean-variance efficient — directly demonstrating the MVT/MAT equivalence (shown whenever Portfolio (1) exists)<br>
+<b style="color:#10b981">Portfolio (1)</b> — Behavioural optimum without derivatives at the chosen constraint (H, α): mean-variance efficient via the mental-accounting framework, and coincides with Portfolio (0) when the implied λ equals 3.795 (the MVT/MAT equivalence)<br>
+<b style="color:#f59e0b">Portfolio (2)</b> — Behavioural optimum with derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
+<b style="color:#e76f51">Portfolio (3)</b> — Portfolio with derivative and with the same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (indicative only)
+</div>
+''', unsafe_allow_html=True)
         st.markdown("""
 <div style="border:1px solid #2a4a6a;border-radius:8px;padding:.9rem 1.2rem;margin-top:.6rem;color:#111111">
 
