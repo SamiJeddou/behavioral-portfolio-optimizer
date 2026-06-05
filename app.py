@@ -3500,28 +3500,38 @@ with tab_bt:
     st.markdown("---")
     st.markdown("#### Inputs")
 
+    _BT_RULE = "<hr style='border:none;border-top:1px solid #30363d;margin:1.2rem 0 0.55rem'>"
+    def _bt_head(t, rule=True):
+        st.markdown((_BT_RULE if rule else "")
+                    + "<div style='color:#4a9eff;font-weight:700;font-size:1rem;"
+                      "margin-bottom:0.35rem'>" + t + "</div>", unsafe_allow_html=True)
+
+    _bt_head("Securities & settings", rule=False)
     bt_tickers_raw = st.text_input(
         "Tickers (comma-separated)", value="AAPL, MSFT, JPM, TLT", key="bt_tickers",
-        help="Yahoo Finance symbols. The riskiest one is used as the derivative's underlying.")
-
-    c1, c2 = st.columns(2)
-    with c1:
-        st.markdown("**Construction period**  \n*the portfolio is built using data from this period*")
-        bt_con_start = st.date_input("From", value=_dt.date(2012, 1, 1), key="bt_con_start")
-        bt_con_end   = st.date_input("To",   value=_dt.date(2016, 12, 31), key="bt_con_end")
-    with c2:
-        st.markdown("**Evaluation period**  \n*the fixed portfolio is then held and measured over this period*")
-        bt_eval_start = st.date_input("From", value=_dt.date(2017, 1, 1), key="bt_eval_start")
-        bt_eval_end   = st.date_input("To",   value=_dt.date(2017, 12, 31), key="bt_eval_end")
-
+        help="Yahoo Finance symbols. Pick the option's underlying in the Derivative section below.")
     c3, c4 = st.columns(2)
     with c3:
         bt_freq = st.selectbox("Return frequency", ["Daily", "Monthly"], index=0, key="bt_freq")
     with c4:
         bt_res = st.selectbox("Optimiser resolution", ["Fast", "Standard", "High"], index=1, key="bt_res")
 
+    st.markdown(_BT_RULE, unsafe_allow_html=True)
+    c1, c2 = st.columns(2)
+    with c1:
+        _bt_head("Construction period", rule=False)
+        st.caption("the portfolio is built using data from this period")
+        bt_con_start = st.date_input("From", value=_dt.date(2012, 1, 1), key="bt_con_start")
+        bt_con_end   = st.date_input("To",   value=_dt.date(2016, 12, 31), key="bt_con_end")
+    with c2:
+        _bt_head("Evaluation period", rule=False)
+        st.caption("the fixed portfolio is then held and measured over this period")
+        bt_eval_start = st.date_input("From", value=_dt.date(2017, 1, 1), key="bt_eval_start")
+        bt_eval_end   = st.date_input("To",   value=_dt.date(2017, 12, 31), key="bt_eval_end")
+
+    _bt_head("Derivative")
     bt_labels = [lbl for lbl, t in PREDEFINED_DERIVATIVES.items() if t in _BT_SUPPORTED]
-    bt_label = st.selectbox("Derivative", bt_labels, index=bt_labels.index("Put option")
+    bt_label = st.selectbox("Instrument", bt_labels, index=bt_labels.index("Put option")
                             if "Put option" in bt_labels else 0, key="bt_der")
     bt_dtype = PREDEFINED_DERIVATIVES[bt_label]
 
@@ -3566,8 +3576,9 @@ with tab_bt:
         help="Which security the option is written on. Auto picks the highest-volatility "
              "holding (thesis convention); or pin it to a specific ticker.")
 
+    _bt_head("Risk measure")
     bt_method = st.selectbox(
-        "Risk measure (constraint)",
+        "Constraint",
         ["Value-at-Risk (VaR)", "Expected Shortfall — thesis", "Rigorous ES — beyond thesis"],
         index=0, key="bt_method",
         help="VaR caps the probability of finishing below H; ES floors the average loss in "
@@ -3588,6 +3599,7 @@ with tab_bt:
                          -40, 0, -15, 1, format="%d%%", key="bt_L") / 100.0
         bt_alpha = 0.05
 
+    st.markdown(_BT_RULE, unsafe_allow_html=True)
     run_bt = st.button("▶  Run backtest", type="primary", key="bt_run")
 
     if run_bt:
