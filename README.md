@@ -16,11 +16,12 @@ This project implements a **behavioural portfolio optimisation algorithm** that 
 - Proving the **equivalence between mean-variance and mental-accounting** optimisation at a given implied risk-aversion coefficient λ
 - Embedding a **hedging benefit** within the portfolio construction process itself — incorporating derivatives can simultaneously improve expected return and provide downside protection, with the optimal derivative weight endogenously determined by the downside constraint rather than imposed as an external hedge ratio
 
-The app provides three portfolio perspectives for comparison:
+The optimisation produces up to four portfolios for comparison:
 
-- **❶ No derivative** — optimal portfolio under the mental-account constraint without derivatives
-- **❷ With derivative, same mental-accounting & risk-aversion constraint (H, α ↔ λ)** — optimal portfolio including the selected derivative, under the same downside constraint (H, α), equivalent to the same risk-aversion λ. This may achieve higher expected return but typically at higher variance, as the derivative satisfies the constraint more efficiently
-- **❸ With derivative, same variance as ❶ (no-derivative portfolio)** — interpolated from the derivative frontier at the same standard deviation as portfolio ❶, showing the potential return gain from derivatives at an equivalent risk level
+- **Portfolio (0) — Markowitz mean-variance optimum (no derivative)** — the minimum-variance portfolio at Portfolio (1)'s expected return. It coincides with Portfolio (1) when Portfolio (1) is mean-variance efficient, directly demonstrating the MVT/MAT equivalence (shown whenever Portfolio (1) exists)
+- **Portfolio (1) — Behavioural optimum without derivatives at the chosen constraint (H, α)** — mean-variance efficient via the mental-accounting framework; coincides with Portfolio (0) when the implied λ equals 3.795 (the MVT/MAT equivalence)
+- **Portfolio (2) — Behavioural optimum with derivative, same mental-accounting & risk-aversion constraint (H, α ↔ λ)** — may reach higher expected returns by exploiting asymmetric derivative payoffs
+- **Portfolio (3) — Portfolio with derivative, same variance as Portfolio (1)** — interpolated from the derivative frontier at an equivalent risk level (indicative only)
 
 Under the default base case (H = -10%, α = 5%), a portfolio including an uncapped Capital-Guaranteed Note achieves **33.6% expected return** versus **10.2% without derivatives** under the same downside constraint.
 
