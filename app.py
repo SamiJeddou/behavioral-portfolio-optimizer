@@ -3839,11 +3839,12 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                            3, 15, 5, 1, key="mc_dof")
 
     _mc_head("Derivatives  (optional — add multiple)")
-    st.caption("Add one row per derivative. Strike and Strike-2 are fractions of the entry "
-               "spot (1.0); Strike-2 is used only by strangle and the spreads. Maturity defaults "
-               "to the 1-year horizon (settled at intrinsic); set it higher to mark the option to "
-               "market at the horizon with its remaining life. Implied vol and rate are optional — "
-               "blank uses the underlying's own volatility and a 3% rate.")
+    st.caption("Add one row per derivative. New rows are pre-filled with sensible defaults — "
+               "strike 1.00 (at-the-money), maturity 1 year (settled at intrinsic at the horizon; "
+               "raise it to mark the option to market with its remaining life) and a 3% rate — all "
+               "editable. Strike-2 is used only by strangle and the spreads. Leave Impl. vol blank "
+               "to price each option with its underlying's own volatility (consistent with the "
+               "scenarios); enter a value to override.")
     import pandas as _pd
     _mc_der_template = _pd.DataFrame(
         {"Type": _pd.Series(dtype="str"), "Underlying": _pd.Series(dtype="str"),
@@ -3858,20 +3859,20 @@ After a run, the results show a details box, colour-coded weight bars, and an in
             "Underlying": st.column_config.SelectboxColumn(
                 "Underlying", options=(_mc_undl_opts if _mc_undl_opts else ["(enter tickers)"]), width="small"),
             "Strike": st.column_config.NumberColumn("Strike (×)", min_value=0.1, max_value=3.0,
-                                                    step=0.05, format="%.2f"),
+                                                    step=0.05, format="%.2f", default=1.0),
             "Strike2": st.column_config.NumberColumn("Strike-2 (×)", min_value=0.1, max_value=3.0,
                                                      step=0.05, format="%.2f"),
             "Maturity": st.column_config.NumberColumn(
-                "Maturity (yr)", min_value=1.0, max_value=5.0, step=0.25, format="%.2f",
+                "Maturity (yr)", min_value=1.0, max_value=5.0, step=0.25, format="%.2f", default=1.0,
                 help="Option maturity in years. 1.0 = expires at the 1-year horizon (settled at "
                      "intrinsic). Above 1, the option is marked to market at the horizon using its "
                      "remaining life."),
             "ImplVol": st.column_config.NumberColumn(
-                "Impl. vol (%)", min_value=1.0, max_value=200.0, step=1.0, format="%.0f",
+                "Impl. vol % (auto)", min_value=1.0, max_value=200.0, step=1.0, format="%.0f",
                 help="Implied volatility for pricing. Blank uses the underlying's own volatility "
                      "(arbitrage-consistent with the scenarios)."),
             "Rate": st.column_config.NumberColumn(
-                "Rate (%)", min_value=0.0, max_value=20.0, step=0.25, format="%.2f",
+                "Rate (%)", min_value=0.0, max_value=20.0, step=0.25, format="%.2f", default=3.0,
                 help="Risk-free rate for option pricing. Blank = 3%."),
         })
 
