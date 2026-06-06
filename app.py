@@ -4007,6 +4007,27 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                         unsafe_allow_html=True)
             if der_warn:
                 st.warning("Skipped derivative rows: " + "; ".join(der_warn))
+            if der_specs:
+                _dp = []
+                _sig_arr = np.array(sigs, dtype=float)
+                for d in der_specs:
+                    _ui = d["underlying_idx"]; _ov = d.get("vol_override")
+                    _vol = _ov if _ov is not None else float(_sig_arr[_ui])
+                    _voltxt = (f"{_vol*100:.1f}%" if _ov is not None
+                               else f"{_vol*100:.1f}% (auto \u2014 {names[_ui]} \u03c3)")
+                    _p = d["params"]
+                    if "strike" in _p:
+                        _ks = f"strike {_p['strike']:.2f}\u00d7"
+                    elif "strike_kp" in _p:
+                        _ks = f"strikes {_p['strike_kp']:.2f}\u00d7 / {_p['strike_kc']:.2f}\u00d7"
+                    elif "k1" in _p:
+                        _ks = f"strikes {_p['k1']:.2f}\u00d7 / {_p['k2']:.2f}\u00d7"
+                    else:
+                        _ks = "\u2014"
+                    _dp.append(f"\u2022 **{d['label']}** \u2014 {_ks}, maturity {d['T']:.2f} y, "
+                               f"vol {_voltxt}, rate {d['r']*100:.1f}%")
+                with st.expander(f"Derivative pricing used ({len(der_specs)})", expanded=True):
+                    st.markdown("  \n".join(_dp))
             if w is None:
                 st.error(f"No feasible portfolio reaches an ES of {mc_L:.0%} for this universe. "
                          f"Loosen the floor (more negative L) or change the inputs.")
