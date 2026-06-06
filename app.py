@@ -3924,12 +3924,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                            + (f" + **{K} derivative(s)**" if K else "")
                            + f".  Scenarios: {int(mc_S):,} ({copula}).  "
                            f"Constraint: ES at α={mc_alpha:.0%} ≥ {mc_L:.0%}.")
-                cR1, cR2, cR3 = st.columns(3)
-                cR1.metric("Expected return", f"{er:.2%}")
-                cR2.metric("Realised ES (tail avg)", f"{es:.2%}")
-                cR3.metric("Securities / derivatives", f"{N} / {K}")
-
-                # ── details text box (mirrors the optimiser's P0–P3 boxes) ──
+                # portfolio stats for the details box
                 _port = R_full @ w
                 _sig = float(_port.std())
                 _mn = float(_port.mean())
@@ -3941,7 +3936,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                 _wmax_txt = (f" · max weight/asset {int(round((mc_wmax or 1)*100))}%" if mc_wmax else "")
                 _univ = (f"{N} securit{'y' if N == 1 else 'ies'}"
                          + (f" + {K} derivative{'s' if K != 1 else ''}" if K else ""))
-                st.markdown(
+                _detbox = (
                     '<div style="background:#0d1a2e;border:1px solid #4a9eff;border-radius:8px;'
                     'padding:.8rem 1.1rem;margin:.2rem 0 .9rem">'
                     '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.5rem">'
@@ -3958,41 +3953,20 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                     f'<b>Objective:</b> maximise E[r] subject to ES ≥ {mc_L*100:.0f}%<br>'
                     '<span style="color:#8b949e;font-size:.8rem">Approximate scenario-based optimum '
                     '(CVaR linear program) — complements the exact grid engine.</span>'
-                    '</div></div>', unsafe_allow_html=True)
+                    '</div></div>')
 
-                # frontier computed once, shown beside the weights
+                # frontier computed once
                 with st.spinner("Tracing the return / tail-risk frontier…"):
                     _floors = sorted(set([-0.30, -0.25, -0.20, -0.15, -0.10, -0.05]
                                          + [round(float(mc_L), 4)]))
                     fr = mc_frontier(R_full, mc_alpha, _floors, w_max=mc_wmax)
                 _okfr = [r for r in fr if r["ok"]]
 
-                col_w, col_c = st.columns([1, 1.25])
-                with col_w:
-                    st.markdown('<div style="font-weight:600;font-size:.95rem;margin:.4rem 0 .5rem">'
-                                'Portfolio weights</div>', unsafe_allow_html=True)
-                    _rows = []
-                    for i in range(len(labels)):
-                        is_der = i >= N
-                        _col = "#f59e0b" if is_der else DONUT_COLORS[i % len(DONUT_COLORS)]
-                        _rows.append((labels[i], float(w[i]), is_der, _col))
-                    _rows = [r for r in _rows if abs(r[1]) > 1e-4]
-                    _rows.sort(key=lambda r: r[1], reverse=True)
-                    _bar = ""
-                    for lbl, wi, is_der, _c in _rows:
-                        pct = wi * 100.0
-                        width = max(0.0, min(100.0, pct))
-                        _bar += (
-                            f'<div style="margin-bottom:.45rem">'
-                            f'<div><span style="color:{_c};font-weight:600">{lbl}</span>'
-                            f'<span style="color:{_c}"> — {pct:.1f}%</span></div>'
-                            f'<div style="height:7px;background:#1a2a3a;border-radius:3px;margin-top:3px">'
-                            f'<div style="height:7px;width:{width:.1f}%;background:{_c};border-radius:3px"></div>'
-                            f'</div></div>')
-                    st.markdown(_bar, unsafe_allow_html=True)
-                    if K:
-                        st.caption("Each security has its own colour; amber bars are derivatives.")
-                with col_c:
+                # Row A: details box (left) + frontier chart (right)
+                colA_l, colA_r = st.columns([1, 1.2])
+                with colA_l:
+                    st.markdown(_detbox, unsafe_allow_html=True)
+                with colA_r:
                     if _okfr:
                         _drawn = False
                         try:
@@ -4077,6 +4051,37 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                                 st.caption(f"(frontier chart unavailable: {_fe})")
                     else:
                         st.caption("No feasible frontier points for these settings.")
+
+                # Row B: metrics (left) + portfolio weights (right)
+                colB_l, colB_r = st.columns([1, 2])
+                with colB_l:
+                    st.metric("Expected return", f"{er:.2%}")
+                    st.metric("Realised ES (tail avg)", f"{es:.2%}")
+                    st.metric("Securities / derivatives", f"{N} / {K}")
+                with colB_r:
+                    st.markdown('<div style="font-weight:600;font-size:.95rem;margin:.4rem 0 .5rem">'
+                                'Portfolio weights</div>', unsafe_allow_html=True)
+                    _rows = []
+                    for i in range(len(labels)):
+                        is_der = i >= N
+                        _col = "#f59e0b" if is_der else DONUT_COLORS[i % len(DONUT_COLORS)]
+                        _rows.append((labels[i], float(w[i]), is_der, _col))
+                    _rows = [r for r in _rows if abs(r[1]) > 1e-4]
+                    _rows.sort(key=lambda r: r[1], reverse=True)
+                    _bar = ""
+                    for lbl, wi, is_der, _c in _rows:
+                        pct = wi * 100.0
+                        width = max(0.0, min(100.0, pct))
+                        _bar += (
+                            f'<div style="margin-bottom:.45rem">'
+                            f'<div><span style="color:{_c};font-weight:600">{lbl}</span>'
+                            f'<span style="color:{_c}"> — {pct:.1f}%</span></div>'
+                            f'<div style="height:7px;background:#1a2a3a;border-radius:3px;margin-top:3px">'
+                            f'<div style="height:7px;width:{width:.1f}%;background:{_c};border-radius:3px"></div>'
+                            f'</div></div>')
+                    st.markdown(_bar, unsafe_allow_html=True)
+                    if K:
+                        st.caption("Each security has its own colour; amber bars are derivatives.")
 
             # ---- validation panel ----
             if mc_validate:
