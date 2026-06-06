@@ -3839,31 +3839,35 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                            3, 15, 5, 1, key="mc_dof")
 
     _mc_head("Derivatives  (optional — add multiple)")
-    st.caption("Add one row per derivative. New rows are pre-filled with sensible defaults — "
-               "strike 1.00 (at-the-money), maturity 1 year (settled at intrinsic at the horizon; "
-               "raise it to mark the option to market with its remaining life) and a 3% rate — all "
-               "editable. Strike-2 is used only by strangle and the spreads. Leave Impl. vol blank "
-               "to price each option with its underlying's own volatility (consistent with the "
-               "scenarios); enter a value to override.")
+    st.caption("Add one row per derivative. Pick a Type first; strike (1.00, at-the-money), "
+               "maturity (1 year, settled at intrinsic at the horizon — raise it to mark the option "
+               "to market with its remaining life) and rate (3%) then fill in automatically and stay "
+               "editable. Strike-2 is used only by strangle and the spreads. Leave Impl. vol blank to "
+               "price each option with its underlying's own volatility (consistent with the scenarios); "
+               "enter a value to override.")
     import pandas as _pd
     _mc_der_template = _pd.DataFrame(
         {"Type": _pd.Series(dtype="str"), "Underlying": _pd.Series(dtype="str"),
          "Strike": _pd.Series(dtype="float"), "Strike2": _pd.Series(dtype="float"),
          "Maturity": _pd.Series(dtype="float"), "ImplVol": _pd.Series(dtype="float"),
          "Rate": _pd.Series(dtype="float")})
-    mc_der_table = st.data_editor(
-        _mc_der_template, num_rows="dynamic", key="mc_der_table", use_container_width=True,
+    if "mc_der_df" not in st.session_state:
+        st.session_state["mc_der_df"] = _mc_der_template.copy()
+        st.session_state["mc_der_nonce"] = 0
+    _mc_edited = st.data_editor(
+        st.session_state["mc_der_df"], num_rows="dynamic",
+        key=f"mc_der_editor_{st.session_state['mc_der_nonce']}", use_container_width=True,
         column_config={
             "Type": st.column_config.SelectboxColumn("Type", options=list(MC_DER_TYPES.keys()),
                                                      width="medium"),
             "Underlying": st.column_config.SelectboxColumn(
                 "Underlying", options=(_mc_undl_opts if _mc_undl_opts else ["(enter tickers)"]), width="small"),
             "Strike": st.column_config.NumberColumn("Strike (×)", min_value=0.1, max_value=3.0,
-                                                    step=0.05, format="%.2f", default=1.0),
+                                                    step=0.05, format="%.2f"),
             "Strike2": st.column_config.NumberColumn("Strike-2 (×)", min_value=0.1, max_value=3.0,
                                                      step=0.05, format="%.2f"),
             "Maturity": st.column_config.NumberColumn(
-                "Maturity (yr)", min_value=1.0, max_value=5.0, step=0.25, format="%.2f", default=1.0,
+                "Maturity (yr)", min_value=1.0, max_value=5.0, step=0.25, format="%.2f",
                 help="Option maturity in years. 1.0 = expires at the 1-year horizon (settled at "
                      "intrinsic). Above 1, the option is marked to market at the horizon using its "
                      "remaining life."),
@@ -3872,9 +3876,26 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                 help="Implied volatility for pricing. Blank uses the underlying's own volatility "
                      "(arbitrage-consistent with the scenarios)."),
             "Rate": st.column_config.NumberColumn(
-                "Rate (%)", min_value=0.0, max_value=20.0, step=0.25, format="%.2f", default=3.0,
+                "Rate (%)", min_value=0.0, max_value=20.0, step=0.25, format="%.2f",
                 help="Risk-free rate for option pricing. Blank = 3%."),
         })
+
+    # Fill per-row defaults only once a derivative Type is chosen (the blank "add"
+    # row stays empty until then). A nonce-keyed editor reloads cleanly after a fill.
+    _mc_filled = _mc_edited.copy()
+    _mc_has_type = _mc_filled["Type"].notna() & (_mc_filled["Type"].astype(str).str.strip() != "")
+    _mc_changed = False
+    for _c, _dv in (("Strike", 1.0), ("Maturity", 1.0), ("Rate", 3.0)):
+        _need = _mc_has_type & _mc_filled[_c].isna()
+        if bool(_need.any()):
+            _mc_filled.loc[_need, _c] = _dv
+            _mc_changed = True
+    if _mc_changed:
+        st.session_state["mc_der_df"] = _mc_filled
+        st.session_state["mc_der_nonce"] += 1
+        st.rerun()
+    st.session_state["mc_der_df"] = _mc_edited
+    mc_der_table = _mc_edited
 
     _mc_head("Constraint")
     cmc1, cmc2, cmc3 = st.columns(3)
