@@ -3017,7 +3017,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
 
 
             with col_chart:
-                st.plotly_chart(fig_plotly, use_container_width=True, config={'editable': True, 'displayModeBar': True})
+                st.plotly_chart(fig_plotly, use_container_width=True, config={'editable': False, 'displayModeBar': True})
 
         # ── Reading the chart — full width below columns ──────────────────────
         st.markdown(
@@ -3074,7 +3074,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
             if st.session_state.get('_fig_plotly'):
                 st.plotly_chart(st.session_state['_fig_plotly'],
                                use_container_width=True,
-                               config={'editable': True, 'displayModeBar': True})
+                               config={'editable': False, 'displayModeBar': True})
 
     if _run_active and (_needs_compute or _render_from_cache):
         # ── Results ───────────────────────────────────────────────────────────────
@@ -4110,8 +4110,10 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                                             borderwidth=1, font=dict(color="white", size=9), x=0.01, y=0.99),
                                 hoverlabel=dict(bgcolor="#1a1a2e", bordercolor="#1a6bbf",
                                                 font=dict(color="white", size=11)))
-                            fig.update_xaxes(showspikes=True, spikethickness=1)
-                            fig.update_yaxes(showspikes=True, spikethickness=1)
+                            fig.update_xaxes(showgrid=True, gridcolor="#21262d", gridwidth=1,
+                                             showspikes=True, spikethickness=1)
+                            fig.update_yaxes(showgrid=True, gridcolor="#21262d", gridwidth=1,
+                                             showspikes=True, spikethickness=1)
                             _dtxt = f"{N} securities" + (f" + {K} deriv." if K else "")
                             fig.add_annotation(
                                 x=mc_L * 100, y=er * 100, ax=46, ay=-58,
@@ -4126,7 +4128,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                                 bgcolor="rgba(13,17,23,0.92)", bordercolor="#f59e0b", borderwidth=1,
                                 align="left", xanchor="left")
                             st.plotly_chart(fig, use_container_width=True,
-                                            config={'editable': True, 'displayModeBar': True})
+                                            config={'editable': False, 'displayModeBar': True})
                             st.caption("⭐ marks the Scalable CVaR optimum (your resulting portfolio). "
                                        "Hover any point for its coordinates; drag to zoom.")
                             _drawn = True
