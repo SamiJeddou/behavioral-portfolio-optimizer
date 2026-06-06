@@ -3497,7 +3497,16 @@ with tab_bt:
             "only be checked against a distribution of realised returns.\n\n"
             "In short: held-to-maturity answers *“did it end up where we expected?”*; "
             "mark-to-market answers *“did it **behave** — return **and** risk — the way we "
-            "expected along the way?”*"
+            "expected along the way?”*\n\n"
+            "**One instrument is excluded — Barrier-M.** Marking to market only gives a "
+            "comparable expected-vs-realised picture when both sides use the same return "
+            "convention. Every instrument here defines its return *net* — (payoff − cost) / cost "
+            "— except the Barrier-M note, whose thesis return is *gross* — payoff / cost, with "
+            "no −1. If it were dropped in unchanged, its realised (net) value path would land "
+            "about 100 points below its gross *expected* figure, purely from the convention "
+            "mismatch rather than performance. (It is otherwise European and perfectly markable; "
+            "the issue is the gross-vs-net basis, not path dependence.) Reconciling that is a "
+            "deliberate next step, so Barrier-M is left out for now."
         )
 
     with st.expander("⚠️  Assumptions & limitations"):
