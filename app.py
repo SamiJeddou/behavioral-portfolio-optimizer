@@ -3920,10 +3920,6 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                          f"Loosen the floor (more negative L) or change the inputs.")
             else:
                 K = len(labels) - N
-                st.caption(f"Universe: **{N} securities**"
-                           + (f" + **{K} derivative(s)**" if K else "")
-                           + f".  Scenarios: {int(mc_S):,} ({copula}).  "
-                           f"Constraint: ES at α={mc_alpha:.0%} ≥ {mc_L:.0%}.")
                 # portfolio stats for the details box
                 _port = R_full @ w
                 _sig = float(_port.std())
@@ -3938,10 +3934,9 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                          + (f" + {K} derivative{'s' if K != 1 else ''}" if K else ""))
                 _detbox = (
                     '<div style="background:#0d1a2e;border:1px solid #4a9eff;border-radius:8px;'
-                    'padding:.8rem 1.1rem;margin:.2rem 0 .9rem">'
+                    'padding:.8rem 1.1rem;margin:.2rem 0 .9rem;min-height:400px;box-sizing:border-box">'
                     '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.5rem">'
-                    '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;'
-                    'background:#4a9eff;border:2px solid white;margin-right:.45rem;vertical-align:middle"></span>'
+                    '<span style="color:#f59e0b;font-size:1.05rem;margin-right:.4rem;vertical-align:middle">★</span>' 
                     'Scalable CVaR optimum — Monte-Carlo</div>'
                     '<div style="color:#c9d1d9;font-size:.86rem;line-height:1.75">'
                     f'<b>Expected return:</b> {er*100:.2f}% &nbsp;·&nbsp; <b>Volatility:</b> {_sig*100:.2f}% '
@@ -3963,7 +3958,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                 _okfr = [r for r in fr if r["ok"]]
 
                 # Row A: details box (left) + frontier chart (right)
-                colA_l, colA_r = st.columns([1, 1.2])
+                colA_l, colA_r = st.columns([1, 1])
                 with colA_l:
                     st.markdown(_detbox, unsafe_allow_html=True)
                 with colA_r:
