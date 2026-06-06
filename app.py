@@ -2137,6 +2137,7 @@ st.markdown("<div style='margin-top:2.5rem'></div>", unsafe_allow_html=True)
 # normalisations and are deferred to a later iteration.
 _BT_SUPPORTED = {
     "put", "call", "straddle", "strangle",
+    "safety_collar", "aggressive_collar", "cgn_uncapped", "cgn_capped",
     "bull_call_spread", "bear_put_spread", "butterfly_call", "condor_call",
     "reverse_convertible", "discount_certificate", "outperformance_certificate",
 }
@@ -2191,52 +2192,73 @@ def stats_from_prices(prices, freq):
     return means, sigs, corr, names, factor
 
 def _bt_legs(der_type, der_params):
-    """Return (legs, premium) for the v1 backtest, or (None, None) if unsupported.
-    Strikes are expressed as fractions of the entry spot (S0 = 1)."""
+    """Return (legs, norm_mode, premium) for the backtest, or (None, None, None) if
+    unsupported. Strikes are fractions of the entry spot (S0 = 1). norm_mode is
+    'gross' for collars (engine divides the return by P0+C0) else 'net'."""
     prem = float(der_params.get("premium", 0.0))
     if der_type == "call":
-        return [{"type": "long_call", "strike": der_params["strike"]}], 0.0
+        return [{"type": "long_call", "strike": der_params["strike"]}], "net", 0.0
     if der_type == "put":
-        return [{"type": "long_put", "strike": der_params["strike"]}], 0.0
+        return [{"type": "long_put", "strike": der_params["strike"]}], "net", 0.0
     if der_type == "straddle":
         K = der_params["strike"]
-        return [{"type": "long_call", "strike": K}, {"type": "long_put", "strike": K}], 0.0
+        return [{"type": "long_call", "strike": K}, {"type": "long_put", "strike": K}], "net", 0.0
     if der_type == "strangle":
         return [{"type": "long_put", "strike": der_params["strike_kp"]},
-                {"type": "long_call", "strike": der_params["strike_kc"]}], 0.0
+                {"type": "long_call", "strike": der_params["strike_kc"]}], "net", 0.0
+    if der_type == "safety_collar":
+        return [{"type": "long_put", "strike": der_params["strike_p"]},
+                {"type": "short_call", "strike": der_params["strike_c"]}], "gross", 0.0
+    if der_type == "aggressive_collar":
+        return [{"type": "long_call", "strike": der_params["strike_c"]},
+                {"type": "short_put", "strike": der_params["strike_p"]}], "gross", 0.0
+    if der_type in ("cgn_uncapped", "cgn_capped"):
+        f = der_params["floor"]; y = der_params["participation"]
+        legs = [{"type": "zcb", "notional": 1.0 + f},
+                {"type": "long_call", "strike": 1.0 + f, "qty": y}]
+        if der_type == "cgn_capped":
+            legs.append({"type": "short_call", "strike": 1.0 + der_params["cap"], "qty": y})
+        return legs, "net", float(der_params.get("premium", 0.0))
     if der_type in _COMPONENT_PRESETS:
-        return preset_components(der_type, der_params), prem
-    return None, None
+        return preset_components(der_type, der_params), "net", prem
+    return None, None, None
 
 def _leg_value(leg, s, remT, vol, r):
-    """Signed Black-Scholes value of one leg at spot s with remaining maturity remT."""
+    """Signed Black-Scholes value of one leg at spot s with remaining maturity remT.
+    Honours an optional 'qty' multiplier (e.g. CGN participation rate)."""
+    q = float(leg.get("qty", 1.0))
     t = leg["type"]
     if t == "zcb":
-        return float(leg.get("notional", 1.0)) * np.exp(-r * remT)
+        return q * float(leg.get("notional", 1.0)) * np.exp(-r * remT)
     K = leg["strike"]
-    if t == "long_call":  return  bs_call(vol, s, r, remT, K)
-    if t == "short_call": return -bs_call(vol, s, r, remT, K)
-    if t == "long_put":   return  bs_put(vol, s, r, remT, K)
-    if t == "short_put":  return -bs_put(vol, s, r, remT, K)
+    if t == "long_call":  return  q * bs_call(vol, s, r, remT, K)
+    if t == "short_call": return -q * bs_call(vol, s, r, remT, K)
+    if t == "long_put":   return  q * bs_put(vol, s, r, remT, K)
+    if t == "short_put":  return -q * bs_put(vol, s, r, remT, K)
     return 0.0
 
-def mtm_gross_path(legs, prem, spot_path, T, vol, r):
+def mtm_gross_path(legs, norm_mode, prem, spot_path, T, vol, r):
     """Mark-to-market gross-return path of the derivative over a realised underlying
-    price path. Entry spot is normalised to 1.0; remaining maturity shrinks linearly
-    across the window (option entered at the start, expiring at the end); V_t is the
-    signed Black-Scholes value of the legs; paid = fair value * (1 + premium).
-    Returns g_t = V_t / paid, the gross return on capital invested in the option."""
+    price path. Entry spot normalised to 1.0; remaining maturity shrinks linearly
+    (option entered at the start, expiring at the end). V_t = signed Black-Scholes
+    value of the legs. Consistent with the engine's per-instrument return definition:
+        g_t = 1 + (V_t - paid) / normalizer
+    where paid = fair value * (1 + premium), and normalizer = gross premium (P0+C0)
+    for collars, else paid. For net instruments this reduces to V_t / paid."""
     spot_path = np.asarray(spot_path, dtype=float)
     s_rel = spot_path / float(spot_path[0])
     n = len(s_rel)
-    V0 = sum(_leg_value(lg, 1.0, T, vol, r) for lg in legs)
+    leg_v0 = [_leg_value(lg, 1.0, T, vol, r) for lg in legs]
+    V0 = float(np.sum(leg_v0))
+    gross = float(np.sum(np.abs(leg_v0)))
     paid = V0 * (1.0 + prem)
-    if paid <= 1e-9:
+    normalizer = gross if norm_mode == "gross" else paid
+    if abs(normalizer) < 1e-9:
         return None
     remT = np.maximum(T * (1.0 - np.linspace(0.0, 1.0, n)), 1e-6)
     V = np.array([sum(_leg_value(lg, s_rel[i], remT[i], vol, r) for lg in legs)
                   for i in range(n)])
-    return V / paid
+    return 1.0 + (V - paid) / normalizer
 
 def _bt_portfolio_path(sec_gross, w_sec, der_gross=None, w_der=0.0):
     """Buy-and-hold portfolio value path, normalised to start at 1.0."""
@@ -3501,9 +3523,14 @@ with tab_bt:
             "loss-threshold check is a *single realised outcome* versus the modelled probability "
             "α — not a frequency. A multi-window walk-forward (a richer realised P(r<H)) is a "
             "planned extension.\n"
-            "- **Instruments in v1.** Vanilla options, straddle, strangle, and the "
-            "spreads/certificates — all with a strictly positive net entry premium. Collars, "
-            "capital-guaranteed notes and barrier-M notes are deferred (special normalisations).\n"
+            "- **Instruments.** Vanilla options, straddle, strangle, both collars, the "
+            "capital-guaranteed notes (uncapped and capped), and the spreads/certificates — "
+            "15 of the 16. Each is marked to market from its Black-Scholes legs and its return "
+            "matches the engine's definition exactly (collars normalise by the gross premium "
+            "P0+C0; the notes by their replication cost). **Barrier-M is the one exclusion**: "
+            "in the thesis its return is defined *gross* (payoff ÷ cost, with no −1), unlike "
+            "every other instrument's *net* return, so a mark-to-market value path would not be "
+            "comparable to its expected figure without reconciling that convention first.\n"
             "- **Constraint.** You can build under Value-at-Risk (P(r<H) ≤ α), thesis "
             "Expected Shortfall, or Rigorous ES (E[r|r<H] ≥ L). These change the *construction* "
             "weights; the *realised* tail check stays a single-window outcome (a true realised "
@@ -3558,6 +3585,15 @@ with tab_bt:
         elif dtype == "strangle":
             p["strike_kp"] = st.slider("Put strike (×)", 0.50, 1.00, 0.85, 0.05, key="bt_kp")
             p["strike_kc"] = st.slider("Call strike (×)", 1.00, 1.60, 1.15, 0.05, key="bt_kc")
+        elif dtype in ("safety_collar", "aggressive_collar"):
+            p["strike_p"] = st.slider("Put strike (×)", 0.50, 1.50, 1.20, 0.05, key="bt_clp")
+            p["strike_c"] = st.slider("Call strike (×)", 1.00, 2.00, 1.60, 0.05, key="bt_clc")
+        elif dtype in ("cgn_uncapped", "cgn_capped"):
+            p["floor"]         = st.slider("Floor (%)", 0.0, 10.0, 1.0, 0.5, key="bt_cgf") / 100.0
+            p["participation"] = st.slider("Participation (%)", 50, 150, 100, 10, key="bt_cgp") / 100.0
+            if dtype == "cgn_capped":
+                p["cap"] = st.slider("Cap (%)", 5.0, 50.0, 20.0, 5.0, key="bt_cgc") / 100.0
+            p["premium"] = st.slider("Issuer premium", 0.00, 0.10, 0.00, 0.01, key="bt_cgpr")
         elif dtype == "bull_call_spread":
             p["k1"] = st.slider("Long call strike (×)", 0.70, 1.20, 1.00, 0.05, key="bt_b1")
             p["k2"] = st.slider("Short call strike (×, higher)", 1.00, 1.60, 1.20, 0.05, key="bt_b2")
@@ -3703,8 +3739,8 @@ with tab_bt:
 
                 sec_gross = ev_px.values / ev_px.values[0]
                 spot_path = ev_px[names[u_idx]].values
-                legs, prem = _bt_legs(bt_dtype, bt_params)
-                g_path = mtm_gross_path(legs, prem, spot_path, T_years, vol_u, 0.03)
+                legs, _norm_mode, prem = _bt_legs(bt_dtype, bt_params)
+                g_path = mtm_gross_path(legs, _norm_mode, prem, spot_path, T_years, vol_u, 0.03)
 
                 w1 = np.asarray(nd_res["weights"], dtype=float)
                 w2 = np.asarray(dr_res["weights"], dtype=float)
