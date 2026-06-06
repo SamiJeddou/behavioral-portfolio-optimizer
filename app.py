@@ -4292,10 +4292,16 @@ with tab_bt:
             p["premium"] = st.slider("Issuer premium", 0.00, 0.10, 0.00, 0.01, key="bt_ocp")
         return p
 
-    # Payoff diagram (left) and derivative parameters (right), side by side
+    # Payoff diagram (left); underlying + derivative parameters (right), side by side
+    _bt_tk = [t.strip().upper() for t in bt_tickers_raw.split(",") if t.strip()]
     _pc = st.columns([1.15, 1])
     with _pc[1]:
-        st.markdown('<div style="font-weight:600;font-size:.9rem;margin:.1rem 0 .3rem">'
+        bt_undl_choice = st.selectbox(
+            "Underlying security (for the derivative)",
+            ["Auto — highest volatility"] + _bt_tk, index=0, key="bt_undl",
+            help="Which security the option is written on. Auto picks the highest-volatility "
+                 "holding (thesis convention); or pin it to a specific ticker.")
+        st.markdown('<div style="font-weight:600;font-size:.9rem;margin:.45rem 0 .3rem">'
                     'Parameters</div>', unsafe_allow_html=True)
         bt_params = _bt_param_inputs(bt_dtype)
     with _pc[0]:
@@ -4312,14 +4318,6 @@ with tab_bt:
                            "with the construction-period volatility of the chosen underlying.")
         except Exception:
             pass
-
-    # Underlying security for the derivative (default: auto = highest volatility)
-    _bt_tk = [t.strip().upper() for t in bt_tickers_raw.split(",") if t.strip()]
-    bt_undl_choice = st.selectbox(
-        "Underlying security (for the derivative)",
-        ["Auto — highest volatility"] + _bt_tk, index=0, key="bt_undl",
-        help="Which security the option is written on. Auto picks the highest-volatility "
-             "holding (thesis convention); or pin it to a specific ticker.")
 
     _bt_head("Risk measure")
     bt_method = st.selectbox(
