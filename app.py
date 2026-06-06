@@ -2305,7 +2305,190 @@ def plot_backtest_paths(dates, pv1, pv2, label2):
     return fig
 
 
-tab1,tab_bt,tab2,tab3=st.tabs(["📊 Optimiser","🔬 Backtest","📖 About","📚 Glossary"])
+# ═══════════════════════════════════════════════════════════════════════════════
+# Scalable Monte-Carlo + CVaR linear-program engine (Beta)
+# Cost is O(S*(N+K)) — linear in securities and derivatives, independent of grid
+# resolution. Reuses _bt_legs / _leg_value so every instrument prices exactly as
+# in the Backtest tab and the exact grid engine. Approximate (sampling); complements
+# the exact grid optimiser rather than replacing it.
+# ═══════════════════════════════════════════════════════════════════════════════
+from scipy.optimize import linprog as _linprog
+from scipy.sparse import coo_matrix as _coo
+from scipy.stats import norm as _norm, t as _student_t, chi2 as _chi2
+
+# instruments the MC tab exposes (single/double-strike; collars/CGN/barrier deferred)
+MC_DER_TYPES = {
+    "Call":               "call",
+    "Put":                "put",
+    "Straddle":           "straddle",
+    "Strangle":           "strangle",
+    "Bull call spread":   "bull_call_spread",
+    "Bear put spread":    "bear_put_spread",
+}
+
+def _mc_psd_cholesky(corr):
+    """Cholesky factor of a correlation matrix, repaired to nearest-PSD if needed."""
+    corr = np.asarray(corr, float)
+    try:
+        return np.linalg.cholesky(corr)
+    except np.linalg.LinAlgError:
+        w, V = np.linalg.eigh(corr)
+        w = np.clip(w, 1e-8, None)
+        c2 = (V * w) @ V.T
+        d = np.sqrt(np.diag(c2))
+        c2 = c2 / np.outer(d, d)
+        return np.linalg.cholesky(c2)
+
+def mc_generate_scenarios(means, sigs, corr, S=10000, copula="gaussian", dof=5, seed=0):
+    """Draw S joint security-return scenarios (S x N). 'gaussian' => multivariate
+    Normal (the thesis assumption); 't' => Student-t copula with Normal marginals
+    (tail dependence: assets fall together)."""
+    rng = np.random.default_rng(seed)
+    means = np.asarray(means, float); sigs = np.asarray(sigs, float)
+    N = len(means); L = _mc_psd_cholesky(corr)
+    if copula == "gaussian":
+        Z = rng.standard_normal((S, N)) @ L.T
+    else:
+        Y = rng.standard_normal((S, N)) @ L.T
+        g = _chi2.rvs(dof, size=S, random_state=rng) / dof
+        Tv = Y / np.sqrt(g)[:, None]
+        U = _student_t.cdf(Tv, dof)
+        Z = _norm.ppf(np.clip(U, 1e-12, 1 - 1e-12))
+    return means[None, :] + sigs[None, :] * Z
+
+def _mc_leg_intrinsic(leg, spot_T):
+    """Terminal intrinsic value of a leg at terminal spot (array)."""
+    q = float(leg.get("qty", 1.0)); t = leg["type"]
+    if t == "zcb":        return q * float(leg.get("notional", 1.0)) * np.ones_like(spot_T)
+    K = leg["strike"]
+    if t == "long_call":  return  q * np.maximum(spot_T - K, 0.0)
+    if t == "short_call": return -q * np.maximum(spot_T - K, 0.0)
+    if t == "long_put":   return  q * np.maximum(K - spot_T, 0.0)
+    if t == "short_put":  return -q * np.maximum(K - spot_T, 0.0)
+    return np.zeros_like(spot_T)
+
+def mc_der_returns(der_type, der_params, und_ret, vol, r=0.03, T=1.0):
+    """Per-scenario derivative return, priced from its Black-Scholes legs and the
+    instrument's terminal payoff — identical definition to the engine/backtest."""
+    legs, norm_mode, prem = _bt_legs(der_type, der_params)
+    if legs is None:
+        return None
+    leg_v0 = [_leg_value(lg, 1.0, T, vol, r) for lg in legs]
+    V0 = float(np.sum(leg_v0)); gross = float(np.sum(np.abs(leg_v0)))
+    paid = V0 * (1.0 + prem)
+    normalizer = gross if norm_mode == "gross" else paid
+    if abs(normalizer) < 1e-9:
+        return None
+    spot_T = 1.0 + np.asarray(und_ret, float)
+    payoff = np.sum([_mc_leg_intrinsic(lg, spot_T) for lg in legs], axis=0)
+    return (payoff - paid) / normalizer
+
+def mc_build_matrix(R_sec, der_specs, sigs, names, r=0.03, T=1.0):
+    """Stack S x N security returns with one return column per derivative spec.
+    der_specs: list of dicts {der_type, params, underlying_idx}. Returns
+    (R_full, labels, errors)."""
+    cols = [R_sec]; labels = list(names); errors = []
+    for d in der_specs:
+        ui = d["underlying_idx"]; vol = sigs[ui]
+        dr = mc_der_returns(d["der_type"], d["params"], R_sec[:, ui], vol, r=r, T=T)
+        if dr is None:
+            errors.append(d.get("label", d["der_type"])); continue
+        cols.append(dr[:, None]); labels.append(d.get("label", d["der_type"]))
+    return np.hstack(cols), labels, errors
+
+def mc_realised_es(port, alpha):
+    p = np.sort(np.asarray(port, float))
+    k = max(1, int(np.floor(alpha * len(p))))
+    return float(p[:k].mean())
+
+def mc_analytical_es(mu_p, sig_p, alpha):
+    """Closed-form ES (tail-average return) for a Normal portfolio return."""
+    z = _norm.ppf(alpha)
+    return float(mu_p - sig_p * _norm.pdf(z) / alpha)
+
+def mc_gmv_weights(cov):
+    """Analytical global-minimum-variance weights (shorts allowed)."""
+    cov = np.asarray(cov, float); n = cov.shape[0]
+    inv = np.linalg.pinv(cov); one = np.ones(n)
+    w = inv @ one
+    return w / (one @ w)
+
+def _mc_cvar_rows(R, alpha):
+    """Common sparse blocks for the Rockafellar-Uryasev CVaR constraints.
+    Scenario rows (S of them): -R[s].w - zeta - z_s <= 0. Returns the COO pieces."""
+    S, n = R.shape
+    sidx = np.arange(S)
+    rows = list(np.repeat(sidx, n)); cols = list(np.tile(np.arange(n), S)); vals = list((-R).ravel())
+    rows += list(sidx); cols += [n] * S; vals += [-1.0] * S                 # -zeta
+    rows += list(sidx); cols += list(range(n + 1, n + 1 + S)); vals += [-1.0] * S  # -z_s
+    return rows, cols, vals, S, n
+
+def mc_max_return_cvar(R, alpha, L, w_max=None, long_only=True):
+    """max E[r] s.t. CVaR_alpha(-r) <= -L (tail-average return >= L), sum w = 1,
+    0 <= w <= w_max. Linear program in (w, zeta, z). Returns (w, E[r], realised ES, res)."""
+    R = np.asarray(R, float); S, n = R.shape; nv = n + 1 + S
+    mu = R.mean(axis=0)
+    c = np.concatenate([-mu, [0.0], np.zeros(S)])
+    rows, cols, vals, S, n = _mc_cvar_rows(R, alpha)
+    rows = [r_ + 1 for r_ in rows]                       # shift scenario rows to 1..S
+    # CVaR row (row 0): zeta + 1/(alpha S) sum z <= -L
+    rows = [0] + [0] * S + rows
+    cols = [n] + list(range(n + 1, n + 1 + S)) + cols
+    vals = [1.0] + [1.0 / (alpha * S)] * S + vals
+    A_ub = _coo((vals, (rows, cols)), shape=(S + 1, nv)).tocsr()
+    b_ub = np.concatenate([[-L], np.zeros(S)])
+    A_eq = _coo((np.ones(n), (np.zeros(n), np.arange(n))), shape=(1, nv)).tocsr()
+    b_eq = np.array([1.0])
+    wb = (0.0, w_max if w_max is not None else 1.0) if long_only else (None, None)
+    bounds = [wb] * n + [(None, None)] + [(0.0, None)] * S
+    res = _linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method="highs")
+    if not res.success:
+        return None, None, None, res
+    w = res.x[:n]; port = R @ w
+    return w, float(port.mean()), mc_realised_es(port, alpha), res
+
+def mc_min_cvar(R, alpha, long_only=False):
+    """min CVaR_alpha(-r) s.t. sum w = 1 (shorts allowed by default). Used for the
+    validation cross-check against analytical global-minimum-variance."""
+    R = np.asarray(R, float); S, n = R.shape; nv = n + 1 + S
+    c = np.concatenate([np.zeros(n), [1.0], np.full(S, 1.0 / (alpha * S))])
+    rows, cols, vals, S, n = _mc_cvar_rows(R, alpha)
+    A_ub = _coo((vals, (rows, cols)), shape=(S, nv)).tocsr()
+    b_ub = np.zeros(S)
+    A_eq = _coo((np.ones(n), (np.zeros(n), np.arange(n))), shape=(1, nv)).tocsr()
+    b_eq = np.array([1.0])
+    wb = (0.0, 1.0) if long_only else (None, None)
+    bounds = [wb] * n + [(None, None)] + [(0.0, None)] * S
+    res = _linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method="highs")
+    return (res.x[:n] if res.success else None), res
+
+def mc_frontier(R, alpha, floors, w_max=None):
+    out = []
+    for L in floors:
+        w, er, es, res = mc_max_return_cvar(R, alpha, L, w_max=w_max)
+        out.append({"L": L, "ok": bool(res.success), "er": er, "es": es})
+    return out
+
+def plot_mc_frontier(rows):
+    """E[r] vs ES floor, dark theme."""
+    import matplotlib.pyplot as plt
+    fig, ax = plt.subplots(figsize=(6.8, 3.4), dpi=130)
+    fig.patch.set_facecolor('#0d1117'); ax.set_facecolor('#0d1117')
+    ok = [r for r in rows if r["ok"]]
+    if ok:
+        xs = [r["L"] * 100 for r in ok]; ys = [r["er"] * 100 for r in ok]
+        ax.plot(xs, ys, '-o', color='#4a9eff', lw=2.2, ms=5)
+    for sp in ax.spines.values(): sp.set_color('#30363d')
+    ax.tick_params(colors='#8b949e', labelsize=8)
+    ax.set_xlabel('Expected-Shortfall floor L (%)', color='#c9d1d9', fontsize=9)
+    ax.set_ylabel('Max expected return (%)', color='#c9d1d9', fontsize=9)
+    ax.set_title('Return / tail-risk frontier (CVaR-LP)', color='#c9d1d9', fontsize=10, pad=8)
+    ax.grid(True, color='#21262d', lw=0.6)
+    fig.tight_layout()
+    return fig
+
+
+tab1,tab_mc,tab_bt,tab2,tab3=st.tabs(["📊 Optimiser","🧮 Scalable (MC)","🔬 Backtest","📖 About","📚 Glossary"])
 
 # Show the input sidebar only on the Optimiser tab. The active tab is client-side
 # state, so this is done in CSS: when any tab other than the first is selected,
@@ -3451,6 +3634,272 @@ I would be glad to hear from you.
         'Based on Das &amp; Statman (2009), Das, Markowitz, Scheid &amp; Statman (2010) and Jeddou (2012). '
         'See <b>About</b> tab for full disclaimer.</div>',
         unsafe_allow_html=True)
+
+with tab_mc:
+    import datetime as _dt
+    st.markdown('<h2 style="color:#4a9eff">🧮 Scalable Optimiser — Monte-Carlo + CVaR</h2>',
+                unsafe_allow_html=True)
+    st.markdown(
+        "A **scenario-based** engine for **large portfolios** and **several derivatives at "
+        "once** — the case the exact grid optimiser cannot reach. It samples joint return "
+        "scenarios and solves *maximise expected return subject to an Expected-Shortfall "
+        "floor* as a linear program. Cost grows **linearly** in the number of assets, so it "
+        "scales to many securities; and any number of derivatives just add columns."
+    )
+    st.warning("**Beta — approximate engine.** Results carry Monte-Carlo sampling error and "
+               "depend on scenario quality. It *complements* the exact grid Optimiser (which "
+               "remains the thesis-faithful reference for small portfolios), it does not "
+               "replace it.")
+
+    with st.expander("ℹ️  How this engine works", expanded=True):
+        st.markdown(
+            "1. **Scenarios.** Draw S joint return scenarios for all securities at once via a "
+            "copula — Gaussian (the thesis's multivariate-Normal assumption) or Student-t "
+            "(tail dependence: assets crash together). The data is an S×N matrix, so memory "
+            "and cost are O(S·N) — *linear* in the number of securities, not exponential.\n"
+            "2. **Derivatives.** Each derivative is priced from its Black-Scholes legs inside "
+            "*every* scenario (same definition as the engine and the Backtest tab), adding one "
+            "return column. Several derivatives — even on different underlyings — cost nothing "
+            "extra structurally.\n"
+            "3. **Optimisation.** With weights w, the portfolio return in scenario s is w·Rₛ. "
+            "Using the Rockafellar–Uryasev identity, *maximise E[r] subject to "
+            "ES_α(r) ≥ L* becomes a **linear program** in (w, ζ, z) that solves in well under "
+            "a second even for hundreds of weights and tens of thousands of scenarios — and "
+            "it is convex, so no heuristics.\n"
+            "4. **Frontier.** Sweeping the floor L traces the return / tail-risk frontier.\n\n"
+            "Full derivation is in the accompanying addendum to the thesis."
+        )
+    with st.expander("⚠️  Assumptions & limitations"):
+        st.markdown(
+            "- **Approximate.** Scenario estimates carry error of order S^(−1/2); tails need "
+            "more scenarios than the body. Raise S for stability.\n"
+            "- **Scenario quality is everything.** The copula choice and the estimated means, "
+            "vols and correlations drive the result; estimation error worsens as N grows "
+            "(shrinkage/robust estimators are the natural next step).\n"
+            "- **ES, not the thesis VaR.** The constraint is Expected Shortfall (CVaR), the "
+            "coherent measure and the convex counterpart of the thesis's P(r<H) ≤ α. CVaR ≥ "
+            "VaR, so a CVaR floor is a conservative way to honour the VaR-style intent.\n"
+            "- **Complements the grid.** The grid optimiser is exact for small N and remains "
+            "the reference; this engine is the route for large, multi-derivative portfolios. "
+            "The validation panel below cross-checks the engine against closed-form values.\n"
+            "- **Derivatives in this tab:** vanilla call/put, straddle, strangle and the two "
+            "vertical spreads (single/double strike). Collars, capital-guaranteed and "
+            "barrier notes are available in the exact engine and can be added here later."
+        )
+
+    st.markdown("---")
+    st.markdown("#### Inputs")
+
+    _MC_RULE = "<hr style='border:none;border-top:1px solid #30363d;margin:1.2rem 0 0.55rem'>"
+    def _mc_head(t, rule=True):
+        st.markdown((_MC_RULE if rule else "")
+                    + "<div style='color:#4a9eff;font-weight:700;font-size:1rem;"
+                      "margin-bottom:0.35rem'>" + t + "</div>", unsafe_allow_html=True)
+
+    _mc_head("Securities & estimation", rule=False)
+    mc_tickers_raw = st.text_input(
+        "Tickers (comma-separated — add as many as you like)",
+        value="AAPL, MSFT, JPM, TLT, XLE, GLD", key="mc_tickers",
+        help="The scalable engine is built for large universes. Means, volatilities and "
+             "correlations are estimated from this window.")
+    _mc_tk = [t.strip().upper() for t in mc_tickers_raw.split(",") if t.strip()]
+    cme1, cme2, cme3 = st.columns(3)
+    with cme1:
+        mc_start = st.date_input("Estimate from", value=_dt.date(2018, 1, 1), key="mc_start")
+    with cme2:
+        mc_end = st.date_input("Estimate to", value=_dt.date(2023, 12, 31), key="mc_end")
+    with cme3:
+        mc_freq = st.selectbox("Frequency", ["Daily", "Monthly"], index=0, key="mc_freq")
+
+    _mc_head("Scenarios")
+    cms1, cms2 = st.columns(2)
+    with cms1:
+        mc_S = st.select_slider("Number of scenarios S",
+                                options=[2000, 5000, 8000, 10000, 15000, 20000, 25000],
+                                value=10000, key="mc_S")
+    with cms2:
+        mc_cop = st.selectbox("Copula", ["Gaussian (Normal)", "Student-t (tail dependence)"],
+                              index=0, key="mc_cop")
+    mc_dof = 5
+    if mc_cop.startswith("Student"):
+        mc_dof = st.slider("Student-t degrees of freedom (lower = fatter tails)",
+                           3, 15, 5, 1, key="mc_dof")
+
+    _mc_head("Derivatives  (optional — add multiple)")
+    st.caption("Add one row per derivative. Strike and Strike-2 are fractions of the entry "
+               "spot (1.0). Strike-2 is used only by strangle and the spreads.")
+    import pandas as _pd
+    _mc_der_template = _pd.DataFrame(
+        {"Type": _pd.Series(dtype="str"), "Underlying": _pd.Series(dtype="str"),
+         "Strike": _pd.Series(dtype="float"), "Strike2": _pd.Series(dtype="float")})
+    mc_der_table = st.data_editor(
+        _mc_der_template, num_rows="dynamic", key="mc_der_table", use_container_width=True,
+        column_config={
+            "Type": st.column_config.SelectboxColumn("Type", options=list(MC_DER_TYPES.keys()),
+                                                     width="medium"),
+            "Underlying": st.column_config.SelectboxColumn(
+                "Underlying", options=(_mc_tk if _mc_tk else ["(enter tickers)"]), width="small"),
+            "Strike": st.column_config.NumberColumn("Strike (×)", min_value=0.1, max_value=3.0,
+                                                    step=0.05, format="%.2f"),
+            "Strike2": st.column_config.NumberColumn("Strike-2 (×)", min_value=0.1, max_value=3.0,
+                                                     step=0.05, format="%.2f"),
+        })
+
+    _mc_head("Constraint")
+    cmc1, cmc2, cmc3 = st.columns(3)
+    with cmc1:
+        mc_alpha = st.slider("Tail probability α", 1, 25, 5, 1, format="%d%%", key="mc_alpha") / 100.0
+    with cmc2:
+        mc_L = st.slider("Expected-Shortfall floor L  (E[r | tail] ≥ L)",
+                         -40, 0, -20, 1, format="%d%%", key="mc_L") / 100.0
+    with cmc3:
+        _wm = st.slider("Max weight per asset", 5, 100, 100, 5, format="%d%%", key="mc_wmax")
+    mc_wmax = None if _wm >= 100 else _wm / 100.0
+
+    _mc_head("Validation")
+    mc_validate = st.checkbox("Run validation checks against closed-form values "
+                              "(Gaussian copula)", value=True, key="mc_validate")
+
+    st.markdown(_MC_RULE, unsafe_allow_html=True)
+    st.markdown("<style>.st-key-mc_run button{font-size:1.1rem;font-weight:700;"
+                "padding:0.85rem 1rem;border-radius:8px;}</style>", unsafe_allow_html=True)
+    _mcb = st.columns([1, 2, 1])
+    with _mcb[1]:
+        mc_run = st.button("▶  Run scalable optimiser", type="primary", key="mc_run",
+                           use_container_width=True)
+
+    if mc_run:
+        try:
+            tickers = list(dict.fromkeys(_mc_tk))
+            if len(tickers) < 2:
+                raise RuntimeError("Please enter at least two tickers.")
+            if not (mc_start < mc_end):
+                raise RuntimeError("Estimation 'from' must precede 'to'.")
+            copula = "gaussian" if mc_cop.startswith("Gaussian") else "t"
+
+            with st.spinner("Estimating from prices and generating scenarios…"):
+                px, err = fetch_close_prices(tickers, mc_start, mc_end)
+                if err:
+                    raise RuntimeError(f"Price data: {err}")
+                means, sigs, corr, names, _ = stats_from_prices(px, mc_freq)
+                if len(names) < 2:
+                    raise RuntimeError("Fewer than two usable securities after cleaning.")
+                N = len(names)
+                cov = corr_to_cov(sigs, corr)
+                R_sec = mc_generate_scenarios(means, sigs, corr, S=int(mc_S),
+                                              copula=copula, dof=int(mc_dof), seed=1)
+
+                # parse derivative rows
+                der_specs = []
+                der_warn = []
+                tbl = mc_der_table.dropna(how="all") if hasattr(mc_der_table, "dropna") else mc_der_table
+                for _, row in tbl.iterrows():
+                    typ_lbl = row.get("Type"); undl = row.get("Underlying")
+                    if not typ_lbl or not undl or typ_lbl not in MC_DER_TYPES:
+                        continue
+                    if undl not in names:
+                        der_warn.append(f"{typ_lbl} on {undl} (ticker unavailable)"); continue
+                    dt = MC_DER_TYPES[typ_lbl]
+                    k1 = row.get("Strike"); k2 = row.get("Strike2")
+                    k1 = float(k1) if k1 == k1 and k1 is not None else None
+                    k2 = float(k2) if k2 == k2 and k2 is not None else None
+                    if dt in ("call", "put", "straddle"):
+                        if k1 is None: der_warn.append(f"{typ_lbl}: missing strike"); continue
+                        params = {"strike": k1}
+                    elif dt == "strangle":
+                        if k1 is None or k2 is None: der_warn.append(f"{typ_lbl}: needs both strikes"); continue
+                        params = {"strike_kp": min(k1, k2), "strike_kc": max(k1, k2)}
+                    elif dt == "bull_call_spread":
+                        if k1 is None or k2 is None: der_warn.append(f"{typ_lbl}: needs both strikes"); continue
+                        params = {"k1": min(k1, k2), "k2": max(k1, k2)}
+                    elif dt == "bear_put_spread":
+                        if k1 is None or k2 is None: der_warn.append(f"{typ_lbl}: needs both strikes"); continue
+                        params = {"k1": max(k1, k2), "k2": min(k1, k2)}
+                    else:
+                        continue
+                    der_specs.append({"der_type": dt, "params": params,
+                                      "underlying_idx": names.index(undl),
+                                      "label": f"{typ_lbl}·{undl}"})
+
+                R_full, labels, errs = mc_build_matrix(R_sec, der_specs, np.array(sigs), names)
+                der_warn += [f"{e} (pricing failed)" for e in errs]
+
+            with st.spinner("Solving the CVaR linear program…"):
+                w, er, es, res = mc_max_return_cvar(R_full, mc_alpha, mc_L, w_max=mc_wmax)
+
+            st.markdown("---")
+            st.markdown("#### Results")
+            if der_warn:
+                st.warning("Skipped derivative rows: " + "; ".join(der_warn))
+            if w is None:
+                st.error(f"No feasible portfolio reaches an ES of {mc_L:.0%} for this universe. "
+                         f"Loosen the floor (more negative L) or change the inputs.")
+            else:
+                K = len(labels) - N
+                st.caption(f"Universe: **{N} securities**"
+                           + (f" + **{K} derivative(s)**" if K else "")
+                           + f".  Scenarios: {int(mc_S):,} ({copula}).  "
+                           f"Constraint: ES at α={mc_alpha:.0%} ≥ {mc_L:.0%}.")
+                cR1, cR2, cR3 = st.columns(3)
+                cR1.metric("Expected return", f"{er:.2%}")
+                cR2.metric("Realised ES (tail avg)", f"{es:.2%}")
+                cR3.metric("Securities / derivatives", f"{N} / {K}")
+
+                wt = _pd.DataFrame({"Asset": labels, "Weight": w})
+                wt = wt[wt["Weight"].abs() > 1e-4].sort_values("Weight", ascending=False)
+                wt["Weight"] = (wt["Weight"] * 100).map(lambda x: f"{x:.1f}%")
+                st.dataframe(wt.set_index("Asset"), use_container_width=True)
+
+                with st.spinner("Tracing the return / tail-risk frontier…"):
+                    fr = mc_frontier(R_full, mc_alpha,
+                                     [-0.30, -0.25, -0.20, -0.15, -0.10, -0.05], w_max=mc_wmax)
+                try:
+                    import matplotlib.pyplot as _plt
+                    figf = plot_mc_frontier(fr)
+                    st.pyplot(figf, use_container_width=True); _plt.close(figf)
+                except Exception as _fe:
+                    st.caption(f"(frontier chart unavailable: {_fe})")
+
+            # ---- validation panel ----
+            if mc_validate:
+                st.markdown("---")
+                st.markdown("#### Validation against closed-form values")
+                m_err = float(np.max(np.abs(R_sec.mean(0) - np.array(means))))
+                s_err = float(np.max(np.abs(R_sec.std(0) - np.array(sigs))))
+                rows_v = [
+                    ["Scenario means vs target (max abs err)", f"{m_err:.4f}", "→ 0 as S grows"],
+                    ["Scenario vols vs target (max abs err)",  f"{s_err:.4f}", "→ 0 as S grows"],
+                ]
+                if copula == "gaussian":
+                    w_eq = np.full(N, 1.0 / N)
+                    mu_p = float(w_eq @ np.array(means))
+                    sig_p = float(np.sqrt(w_eq @ cov @ w_eq))
+                    es_mc = mc_realised_es(R_sec @ w_eq, mc_alpha)
+                    es_an = mc_analytical_es(mu_p, sig_p, mc_alpha)
+                    rows_v.append([
+                        f"Equal-weight ES: MC {es_mc:.4f} vs Normal {es_an:.4f}",
+                        f"|Δ| = {abs(es_mc-es_an):.4f}",
+                        "✓ match" if abs(es_mc - es_an) < 0.01 else "raise S"])
+                else:
+                    rows_v.append(["Closed-form ES check", "n/a",
+                                   "Gaussian copula only (t-portfolio is non-Normal)"])
+                vdf = _pd.DataFrame(rows_v, columns=["Check", "Result", "Note"])
+                st.table(vdf.set_index("Check"))
+                st.caption("The scenario sample reproduces the target means and volatilities, "
+                           "and (under the Gaussian copula) its Expected Shortfall matches the "
+                           "closed-form Normal value — confirming the generator and the tail "
+                           "estimate are faithful. Note the minimum-CVaR portfolio is "
+                           "mean-variance *efficient* but is not the global-minimum-variance "
+                           "portfolio (CVaR carries a return tilt). The exact grid-agreement "
+                           "test on a 3–4-asset case is documented in the addendum.")
+
+        except Exception as _e:
+            st.error(str(_e))
+            import traceback as _tb
+            with st.expander("Traceback"):
+                st.code(_tb.format_exc())
+
+
 
 with tab_bt:
     import datetime as _dt
