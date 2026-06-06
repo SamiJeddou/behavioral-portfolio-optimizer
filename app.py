@@ -3698,7 +3698,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">⭐ <strong>Gold star</strong></td>
-  <td style="padding:.3rem .5rem"><strong>Your resulting portfolio</strong> at the chosen floor L — hover for its expected return, L and realised ES</td>
+  <td style="padding:.3rem .5rem"><strong>Scalable CVaR optimum</strong> (your resulting portfolio) at the chosen floor L — hover for its expected return, L and realised ES</td>
 </tr>
 <tr style="border-bottom:1px solid #2a2a3a">
   <td style="padding:.3rem .5rem;white-space:nowrap">🖱️ <strong>Interactivity</strong></td>
@@ -3947,7 +3947,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                     '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.5rem">'
                     '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;'
                     'background:#4a9eff;border:2px solid white;margin-right:.45rem;vertical-align:middle"></span>'
-                    'Scalable optimal portfolio — Monte-Carlo + CVaR</div>'
+                    'Scalable CVaR optimum — Monte-Carlo</div>'
                     '<div style="color:#c9d1d9;font-size:.86rem;line-height:1.75">'
                     f'<b>Expected return:</b> {er*100:.2f}% &nbsp;·&nbsp; <b>Volatility:</b> {_sig*100:.2f}% '
                     f'&nbsp;·&nbsp; <b>Skewness:</b> {_skew:.3f}<br>'
@@ -4005,11 +4005,11 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                             hovertemplate="ES floor L: %{x:.1f}%<br>Max E[r]: %{y:.2f}%"
                                           "<br>Realised ES: %{customdata:.2f}%<extra></extra>"))
                         fig.add_trace(_go.Scatter(
-                            x=[mc_L * 100], y=[er * 100], mode="markers", name="Your portfolio",
+                            x=[mc_L * 100], y=[er * 100], mode="markers", name="Scalable CVaR optimum",
                             marker=dict(size=18, color="#f59e0b", symbol="star",
                                         line=dict(color="#ffffff", width=1.2)),
                             customdata=[es * 100],
-                            hovertemplate="<b>Your portfolio</b><br>ES floor L: %{x:.1f}%"
+                            hovertemplate="<b>Scalable CVaR optimum</b><br>ES floor L: %{x:.1f}%"
                                           "<br>E[r]: %{y:.2f}%<br>Realised ES: %{customdata:.2f}%<extra></extra>"))
                         fig.update_layout(
                             template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
@@ -4025,7 +4025,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                             x=mc_L * 100, y=er * 100, ax=64, ay=-62,
                             xref="x", yref="y", axref="pixel", ayref="pixel",
                             showarrow=True, arrowhead=2, arrowwidth=1.5, arrowcolor="#f59e0b",
-                            text=("<b>Your portfolio</b><br>"
+                            text=("<b>Scalable CVaR optimum</b><br>"
                                   f"E[r] = {er*100:.1f}%&nbsp; | &nbsp;Vol = {_sig*100:.1f}%<br>"
                                   f"Skew = {_skew:.2f}<br>"
                                   f"Realised ES = {es*100:.1f}%&nbsp; (L = {mc_L*100:.0f}%)<br>"
@@ -4034,7 +4034,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                             bgcolor="rgba(13,17,23,0.92)", bordercolor="#f59e0b", borderwidth=1,
                             align="left", xanchor="left")
                         st.plotly_chart(fig, use_container_width=True)
-                        st.caption("⭐ marks your resulting portfolio. Hover any point for its "
+                        st.caption("⭐ marks the Scalable CVaR optimum (your resulting portfolio). Hover any point for its "
                                    "coordinates; drag to zoom, double-click to reset.")
                         _drawn = True
                     except Exception:
@@ -4061,7 +4061,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                                 x="ES floor L (%):Q", y="Max expected return (%):Q")
                             st.altair_chart((_line + _pts + _star).interactive().properties(height=340),
                                             use_container_width=True)
-                            st.caption("◆ marks your resulting portfolio. Hover points for coordinates.")
+                            st.caption("◆ marks the Scalable CVaR optimum. Hover points for coordinates.")
                         except Exception as _fe:
                             st.caption(f"(frontier chart unavailable: {_fe})")
                 else:
