@@ -3839,24 +3839,20 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                            3, 15, 5, 1, key="mc_dof")
 
     _mc_head("Derivatives  (optional — add multiple)")
-    st.caption("Add one row per derivative. Pick a Type first; strike (1.00, at-the-money), "
-               "maturity (1 year, settled at intrinsic at the horizon — raise it to mark the option "
-               "to market with its remaining life) and rate (3%) then fill in automatically and stay "
-               "editable. Strike-2 is used only by strangle and the spreads. Leave Impl. vol blank to "
-               "price each option with its underlying's own volatility (consistent with the scenarios); "
-               "enter a value to override.")
+    st.caption("Add one row per derivative — pick a Type and an Underlying. Any blank cell uses a "
+               "default: strike 1.00 (at-the-money), maturity 1 year (settled at intrinsic at the "
+               "horizon; raise it to mark the option to market with its remaining life), rate 3%, and "
+               "implied vol = the underlying's own volatility (consistent with the scenarios). The "
+               "resolved values for each row are listed below the table.")
     import pandas as _pd
     _mc_der_template = _pd.DataFrame(
         {"Type": _pd.Series(dtype="str"), "Underlying": _pd.Series(dtype="str"),
          "Strike": _pd.Series(dtype="float"), "Strike2": _pd.Series(dtype="float"),
          "Maturity": _pd.Series(dtype="float"), "ImplVol": _pd.Series(dtype="float"),
          "Rate": _pd.Series(dtype="float")})
-    if "mc_der_df" not in st.session_state:
-        st.session_state["mc_der_df"] = _mc_der_template.copy()
-        st.session_state["mc_der_nonce"] = 0
-    _mc_edited = st.data_editor(
-        st.session_state["mc_der_df"], num_rows="dynamic", hide_index=True,
-        key=f"mc_der_editor_{st.session_state['mc_der_nonce']}", use_container_width=True,
+    mc_der_table = st.data_editor(
+        _mc_der_template, num_rows="dynamic", hide_index=True, key="mc_der_table",
+        use_container_width=True,
         column_config={
             "Type": st.column_config.SelectboxColumn("Type", options=list(MC_DER_TYPES.keys()),
                                                      width="medium"),
@@ -3880,29 +3876,30 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                 help="Risk-free rate for option pricing. Blank = 3%."),
         })
 
-    # Defaults fill in per row only once a Type is chosen; clearing the Type empties that
-    # row again. A clean integer index avoids the editor showing a stray index column or a
-    # null-index error; a nonce-keyed editor reloads cleanly after any change.
-    _mc_edited = _mc_edited.reset_index(drop=True)
-    _mc_filled = _mc_edited.copy()
-    _mc_has_type = _mc_filled["Type"].notna() & (_mc_filled["Type"].astype(str).str.strip() != "")
-    _mc_changed = False
-    for _c, _dv in (("Strike", 1.0), ("Maturity", 1.0), ("Rate", 3.0)):
-        _need = _mc_has_type & _mc_filled[_c].isna()
-        if bool(_need.any()):
-            _mc_filled.loc[_need, _c] = _dv
-            _mc_changed = True
-    for _c in ("Strike", "Strike2", "Maturity", "ImplVol", "Rate"):
-        _clr = (~_mc_has_type) & _mc_filled[_c].notna()
-        if bool(_clr.any()):
-            _mc_filled.loc[_clr, _c] = float("nan")
-            _mc_changed = True
-    if _mc_changed:
-        st.session_state["mc_der_df"] = _mc_filled.reset_index(drop=True)
-        st.session_state["mc_der_nonce"] += 1
-        st.rerun()
-    st.session_state["mc_der_df"] = _mc_edited
-    mc_der_table = _mc_edited
+    # Read-out of the resolved parameters per row (blank cells use the defaults shown), plus a
+    # clear flag when a Type is chosen with no underlying. No table mutation here, so a selection
+    # shows immediately — no reload/flicker.
+    def _mc_isblank(v):
+        return v is None or (isinstance(v, float) and v != v) or (isinstance(v, str) and v.strip() == "")
+    _mc_preview = []
+    _mc_tbl_ro = mc_der_table.dropna(how="all") if hasattr(mc_der_table, "dropna") else mc_der_table
+    for _, _r in _mc_tbl_ro.iterrows():
+        _ty = _r.get("Type")
+        if _mc_isblank(_ty) or _ty not in MC_DER_TYPES:
+            continue
+        if _mc_isblank(_r.get("Underlying")):
+            _mc_preview.append(f"⚠️ **{_ty}** — pick an underlying (ignored until you do)")
+            continue
+        _un = _r.get("Underlying")
+        _k  = "1.00" if _mc_isblank(_r.get("Strike"))   else f"{float(_r.get('Strike')):.2f}"
+        _t  = "1.00" if _mc_isblank(_r.get("Maturity")) else f"{float(_r.get('Maturity')):.2f}"
+        _rt = "3.00" if _mc_isblank(_r.get("Rate"))     else f"{float(_r.get('Rate')):.2f}"
+        _iv = "auto (underlying \u03c3)" if _mc_isblank(_r.get("ImplVol")) else f"{float(_r.get('ImplVol')):.0f}%"
+        _k2 = "" if _mc_isblank(_r.get("Strike2")) else f", strike-2 {float(_r.get('Strike2')):.2f}\u00d7"
+        _mc_preview.append(f"\u2022 **{_ty}** on **{_un}** \u2014 strike {_k}\u00d7{_k2}, maturity {_t} y, vol {_iv}, rate {_rt}%")
+    if _mc_preview:
+        st.caption("Resolved settings (blank cells use the defaults shown):")
+        st.markdown("  \n".join(_mc_preview))
 
     _mc_head("Constraint")
     cmc1, cmc2, cmc3 = st.columns(3)
@@ -3958,8 +3955,10 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                 tbl = mc_der_table.dropna(how="all") if hasattr(mc_der_table, "dropna") else mc_der_table
                 for _, row in tbl.iterrows():
                     typ_lbl = row.get("Type"); undl = row.get("Underlying")
-                    if not typ_lbl or not undl or typ_lbl not in MC_DER_TYPES:
+                    if _mc_isblank(typ_lbl) or typ_lbl not in MC_DER_TYPES:
                         continue
+                    if _mc_isblank(undl):
+                        der_warn.append(f"{typ_lbl}: no underlying selected \u2014 not included"); continue
                     if undl not in names:
                         der_warn.append(f"{typ_lbl} on {undl} (ticker unavailable)"); continue
                     dt = MC_DER_TYPES[typ_lbl]
@@ -3967,7 +3966,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                     k1 = float(k1) if k1 == k1 and k1 is not None else None
                     k2 = float(k2) if k2 == k2 and k2 is not None else None
                     if dt in ("call", "put", "straddle"):
-                        if k1 is None: der_warn.append(f"{typ_lbl}: missing strike"); continue
+                        if k1 is None: k1 = 1.0  # blank strike -> at-the-money default
                         params = {"strike": k1}
                     elif dt == "strangle":
                         if k1 is None or k2 is None: der_warn.append(f"{typ_lbl}: needs both strikes"); continue
