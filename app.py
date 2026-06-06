@@ -4048,15 +4048,14 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                     else:
                         st.caption("No feasible frontier points for these settings.")
 
-                # Row B: metrics (left) + portfolio weights (right)
-                colB_l, colB_r = st.columns([1, 2])
+                # Row B: metrics on one line (under the box) + weights box (under the graph)
+                colB_l, colB_r = st.columns([1, 1])
                 with colB_l:
-                    st.metric("Expected return", f"{er:.2%}")
-                    st.metric("Realised ES (tail avg)", f"{es:.2%}")
-                    st.metric("Securities / derivatives", f"{N} / {K}")
+                    m1, m2, m3 = st.columns(3)
+                    m1.metric("Expected return", f"{er:.2%}")
+                    m2.metric("Realised ES (tail avg)", f"{es:.2%}")
+                    m3.metric("Securities / derivatives", f"{N} / {K}")
                 with colB_r:
-                    st.markdown('<div style="font-weight:600;font-size:.95rem;margin:.4rem 0 .5rem">'
-                                'Portfolio weights</div>', unsafe_allow_html=True)
                     _rows = []
                     for i in range(len(labels)):
                         is_der = i >= N
@@ -4075,9 +4074,14 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                             f'<div style="height:7px;background:#1a2a3a;border-radius:3px;margin-top:3px">'
                             f'<div style="height:7px;width:{width:.1f}%;background:{_c};border-radius:3px"></div>'
                             f'</div></div>')
-                    st.markdown(_bar, unsafe_allow_html=True)
-                    if K:
-                        st.caption("Each security has its own colour; amber bars are derivatives.")
+                    _note = ('<div style="color:#8b949e;font-size:.78rem;margin-top:.5rem">'
+                             'Each security has its own colour; amber bars are derivatives.</div>') if K else ''
+                    st.markdown(
+                        '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
+                        'padding:.75rem .95rem">'
+                        '<div style="color:#4a9eff;font-weight:700;font-size:.95rem;margin-bottom:.6rem">'
+                        'Portfolio weights</div>' + _bar + _note + '</div>',
+                        unsafe_allow_html=True)
 
             # ---- validation panel ----
             if mc_validate:
