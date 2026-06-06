@@ -3912,7 +3912,8 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                 w, er, es, res = mc_max_return_cvar(R_full, mc_alpha, mc_L, w_max=mc_wmax)
 
             st.markdown("---")
-            st.markdown("#### Results")
+            st.markdown('<h3 style="color:#4a9eff;text-align:center">Results</h3>',
+                        unsafe_allow_html=True)
             if der_warn:
                 st.warning("Skipped derivative rows: " + "; ".join(der_warn))
             if w is None:
@@ -3934,7 +3935,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                          + (f" + {K} derivative{'s' if K != 1 else ''}" if K else ""))
                 _detbox = (
                     '<div style="background:#0d1a2e;border:1px solid #4a9eff;border-radius:8px;'
-                    'padding:.8rem 1.1rem;margin:.2rem 0 .9rem;min-height:400px;box-sizing:border-box">'
+                    'padding:.8rem 1.1rem;margin:0 0 .5rem;min-height:400px;box-sizing:border-box">'
                     '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.5rem">'
                     '<span style="color:#f59e0b;font-size:1.05rem;margin-right:.4rem;vertical-align:middle">★</span>' 
                     'Scalable CVaR optimum — Monte-Carlo</div>'
