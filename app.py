@@ -4020,6 +4020,19 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                             legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0))
                         fig.update_xaxes(showspikes=True, spikethickness=1, gridcolor="#21262d")
                         fig.update_yaxes(showspikes=True, spikethickness=1, gridcolor="#21262d")
+                        _dtxt = f"{N} securities" + (f" + {K} deriv." if K else "")
+                        fig.add_annotation(
+                            x=mc_L * 100, y=er * 100, ax=64, ay=-62,
+                            xref="x", yref="y", axref="pixel", ayref="pixel",
+                            showarrow=True, arrowhead=2, arrowwidth=1.5, arrowcolor="#f59e0b",
+                            text=("<b>Your portfolio</b><br>"
+                                  f"E[r] = {er*100:.1f}%&nbsp; | &nbsp;Vol = {_sig*100:.1f}%<br>"
+                                  f"Skew = {_skew:.2f}<br>"
+                                  f"Realised ES = {es*100:.1f}%&nbsp; (L = {mc_L*100:.0f}%)<br>"
+                                  f"{_dtxt} · {'✓ feasible' if _feas else '✗ infeasible'}"),
+                            font=dict(color="#f59e0b", size=9),
+                            bgcolor="rgba(13,17,23,0.92)", bordercolor="#f59e0b", borderwidth=1,
+                            align="left", xanchor="left")
                         st.plotly_chart(fig, use_container_width=True)
                         st.caption("⭐ marks your resulting portfolio. Hover any point for its "
                                    "coordinates; drag to zoom, double-click to reset.")
