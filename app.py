@@ -4084,8 +4084,6 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                         f'<div style="height:7px;background:#1a2a3a;border-radius:3px;margin-top:3px">'
                         f'<div style="height:7px;width:{width:.1f}%;background:{_c};border-radius:3px"></div>'
                         f'</div></div>')
-                _note = ('<div style="color:#8b949e;font-size:.78rem;margin-top:.5rem">'
-                         'Each security has its own colour; amber bars are derivatives.</div>') if K else ''
                 _dcolors = ["#f59e0b" if i >= N else DONUT_COLORS[i % len(DONUT_COLORS)]
                             for i in range(len(labels))]
                 _donut = make_donut_svg(list(w), list(labels), _dcolors, size=170)
@@ -4097,7 +4095,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                     '<div style="display:flex;gap:22px;align-items:center">'
                     '<div style="flex:none">' + _donut + '</div>'
                     '<div style="flex:1;min-width:0">' + _bar + '</div>'
-                    '</div>' + _note + '</div>',
+                    '</div></div>',
                     unsafe_allow_html=True)
 
             # ---- validation panel ----
