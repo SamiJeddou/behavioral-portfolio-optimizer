@@ -3862,20 +3862,61 @@ with tab_mc:
                 cR2.metric("Realised ES (tail avg)", f"{es:.2%}")
                 cR3.metric("Securities / derivatives", f"{N} / {K}")
 
-                wt = _pd.DataFrame({"Asset": labels, "Weight": w})
-                wt = wt[wt["Weight"].abs() > 1e-4].sort_values("Weight", ascending=False)
-                wt["Weight"] = (wt["Weight"] * 100).map(lambda x: f"{x:.1f}%")
-                st.dataframe(wt.set_index("Asset"), use_container_width=True)
+                st.markdown('<div style="font-weight:600;font-size:.95rem;margin:.4rem 0 .5rem">'
+                            'Portfolio weights</div>', unsafe_allow_html=True)
+                _rows = [(labels[i], float(w[i]), i >= N) for i in range(len(labels))]
+                _rows = [r for r in _rows if abs(r[1]) > 1e-4]
+                _rows.sort(key=lambda r: r[1], reverse=True)
+                _bar = ""
+                for lbl, wi, is_der in _rows:
+                    _c = "#f59e0b" if is_der else "#4a9eff"
+                    pct = wi * 100.0
+                    width = max(0.0, min(100.0, pct))
+                    _bar += (
+                        f'<div style="margin-bottom:.45rem">'
+                        f'<div><span style="color:{_c};font-weight:600">{lbl}</span>'
+                        f'<span style="color:{_c}"> — {pct:.1f}%</span></div>'
+                        f'<div style="height:7px;background:#1a2a3a;border-radius:3px;margin-top:3px">'
+                        f'<div style="height:7px;width:{width:.1f}%;background:{_c};border-radius:3px"></div>'
+                        f'</div></div>')
+                st.markdown(_bar, unsafe_allow_html=True)
+                if K:
+                    st.caption("Blue = securities · amber = derivatives.")
 
                 with st.spinner("Tracing the return / tail-risk frontier…"):
                     fr = mc_frontier(R_full, mc_alpha,
                                      [-0.30, -0.25, -0.20, -0.15, -0.10, -0.05], w_max=mc_wmax)
-                try:
-                    import matplotlib.pyplot as _plt
-                    figf = plot_mc_frontier(fr)
-                    st.pyplot(figf, use_container_width=True); _plt.close(figf)
-                except Exception as _fe:
-                    st.caption(f"(frontier chart unavailable: {_fe})")
+                _okfr = [r for r in fr if r["ok"]]
+                if _okfr:
+                    try:
+                        import altair as alt
+                        dff = _pd.DataFrame({
+                            "ES floor L (%)": [r["L"] * 100 for r in _okfr],
+                            "Max expected return (%)": [r["er"] * 100 for r in _okfr],
+                            "Realised ES (%)": [r["es"] * 100 for r in _okfr],
+                        })
+                        _base = alt.Chart(dff).encode(
+                            x=alt.X("ES floor L (%):Q", scale=alt.Scale(zero=False),
+                                    title="Expected-Shortfall floor L (%)"),
+                            y=alt.Y("Max expected return (%):Q", scale=alt.Scale(zero=False),
+                                    title="Max expected return (%)"))
+                        _line = _base.mark_line(color="#4a9eff", strokeWidth=2.5)
+                        _pts = _base.mark_circle(color="#4a9eff", size=95).encode(
+                            tooltip=[alt.Tooltip("ES floor L (%):Q", format=".1f", title="ES floor L"),
+                                     alt.Tooltip("Max expected return (%):Q", format=".2f", title="E[r]"),
+                                     alt.Tooltip("Realised ES (%):Q", format=".2f", title="Realised ES")])
+                        st.altair_chart((_line + _pts).interactive().properties(height=340),
+                                        use_container_width=True)
+                        st.caption("Hover any point to read its coordinates; drag to pan and "
+                                   "scroll to zoom.")
+                    except Exception as _fe:
+                        try:
+                            import matplotlib.pyplot as _plt
+                            figf = plot_mc_frontier(fr); st.pyplot(figf, use_container_width=True); _plt.close(figf)
+                        except Exception:
+                            st.caption(f"(frontier chart unavailable: {_fe})")
+                else:
+                    st.caption("No feasible frontier points for these settings.")
 
             # ---- validation panel ----
             if mc_validate:
