@@ -3598,7 +3598,9 @@ with tab_bt:
             if _dcfg:
                 _dcfg["r"] = 0.03; _dcfg["T"] = 1.0
                 _fig_bt = plot_named_payoff(_dcfg, "underlying")
-                st.pyplot(_fig_bt, use_container_width=True)
+                _pc = st.columns([1, 1])
+                with _pc[0]:
+                    st.pyplot(_fig_bt, use_container_width=True)
                 plt.close(_fig_bt)
                 st.caption("Illustrative payoff: derivative return vs underlying return "
                            "(priced at ~25% vol). The backtest itself prices and marks the "
