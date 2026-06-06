@@ -3960,112 +3960,123 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                     '(CVaR linear program) — complements the exact grid engine.</span>'
                     '</div></div>', unsafe_allow_html=True)
 
-                st.markdown('<div style="font-weight:600;font-size:.95rem;margin:.4rem 0 .5rem">'
-                            'Portfolio weights</div>', unsafe_allow_html=True)
-                _rows = []
-                for i in range(len(labels)):
-                    is_der = i >= N
-                    _col = "#f59e0b" if is_der else DONUT_COLORS[i % len(DONUT_COLORS)]
-                    _rows.append((labels[i], float(w[i]), is_der, _col))
-                _rows = [r for r in _rows if abs(r[1]) > 1e-4]
-                _rows.sort(key=lambda r: r[1], reverse=True)
-                _bar = ""
-                for lbl, wi, is_der, _c in _rows:
-                    pct = wi * 100.0
-                    width = max(0.0, min(100.0, pct))
-                    _bar += (
-                        f'<div style="margin-bottom:.45rem">'
-                        f'<div><span style="color:{_c};font-weight:600">{lbl}</span>'
-                        f'<span style="color:{_c}"> — {pct:.1f}%</span></div>'
-                        f'<div style="height:7px;background:#1a2a3a;border-radius:3px;margin-top:3px">'
-                        f'<div style="height:7px;width:{width:.1f}%;background:{_c};border-radius:3px"></div>'
-                        f'</div></div>')
-                st.markdown(_bar, unsafe_allow_html=True)
-                if K:
-                    st.caption("Each security has its own colour; amber bars are derivatives.")
-
+                # frontier computed once, shown beside the weights
                 with st.spinner("Tracing the return / tail-risk frontier…"):
                     _floors = sorted(set([-0.30, -0.25, -0.20, -0.15, -0.10, -0.05]
                                          + [round(float(mc_L), 4)]))
                     fr = mc_frontier(R_full, mc_alpha, _floors, w_max=mc_wmax)
                 _okfr = [r for r in fr if r["ok"]]
-                if _okfr:
-                    _drawn = False
-                    try:
-                        import plotly.graph_objects as _go
-                        xs = [r["L"] * 100 for r in _okfr]
-                        ys = [r["er"] * 100 for r in _okfr]
-                        es_pct = [r["es"] * 100 for r in _okfr]
-                        fig = _go.Figure()
-                        fig.add_trace(_go.Scatter(
-                            x=xs, y=ys, mode="lines+markers", name="Frontier",
-                            line=dict(color="#4a9eff", width=2.5),
-                            marker=dict(size=8, color="#4a9eff"),
-                            customdata=es_pct,
-                            hovertemplate="ES floor L: %{x:.1f}%<br>Max E[r]: %{y:.2f}%"
-                                          "<br>Realised ES: %{customdata:.2f}%<extra></extra>"))
-                        fig.add_trace(_go.Scatter(
-                            x=[mc_L * 100], y=[er * 100], mode="markers", name="Scalable CVaR optimum",
-                            marker=dict(size=18, color="#f59e0b", symbol="star",
-                                        line=dict(color="#ffffff", width=1.2)),
-                            customdata=[es * 100],
-                            hovertemplate="<b>Scalable CVaR optimum</b><br>ES floor L: %{x:.1f}%"
-                                          "<br>E[r]: %{y:.2f}%<br>Realised ES: %{customdata:.2f}%<extra></extra>"))
-                        fig.update_layout(
-                            template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
-                            plot_bgcolor="rgba(0,0,0,0)", height=380,
-                            margin=dict(l=10, r=10, t=30, b=10), hovermode="closest",
-                            xaxis_title="Expected-Shortfall floor L (%)",
-                            yaxis_title="Max expected return (%)",
-                            legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0))
-                        fig.update_xaxes(showspikes=True, spikethickness=1, gridcolor="#21262d")
-                        fig.update_yaxes(showspikes=True, spikethickness=1, gridcolor="#21262d")
-                        _dtxt = f"{N} securities" + (f" + {K} deriv." if K else "")
-                        fig.add_annotation(
-                            x=mc_L * 100, y=er * 100, ax=64, ay=-62,
-                            xref="x", yref="y", axref="pixel", ayref="pixel",
-                            showarrow=True, arrowhead=2, arrowwidth=1.5, arrowcolor="#f59e0b",
-                            text=("<b>Scalable CVaR optimum</b><br>"
-                                  f"E[r] = {er*100:.1f}%&nbsp; | &nbsp;Vol = {_sig*100:.1f}%<br>"
-                                  f"Skew = {_skew:.2f}<br>"
-                                  f"Realised ES = {es*100:.1f}%&nbsp; (L = {mc_L*100:.0f}%)<br>"
-                                  f"{_dtxt} · {'✓ feasible' if _feas else '✗ infeasible'}"),
-                            font=dict(color="#f59e0b", size=9),
-                            bgcolor="rgba(13,17,23,0.92)", bordercolor="#f59e0b", borderwidth=1,
-                            align="left", xanchor="left")
-                        st.plotly_chart(fig, use_container_width=True)
-                        st.caption("⭐ marks the Scalable CVaR optimum (your resulting portfolio). Hover any point for its "
-                                   "coordinates; drag to zoom, double-click to reset.")
-                        _drawn = True
-                    except Exception:
-                        pass
-                    if not _drawn:
+
+                col_w, col_c = st.columns([1, 1.25])
+                with col_w:
+                    st.markdown('<div style="font-weight:600;font-size:.95rem;margin:.4rem 0 .5rem">'
+                                'Portfolio weights</div>', unsafe_allow_html=True)
+                    _rows = []
+                    for i in range(len(labels)):
+                        is_der = i >= N
+                        _col = "#f59e0b" if is_der else DONUT_COLORS[i % len(DONUT_COLORS)]
+                        _rows.append((labels[i], float(w[i]), is_der, _col))
+                    _rows = [r for r in _rows if abs(r[1]) > 1e-4]
+                    _rows.sort(key=lambda r: r[1], reverse=True)
+                    _bar = ""
+                    for lbl, wi, is_der, _c in _rows:
+                        pct = wi * 100.0
+                        width = max(0.0, min(100.0, pct))
+                        _bar += (
+                            f'<div style="margin-bottom:.45rem">'
+                            f'<div><span style="color:{_c};font-weight:600">{lbl}</span>'
+                            f'<span style="color:{_c}"> — {pct:.1f}%</span></div>'
+                            f'<div style="height:7px;background:#1a2a3a;border-radius:3px;margin-top:3px">'
+                            f'<div style="height:7px;width:{width:.1f}%;background:{_c};border-radius:3px"></div>'
+                            f'</div></div>')
+                    st.markdown(_bar, unsafe_allow_html=True)
+                    if K:
+                        st.caption("Each security has its own colour; amber bars are derivatives.")
+                with col_c:
+                    if _okfr:
+                        _drawn = False
                         try:
-                            import altair as alt
-                            dff = _pd.DataFrame({
-                                "ES floor L (%)": [r["L"] * 100 for r in _okfr],
-                                "Max expected return (%)": [r["er"] * 100 for r in _okfr],
-                                "Realised ES (%)": [r["es"] * 100 for r in _okfr]})
-                            _base = alt.Chart(dff).encode(
-                                x=alt.X("ES floor L (%):Q", scale=alt.Scale(zero=False)),
-                                y=alt.Y("Max expected return (%):Q", scale=alt.Scale(zero=False)))
-                            _line = _base.mark_line(color="#4a9eff", strokeWidth=2.5)
-                            _pts = _base.mark_circle(color="#4a9eff", size=95).encode(
-                                tooltip=[alt.Tooltip("ES floor L (%):Q", format=".1f"),
-                                         alt.Tooltip("Max expected return (%):Q", format=".2f"),
-                                         alt.Tooltip("Realised ES (%):Q", format=".2f")])
-                            _star = alt.Chart(_pd.DataFrame({
-                                "ES floor L (%)": [mc_L * 100],
-                                "Max expected return (%)": [er * 100]})).mark_point(
-                                shape="diamond", size=260, color="#f59e0b", filled=True).encode(
-                                x="ES floor L (%):Q", y="Max expected return (%):Q")
-                            st.altair_chart((_line + _pts + _star).interactive().properties(height=340),
-                                            use_container_width=True)
-                            st.caption("◆ marks the Scalable CVaR optimum. Hover points for coordinates.")
-                        except Exception as _fe:
-                            st.caption(f"(frontier chart unavailable: {_fe})")
-                else:
-                    st.caption("No feasible frontier points for these settings.")
+                            import plotly.graph_objects as _go
+                            xs = [r["L"] * 100 for r in _okfr]
+                            ys = [r["er"] * 100 for r in _okfr]
+                            es_pct = [r["es"] * 100 for r in _okfr]
+                            fig = _go.Figure()
+                            fig.add_trace(_go.Scatter(
+                                x=xs, y=ys, mode="lines+markers", name="Frontier",
+                                line=dict(color="#4a9eff", width=2.5),
+                                marker=dict(size=8, color="#4a9eff"),
+                                customdata=es_pct,
+                                hovertemplate="ES floor L: %{x:.1f}%<br>Max E[r]: %{y:.2f}%"
+                                              "<br>Realised ES: %{customdata:.2f}%<extra></extra>"))
+                            fig.add_trace(_go.Scatter(
+                                x=[mc_L * 100], y=[er * 100], mode="markers", name="Scalable CVaR optimum",
+                                marker=dict(size=18, color="#f59e0b", symbol="star",
+                                            line=dict(color="#ffffff", width=1.2)),
+                                customdata=[es * 100],
+                                hovertemplate="<b>Scalable CVaR optimum</b><br>ES floor L: %{x:.1f}%"
+                                              "<br>E[r]: %{y:.2f}%<br>Realised ES: %{customdata:.2f}%<extra></extra>"))
+                            fig.update_layout(
+                                template="plotly_dark", paper_bgcolor="#0d1117",
+                                plot_bgcolor="#0d1117", height=400,
+                                margin=dict(l=10, r=10, t=40, b=40), hovermode="closest",
+                                xaxis=dict(title=dict(text="Expected-Shortfall floor L (%)",
+                                                      font=dict(color="#c0c8d8", size=12)),
+                                           color="#c0c8d8", gridcolor="#1e2130", zerolinecolor="#2a2a3a"),
+                                yaxis=dict(title=dict(text="Max expected return (%)",
+                                                      font=dict(color="#c0c8d8", size=12)),
+                                           color="#c0c8d8", gridcolor="#1e2130", zerolinecolor="#2a2a3a"),
+                                legend=dict(bgcolor="rgba(26,26,46,0.9)", bordercolor="#3a3a5a",
+                                            borderwidth=1, font=dict(color="white", size=9), x=0.01, y=0.99),
+                                hoverlabel=dict(bgcolor="#1a1a2e", bordercolor="#1a6bbf",
+                                                font=dict(color="white", size=11)))
+                            fig.update_xaxes(showspikes=True, spikethickness=1)
+                            fig.update_yaxes(showspikes=True, spikethickness=1)
+                            _dtxt = f"{N} securities" + (f" + {K} deriv." if K else "")
+                            fig.add_annotation(
+                                x=mc_L * 100, y=er * 100, ax=46, ay=-58,
+                                xref="x", yref="y", axref="pixel", ayref="pixel",
+                                showarrow=True, arrowhead=2, arrowwidth=1.5, arrowcolor="#f59e0b",
+                                text=("<b>Scalable CVaR optimum</b><br>"
+                                      f"E[r] = {er*100:.1f}%&nbsp; | &nbsp;Vol = {_sig*100:.1f}%<br>"
+                                      f"Skew = {_skew:.2f}<br>"
+                                      f"Realised ES = {es*100:.1f}%&nbsp; (L = {mc_L*100:.0f}%)<br>"
+                                      f"{_dtxt} · {'✓ feasible' if _feas else '✗ infeasible'}"),
+                                font=dict(color="#f59e0b", size=9),
+                                bgcolor="rgba(13,17,23,0.92)", bordercolor="#f59e0b", borderwidth=1,
+                                align="left", xanchor="left")
+                            st.plotly_chart(fig, use_container_width=True)
+                            st.caption("⭐ marks the Scalable CVaR optimum (your resulting portfolio). "
+                                       "Hover any point for its coordinates; drag to zoom.")
+                            _drawn = True
+                        except Exception:
+                            pass
+                        if not _drawn:
+                            try:
+                                import altair as alt
+                                dff = _pd.DataFrame({
+                                    "ES floor L (%)": [r["L"] * 100 for r in _okfr],
+                                    "Max expected return (%)": [r["er"] * 100 for r in _okfr],
+                                    "Realised ES (%)": [r["es"] * 100 for r in _okfr]})
+                                _base = alt.Chart(dff).encode(
+                                    x=alt.X("ES floor L (%):Q", scale=alt.Scale(zero=False)),
+                                    y=alt.Y("Max expected return (%):Q", scale=alt.Scale(zero=False)))
+                                _line = _base.mark_line(color="#4a9eff", strokeWidth=2.5)
+                                _pts = _base.mark_circle(color="#4a9eff", size=95).encode(
+                                    tooltip=[alt.Tooltip("ES floor L (%):Q", format=".1f"),
+                                             alt.Tooltip("Max expected return (%):Q", format=".2f"),
+                                             alt.Tooltip("Realised ES (%):Q", format=".2f")])
+                                _star = alt.Chart(_pd.DataFrame({
+                                    "ES floor L (%)": [mc_L * 100],
+                                    "Max expected return (%)": [er * 100]})).mark_point(
+                                    shape="diamond", size=260, color="#f59e0b", filled=True).encode(
+                                    x="ES floor L (%):Q", y="Max expected return (%):Q")
+                                st.altair_chart((_line + _pts + _star).interactive().properties(height=360),
+                                                use_container_width=True)
+                                st.caption("◆ marks the Scalable CVaR optimum. Hover points for coordinates.")
+                            except Exception as _fe:
+                                st.caption(f"(frontier chart unavailable: {_fe})")
+                    else:
+                        st.caption("No feasible frontier points for these settings.")
 
             # ---- validation panel ----
             if mc_validate:
