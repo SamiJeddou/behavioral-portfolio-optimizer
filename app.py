@@ -3855,7 +3855,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
         st.session_state["mc_der_df"] = _mc_der_template.copy()
         st.session_state["mc_der_nonce"] = 0
     _mc_edited = st.data_editor(
-        st.session_state["mc_der_df"], num_rows="dynamic",
+        st.session_state["mc_der_df"], num_rows="dynamic", hide_index=True,
         key=f"mc_der_editor_{st.session_state['mc_der_nonce']}", use_container_width=True,
         column_config={
             "Type": st.column_config.SelectboxColumn("Type", options=list(MC_DER_TYPES.keys()),
@@ -3880,8 +3880,10 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                 help="Risk-free rate for option pricing. Blank = 3%."),
         })
 
-    # Fill per-row defaults only once a derivative Type is chosen (the blank "add"
-    # row stays empty until then). A nonce-keyed editor reloads cleanly after a fill.
+    # Defaults fill in per row only once a Type is chosen; clearing the Type empties that
+    # row again. A clean integer index avoids the editor showing a stray index column or a
+    # null-index error; a nonce-keyed editor reloads cleanly after any change.
+    _mc_edited = _mc_edited.reset_index(drop=True)
     _mc_filled = _mc_edited.copy()
     _mc_has_type = _mc_filled["Type"].notna() & (_mc_filled["Type"].astype(str).str.strip() != "")
     _mc_changed = False
@@ -3890,8 +3892,13 @@ After a run, the results show a details box, colour-coded weight bars, and an in
         if bool(_need.any()):
             _mc_filled.loc[_need, _c] = _dv
             _mc_changed = True
+    for _c in ("Strike", "Strike2", "Maturity", "ImplVol", "Rate"):
+        _clr = (~_mc_has_type) & _mc_filled[_c].notna()
+        if bool(_clr.any()):
+            _mc_filled.loc[_clr, _c] = float("nan")
+            _mc_changed = True
     if _mc_changed:
-        st.session_state["mc_der_df"] = _mc_filled
+        st.session_state["mc_der_df"] = _mc_filled.reset_index(drop=True)
         st.session_state["mc_der_nonce"] += 1
         st.rerun()
     st.session_state["mc_der_df"] = _mc_edited
