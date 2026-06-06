@@ -3839,11 +3839,12 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                            3, 15, 5, 1, key="mc_dof")
 
     _mc_head("Derivatives  (optional — add multiple)")
-    st.caption("Add one row per derivative — pick a Type and an Underlying. Any blank cell uses a "
-               "default: strike 1.00 (at-the-money), maturity 1 year (settled at intrinsic at the "
-               "horizon; raise it to mark the option to market with its remaining life), rate 3%, and "
-               "implied vol = the underlying's own volatility (consistent with the scenarios). The "
-               "resolved values for each row are listed below the table.")
+    st.caption("Add one row per derivative — pick a Type and an Underlying. New rows pre-fill "
+               "strike 1.00 (at-the-money), maturity 1 year (settled at intrinsic at the horizon; "
+               "raise it to mark the option to market with its remaining life) and rate 3% — all "
+               "editable. Implied vol stays \"auto\" (the underlying's own volatility, consistent "
+               "with the scenarios); the resolved value per row is listed below the table, where you "
+               "can confirm each derivative's settings.")
     import pandas as _pd
     _mc_der_template = _pd.DataFrame(
         {"Type": _pd.Series(dtype="str"), "Underlying": _pd.Series(dtype="str"),
@@ -3859,11 +3860,11 @@ After a run, the results show a details box, colour-coded weight bars, and an in
             "Underlying": st.column_config.SelectboxColumn(
                 "Underlying", options=(_mc_undl_opts if _mc_undl_opts else ["(enter tickers)"]), width="small"),
             "Strike": st.column_config.NumberColumn("Strike (×)", min_value=0.1, max_value=3.0,
-                                                    step=0.05, format="%.2f"),
+                                                    step=0.05, format="%.2f", default=1.0),
             "Strike2": st.column_config.NumberColumn("Strike-2 (×)", min_value=0.1, max_value=3.0,
                                                      step=0.05, format="%.2f"),
             "Maturity": st.column_config.NumberColumn(
-                "Maturity (yr)", min_value=1.0, max_value=5.0, step=0.25, format="%.2f",
+                "Maturity (yr)", min_value=1.0, max_value=5.0, step=0.25, format="%.2f", default=1.0,
                 help="Option maturity in years. 1.0 = expires at the 1-year horizon (settled at "
                      "intrinsic). Above 1, the option is marked to market at the horizon using its "
                      "remaining life."),
@@ -3872,7 +3873,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                 help="Implied volatility for pricing. Blank uses the underlying's own volatility "
                      "(arbitrage-consistent with the scenarios)."),
             "Rate": st.column_config.NumberColumn(
-                "Rate (%)", min_value=0.0, max_value=20.0, step=0.25, format="%.2f",
+                "Rate (%)", min_value=0.0, max_value=20.0, step=0.25, format="%.2f", default=3.0,
                 help="Risk-free rate for option pricing. Blank = 3%."),
         })
 
@@ -3882,6 +3883,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
     def _mc_isblank(v):
         return v is None or (isinstance(v, float) and v != v) or (isinstance(v, str) and v.strip() == "")
     _mc_preview = []
+    _mc_sig_map = dict(zip(DEFAULT_NAMES, DEFAULT_SIGS))
     _mc_tbl_ro = mc_der_table.dropna(how="all") if hasattr(mc_der_table, "dropna") else mc_der_table
     for _, _r in _mc_tbl_ro.iterrows():
         _ty = _r.get("Type")
@@ -3894,7 +3896,11 @@ After a run, the results show a details box, colour-coded weight bars, and an in
         _k  = "1.00" if _mc_isblank(_r.get("Strike"))   else f"{float(_r.get('Strike')):.2f}"
         _t  = "1.00" if _mc_isblank(_r.get("Maturity")) else f"{float(_r.get('Maturity')):.2f}"
         _rt = "3.00" if _mc_isblank(_r.get("Rate"))     else f"{float(_r.get('Rate')):.2f}"
-        _iv = "auto (underlying \u03c3)" if _mc_isblank(_r.get("ImplVol")) else f"{float(_r.get('ImplVol')):.0f}%"
+        if _mc_isblank(_r.get("ImplVol")):
+            _iv = (f"auto = {_mc_sig_map[_un]*100:.0f}% (underlying \u03c3)" if _un in _mc_sig_map
+                   else "auto (underlying \u03c3, set on run)")
+        else:
+            _iv = f"{float(_r.get('ImplVol')):.0f}%"
         _k2 = "" if _mc_isblank(_r.get("Strike2")) else f", strike-2 {float(_r.get('Strike2')):.2f}\u00d7"
         _mc_preview.append(f"\u2022 **{_ty}** on **{_un}** \u2014 strike {_k}\u00d7{_k2}, maturity {_t} y, vol {_iv}, rate {_rt}%")
     if _mc_preview:
