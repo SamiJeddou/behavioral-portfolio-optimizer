@@ -2367,9 +2367,35 @@ def _mc_leg_intrinsic(leg, spot_T):
     if t == "short_put":  return -q * np.maximum(K - spot_T, 0.0)
     return np.zeros_like(spot_T)
 
-def mc_der_returns(der_type, der_params, und_ret, vol, r=0.03, T=1.0):
-    """Per-scenario derivative return, priced from its Black-Scholes legs and the
-    instrument's terminal payoff — identical definition to the engine/backtest."""
+def _mc_leg_value_vec(leg, s, remT, vol, r):
+    """Vectorised signed Black-Scholes value of one leg at the horizon: spot array s,
+    scalar remaining maturity remT (>0). Mirrors the engine's BS formula so a
+    marked-to-market option at the horizon is priced consistently with inception."""
+    q = float(leg.get("qty", 1.0)); t = leg["type"]
+    s = np.asarray(s, float)
+    if t == "zcb":
+        return q * float(leg.get("notional", 1.0)) * np.exp(-r * remT) * np.ones_like(s)
+    K = leg["strike"]
+    if vol <= 0 or remT <= 0:
+        return _mc_leg_intrinsic(leg, s)
+    s_safe = np.maximum(s, 1e-12)
+    sq = vol * np.sqrt(remT)
+    d1 = (np.log(s_safe / K) + (r + 0.5 * vol * vol) * remT) / sq
+    d2 = d1 - sq
+    call = s_safe * _norm.cdf(d1) - K * np.exp(-r * remT) * _norm.cdf(d2)
+    put  = K * np.exp(-r * remT) * _norm.cdf(-d2) - s_safe * _norm.cdf(-d1)
+    if t == "long_call":  return  q * call
+    if t == "short_call": return -q * call
+    if t == "long_put":   return  q * put
+    if t == "short_put":  return -q * put
+    return np.zeros_like(s)
+
+def mc_der_returns(der_type, der_params, und_ret, vol, r=0.03, T=1.0, horizon=1.0):
+    """Per-scenario derivative return, priced from its Black-Scholes legs. The option
+    is bought at inception (full maturity T) and valued at the optimisation horizon:
+    intrinsic if it expires at/before the horizon (T<=horizon), otherwise a
+    Black-Scholes mark-to-market with the remaining maturity (T-horizon). Same return
+    definition as the engine/backtest."""
     legs, norm_mode, prem = _bt_legs(der_type, der_params)
     if legs is None:
         return None
@@ -2380,17 +2406,24 @@ def mc_der_returns(der_type, der_params, und_ret, vol, r=0.03, T=1.0):
     if abs(normalizer) < 1e-9:
         return None
     spot_T = 1.0 + np.asarray(und_ret, float)
-    payoff = np.sum([_mc_leg_intrinsic(lg, spot_T) for lg in legs], axis=0)
+    remT = max(float(T) - float(horizon), 0.0)
+    if remT <= 1e-9:
+        payoff = np.sum([_mc_leg_intrinsic(lg, spot_T) for lg in legs], axis=0)
+    else:
+        payoff = np.sum([_mc_leg_value_vec(lg, spot_T, remT, vol, r) for lg in legs], axis=0)
     return (payoff - paid) / normalizer
 
-def mc_build_matrix(R_sec, der_specs, sigs, names, r=0.03, T=1.0):
+def mc_build_matrix(R_sec, der_specs, sigs, names, r=0.03, T=1.0, horizon=1.0):
     """Stack S x N security returns with one return column per derivative spec.
-    der_specs: list of dicts {der_type, params, underlying_idx}. Returns
-    (R_full, labels, errors)."""
+    der_specs: list of dicts {der_type, params, underlying_idx, [T, vol_override, r]}.
+    Per-spec maturity, implied-vol override and rate fall back to the underlying's own
+    sigma and the defaults. Returns (R_full, labels, errors)."""
     cols = [R_sec]; labels = list(names); errors = []
     for d in der_specs:
-        ui = d["underlying_idx"]; vol = sigs[ui]
-        dr = mc_der_returns(d["der_type"], d["params"], R_sec[:, ui], vol, r=r, T=T)
+        ui = d["underlying_idx"]
+        vol = d["vol_override"] if d.get("vol_override") is not None else sigs[ui]
+        Td = float(d.get("T", T)); rd = float(d.get("r", r))
+        dr = mc_der_returns(d["der_type"], d["params"], R_sec[:, ui], vol, r=rd, T=Td, horizon=horizon)
         if dr is None:
             errors.append(d.get("label", d["der_type"])); continue
         cols.append(dr[:, None]); labels.append(d.get("label", d["der_type"]))
@@ -3807,11 +3840,16 @@ After a run, the results show a details box, colour-coded weight bars, and an in
 
     _mc_head("Derivatives  (optional — add multiple)")
     st.caption("Add one row per derivative. Strike and Strike-2 are fractions of the entry "
-               "spot (1.0). Strike-2 is used only by strangle and the spreads.")
+               "spot (1.0); Strike-2 is used only by strangle and the spreads. Maturity defaults "
+               "to the 1-year horizon (settled at intrinsic); set it higher to mark the option to "
+               "market at the horizon with its remaining life. Implied vol and rate are optional — "
+               "blank uses the underlying's own volatility and a 3% rate.")
     import pandas as _pd
     _mc_der_template = _pd.DataFrame(
         {"Type": _pd.Series(dtype="str"), "Underlying": _pd.Series(dtype="str"),
-         "Strike": _pd.Series(dtype="float"), "Strike2": _pd.Series(dtype="float")})
+         "Strike": _pd.Series(dtype="float"), "Strike2": _pd.Series(dtype="float"),
+         "Maturity": _pd.Series(dtype="float"), "ImplVol": _pd.Series(dtype="float"),
+         "Rate": _pd.Series(dtype="float")})
     mc_der_table = st.data_editor(
         _mc_der_template, num_rows="dynamic", key="mc_der_table", use_container_width=True,
         column_config={
@@ -3823,6 +3861,18 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                                                     step=0.05, format="%.2f"),
             "Strike2": st.column_config.NumberColumn("Strike-2 (×)", min_value=0.1, max_value=3.0,
                                                      step=0.05, format="%.2f"),
+            "Maturity": st.column_config.NumberColumn(
+                "Maturity (yr)", min_value=1.0, max_value=5.0, step=0.25, format="%.2f",
+                help="Option maturity in years. 1.0 = expires at the 1-year horizon (settled at "
+                     "intrinsic). Above 1, the option is marked to market at the horizon using its "
+                     "remaining life."),
+            "ImplVol": st.column_config.NumberColumn(
+                "Impl. vol (%)", min_value=1.0, max_value=200.0, step=1.0, format="%.0f",
+                help="Implied volatility for pricing. Blank uses the underlying's own volatility "
+                     "(arbitrage-consistent with the scenarios)."),
+            "Rate": st.column_config.NumberColumn(
+                "Rate (%)", min_value=0.0, max_value=20.0, step=0.25, format="%.2f",
+                help="Risk-free rate for option pricing. Blank = 3%."),
         })
 
     _mc_head("Constraint")
@@ -3901,9 +3951,16 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                         params = {"k1": max(k1, k2), "k2": min(k1, k2)}
                     else:
                         continue
+                    _mat = row.get("Maturity"); _iv = row.get("ImplVol"); _rr = row.get("Rate")
+                    _mat = float(_mat) if _mat == _mat and _mat is not None else 1.0
+                    _iv  = float(_iv)  if _iv  == _iv  and _iv  is not None else None
+                    _rr  = float(_rr)  if _rr  == _rr  and _rr  is not None else None
                     der_specs.append({"der_type": dt, "params": params,
                                       "underlying_idx": names.index(undl),
-                                      "label": f"{typ_lbl}·{undl}"})
+                                      "label": f"{typ_lbl}·{undl}",
+                                      "T": _mat,
+                                      "vol_override": (_iv / 100.0) if _iv is not None else None,
+                                      "r": (_rr / 100.0) if _rr is not None else 0.03})
 
                 R_full, labels, errs = mc_build_matrix(R_sec, der_specs, np.array(sigs), names)
                 der_warn += [f"{e} (pricing failed)" for e in errs]
