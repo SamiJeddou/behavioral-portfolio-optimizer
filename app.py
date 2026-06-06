@@ -3651,6 +3651,73 @@ with tab_mc:
                "remains the thesis-faithful reference for small portfolios), it does not "
                "replace it.")
 
+    st.markdown("""
+<div class="info-box" style="color:#ffffff !important">
+
+<span style="color:#4a9eff;font-size:1.75rem;font-weight:700">📋 How to use this tool</span>
+
+Set up the run in the sections below, then click Run:
+
+<table style="width:100%;border-collapse:collapse;color:#ffffff">
+<tr style="border-bottom:1px solid #3a3a5a">
+  <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">1</span></span></td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Data &amp; estimation</strong> — Choose a data source: live market tickers (estimated over a window) or the 3-asset thesis sample case (Das–Statman)</td>
+</tr>
+<tr style="border-bottom:1px solid #3a3a5a">
+  <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">2</span></span></td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Scenarios</strong> — Set the number of Monte-Carlo scenarios S and the copula (Gaussian, or Student-t for tail dependence)</td>
+</tr>
+<tr style="border-bottom:1px solid #3a3a5a">
+  <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">3</span></span></td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Derivatives</strong> (optional) — Add one or more derivatives (call, put, straddle, strangle, vertical spreads), each on any security</td>
+</tr>
+<tr style="border-bottom:1px solid #3a3a5a">
+  <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">4</span></span></td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Constraint</strong> — Set the tail probability α, the Expected-Shortfall floor L (E[r | tail] ≥ L), and an optional max weight per asset</td>
+</tr>
+<tr>
+  <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">5</span></span></td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Run</strong> — Click <strong>▶ Run scalable optimiser</strong></td>
+</tr>
+</table>
+
+</div>
+""", unsafe_allow_html=True)
+    st.markdown("""
+<div class="info-box" style="color:#ffffff !important">
+
+<span style="color:#4a9eff;font-size:1.4rem;font-weight:700">📈 Output chart</span>
+
+After a run, the results show a details box, colour-coded weight bars, and an interactive return / tail-risk frontier:
+
+<table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
+<tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Frontier chart</td></tr>
+<tr style="border-bottom:1px solid #2a2a3a">
+  <td style="padding:.3rem .5rem;white-space:nowrap">🔵 <strong>Blue line + dots</strong></td>
+  <td style="padding:.3rem .5rem">The return / tail-risk frontier — each dot is the <strong>maximum expected return</strong> achievable for one Expected-Shortfall floor L</td>
+</tr>
+<tr style="border-bottom:1px solid #2a2a3a">
+  <td style="padding:.3rem .5rem;white-space:nowrap">⭐ <strong>Gold star</strong></td>
+  <td style="padding:.3rem .5rem"><strong>Your resulting portfolio</strong> at the chosen floor L — hover for its expected return, L and realised ES</td>
+</tr>
+<tr style="border-bottom:1px solid #2a2a3a">
+  <td style="padding:.3rem .5rem;white-space:nowrap">🖱️ <strong>Interactivity</strong></td>
+  <td style="padding:.3rem .5rem">Hover any point for its coordinates; drag to zoom, double-click to reset</td>
+</tr>
+<tr><td colspan="2" style="padding:.5rem .5rem .3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Weights &amp; details</td></tr>
+<tr style="border-bottom:1px solid #2a2a3a">
+  <td style="padding:.3rem .5rem;white-space:nowrap">📊 <strong>Weight bars</strong></td>
+  <td style="padding:.3rem .5rem">Each security has its own colour; <span style="color:#f59e0b;font-weight:700">amber</span> bars are derivatives</td>
+</tr>
+<tr>
+  <td style="padding:.3rem .5rem;white-space:nowrap">🔷 <strong>Details box</strong></td>
+  <td style="padding:.3rem .5rem">Expected return, volatility, skewness and realised ES of the optimal portfolio, with a feasibility badge against the floor L</td>
+</tr>
+</table>
+
+</div>
+""", unsafe_allow_html=True)
+
     with st.expander("ℹ️  How this engine works", expanded=True):
         st.markdown(
             "1. **Scenarios.** Draw S joint return scenarios for all securities at once via a "
