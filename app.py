@@ -3935,7 +3935,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                          + (f" + {K} derivative{'s' if K != 1 else ''}" if K else ""))
                 _detbox = (
                     '<div style="background:#0d1a2e;border:1px solid #4a9eff;border-radius:8px;'
-                    'padding:.8rem 1.1rem;margin:0 0 .5rem;min-height:400px;box-sizing:border-box">'
+                    'padding:.8rem 1.1rem;flex:1;min-height:0;box-sizing:border-box;overflow:auto">'
                     '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.5rem">'
                     '<span style="color:#f59e0b;font-size:1.05rem;margin-right:.4rem;vertical-align:middle">★</span>' 
                     'Scalable CVaR optimum — Monte-Carlo</div>'
@@ -3950,6 +3950,20 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                     '<span style="color:#8b949e;font-size:.8rem">Approximate scenario-based optimum '
                     '(CVaR linear program) — complements the exact grid engine.</span>'
                     '</div></div>')
+                _metbox = (
+                    '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
+                    'padding:.85rem .95rem">'
+                    '<div style="display:flex;gap:.5rem;text-align:center">'
+                    f'<div style="flex:1"><div style="color:#4a9eff;font-weight:700;font-size:.95rem;line-height:1.2">'
+                    f'Expected return</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
+                    f'margin-top:.25rem">{er*100:.2f}%</div></div>'
+                    f'<div style="flex:1"><div style="color:#4a9eff;font-weight:700;font-size:.95rem;line-height:1.2">'
+                    f'Realised ES (tail avg)</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
+                    f'margin-top:.25rem">{es*100:.2f}%</div></div>'
+                    f'<div style="flex:1"><div style="color:#4a9eff;font-weight:700;font-size:.95rem;line-height:1.2">'
+                    f'Securities / derivatives</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
+                    f'margin-top:.25rem">{N} / {K}</div></div>'
+                    '</div></div>')
 
                 # frontier computed once
                 with st.spinner("Tracing the return / tail-risk frontier…"):
@@ -3958,10 +3972,13 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                     fr = mc_frontier(R_full, mc_alpha, _floors, w_max=mc_wmax)
                 _okfr = [r for r in fr if r["ok"]]
 
-                # Row A: details box (left) + frontier chart (right)
+                # Row: left = metrics box on top of details box (height matched to chart);
+                #      right = frontier chart
                 colA_l, colA_r = st.columns([1, 1])
                 with colA_l:
-                    st.markdown(_detbox, unsafe_allow_html=True)
+                    st.markdown(
+                        '<div style="display:flex;flex-direction:column;gap:12px;height:400px">'
+                        + _metbox + _detbox + '</div>', unsafe_allow_html=True)
                 with colA_r:
                     if _okfr:
                         _drawn = False
@@ -4048,50 +4065,33 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                     else:
                         st.caption("No feasible frontier points for these settings.")
 
-                # Row B: metrics on one line (under the box) + weights box (under the graph)
-                colB_l, colB_r = st.columns([1, 1])
-                with colB_l:
-                    st.markdown(
-                        '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
-                        'padding:.85rem .95rem">'
-                        '<div style="display:flex;gap:.5rem;text-align:center">'
-                        f'<div style="flex:1"><div style="color:#4a9eff;font-weight:700;font-size:.95rem;line-height:1.2">'
-                        f'Expected return</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
-                        f'margin-top:.25rem">{er*100:.2f}%</div></div>'
-                        f'<div style="flex:1"><div style="color:#4a9eff;font-weight:700;font-size:.95rem;line-height:1.2">'
-                        f'Realised ES (tail avg)</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
-                        f'margin-top:.25rem">{es*100:.2f}%</div></div>'
-                        f'<div style="flex:1"><div style="color:#4a9eff;font-weight:700;font-size:.95rem;line-height:1.2">'
-                        f'Securities / derivatives</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
-                        f'margin-top:.25rem">{N} / {K}</div></div>'
-                        '</div></div>', unsafe_allow_html=True)
-                with colB_r:
-                    _rows = []
-                    for i in range(len(labels)):
-                        is_der = i >= N
-                        _col = "#f59e0b" if is_der else DONUT_COLORS[i % len(DONUT_COLORS)]
-                        _rows.append((labels[i], float(w[i]), is_der, _col))
-                    _rows = [r for r in _rows if abs(r[1]) > 1e-4]
-                    _rows.sort(key=lambda r: r[1], reverse=True)
-                    _bar = ""
-                    for lbl, wi, is_der, _c in _rows:
-                        pct = wi * 100.0
-                        width = max(0.0, min(100.0, pct))
-                        _bar += (
-                            f'<div style="margin-bottom:.45rem">'
-                            f'<div><span style="color:{_c};font-weight:600">{lbl}</span>'
-                            f'<span style="color:{_c}"> — {pct:.1f}%</span></div>'
-                            f'<div style="height:7px;background:#1a2a3a;border-radius:3px;margin-top:3px">'
-                            f'<div style="height:7px;width:{width:.1f}%;background:{_c};border-radius:3px"></div>'
-                            f'</div></div>')
-                    _note = ('<div style="color:#8b949e;font-size:.78rem;margin-top:.5rem">'
-                             'Each security has its own colour; amber bars are derivatives.</div>') if K else ''
-                    st.markdown(
-                        '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
-                        'padding:.75rem .95rem">'
-                        '<div style="color:#4a9eff;font-weight:700;font-size:.95rem;margin-bottom:.6rem">'
-                        'Portfolio weights</div>' + _bar + _note + '</div>',
-                        unsafe_allow_html=True)
+                # Portfolio weights box (full width, below the row)
+                _rows = []
+                for i in range(len(labels)):
+                    is_der = i >= N
+                    _col = "#f59e0b" if is_der else DONUT_COLORS[i % len(DONUT_COLORS)]
+                    _rows.append((labels[i], float(w[i]), is_der, _col))
+                _rows = [r for r in _rows if abs(r[1]) > 1e-4]
+                _rows.sort(key=lambda r: r[1], reverse=True)
+                _bar = ""
+                for lbl, wi, is_der, _c in _rows:
+                    pct = wi * 100.0
+                    width = max(0.0, min(100.0, pct))
+                    _bar += (
+                        f'<div style="margin-bottom:.45rem">'
+                        f'<div><span style="color:{_c};font-weight:600">{lbl}</span>'
+                        f'<span style="color:{_c}"> — {pct:.1f}%</span></div>'
+                        f'<div style="height:7px;background:#1a2a3a;border-radius:3px;margin-top:3px">'
+                        f'<div style="height:7px;width:{width:.1f}%;background:{_c};border-radius:3px"></div>'
+                        f'</div></div>')
+                _note = ('<div style="color:#8b949e;font-size:.78rem;margin-top:.5rem">'
+                         'Each security has its own colour; amber bars are derivatives.</div>') if K else ''
+                st.markdown(
+                    '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
+                    'padding:.75rem .95rem;margin-top:14px">'
+                    '<div style="color:#4a9eff;font-weight:700;font-size:.95rem;margin-bottom:.6rem">'
+                    'Portfolio weights</div>' + _bar + _note + '</div>',
+                    unsafe_allow_html=True)
 
             # ---- validation panel ----
             if mc_validate:
