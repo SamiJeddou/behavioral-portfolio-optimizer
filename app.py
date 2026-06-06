@@ -4251,7 +4251,6 @@ with tab_bt:
     bt_label = st.selectbox("Instrument", bt_labels, index=bt_labels.index("Put option")
                             if "Put option" in bt_labels else 0, key="bt_der")
     bt_dtype = PREDEFINED_DERIVATIVES[bt_label]
-    _bt_diag = st.container()  # payoff diagram slot, shown right under the dropdown
 
     def _bt_param_inputs(dtype):
         p = {}
@@ -4293,7 +4292,26 @@ with tab_bt:
             p["premium"] = st.slider("Issuer premium", 0.00, 0.10, 0.00, 0.01, key="bt_ocp")
         return p
 
-    bt_params = _bt_param_inputs(bt_dtype)
+    # Payoff diagram (left) and derivative parameters (right), side by side
+    _pc = st.columns([1.15, 1])
+    with _pc[1]:
+        st.markdown('<div style="font-weight:600;font-size:.9rem;margin:.1rem 0 .3rem">'
+                    'Parameters</div>', unsafe_allow_html=True)
+        bt_params = _bt_param_inputs(bt_dtype)
+    with _pc[0]:
+        try:
+            _dp = dict(bt_params); _dp["r"] = 0.03; _dp["T"] = 1.0
+            _dcfg = build_der_config(bt_dtype, _dp, [0.25], 0)
+            if _dcfg:
+                _dcfg["r"] = 0.03; _dcfg["T"] = 1.0
+                _fig_bt = plot_named_payoff(_dcfg, "underlying")
+                st.pyplot(_fig_bt, use_container_width=True)
+                plt.close(_fig_bt)
+                st.caption("Illustrative payoff: derivative return vs underlying return "
+                           "(priced at ~25% vol). The backtest prices and marks the option "
+                           "with the construction-period volatility of the chosen underlying.")
+        except Exception:
+            pass
 
     # Underlying security for the derivative (default: auto = highest volatility)
     _bt_tk = [t.strip().upper() for t in bt_tickers_raw.split(",") if t.strip()]
@@ -4302,24 +4320,6 @@ with tab_bt:
         ["Auto — highest volatility"] + _bt_tk, index=0, key="bt_undl",
         help="Which security the option is written on. Auto picks the highest-volatility "
              "holding (thesis convention); or pin it to a specific ticker.")
-
-    with _bt_diag:
-        try:
-            _dp = dict(bt_params); _dp["r"] = 0.03; _dp["T"] = 1.0
-            _dcfg = build_der_config(bt_dtype, _dp, [0.25], 0)
-            if _dcfg:
-                _dcfg["r"] = 0.03; _dcfg["T"] = 1.0
-                _fig_bt = plot_named_payoff(_dcfg, "underlying")
-                _pc = st.columns([1, 1])
-                with _pc[0]:
-                    st.pyplot(_fig_bt, use_container_width=True)
-                plt.close(_fig_bt)
-                st.caption("Illustrative payoff: derivative return vs underlying return "
-                           "(priced at ~25% vol). The backtest itself prices and marks the "
-                           "option with the construction-period volatility of the chosen "
-                           "underlying.")
-        except Exception:
-            pass
 
     _bt_head("Risk measure")
     bt_method = st.selectbox(
