@@ -3864,12 +3864,15 @@ with tab_mc:
 
                 st.markdown('<div style="font-weight:600;font-size:.95rem;margin:.4rem 0 .5rem">'
                             'Portfolio weights</div>', unsafe_allow_html=True)
-                _rows = [(labels[i], float(w[i]), i >= N) for i in range(len(labels))]
+                _rows = []
+                for i in range(len(labels)):
+                    is_der = i >= N
+                    _col = "#f59e0b" if is_der else DONUT_COLORS[i % len(DONUT_COLORS)]
+                    _rows.append((labels[i], float(w[i]), is_der, _col))
                 _rows = [r for r in _rows if abs(r[1]) > 1e-4]
                 _rows.sort(key=lambda r: r[1], reverse=True)
                 _bar = ""
-                for lbl, wi, is_der in _rows:
-                    _c = "#f59e0b" if is_der else "#4a9eff"
+                for lbl, wi, is_der, _c in _rows:
                     pct = wi * 100.0
                     width = max(0.0, min(100.0, pct))
                     _bar += (
@@ -3881,39 +3884,74 @@ with tab_mc:
                         f'</div></div>')
                 st.markdown(_bar, unsafe_allow_html=True)
                 if K:
-                    st.caption("Blue = securities · amber = derivatives.")
+                    st.caption("Each security has its own colour; amber bars are derivatives.")
 
                 with st.spinner("Tracing the return / tail-risk frontier…"):
-                    fr = mc_frontier(R_full, mc_alpha,
-                                     [-0.30, -0.25, -0.20, -0.15, -0.10, -0.05], w_max=mc_wmax)
+                    _floors = sorted(set([-0.30, -0.25, -0.20, -0.15, -0.10, -0.05]
+                                         + [round(float(mc_L), 4)]))
+                    fr = mc_frontier(R_full, mc_alpha, _floors, w_max=mc_wmax)
                 _okfr = [r for r in fr if r["ok"]]
                 if _okfr:
+                    _drawn = False
                     try:
-                        import altair as alt
-                        dff = _pd.DataFrame({
-                            "ES floor L (%)": [r["L"] * 100 for r in _okfr],
-                            "Max expected return (%)": [r["er"] * 100 for r in _okfr],
-                            "Realised ES (%)": [r["es"] * 100 for r in _okfr],
-                        })
-                        _base = alt.Chart(dff).encode(
-                            x=alt.X("ES floor L (%):Q", scale=alt.Scale(zero=False),
-                                    title="Expected-Shortfall floor L (%)"),
-                            y=alt.Y("Max expected return (%):Q", scale=alt.Scale(zero=False),
-                                    title="Max expected return (%)"))
-                        _line = _base.mark_line(color="#4a9eff", strokeWidth=2.5)
-                        _pts = _base.mark_circle(color="#4a9eff", size=95).encode(
-                            tooltip=[alt.Tooltip("ES floor L (%):Q", format=".1f", title="ES floor L"),
-                                     alt.Tooltip("Max expected return (%):Q", format=".2f", title="E[r]"),
-                                     alt.Tooltip("Realised ES (%):Q", format=".2f", title="Realised ES")])
-                        st.altair_chart((_line + _pts).interactive().properties(height=340),
-                                        use_container_width=True)
-                        st.caption("Hover any point to read its coordinates; drag to pan and "
-                                   "scroll to zoom.")
-                    except Exception as _fe:
+                        import plotly.graph_objects as _go
+                        xs = [r["L"] * 100 for r in _okfr]
+                        ys = [r["er"] * 100 for r in _okfr]
+                        es_pct = [r["es"] * 100 for r in _okfr]
+                        fig = _go.Figure()
+                        fig.add_trace(_go.Scatter(
+                            x=xs, y=ys, mode="lines+markers", name="Frontier",
+                            line=dict(color="#4a9eff", width=2.5),
+                            marker=dict(size=8, color="#4a9eff"),
+                            customdata=es_pct,
+                            hovertemplate="ES floor L: %{x:.1f}%<br>Max E[r]: %{y:.2f}%"
+                                          "<br>Realised ES: %{customdata:.2f}%<extra></extra>"))
+                        fig.add_trace(_go.Scatter(
+                            x=[mc_L * 100], y=[er * 100], mode="markers", name="Your portfolio",
+                            marker=dict(size=18, color="#f59e0b", symbol="star",
+                                        line=dict(color="#ffffff", width=1.2)),
+                            customdata=[es * 100],
+                            hovertemplate="<b>Your portfolio</b><br>ES floor L: %{x:.1f}%"
+                                          "<br>E[r]: %{y:.2f}%<br>Realised ES: %{customdata:.2f}%<extra></extra>"))
+                        fig.update_layout(
+                            template="plotly_dark", paper_bgcolor="rgba(0,0,0,0)",
+                            plot_bgcolor="rgba(0,0,0,0)", height=380,
+                            margin=dict(l=10, r=10, t=30, b=10), hovermode="closest",
+                            xaxis_title="Expected-Shortfall floor L (%)",
+                            yaxis_title="Max expected return (%)",
+                            legend=dict(orientation="h", yanchor="bottom", y=1.02, x=0))
+                        fig.update_xaxes(showspikes=True, spikethickness=1, gridcolor="#21262d")
+                        fig.update_yaxes(showspikes=True, spikethickness=1, gridcolor="#21262d")
+                        st.plotly_chart(fig, use_container_width=True)
+                        st.caption("⭐ marks your resulting portfolio. Hover any point for its "
+                                   "coordinates; drag to zoom, double-click to reset.")
+                        _drawn = True
+                    except Exception:
+                        pass
+                    if not _drawn:
                         try:
-                            import matplotlib.pyplot as _plt
-                            figf = plot_mc_frontier(fr); st.pyplot(figf, use_container_width=True); _plt.close(figf)
-                        except Exception:
+                            import altair as alt
+                            dff = _pd.DataFrame({
+                                "ES floor L (%)": [r["L"] * 100 for r in _okfr],
+                                "Max expected return (%)": [r["er"] * 100 for r in _okfr],
+                                "Realised ES (%)": [r["es"] * 100 for r in _okfr]})
+                            _base = alt.Chart(dff).encode(
+                                x=alt.X("ES floor L (%):Q", scale=alt.Scale(zero=False)),
+                                y=alt.Y("Max expected return (%):Q", scale=alt.Scale(zero=False)))
+                            _line = _base.mark_line(color="#4a9eff", strokeWidth=2.5)
+                            _pts = _base.mark_circle(color="#4a9eff", size=95).encode(
+                                tooltip=[alt.Tooltip("ES floor L (%):Q", format=".1f"),
+                                         alt.Tooltip("Max expected return (%):Q", format=".2f"),
+                                         alt.Tooltip("Realised ES (%):Q", format=".2f")])
+                            _star = alt.Chart(_pd.DataFrame({
+                                "ES floor L (%)": [mc_L * 100],
+                                "Max expected return (%)": [er * 100]})).mark_point(
+                                shape="diamond", size=260, color="#f59e0b", filled=True).encode(
+                                x="ES floor L (%):Q", y="Max expected return (%):Q")
+                            st.altair_chart((_line + _pts + _star).interactive().properties(height=340),
+                                            use_container_width=True)
+                            st.caption("◆ marks your resulting portfolio. Hover points for coordinates.")
+                        except Exception as _fe:
                             st.caption(f"(frontier chart unavailable: {_fe})")
                 else:
                     st.caption("No feasible frontier points for these settings.")
