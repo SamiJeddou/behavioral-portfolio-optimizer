@@ -4031,7 +4031,8 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                                 font=dict(color="#f59e0b", size=9),
                                 bgcolor="rgba(13,17,23,0.92)", bordercolor="#f59e0b", borderwidth=1,
                                 align="left", xanchor="left")
-                            st.plotly_chart(fig, use_container_width=True)
+                            st.plotly_chart(fig, use_container_width=True,
+                                            config={'editable': True, 'displayModeBar': True})
                             st.caption("⭐ marks the Scalable CVaR optimum (your resulting portfolio). "
                                        "Hover any point for its coordinates; drag to zoom.")
                             _drawn = True
