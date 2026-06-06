@@ -3862,6 +3862,37 @@ with tab_mc:
                 cR2.metric("Realised ES (tail avg)", f"{es:.2%}")
                 cR3.metric("Securities / derivatives", f"{N} / {K}")
 
+                # ── details text box (mirrors the optimiser's P0–P3 boxes) ──
+                _port = R_full @ w
+                _sig = float(_port.std())
+                _mn = float(_port.mean())
+                _skew = float((((_port - _mn) / _sig) ** 3).mean()) if _sig > 0 else 0.0
+                _feas = es >= mc_L
+                _badge = (f'<span style="color:#16a34a">✓ feasible — ES {es*100:.2f}% ≥ L {mc_L*100:.2f}%</span>'
+                          if _feas else
+                          f'<span style="color:#dc2626">✗ ES {es*100:.2f}% &lt; L {mc_L*100:.2f}%</span>')
+                _wmax_txt = (f" · max weight/asset {int(round((mc_wmax or 1)*100))}%" if mc_wmax else "")
+                _univ = (f"{N} securit{'y' if N == 1 else 'ies'}"
+                         + (f" + {K} derivative{'s' if K != 1 else ''}" if K else ""))
+                st.markdown(
+                    '<div style="background:#0d1a2e;border:1px solid #4a9eff;border-radius:8px;'
+                    'padding:.8rem 1.1rem;margin:.2rem 0 .9rem">'
+                    '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.5rem">'
+                    '<span style="display:inline-block;width:12px;height:12px;border-radius:50%;'
+                    'background:#4a9eff;border:2px solid white;margin-right:.45rem;vertical-align:middle"></span>'
+                    'Scalable optimal portfolio — Monte-Carlo + CVaR</div>'
+                    '<div style="color:#c9d1d9;font-size:.86rem;line-height:1.75">'
+                    f'<b>Expected return:</b> {er*100:.2f}% &nbsp;·&nbsp; <b>Volatility:</b> {_sig*100:.2f}% '
+                    f'&nbsp;·&nbsp; <b>Skewness:</b> {_skew:.3f}<br>'
+                    f'<b>Realised ES</b> (tail average at α = {mc_alpha*100:.0f}%)<b>:</b> '
+                    f'{es*100:.2f}% &nbsp; {_badge}<br>'
+                    f'<b>Universe:</b> {_univ}<br>'
+                    f'<b>Scenarios:</b> {int(mc_S):,} ({copula} copula){_wmax_txt}<br>'
+                    f'<b>Objective:</b> maximise E[r] subject to ES ≥ {mc_L*100:.0f}%<br>'
+                    '<span style="color:#8b949e;font-size:.8rem">Approximate scenario-based optimum '
+                    '(CVaR linear program) — complements the exact grid engine.</span>'
+                    '</div></div>', unsafe_allow_html=True)
+
                 st.markdown('<div style="font-weight:600;font-size:.95rem;margin:.4rem 0 .5rem">'
                             'Portfolio weights</div>', unsafe_allow_html=True)
                 _rows = []
