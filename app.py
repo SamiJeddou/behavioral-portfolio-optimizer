@@ -4101,7 +4101,6 @@ After a run, the results show a details box, colour-coded weight bars, and an in
             # ---- validation panel ----
             if mc_validate:
                 st.markdown("---")
-                st.markdown("#### Validation against closed-form values")
                 m_err = float(np.max(np.abs(R_sec.mean(0) - np.array(means))))
                 s_err = float(np.max(np.abs(R_sec.std(0) - np.array(sigs))))
                 rows_v = [
@@ -4121,15 +4120,31 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                 else:
                     rows_v.append(["Closed-form ES check", "n/a",
                                    "Gaussian copula only (t-portfolio is non-Normal)"])
-                vdf = _pd.DataFrame(rows_v, columns=["Check", "Result", "Note"])
-                st.table(vdf.set_index("Check"))
-                st.caption("The scenario sample reproduces the target means and volatilities, "
-                           "and (under the Gaussian copula) its Expected Shortfall matches the "
-                           "closed-form Normal value — confirming the generator and the tail "
-                           "estimate are faithful. Note the minimum-CVaR portfolio is "
-                           "mean-variance *efficient* but is not the global-minimum-variance "
-                           "portfolio (CVaR carries a return tilt). The exact grid-agreement "
-                           "test on a 3–4-asset case is documented in the addendum.")
+                _vhead = ('<tr style="color:#8b949e;border-bottom:1px solid #30363d">'
+                          '<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Check</th>'
+                          '<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Result</th>'
+                          '<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Note</th></tr>')
+                _vrows = ""
+                for _c0, _c1, _c2 in rows_v:
+                    _vrows += ('<tr style="border-bottom:1px solid #1b2230">'
+                               f'<td style="padding:.4rem .5rem">{_c0}</td>'
+                               f'<td style="padding:.4rem .5rem;color:#fafafa;font-weight:600">{_c1}</td>'
+                               f'<td style="padding:.4rem .5rem;color:#8b949e">{_c2}</td></tr>')
+                _vcap = ('<div style="color:#8b949e;font-size:.78rem;margin-top:.6rem;line-height:1.5">'
+                         'The scenario sample reproduces the target means and volatilities, and '
+                         '(under the Gaussian copula) its Expected Shortfall matches the closed-form '
+                         'Normal value — confirming the generator and the tail estimate are faithful. '
+                         'The minimum-CVaR portfolio is mean-variance efficient but not the '
+                         'global-minimum-variance portfolio (CVaR carries a return tilt). The exact '
+                         'grid-agreement test on a 3–4-asset case is documented in the addendum.</div>')
+                st.markdown(
+                    '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
+                    'padding:.85rem 1rem">'
+                    '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.6rem">'
+                    'Validation against closed-form values</div>'
+                    '<table style="width:100%;border-collapse:collapse;font-size:.85rem;color:#c9d1d9">'
+                    + _vhead + _vrows + '</table>' + _vcap + '</div>',
+                    unsafe_allow_html=True)
 
         except Exception as _e:
             st.error(str(_e))
