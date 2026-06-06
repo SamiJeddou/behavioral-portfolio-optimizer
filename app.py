@@ -4051,10 +4051,20 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                 # Row B: metrics on one line (under the box) + weights box (under the graph)
                 colB_l, colB_r = st.columns([1, 1])
                 with colB_l:
-                    m1, m2, m3 = st.columns(3)
-                    m1.metric("Expected return", f"{er:.2%}")
-                    m2.metric("Realised ES (tail avg)", f"{es:.2%}")
-                    m3.metric("Securities / derivatives", f"{N} / {K}")
+                    st.markdown(
+                        '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
+                        'padding:.85rem .95rem">'
+                        '<div style="display:flex;gap:.5rem;text-align:center">'
+                        f'<div style="flex:1"><div style="color:#8b949e;font-size:.76rem;line-height:1.25">'
+                        f'Expected return</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
+                        f'margin-top:.25rem">{er*100:.2f}%</div></div>'
+                        f'<div style="flex:1"><div style="color:#8b949e;font-size:.76rem;line-height:1.25">'
+                        f'Realised ES (tail avg)</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
+                        f'margin-top:.25rem">{es*100:.2f}%</div></div>'
+                        f'<div style="flex:1"><div style="color:#8b949e;font-size:.76rem;line-height:1.25">'
+                        f'Securities / derivatives</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
+                        f'margin-top:.25rem">{N} / {K}</div></div>'
+                        '</div></div>', unsafe_allow_html=True)
                 with colB_r:
                     _rows = []
                     for i in range(len(labels)):
