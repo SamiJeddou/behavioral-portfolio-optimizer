@@ -3528,16 +3528,7 @@ with tab_bt:
     bt_tickers_raw = st.text_input(
         "Tickers (comma-separated)", value="AAPL, MSFT, JPM, TLT", key="bt_tickers",
         help="Yahoo Finance symbols. Pick the option's underlying in the Derivative section below.")
-    c3, c4 = st.columns(2)
-    with c3:
-        bt_freq = st.selectbox("Return frequency", ["Daily", "Monthly"], index=0, key="bt_freq")
-    with c4:
-        bt_res = st.selectbox(
-            "Grid resolution", ["Fast", "Standard", "High"], index=1, key="bt_res",
-            help="Weight-grid precision for the construction optimiser "
-                 "(Fast m=21 / Standard m=35 / High m=51). Turbo is omitted here — it is "
-                 "unreliable when a derivative is in the portfolio, which the backtest always "
-                 "builds — and Rigorous ES is selected in the Risk measure section below.")
+    bt_freq = st.selectbox("Return frequency", ["Daily", "Monthly"], index=0, key="bt_freq")
 
     st.markdown(_BT_RULE, unsafe_allow_html=True)
     c1, c2 = st.columns(2)
@@ -3557,6 +3548,7 @@ with tab_bt:
     bt_label = st.selectbox("Instrument", bt_labels, index=bt_labels.index("Put option")
                             if "Put option" in bt_labels else 0, key="bt_der")
     bt_dtype = PREDEFINED_DERIVATIVES[bt_label]
+    _bt_diag = st.container()  # payoff diagram slot, shown right under the dropdown
 
     def _bt_param_inputs(dtype):
         p = {}
@@ -3599,6 +3591,22 @@ with tab_bt:
         help="Which security the option is written on. Auto picks the highest-volatility "
              "holding (thesis convention); or pin it to a specific ticker.")
 
+    with _bt_diag:
+        try:
+            _dp = dict(bt_params); _dp["r"] = 0.03; _dp["T"] = 1.0
+            _dcfg = build_der_config(bt_dtype, _dp, [0.25], 0)
+            if _dcfg:
+                _dcfg["r"] = 0.03; _dcfg["T"] = 1.0
+                _fig_bt = plot_named_payoff(_dcfg, "underlying")
+                st.pyplot(_fig_bt, use_container_width=True)
+                plt.close(_fig_bt)
+                st.caption("Illustrative payoff: derivative return vs underlying return "
+                           "(priced at ~25% vol). The backtest itself prices and marks the "
+                           "option with the construction-period volatility of the chosen "
+                           "underlying.")
+        except Exception:
+            pass
+
     _bt_head("Risk measure")
     bt_method = st.selectbox(
         "Constraint",
@@ -3621,6 +3629,14 @@ with tab_bt:
         bt_L = st.slider("Minimum Expected Shortfall L  (E[r | r < H] ≥ L)",
                          -40, 0, -15, 1, format="%d%%", key="bt_L") / 100.0
         bt_alpha = 0.05
+
+    _bt_head("Grid resolution")
+    bt_res = st.selectbox(
+        "Grid precision", ["Fast", "Standard", "High"], index=1, key="bt_res",
+        help="Weight-grid precision for the construction optimiser "
+             "(Fast m=21 / Standard m=35 / High m=51). Turbo is omitted here — it is "
+             "unreliable when a derivative is in the portfolio, which the backtest always "
+             "builds — and Rigorous ES is selected in the Risk measure section above.")
 
     st.markdown(_BT_RULE, unsafe_allow_html=True)
     st.markdown(
