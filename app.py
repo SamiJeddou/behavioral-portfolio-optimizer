@@ -3696,20 +3696,33 @@ with tab_mc:
                     + "<div style='color:#4a9eff;font-weight:700;font-size:1rem;"
                       "margin-bottom:0.35rem'>" + t + "</div>", unsafe_allow_html=True)
 
-    _mc_head("Securities & estimation", rule=False)
-    mc_tickers_raw = st.text_input(
-        "Tickers (comma-separated — add as many as you like)",
-        value="AAPL, MSFT, JPM, TLT, XLE, GLD", key="mc_tickers",
-        help="The scalable engine is built for large universes. Means, volatilities and "
-             "correlations are estimated from this window.")
-    _mc_tk = [t.strip().upper() for t in mc_tickers_raw.split(",") if t.strip()]
-    cme1, cme2, cme3 = st.columns(3)
-    with cme1:
-        mc_start = st.date_input("Estimate from", value=_dt.date(2018, 1, 1), key="mc_start")
-    with cme2:
-        mc_end = st.date_input("Estimate to", value=_dt.date(2023, 12, 31), key="mc_end")
-    with cme3:
-        mc_freq = st.selectbox("Frequency", ["Daily", "Monthly"], index=0, key="mc_freq")
+    _mc_head("Data & estimation", rule=False)
+    mc_source = st.radio(
+        "Data source",
+        ["Live tickers", "Sample case — 3-asset thesis (Das–Statman)"],
+        horizontal=True, key="mc_source")
+    if mc_source.startswith("Live"):
+        mc_tickers_raw = st.text_input(
+            "Tickers (comma-separated — add as many as you like)",
+            value="AAPL, MSFT, JPM, TLT, XLE, GLD", key="mc_tickers",
+            help="The scalable engine is built for large universes. Means, volatilities and "
+                 "correlations are estimated from this window.")
+        _mc_tk = [t.strip().upper() for t in mc_tickers_raw.split(",") if t.strip()]
+        cme1, cme2, cme3 = st.columns(3)
+        with cme1:
+            mc_start = st.date_input("Estimate from", value=_dt.date(2018, 1, 1), key="mc_start")
+        with cme2:
+            mc_end = st.date_input("Estimate to", value=_dt.date(2023, 12, 31), key="mc_end")
+        with cme3:
+            mc_freq = st.selectbox("Frequency", ["Daily", "Monthly"], index=0, key="mc_freq")
+        _mc_undl_opts = _mc_tk
+    else:
+        st.caption("Thesis 3-asset case — expected returns [5%, 10%, 25%], volatilities "
+                   "[5%, 20%, 50%], correlation(Mid, High) = 0.4. No prices are fetched; this "
+                   "reproduces the **Optimiser tab's default sample**, so you can compare the "
+                   "two engines directly on the same inputs.")
+        _mc_tk, mc_start, mc_end, mc_freq = [], None, None, "Daily"
+        _mc_undl_opts = list(DEFAULT_NAMES)
 
     _mc_head("Scenarios")
     cms1, cms2 = st.columns(2)
@@ -3738,7 +3751,7 @@ with tab_mc:
             "Type": st.column_config.SelectboxColumn("Type", options=list(MC_DER_TYPES.keys()),
                                                      width="medium"),
             "Underlying": st.column_config.SelectboxColumn(
-                "Underlying", options=(_mc_tk if _mc_tk else ["(enter tickers)"]), width="small"),
+                "Underlying", options=(_mc_undl_opts if _mc_undl_opts else ["(enter tickers)"]), width="small"),
             "Strike": st.column_config.NumberColumn("Strike (×)", min_value=0.1, max_value=3.0,
                                                     step=0.05, format="%.2f"),
             "Strike2": st.column_config.NumberColumn("Strike-2 (×)", min_value=0.1, max_value=3.0,
@@ -3770,22 +3783,26 @@ with tab_mc:
 
     if mc_run:
         try:
-            tickers = list(dict.fromkeys(_mc_tk))
-            if len(tickers) < 2:
-                raise RuntimeError("Please enter at least two tickers.")
-            if not (mc_start < mc_end):
-                raise RuntimeError("Estimation 'from' must precede 'to'.")
             copula = "gaussian" if mc_cop.startswith("Gaussian") else "t"
-
-            with st.spinner("Estimating from prices and generating scenarios…"):
-                px, err = fetch_close_prices(tickers, mc_start, mc_end)
-                if err:
-                    raise RuntimeError(f"Price data: {err}")
-                means, sigs, corr, names, _ = stats_from_prices(px, mc_freq)
-                if len(names) < 2:
-                    raise RuntimeError("Fewer than two usable securities after cleaning.")
-                N = len(names)
-                cov = corr_to_cov(sigs, corr)
+            if mc_source.startswith("Live"):
+                tickers = list(dict.fromkeys(_mc_tk))
+                if len(tickers) < 2:
+                    raise RuntimeError("Please enter at least two tickers.")
+                if not (mc_start < mc_end):
+                    raise RuntimeError("Estimation 'from' must precede 'to'.")
+                with st.spinner("Estimating from prices…"):
+                    px, err = fetch_close_prices(tickers, mc_start, mc_end)
+                    if err:
+                        raise RuntimeError(f"Price data: {err}")
+                    means, sigs, corr, names, _ = stats_from_prices(px, mc_freq)
+                    if len(names) < 2:
+                        raise RuntimeError("Fewer than two usable securities after cleaning.")
+            else:
+                means, sigs = list(DEFAULT_MEANS), list(DEFAULT_SIGS)
+                corr = [r[:] for r in DEFAULT_CORR]; names = list(DEFAULT_NAMES)
+            N = len(names)
+            cov = corr_to_cov(sigs, corr)
+            with st.spinner("Generating scenarios…"):
                 R_sec = mc_generate_scenarios(means, sigs, corr, S=int(mc_S),
                                               copula=copula, dof=int(mc_dof), seed=1)
 
