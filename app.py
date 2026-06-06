@@ -4005,7 +4005,10 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                             fig.update_layout(
                                 template="plotly_dark", paper_bgcolor="#0d1117",
                                 plot_bgcolor="#0d1117", height=400,
-                                margin=dict(l=10, r=10, t=40, b=40), hovermode="closest",
+                                title=dict(text="Return / Tail-Risk Frontier (Monte-Carlo + CVaR)",
+                                           font=dict(color="white", size=15),
+                                           x=0.5, xanchor="center", xref="paper"),
+                                margin=dict(l=10, r=10, t=52, b=40), hovermode="closest",
                                 xaxis=dict(title=dict(text="Expected-Shortfall floor L (%)",
                                                       font=dict(color="#c0c8d8", size=12)),
                                            color="#c0c8d8", gridcolor="#1e2130", zerolinecolor="#2a2a3a"),
