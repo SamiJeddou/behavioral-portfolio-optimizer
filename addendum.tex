@@ -1,0 +1,280 @@
+\documentclass[11pt]{article}
+\usepackage[a4paper,margin=2.5cm]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage[expansion=false]{microtype}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{xcolor}
+
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\E}{\mathbb{E}}
+\newcommand{\Prob}{\mathbb{P}}
+\newcommand{\T}{^{\!\top}}
+\newcommand{\ind}{\mathbf{1}}
+
+\title{\textbf{A Scalable Monte-Carlo / CVaR Linear-Program Optimiser\\
+for Mental-Account Portfolios with Many Securities and Derivatives}}
+\author{Sami Jeddou\\[2pt]
+\small Addendum to the 2012 MSc thesis (USI Lugano) and the accompanying paper\\
+\small on the \emph{Beyond Mean-Variance} optimiser}
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+\noindent
+The thesis and its software reimplementation solve the Das--Statman mental-account
+problem on an exhaustive return grid. That representation is exact for small
+universes but its state space grows as $m^{N}$ in the number of securities $N$,
+which confines it in practice to four or five assets and a single derivative.
+This addendum sets out a \emph{scenario-based} reformulation whose cost is linear
+in $N$ and independent of how returns are discretised, and which admits an
+arbitrary number $K$ of derivatives priced consistently inside each scenario.
+Joint returns are sampled through a copula; each mental account's
+constraint---maximise expected return subject to a tail-risk floor---is then a
+\emph{linear program} via the Rockafellar--Uryasev representation of Conditional
+Value-at-Risk. We give the full formulation, its relationship to the grid method
+and to the thesis, a convergence and validation check, and the design trade-offs.
+A prototype reproduces the closed-form Normal Expected Shortfall to within $3$
+basis points and optimises a five-asset, two-derivative portfolio in a single
+linear solve.
+\end{abstract}
+
+\section{Motivation: the curse of dimensionality}
+The Das, Markowitz, Scheid and Statman (2010) mental-account framework---extended
+in the 2012 thesis with derivatives and structured products---maximises a sub-portfolio's
+expected return subject to a behavioural shortfall constraint,
+$\Prob(r < H) \le \alpha$. The engine evaluates this by discretising each
+security's return into $m$ levels and enumerating the \emph{joint} state space.
+For $N$ securities that space has on the order of $m^{N}$ cells: with $m=51$,
+$N=3$ gives $\sim\!1.3\times10^{5}$ states (tractable), whereas $N=10$ gives
+$51^{10}\approx10^{17}$ (infeasible). This is why exhaustive grid search is capped
+at $N\le 4$ in the software and why a single derivative is the practical limit.
+
+Institutional portfolios contain tens to hundreds of positions and multiple
+hedging or yield-enhancement overlays. We therefore need a representation whose
+cost grows \emph{linearly}, not exponentially, in $N$, and which scales in the
+number of derivatives.
+
+\section{A scenario-based reformulation}
+Rather than enumerate a grid, draw a fixed number $S$ of joint
+\emph{scenarios} from the return distribution. Each scenario $s$ is one
+simultaneous realisation of all assets,
+\[
+   R_s = \big(R_{s,1},\dots,R_{s,N},\,R_{s,N+1},\dots,R_{s,N+K}\big)\in\R^{N+K},
+\]
+where the first $N$ entries are security returns and the last $K$ are derivative
+returns; every scenario carries equal probability $1/S$. The data structure is an
+$S\times(N+K)$ matrix, so memory and per-iteration cost are $O\!\big(S(N+K)\big)$:
+\emph{linear} in the number of instruments, with $S$ chosen for statistical
+accuracy and entirely decoupled from $N$. Adding a security widens each scenario
+by one column; adding a derivative widens it by one more. Nothing is enumerated.
+
+\section{Generating the scenarios}
+\paragraph{Securities.}
+Let $\mu\in\R^{N}$ and $\sigma\in\R^{N}$ be the horizon expected returns and
+volatilities and $\Omega$ the correlation matrix, with Cholesky factor
+$L$ ($\Omega = LL\T$). Drawing $\xi_s\stackrel{\text{iid}}{\sim}\mathcal N(0,I_N)$
+and setting $z_s = L\xi_s$, $R_{s,i} = \mu_i + \sigma_i\,z_{s,i}$ reproduces the
+thesis's multivariate-Normal assumption exactly. To capture \emph{tail dependence}
+(assets falling together in stress), replace the Gaussian copula by a Student-$t$
+copula: draw a multivariate-$t$ vector $t_s = z_s/\sqrt{g_s}$ with
+$g_s\sim\chi^2_{\nu}/\nu$, map to uniforms $u_{s,i}=F_{t_\nu}(t_{s,i})$, and back to
+the chosen marginals $z_{s,i}=\Phi^{-1}(u_{s,i})$. The dependence is then heavy-tailed
+while the marginals remain controlled. This is the Sklar (1959) decomposition into
+marginals and copula, standard in dependence modelling (Embrechts \emph{et al.}, 2002).
+
+\paragraph{Derivatives (arbitrage-consistent, per scenario).}
+For each derivative $k$ written on underlying $u(k)$, its entry price is the
+Black--Scholes fair value $\pi_k$ at $S_0=1$ (the same convention as the engine:
+strikes are fractions of the underlying, volatility is that of the underlying).
+In scenario $s$ the terminal spot is $1+R_{s,u(k)}$, the payoff
+$\Pi_k\!\big(1+R_{s,u(k)}\big)$ follows from the instrument's leg structure, and the
+derivative's scenario return is
+\[
+   R_{s,N+k} \;=\; \frac{\Pi_k\!\big(1+R_{s,u(k)}\big) - \pi_k(1+p_k)}{\pi_k(1+p_k)},
+\]
+with $p_k$ an optional structured-product premium. Because the payoff is computed
+from the \emph{same} simulated underlying that drives the security column, each
+scenario keeps a coherent $(\text{underlying},\text{derivative})$ pair with no
+auxiliary model. Crucially this holds for \emph{several} derivatives at once,
+possibly on different underlyings: each simply contributes one more column.
+
+\section{The optimisation problem}
+For weights $w\in\R^{N+K}$ the portfolio return in scenario $s$ is the inner
+product $r_s = w\T R_s$, giving $S$ weight-dependent realisations. The expected
+return is the sample mean $\widehat\mu\T w$ with $\widehat\mu = \tfrac1S\sum_s R_s$.
+
+We measure tail risk by Expected Shortfall (Conditional Value-at-Risk), the
+coherent risk measure (Artzner \emph{et al.}, 1999) and the natural convex
+counterpart of the thesis's loss-probability constraint. Writing the loss as
+$\ell = -r$ and letting $\alpha$ be the tail probability, the
+Rockafellar--Uryasev (2000, 2002) identity is
+\[
+   \mathrm{CVaR}_\alpha(\ell)
+   \;=\; \min_{\zeta\in\R}\;\Big\{\, \zeta + \tfrac{1}{\alpha}\,
+   \E\big[(\ell-\zeta)^{+}\big] \Big\},
+\]
+where the minimiser $\zeta^\star$ is the Value-at-Risk. On the scenario sample this
+becomes $\zeta + \tfrac{1}{\alpha S}\sum_s(\ell_s-\zeta)^{+}$, which is
+\emph{piecewise-linear and convex}. The tail-average return is
+$\mathrm{ES}_\alpha(r) = -\mathrm{CVaR}_\alpha(\ell)$, so a behavioural floor
+``the average outcome in the worst $\alpha$ tail is at least $L$'' is
+$\mathrm{CVaR}_\alpha(\ell)\le -L$.
+
+\subsection*{The linear program}
+Introduce $\zeta$ (scalar) and slacks $z_s\ge 0$. The mental-account problem
+\[
+   \max_{w}\; \E[r] \quad\text{s.t.}\quad \mathrm{ES}_\alpha(r)\ge L,\;
+   \ind\T w = 1,\; w\ge 0
+\]
+becomes the linear program
+\[
+\boxed{
+\begin{aligned}
+\max_{w,\zeta,z}\quad & \widehat\mu\T w \\
+\text{s.t.}\quad
+ & \zeta + \frac{1}{\alpha S}\sum_{s=1}^{S} z_s \;\le\; -L, \\
+ & z_s \;\ge\; -\,w\T R_s - \zeta, \qquad s=1,\dots,S, \\
+ & z_s \ge 0,\quad \ind\T w = 1,\quad 0 \le w \le \bar w .
+\end{aligned}}
+\]
+The decision vector $x=(w,\zeta,z)\in\R^{\,N+K+1+S}$ has $S+1$ inequality rows; the
+constraint matrix is sparse (each scenario row touches the $N{+}K$ weights, $\zeta$
+and one $z_s$). Modern simplex/interior-point solvers (e.g.\ HiGHS) handle
+$N+K\sim10^{2}$ and $S\sim10^{4}$ in well under a second. Convexity removes the need
+for the differential-evolution and pattern-search heuristics the grid engine falls
+back on beyond four assets. Optional bounds $\bar w$ (position limits), group budgets,
+turnover or cardinality penalties are additional linear rows.
+
+\section{Value-at-Risk via a CVaR proxy}
+The thesis constraint $\Prob(r<H)\le\alpha$ is a \emph{chance constraint}:
+non-convex and combinatorial (mixed-integer in general). Rather than solve it
+exactly, we use CVaR as a conservative convex surrogate. Because
+$\mathrm{CVaR}_\alpha \ge \mathrm{VaR}_\alpha$ always, imposing a CVaR floor
+guarantees the VaR-style floor is met at least as safely; ES is also the coherent
+measure and the one favoured by modern regulation. Where an exact
+$\Prob(r<H)\le\alpha$ solution is required, the convex CVaR optimum is an excellent
+warm start for a subsequent mixed-integer refinement.
+
+\section{Multiple derivatives and mental accounts}
+Two structural generalisations fall out directly:
+\begin{itemize}[leftmargin=1.4em,itemsep=2pt]
+\item \textbf{Several derivatives.} $K$ derivative columns are optimised jointly at
+no extra modelling cost; the optimiser can, for instance, fund downside protection
+on the riskiest holding while gearing upside on another. The current engine, by
+contrast, prices one derivative on one underlying.
+\item \textbf{Mental accounts.} Each behavioural sub-portfolio (goal) is the same
+linear program over the \emph{same} scenario matrix with its own triple
+$(H_j,\alpha_j,L_j)$. Solving the accounts independently and aggregating preserves
+the goals-based interpretation while inheriting the scalability.
+\end{itemize}
+
+\section{Efficient frontier and warm-starting}
+Sweeping the floor $L$ traces the return/tail-risk frontier. Consecutive programs
+differ only in the single right-hand side $-L$, so each solve is warm-started from
+the previous optimal basis and resolves almost instantly; the whole frontier costs
+little more than one solve. Using common random numbers (the \emph{same} scenario
+draw across the sweep) removes Monte-Carlo noise from the \emph{shape} of the
+frontier.
+
+\section{Convergence, variance reduction and validation}
+Scenario estimates carry sampling error of order $S^{-1/2}$; tail quantities such as
+ES need more scenarios than the distribution's body, so antithetic variates,
+importance sampling of the loss tail, and common random numbers are part of the
+engine rather than afterthoughts.
+
+\paragraph{Prototype check.} A reference implementation\footnote{\texttt{mc\_cvar\_optimizer.py},
+accompanying this note: scenario generator, per-scenario derivative pricing, the
+CVaR linear program and a frontier sweep, in roughly 250 lines of Python/SciPy.}
+on a five-asset Gaussian universe ($\alpha=5\%$, $S=4\times10^{4}$) reproduces the
+closed-form Normal Expected Shortfall of an equal-weight portfolio,
+\[
+   \mathrm{ES}_\alpha = \mu_p - \sigma_p\,\frac{\phi\!\big(\Phi^{-1}(\alpha)\big)}{\alpha},
+\]
+to $3$ basis points (Table~\ref{tab:val}), returns a monotone frontier whose
+realised ES sits exactly on each floor, correctly reports infeasibility when no
+portfolio can reach a floor, and solves a two-derivative ($K{=}2$) instance in a
+single linear program. A Student-$t$ copula deepens the equal-weight tail from
+$-18.70\%$ to $-19.68\%$, as intended.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lccc}
+\toprule
+Quantity & Monte-Carlo & Closed form & $|\Delta|$ \\
+\midrule
+Equal-weight $\E[r]$            & $0.0810$ & $0.0820$ & $0.0010$ \\
+Equal-weight $\sigma$           & $0.1301$ & $0.1305$ & $0.0004$ \\
+Equal-weight $\mathrm{ES}_{5\%}$& $-0.1870$& $-0.1873$& $0.0003$ \\
+\bottomrule
+\end{tabular}
+\caption{Monte-Carlo estimates against closed-form Normal values
+($S=4\times10^{4}$). Frontier solutions (omitted) place the realised ES on the
+imposed floor to machine tolerance.}
+\label{tab:val}
+\end{table}
+
+The exactness of the grid method on small universes gives a second, independent
+test: the scenario optimum should converge to the grid optimum on the three- and
+four-asset thesis cases, which is the recommended acceptance test before deploying
+the engine at $N=100$.
+
+\section{Relationship to the existing method and limitations}
+The scenario engine \emph{complements} rather than replaces the grid. The grid is
+exact and deterministic for small $N$ and remains the reference there; the scenario
+engine is approximate but scales, and is the only viable route for large, multi-derivative
+portfolios. The principal cautions are: (i) Monte-Carlo error, mitigated by sample
+size and variance reduction; (ii) \emph{scenario quality}---the copula choice and the
+estimation of $\mu,\sigma,\Omega$ drive the result, and estimation error worsens with
+$N$, so shrinkage or robust estimators become part of the pipeline; and (iii) the
+CVaR-for-VaR surrogacy described in \S5. None of these is a barrier to the
+construction; each is a calibration responsibility.
+
+\section{Commercial relevance}
+The reformulation turns an academically faithful but small-$N$ tool into one usable
+on realistic mandates: dozens to hundreds of instruments, several derivatives priced
+consistently, a coherent tail-risk constraint, and a fast, warm-started frontier. The
+differentiators are scenario quality, per-scenario arbitrage-consistent derivative
+pricing, robustness to estimation error, and the goals-based mental-account framing
+inherited from the thesis.
+
+\begin{thebibliography}{9}
+\small
+\bibitem{adeh1999} Artzner, P., Delbaen, F., Eber, J.-M., Heath, D. (1999).
+\emph{Coherent Measures of Risk}. Mathematical Finance, 9(3), 203--228.
+\bibitem{aby2017} Alexander, G., Baptista, A., Yan, S. (2017).
+\emph{Portfolio selection with mental accounts and estimation risk}.
+Journal of Empirical Finance, 41, 161--186.
+\bibitem{baptista2012} Baptista, A. (2012).
+\emph{Portfolio selection with mental accounts and background risk}.
+Journal of Banking \& Finance, 36(4), 968--980.
+\bibitem{dmss2010} Das, S., Markowitz, H., Scheid, J., Statman, M. (2010).
+\emph{Portfolio Optimization with Mental Accounts}.
+Journal of Financial and Quantitative Analysis, 45(2), 311--334.
+\bibitem{ds2009} Das, S., Statman, M. (2013).
+\emph{Options and structured products in behavioral portfolios}.
+Journal of Economic Dynamics and Control, 37(1), 137--153.
+\bibitem{ems2002} Embrechts, P., McNeil, A., Straumann, D. (2002).
+\emph{Correlation and dependence in risk management}. In: Risk Management:
+Value at Risk and Beyond, Cambridge University Press, 176--223.
+\bibitem{jeddou2012} Jeddou, S. (2012).
+\emph{Portfolio Optimization with Mental Accounts: replication and extension with
+derivatives}. MSc thesis, Universit\`a della Svizzera italiana, Lugano.
+\bibitem{markowitz1952} Markowitz, H. (1952). \emph{Portfolio Selection}.
+Journal of Finance, 7(1), 77--91.
+\bibitem{mes2019} Momen, O., Esfahanipour, A., Seifi, A. (2019).
+\emph{Collective mental accounting: an integrated behavioural portfolio selection
+model for multiple mental accounts}. Quantitative Finance, 19(2), 265--275.
+\bibitem{ru2000} Rockafellar, R.T., Uryasev, S. (2000).
+\emph{Optimization of Conditional Value-at-Risk}. Journal of Risk, 2(3), 21--41.
+\bibitem{ru2002} Rockafellar, R.T., Uryasev, S. (2002).
+\emph{Conditional value-at-risk for general loss distributions}.
+Journal of Banking \& Finance, 26(7), 1443--1471.
+\bibitem{sklar1959} Sklar, A. (1959). \emph{Fonctions de r\'epartition \`a $n$
+dimensions et leurs marges}. Publ. Inst. Statist. Univ. Paris, 8, 229--231.
+\end{thebibliography}
+
+\end{document}
