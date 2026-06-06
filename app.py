@@ -2519,7 +2519,7 @@ with tab1:
         st.markdown("""
 <div class="info-box" style="color:#ffffff !important">
 
-<span style="color:#4a9eff;font-size:1.75rem;font-weight:700">👈 How to use this tool</span>
+<span style="color:#4a9eff;font-size:1.75rem;font-weight:700">👈 How to use this tool: Optimiser</span>
 
 Follow these steps in the sidebar:
 
@@ -3654,7 +3654,7 @@ with tab_mc:
     st.markdown("""
 <div class="info-box" style="color:#ffffff !important">
 
-<span style="color:#4a9eff;font-size:1.75rem;font-weight:700">📋 How to use this tool</span>
+<span style="color:#4a9eff;font-size:1.75rem;font-weight:700">📋 How to use this tool: Scalable Optimiser</span>
 
 Set up the run in the sections below, then click Run:
 
