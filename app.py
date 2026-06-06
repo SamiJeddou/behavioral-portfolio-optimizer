@@ -4120,7 +4120,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                 else:
                     rows_v.append(["Closed-form ES check", "n/a",
                                    "Gaussian copula only (t-portfolio is non-Normal)"])
-                _vhead = ('<tr style="color:#8b949e;border-bottom:1px solid #30363d">'
+                _vhead = ('<tr style="color:#4a9eff;border-bottom:1px solid #30363d">'
                           '<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Check</th>'
                           '<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Result</th>'
                           '<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Note</th></tr>')
