@@ -3017,7 +3017,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
 
 
             with col_chart:
-                st.plotly_chart(fig_plotly, use_container_width=True, config={'editable': False, 'displayModeBar': True})
+                st.plotly_chart(fig_plotly, use_container_width=True, config={'edits': {'annotationPosition': True, 'annotationTail': True, 'legendPosition': True}, 'displayModeBar': True})
 
         # ── Reading the chart — full width below columns ──────────────────────
         st.markdown(
@@ -3074,7 +3074,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
             if st.session_state.get('_fig_plotly'):
                 st.plotly_chart(st.session_state['_fig_plotly'],
                                use_container_width=True,
-                               config={'editable': False, 'displayModeBar': True})
+                               config={'edits': {'annotationPosition': True, 'annotationTail': True, 'legendPosition': True}, 'displayModeBar': True})
 
     if _run_active and (_needs_compute or _render_from_cache):
         # ── Results ───────────────────────────────────────────────────────────────
@@ -4149,7 +4149,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                                 bgcolor="rgba(13,17,23,0.92)", bordercolor="#f59e0b", borderwidth=1,
                                 align="left", xanchor="left")
                             st.plotly_chart(fig, use_container_width=True,
-                                            config={'editable': False, 'displayModeBar': True})
+                                            config={'edits': {'annotationPosition': True, 'annotationTail': True, 'legendPosition': True}, 'displayModeBar': True})
                             st.caption("⭐ marks the Scalable CVaR optimum (your resulting portfolio). "
                                        "Hover any point for its coordinates; drag to zoom.")
                             _drawn = True
