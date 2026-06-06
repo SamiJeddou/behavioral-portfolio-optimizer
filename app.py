@@ -4038,10 +4038,18 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                 _sig = float(_port.std())
                 _mn = float(_port.mean())
                 _skew = float((((_port - _mn) / _sig) ** 3).mean()) if _sig > 0 else 0.0
-                _feas = es >= mc_L
-                _badge = (f'<span style="color:#16a34a">✓ feasible — ES {es*100:.2f}% ≥ L {mc_L*100:.2f}%</span>'
+                # The CVaR LP drives the tail-average return onto the floor L,
+                # so at the optimum ES binds L exactly; tiny solver float noise
+                # can leave it a hair past the floor. Compare at the 2-dp
+                # display precision (as the grid badge does) so the badge can
+                # never contradict the figures shown — e.g. ES -20.00% vs
+                # L -20.00% reads as feasible (binding), not "✗ < L".
+                _es2 = round(es * 100, 2)
+                _L2 = round(mc_L * 100, 2)
+                _feas = _es2 >= _L2
+                _badge = (f'<span style="color:#16a34a">✓ feasible — ES {_es2:.2f}% ≥ L {_L2:.2f}%</span>'
                           if _feas else
-                          f'<span style="color:#dc2626">✗ ES {es*100:.2f}% &lt; L {mc_L*100:.2f}%</span>')
+                          f'<span style="color:#dc2626">✗ ES {_es2:.2f}% &lt; L {_L2:.2f}%</span>')
                 _wmax_txt = (f" · max weight/asset {int(round((mc_wmax or 1)*100))}%" if mc_wmax else "")
                 _univ = (f"{N} securit{'y' if N == 1 else 'ies'}"
                          + (f" + {K} derivative{'s' if K != 1 else ''}" if K else ""))
