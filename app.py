@@ -4071,7 +4071,6 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                     is_der = i >= N
                     _col = "#f59e0b" if is_der else DONUT_COLORS[i % len(DONUT_COLORS)]
                     _rows.append((labels[i], float(w[i]), is_der, _col))
-                _rows = [r for r in _rows if abs(r[1]) > 1e-4]
                 _rows.sort(key=lambda r: r[1], reverse=True)
                 _bar = ""
                 for lbl, wi, is_der, _c in _rows:
@@ -4086,14 +4085,11 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                         f'</div></div>')
                 _note = ('<div style="color:#8b949e;font-size:.78rem;margin-top:.5rem">'
                          'Each security has its own colour; amber bars are derivatives.</div>') if K else ''
-                _zero = [labels[i] for i in range(len(labels)) if abs(float(w[i])) <= 1e-4]
-                _znote = ('<div style="color:#8b949e;font-size:.78rem;margin-top:.4rem">'
-                          '0% allocation: ' + ", ".join(_zero) + '.</div>') if _zero else ''
                 st.markdown(
                     '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
                     'padding:.75rem .95rem;margin-top:14px">'
                     '<div style="color:#4a9eff;font-weight:700;font-size:.95rem;margin-bottom:.6rem">'
-                    'Portfolio weights</div>' + _bar + _note + _znote + '</div>',
+                    'Portfolio weights</div>' + _bar + _note + '</div>',
                     unsafe_allow_html=True)
 
             # ---- validation panel ----
