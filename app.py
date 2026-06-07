@@ -2435,6 +2435,7 @@ def plot_backtest_paths_plotly(dates, pv1, pv2, label2):
         paper_bgcolor='#0d1117', plot_bgcolor='#0d1117', font=dict(color='#c9d1d9'),
         hovermode='x unified', margin=dict(l=10, r=10, t=46, b=10), height=440,
         legend=dict(bgcolor='rgba(22,27,34,0.85)', bordercolor='#30363d', borderwidth=1,
+                    font=dict(color='#ffffff', size=12),
                     x=0.01, y=0.99, xanchor='left', yanchor='top'),
         yaxis=dict(title='Portfolio value (entry = 100)', gridcolor='#21262d',
                    zeroline=False, color='#8b949e'),
