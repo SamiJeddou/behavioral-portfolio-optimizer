@@ -1455,7 +1455,15 @@ _HOME_HTML = '<div class="bmv-home">\n  <div class="bmv-hero">\n    <div class="
 def _render_home():
     a = _home_assets()
     html = _HOME_HTML.replace("__OPT__", a["OPT"]).replace("__MC__", a["MC"]).replace("__BT__", a["BT"])
-    st.markdown(_HOME_CSS + html, unsafe_allow_html=True)
+    _bg = ("<style>"
+           "[data-testid='stAppViewContainer']{background:"
+           "radial-gradient(1000px 560px at 78% -12%,rgba(74,158,255,.12),transparent 60%),"
+           "radial-gradient(760px 420px at -5% 112%,rgba(245,185,66,.07),transparent 55%),"
+           "#0d1117 !important}"
+           "[data-testid='stHeader']{background:transparent !important}"
+           "[data-testid='stMain'],section.main{background:transparent !important}"
+           "</style>")
+    st.markdown(_bg + _HOME_CSS + html, unsafe_allow_html=True)
 
 def _go_home():
     st.query_params["view"] = "home"
