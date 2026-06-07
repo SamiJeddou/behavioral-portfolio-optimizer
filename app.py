@@ -4705,6 +4705,16 @@ elif _view == "backtest":
              "(Fast m=21 / Standard m=35 / High m=51). Turbo is omitted here — it is "
              "unreliable when a derivative is in the portfolio, which the backtest always "
              "builds — and Rigorous ES is selected in the Risk measure section above.")
+    _bt_grid_key = next((k for k in GRID_EXPLANATIONS
+                         if bt_res in k and "Turbo" not in k and "Rigorous" not in k), bt_res)
+    st.markdown(
+        f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;'
+        f'padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
+        f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">'
+        f'✨ AI-powered: What does this resolution mean?</summary>'
+        f'<div style="color:#1a3a5c;margin-top:.4rem">'
+        f'{GRID_EXPLANATIONS.get(_bt_grid_key, "No explanation available.")}</div></details>',
+        unsafe_allow_html=True)
 
     _bt_head("Benchmark (for α / β)")
     bt_bench_choice = st.selectbox(
