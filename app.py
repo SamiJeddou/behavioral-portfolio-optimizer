@@ -2430,7 +2430,7 @@ def plot_backtest_paths_plotly(dates, pv1, pv2, label2):
             name=label2, line=dict(color='#f59e0b', width=2.4),
             hovertemplate='<b>%{fullData.name}</b><br>%{x|%d %b %Y}<br>Value: %{y:.2f}<extra></extra>'))
     fig.update_layout(
-        title=dict(text='Out-of-sample buy-and-hold performance',
+        title=dict(text='Out-of-sample portfolio value — buy-and-hold (entry = 100)',
                    font=dict(color='#c9d1d9', size=14), x=0.5, xanchor='center'),
         paper_bgcolor='#0d1117', plot_bgcolor='#0d1117', font=dict(color='#c9d1d9'),
         hovermode='x unified', margin=dict(l=10, r=10, t=46, b=10), height=440,
