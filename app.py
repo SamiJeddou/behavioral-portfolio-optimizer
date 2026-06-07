@@ -4460,7 +4460,7 @@ elif _view == "backtest":
         "portfolio (P1) and a with-derivative portfolio (P2)."
     )
 
-    with st.expander("ℹ️  How this backtest works — and why the derivative is marked to market", expanded=True):
+    with st.expander("ℹ️  How this backtest works — and why the derivative is marked to market", expanded=False):
         st.markdown(
             "**The procedure (walk-forward, single horizon):**\n"
             "1. **Construction period** — download prices, estimate annualised means, "
