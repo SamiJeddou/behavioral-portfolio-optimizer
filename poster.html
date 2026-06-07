@@ -274,9 +274,10 @@
 
   <!-- 06 + 07 -->
   <div class="grid">
-    <div class="card accent-violet">
+    <div class="card accent-violet" style="display:flex;flex-direction:column">
       <div class="head"><div class="num">06</div><div class="ttl">Validated: against theory and out-of-sample</div></div>
       <p>Every figure is checked, not asserted — validated against the original thesis and against closed-form theory before any result is shown. The scalable engine <b>complements</b> the exact reference; it never replaces it.</p>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center">
       <table class="vtab">
         <thead><tr><th>Validation check</th><th>Result</th></tr></thead>
         <tbody>
@@ -287,6 +288,7 @@
           <tr><td class="k">Out-of-sample back-test</td><td>weights held through a later window · derivative marked to market</td></tr>
         </tbody>
       </table>
+      </div>
     </div>
 
     <div class="card accent-green">
