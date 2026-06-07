@@ -4473,7 +4473,10 @@ elif _view == "backtest":
         "own inputs. It builds the optimal portfolio on a **construction period**, then "
         "holds those fixed weights through a later **evaluation period**, and compares what "
         "the model *expected* with what actually *happened* — for both a no-derivative "
-        "portfolio (P1) and a with-derivative portfolio (P2)."
+        "portfolio (P1) and a with-derivative portfolio (P2). It also reports the realised "
+        "**alpha and beta** (and R\u00b2) of each security and of both portfolios against a "
+        "benchmark you choose, with an optional expected-market-return input for a CAPM "
+        "(ex-ante) alpha."
     )
 
     with st.expander("ℹ️  How this backtest works — and why the derivative is marked to market", expanded=False):
@@ -4664,6 +4667,13 @@ elif _view == "backtest":
                            "with the construction-period volatility of the chosen underlying.")
         except Exception:
             pass
+        st.markdown(
+            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;'
+            f'padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
+            f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">'
+            f'✨ AI-powered: What is this instrument?</summary>'
+            f'<div style="color:#1a3a5c;margin-top:.4rem">{get_explanation(bt_label)}</div></details>',
+            unsafe_allow_html=True)
 
     _bt_head("Risk measure")
     bt_method = st.selectbox(
@@ -5123,7 +5133,10 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
         "To test the *efficiency* of each optimisation method — not just its in-sample fit — the app "
         "can build portfolio weights on a construction window and then **buy-and-hold** those weights "
         "through a later, out-of-sample window, with any derivative marked to market, comparing "
-        "expected against realised outcomes.")
+        "expected against realised outcomes. It also reports the realised **alpha, beta and R\u00b2** "
+        "of each security and of the portfolio against a benchmark you select (S&P 500, global ACWI, "
+        "a 60/40 blend, or any ticker), with an optional expected-market-return input that adds a "
+        "CAPM required return and an ex-ante alpha.")
 
     st.markdown("### Constraint methods & resolutions")
     st.markdown("There are two independent choices — the **constraint method** "
