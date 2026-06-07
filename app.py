@@ -690,6 +690,169 @@ EXPLANATIONS = {
         "instruments built on the same Black-Scholes pricing principle: bull and bear spreads, "
         "a long butterfly and call condor, a reverse convertible, and discount and outperformance certificates."
     ),
+    "Capital-guaranteed note (CGN)": (
+        "A capital-guaranteed note combines a zero-coupon bond, which secures a protected floor at "
+        "maturity, with a long option that provides upside participation. The investor gives up some "
+        "upside — through a participation rate below 100% or a cap — in exchange for that downside "
+        "protection. This app prices both an uncapped version (full participation above the floor) "
+        "and a capped version (participation up to a ceiling), each built from Black-Scholes legs."
+    ),
+    "Digital option": (
+        "A digital (binary) option pays a fixed amount if the underlying finishes beyond a strike and "
+        "nothing otherwise — an all-or-nothing payoff rather than the linear payoff of a vanilla "
+        "option. Because the payoff jumps at the strike, its value is highly sensitive to the "
+        "underlying near expiry. In this app it serves as a building block for custom structured "
+        "products priced on the same Black-Scholes engine."
+    ),
+    "Zero-coupon bond": (
+        "A zero-coupon bond pays no interim coupons; it is bought at a discount and repays its face "
+        "value at maturity, so its whole return comes from that price-to-face appreciation. It is the "
+        "riskless building block of a capital-guaranteed note: the bond secures the protected floor "
+        "and the remaining budget buys the option that supplies the upside. In this app it is valued "
+        "by discounting the face value at the risk-free rate."
+    ),
+    "Alpha (Jensen's alpha)": (
+        "Alpha is the return a portfolio earns beyond what its market exposure alone would justify. "
+        "In this app's back-test it is Jensen's alpha: each holding's excess returns (over the "
+        "risk-free rate) are regressed on the benchmark's excess returns, and the annualised "
+        "intercept is the alpha. A positive alpha means the holding out-performed the return its beta "
+        "predicted; a negative alpha means it under-performed. Because it is measured over the "
+        "evaluation window, it is a realised (ex-post) alpha, not a forecast."
+    ),
+    "Beta": (
+        "Beta measures how strongly a holding moves with the benchmark. A beta of 1.0 moves "
+        "one-for-one with the market; below 1.0 is more defensive, above 1.0 more aggressive, and a "
+        "negative beta moves opposite the market. It is the slope of the regression of the holding's "
+        "excess returns on the benchmark's excess returns over the evaluation window. The portfolio "
+        "beta is measured directly from the realised buy-and-hold path, so a derivative's changing "
+        "(non-linear) sensitivity is captured rather than approximated by a weighted average."
+    ),
+    "R-squared (R²)": (
+        "R-squared is the fraction of a holding's return variation that the benchmark explains, from "
+        "0 (no relationship) to 1 (fully explained). It signals how trustworthy the alpha and beta "
+        "are: a high R² means the benchmark is a good reference and beta is reliable, while a low R² "
+        "means much of the return is unrelated to that benchmark, so the alpha and beta should be "
+        "read with caution. Short back-test windows tend to give noisier, lower-R² estimates."
+    ),
+    "Benchmark": (
+        "A benchmark is the reference market that alpha and beta are measured against. The choice "
+        "matters: a single equity index such as the S&P 500 suits an equity-heavy portfolio, while a "
+        "global index (ACWI) or a 60/40 stock-bond blend is fairer for multi-asset, bond, gold or "
+        "crypto mixes. Against a poorly matched benchmark, betas can look low or odd for the "
+        "non-equity sleeves. In this app you can pick the S&P 500, global ACWI, a 60/40 SPY-AGG "
+        "blend, or any Yahoo Finance ticker."
+    ),
+    "CAPM (Capital Asset Pricing Model)": (
+        "The Capital Asset Pricing Model links a holding's expected return to its market sensitivity: "
+        "required return = risk-free rate + beta × (expected market return − risk-free rate), where "
+        "the bracketed term is the equity risk premium. In this app CAPM is optional and used only if "
+        "you supply an expected market return E[Rₘ]: it then shows each holding's CAPM required "
+        "return and an ex-ante (expected) alpha = the model's expected return minus that required "
+        "return. The realised alpha and beta never depend on this forecast."
+    ),
+    "Excess return": (
+        "An excess return is a return measured above the risk-free rate (return − risk-free rate). "
+        "Alpha and beta are computed on excess returns rather than raw returns, because CAPM "
+        "describes how investors are compensated for risk relative to a safe asset. In this app the "
+        "risk-free rate is an input you set, and it defines the excess returns used in the alpha/beta "
+        "regression."
+    ),
+    "Risk-free rate": (
+        "The risk-free rate is the return on a (theoretically) riskless asset, such as a short-term "
+        "government bill, and it is the baseline from which excess returns — and therefore alpha and "
+        "beta — are measured. In this app it is an annual input; the per-period rate is that annual "
+        "rate divided by the number of periods per year. Raising or lowering it shifts the excess "
+        "returns and slightly changes the alpha; setting it to 0% simply uses raw returns."
+    ),
+    "α-CVaR (Conditional VaR)": (
+        "Conditional Value-at-Risk (CVaR), also called Expected Shortfall, is the average loss in the "
+        "worst α% of outcomes — it captures how bad the tail is, not just how often a threshold is "
+        "breached. The scalable Monte-Carlo engine uses the α-CVaR form (the average loss beyond the "
+        "α-quantile) because it can be minimised with a linear program. This differs subtly from the "
+        "exact grid's fixed-threshold ES (the average loss below a chosen H): the two coincide only "
+        "when H equals the α-quantile."
+    ),
+    "Monte-Carlo scenario generation": (
+        "Monte-Carlo scenario generation samples a large number of possible joint outcomes for the "
+        "assets and their derivative payoffs, instead of enumerating a fixed grid of states. The "
+        "scalable engine draws thousands of correlated return scenarios through a copula, prices "
+        "every derivative under each scenario, and optimises over that scenario set. Because cost "
+        "grows with the number of scenarios rather than exponentially with the number of assets, it "
+        "scales to large, multi-derivative portfolios the exact grid cannot handle."
+    ),
+    "Student-t copula": (
+        "A copula joins individual asset distributions into one joint distribution while preserving "
+        "each asset's own (possibly non-normal) shape. A Student-t copula has heavier joint tails "
+        "than a Gaussian copula, so extreme moves are more likely to occur together — it captures the "
+        "tendency of assets to crash at the same time. The scalable engine offers both Gaussian and "
+        "Student-t copulas for generating its Monte-Carlo scenarios."
+    ),
+    "Rockafellar–Uryasev CVaR linear program": (
+        "Rockafellar and Uryasev (2000) showed that minimising CVaR can be cast as a linear program "
+        "by adding one variable for the value-at-risk level and one slack variable per scenario. The "
+        "scalable engine uses this formulation, solved with a fast LP solver, to maximise expected "
+        "return subject to a CVaR (Expected-Shortfall) floor. It is what lets the engine handle many "
+        "assets and several derivatives at once while keeping the problem convex and quick to solve."
+    ),
+    "Common random numbers (CRN)": (
+        "Common random numbers means reusing the same set of Monte-Carlo scenarios across every point "
+        "on the efficient frontier. Because all points are evaluated on identical draws, the "
+        "differences between them reflect the portfolios themselves rather than sampling noise, so "
+        "the frontier comes out smooth and the points are directly comparable."
+    ),
+    "Out-of-sample back-test": (
+        "An out-of-sample back-test checks whether an optimised portfolio behaves as expected on data "
+        "it was not built on. This app builds the optimal weights on a construction window, then "
+        "buy-and-holds those fixed weights through a separate, later evaluation window — with any "
+        "derivative marked to market — and compares expected versus realised return, volatility and "
+        "the loss-threshold outcome. It also reports the realised alpha and beta of each holding and "
+        "of the portfolio against a chosen benchmark, testing the efficiency of the optimisation "
+        "methods rather than just their in-sample fit."
+    ),
+    "Construction vs evaluation window": (
+        "The construction window is the historical period used to estimate means, volatilities and "
+        "correlations and to build the optimal weights. The evaluation window is a separate, later "
+        "period over which those fixed weights are held and measured. Keeping the two apart is what "
+        "makes the test out-of-sample: the model never sees the evaluation data when it chooses the "
+        "portfolio."
+    ),
+    "Mark-to-market": (
+        "Marking to market means revaluing a position at current prices at each point in time, rather "
+        "than only at maturity. In the back-test the derivative is repriced with Black-Scholes at the "
+        "current spot, the shrinking remaining maturity and the volatility assumption, so it has a "
+        "value at every date. This gives the option its own return series, which is needed to compute "
+        "realised portfolio volatility and the distributional loss-threshold check — a "
+        "held-to-maturity payoff would give only a single end-point number."
+    ),
+    "Buy-and-hold": (
+        "Buy-and-hold means fixing the portfolio weights at the start and holding them without "
+        "rebalancing. In the back-test the weights chosen on the construction window are held through "
+        "the evaluation window and allowed to drift naturally with prices. This isolates the quality "
+        "of the original optimisation decision, with no transaction costs or rebalancing rules mixed "
+        "in."
+    ),
+    "Rigorous Expected Shortfall (beyond thesis)": (
+        "The thesis's Expected-Shortfall method enforces the ES floor only when seeding the grid, "
+        "while its refinement step still targets the VaR penalty — so the final portfolio can drift "
+        "below the ES limit. The rigorous-ES mode instead optimises with a genuinely ES-aware "
+        "objective, so the result stays ES-feasible. In tests it recovers expected return the thesis "
+        "method leaves unused (for example about +2.4 percentage points at L = −15%). It runs at high "
+        "precision (m = 51) with a fast coarse-to-fine search."
+    ),
+    "Turbo solver (coarse-to-fine)": (
+        "Turbo reproduces High-precision results for the VaR constraint but replaces the exhaustive "
+        "weight-grid search with a coarse-to-fine search plus pruning of negligible states. It runs "
+        "in seconds instead of 15–30 minutes, matching High precision to within about 0.1 percentage "
+        "point of expected return. It is VaR-only and limited to four or fewer securities with no "
+        "derivative — Expected-Shortfall and larger problems fall back to the standard solver — which "
+        "is why it is not offered in the back-test."
+    ),
+    "Differential evolution": (
+        "Differential evolution is a global, population-based stochastic optimiser. The app uses it "
+        "for larger problems (five or more securities), where the exhaustive weight grid would be too "
+        "expensive, because it searches the weight space efficiently without enumerating every "
+        "combination. For four or fewer securities the app uses the exact grid search instead."
+    ),
 }
 
 def get_explanation(term):
@@ -769,6 +932,25 @@ GRID_EXPLANATIONS = {
         "high-precision-grade accuracy in a few seconds. The setting is fixed for this mode."
     ),
 }
+
+BENCHMARK_EXPLANATION = (
+    "Alpha and beta measure your portfolio against a benchmark — the \u201cmarket\u201d you choose "
+    "here. Beta is how strongly the portfolio moves with that benchmark (1.0 = moves one-for-one; "
+    "below 1.0 = more defensive); alpha is the return earned beyond what that beta exposure alone "
+    "would explain. They are computed by regressing each holding's excess returns (over the "
+    "risk-free rate) on the benchmark's excess returns across the evaluation window: beta is the "
+    "regression slope, alpha its annualised intercept (Jensen's alpha), and R\u00b2 shows how well "
+    "the benchmark explains the holding. "
+    "Pick a benchmark that fits the portfolio: a single equity index such as the S&P 500 suits an "
+    "equity-heavy book, while a global index (ACWI) or a 60/40 blend is fairer for multi-asset, "
+    "bond, gold or crypto mixes — alpha and beta are only as meaningful as the benchmark behind "
+    "them, and a single equity index will show low or odd betas for non-equity sleeves. The "
+    "risk-free rate sets the excess returns used in the regression. "
+    "Leave the expected market return E[R\u2098] blank to report realised alpha and beta only. If "
+    "you enter a value, a CAPM view is added: a required return = rf + beta \u00d7 (E[R\u2098] \u2212 rf) "
+    "and an ex-ante (expected) alpha = the model's expected return minus that required return. "
+    "The forecast affects only that ex-ante column — never the realised figures."
+)
 
 CONSTRAINT_EXPLANATIONS = {
     "var": (
@@ -4739,6 +4921,13 @@ elif _view == "backtest":
             "Expected market return E[Rₘ] (annual %, optional)", value="", key="bt_erm",
             help="Leave blank to report only realised α / β. Enter a value to add a CAPM "
                  "required-return and an ex-ante (expected) alpha column, using the realised beta.")
+    st.markdown(
+        f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;'
+        f'padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
+        f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">'
+        f'✨ AI-powered: What are alpha &amp; beta, and which benchmark?</summary>'
+        f'<div style="color:#1a3a5c;margin-top:.4rem">{BENCHMARK_EXPLANATION}</div></details>',
+        unsafe_allow_html=True)
 
     st.markdown(_BT_RULE, unsafe_allow_html=True)
     st.markdown(
@@ -5252,15 +5441,38 @@ elif _view == "glossary":
 
     GLOSSARY_TERMS = {
         "Derivatives & structured products": [
-            "Put option", "Call option", "Safety collar", "Aggressive collar",
-            "Straddle", "Strangle", "Capital-guaranteed note (CGN)", "Barrier-M note",
-            "Bull call spread", "Bear put spread", "Long butterfly", "Call condor",
-            "Reverse convertible", "Discount certificate", "Outperformance certificate",
+            "Put option", "Call option",
+            "Safety collar (long put + short call)",
+            "Aggressive collar (long call + short put)",
+            "Straddle (long call + long put)",
+            "Strangle (long call + long put, diff strikes)",
+            "Capital-guaranteed note (CGN)", "Barrier-M note",
+            "Bull call spread (long call + short higher call)",
+            "Bear put spread (long put + short lower put)",
+            "Long butterfly (calls)", "Call condor",
+            "Reverse convertible (bond − short put)",
+            "Discount certificate (capped underlying)",
+            "Outperformance certificate (geared upside)",
             "Digital option", "Zero-coupon bond"
         ],
         "Risk measures": [
             "Value at Risk (VaR)", "Expected Shortfall (ES)",
             "Shortfall probability", "Skewness", "Excess kurtosis"
+        ],
+        "Performance & benchmarking": [
+            "Alpha (Jensen's alpha)", "Beta", "R-squared (R²)", "Benchmark",
+            "CAPM (Capital Asset Pricing Model)", "Excess return", "Risk-free rate"
+        ],
+        "Scalable engine (Monte-Carlo + CVaR)": [
+            "α-CVaR (Conditional VaR)", "Monte-Carlo scenario generation",
+            "Student-t copula", "Rockafellar–Uryasev CVaR linear program",
+            "Common random numbers (CRN)"
+        ],
+        "Back-test & solvers": [
+            "Out-of-sample back-test", "Construction vs evaluation window",
+            "Mark-to-market", "Buy-and-hold",
+            "Rigorous Expected Shortfall (beyond thesis)",
+            "Turbo solver (coarse-to-fine)", "Differential evolution"
         ],
         "Portfolio theory": [
             "Mean-variance efficient frontier", "Markowitz optimization",
