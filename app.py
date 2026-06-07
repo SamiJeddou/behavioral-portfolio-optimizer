@@ -5222,6 +5222,8 @@ elif _view == "about":
 """)
     st.markdown("*The sections below explain how it works, what you can configure, and the theory behind it.*")
 
+    st.markdown("---")
+
     st.markdown('<h3 style="color:#4a9eff">How it works — the grid optimisation algorithm</h3>', unsafe_allow_html=True)
     st.markdown(
         "The full algorithm is described in Das & Statman (2009) — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*. "
@@ -5293,6 +5295,22 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
         f'</div></div>',
         unsafe_allow_html=True)
 
+    st.markdown('<h3 style="color:#4a9eff">Data input &amp; cleaning</h3>', unsafe_allow_html=True)
+    st.markdown(
+        "The grid optimiser supports four data input modes. For live market data and CSV uploads, "
+        "returns are automatically cleaned before being passed to the optimizer:")
+    st.markdown("""
+- **Default**: Das & Statman (2009) base case — 3 securities, pre-calibrated parameters, reproduces thesis results exactly
+- **Live market data**: any global ticker from Yahoo Finance, daily or monthly frequency, over a user-defined date range. Auto-adjusted for splits and dividends. Cleaned automatically: stale price rows (zero returns) are removed and outliers beyond ±5 standard deviations are winsorised
+- **Manual entry**: enter means, standard deviations, and correlations directly for 2–10 securities
+- **CSV upload**: upload historical prices — returns computed automatically with the same cleaning applied as for live data
+""")
+    st.markdown(
+        "The scalable **Monte-Carlo + CVaR** engine takes only the **base case** or **live tickers** — "
+        "manual entry and CSV upload apply to the grid optimiser only.")
+
+    st.markdown("---")
+
     st.markdown('<h3 style="color:#4a9eff">Scaling to large portfolios — Monte-Carlo + CVaR</h3>', unsafe_allow_html=True)
     st.markdown(
         "The exact grid above is precise, but its state space grows as *m^n′* and becomes "
@@ -5307,6 +5325,8 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
         "This engine uses an **α-CVaR** objective; it is a scalable complement to the exact grid "
         "rather than a bit-for-bit reproduction of it.")
 
+    st.markdown("---")
+
     st.markdown('<h3 style="color:#4a9eff">Out-of-sample back-test</h3>', unsafe_allow_html=True)
     st.markdown(
         "To test the *efficiency* of each optimisation method — not just its in-sample fit — the app "
@@ -5316,17 +5336,6 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
         "of each security and of the portfolio against a benchmark you select (S&P 500, global ACWI, "
         "a 60/40 blend, or any ticker), with an optional expected-market-return input that adds a "
         "CAPM required return and an ex-ante alpha.")
-
-    st.markdown('<h3 style="color:#4a9eff">Data input &amp; cleaning</h3>', unsafe_allow_html=True)
-    st.markdown(
-        "Four data input modes are supported. For live market data and CSV uploads, "
-        "returns are automatically cleaned before being passed to the optimizer:")
-    st.markdown("""
-- **Default**: Das & Statman (2009) base case — 3 securities, pre-calibrated parameters, reproduces thesis results exactly
-- **Live market data**: any global ticker from Yahoo Finance, daily or monthly frequency, over a user-defined date range. Auto-adjusted for splits and dividends. Cleaned automatically: stale price rows (zero returns) are removed and outliers beyond ±5 standard deviations are winsorised
-- **Manual entry**: enter means, standard deviations, and correlations directly for 2–10 securities
-- **CSV upload**: upload historical prices — returns computed automatically with the same cleaning applied as for live data
-""")
 
     st.markdown('<h3 style="color:#4a9eff">Supported derivatives &amp; structured products</h3>', unsafe_allow_html=True)
     st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Type</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Description</th></tr></thead><tbody><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Put / Call</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Standard European options</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Safety collar</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long put + short call</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Aggressive collar</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + short put</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Straddle / Strangle</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + long put (same or different strikes)</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Capital-guaranteed note</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Uncapped or capped, with floor and participation rate</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Barrier-M note</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Corridor note with digital components</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Bull call spread</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + short higher call — bullish, capped, lower cost than a call</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Bear put spread</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long put + short lower put — cheaper bearish hedge, capped</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long butterfly (calls)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long–short²–long calls — low-volatility &#8220;pin&#8221; bet, very cheap</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Call condor</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Four-strike range bet with a flat maximum payoff between the inner strikes</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Reverse convertible</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Zero-coupon bond − short put — high coupon, capped upside, principal at risk</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Discount certificate</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Synthetic underlying − short call — bought at a discount, upside capped</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Outperformance certificate</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Synthetic underlying + extra call — full downside, geared (&gt;100%) upside</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Custom composer</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Build any payoff from calls, puts, digitals, and zero-coupon bonds</td></tr></tbody></table>''', unsafe_allow_html=True)
