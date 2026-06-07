@@ -1471,6 +1471,11 @@ if _view == "home":
 
 # A section is selected: hide the optimiser sidebar on views that don't use it,
 # and show a discreet back-to-launcher control.
+# Push content clear of Streamlit's fixed top header so the back button isn't clipped.
+st.markdown(
+    "<style>[data-testid='stMainBlockContainer'],section.main>.block-container,"
+    ".block-container{padding-top:3.5rem !important}</style>",
+    unsafe_allow_html=True)
 if _view != "optimiser":
     st.markdown(
         "<style>section[data-testid='stSidebar'],"
