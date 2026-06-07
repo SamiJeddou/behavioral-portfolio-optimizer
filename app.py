@@ -1435,6 +1435,102 @@ def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
     return fig
 
 # ═════════════════════════════════════════════════════════════════════════════
+# TILE-LAUNCHER HOME  (navigation only — no section content is changed)
+# ═════════════════════════════════════════════════════════════════════════════
+import os as _os
+_HOME_DIR = _os.path.dirname(_os.path.abspath(__file__))
+if "nav_view" not in st.session_state:
+    st.session_state["nav_view"] = "home"
+
+def _nav_go(v):
+    st.session_state["nav_view"] = v
+
+def _himg(name):
+    fp = _os.path.join(_HOME_DIR, name)
+    if not _os.path.exists(fp):
+        return
+    try:
+        st.image(fp, use_container_width=True)
+    except TypeError:
+        st.image(fp, use_column_width=True)
+
+def _render_home():
+    st.markdown(
+        "<style>"
+        "section[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl']{display:none!important;}"
+        ".block-container .stButton>button{width:100%;text-align:left;font-weight:600;font-size:1rem;"
+        "background:linear-gradient(165deg,#1b2330,#161b22);border:1px solid #30363d;color:#fafafa;"
+        "border-radius:0 0 12px 12px;padding:.6rem .9rem;transition:.18s}"
+        ".block-container .stButton>button:hover{border-color:#4a9eff;color:#fff}"
+        ".block-container [data-testid='stImage'] img{border:1px solid #30363d;border-bottom:none;"
+        "border-radius:12px 12px 0 0}"
+        "</style>",
+        unsafe_allow_html=True)
+    st.markdown(
+        "<div style=\"display:flex;gap:16px;align-items:flex-start;margin:.2rem 0 1.3rem\">"
+        "<div style=\"width:46px;height:46px;border-radius:11px;display:grid;place-items:center;"
+        "background:linear-gradient(135deg,#f5b942,#caa14a);color:#1a1205;font-weight:700;"
+        "font-size:1.5rem;font-family:serif;flex:none\">&beta;</div><div>"
+        "<div style=\"font-size:.66rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;"
+        "color:#f5b942;margin-bottom:6px\">Quantitative portfolio suite</div>"
+        "<div style=\"font-size:1.9rem;font-weight:700;line-height:1.1\">Beyond "
+        "<span style=\"color:#4a9eff\">Mean-Variance</span></div>"
+        "<div style=\"color:#c9d1d9;font-size:.92rem;margin-top:6px\">A behavioural mental-accounts "
+        "optimiser on the Das&ndash;Statman framework. Pick a tool to begin.</div></div></div>",
+        unsafe_allow_html=True)
+
+    def _label(t):
+        st.markdown(f"<div style=\"font-size:.64rem;font-weight:700;letter-spacing:.16em;"
+                    f"text-transform:uppercase;color:#8b949e;margin:.3rem 0 .1rem\">{t}</div>",
+                    unsafe_allow_html=True)
+
+    _label("Tools")
+    c1, c2, c3 = st.columns(3, gap="medium")
+    with c1:
+        _himg("home_optimiser.png")
+        st.button("📊  Optimiser", key="_h_opt", use_container_width=True,
+                  on_click=_nav_go, args=("optimiser",))
+        st.caption("Exact grid engine — VaR · thesis-faithful ES · rigorous-ES, with derivatives.")
+    with c2:
+        _himg("home_scalable.png")
+        st.button("🧮  Scalable (MC)", key="_h_mc", use_container_width=True,
+                  on_click=_nav_go, args=("scalable",))
+        st.caption("Monte-Carlo + α-CVaR LP — scales to large, multi-derivative portfolios.")
+    with c3:
+        _himg("home_backtest.png")
+        st.button("🔬  Backtest", key="_h_bt", use_container_width=True,
+                  on_click=_nav_go, args=("backtest",))
+        st.caption("Out-of-sample test of the Optimiser's grid portfolios — not the MC engine.")
+
+    _label("Reference")
+    r1, r2, r3 = st.columns(3, gap="medium")
+    with r1:
+        st.button("📖  About", key="_h_about", use_container_width=True,
+                  on_click=_nav_go, args=("about",))
+        st.caption("Methods, framework and research.")
+    with r2:
+        st.button("📚  Glossary · AI-powered", key="_h_gloss", use_container_width=True,
+                  on_click=_nav_go, args=("glossary",))
+        st.caption("VaR, ES, α-CVaR, copulas — plus natural-language Q&A.")
+
+if st.session_state["nav_view"] == "home":
+    _render_home()
+    st.stop()
+
+# ---- a section is selected: show a back-to-launcher control, hide the
+#      optimiser sidebar on views that don't use it ----
+_view = st.session_state["nav_view"]
+if _view != "optimiser":
+    st.markdown(
+        "<style>section[data-testid='stSidebar'],"
+        "[data-testid='stSidebarCollapsedControl']{display:none!important;}</style>",
+        unsafe_allow_html=True)
+_bk, _bk_rest = st.columns([1, 6])
+with _bk:
+    st.button("◀  Tools", key="_nav_back", use_container_width=True,
+              on_click=_nav_go, args=("home",))
+
+# ═════════════════════════════════════════════════════════════════════════════
 # SIDEBAR
 # ═════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
@@ -2521,7 +2617,8 @@ def plot_mc_frontier(rows):
     return fig
 
 
-tab1,tab_mc,tab_bt,tab2,tab3=st.tabs(["📊 Optimiser","🧮 Scalable (MC)","🔬 Backtest","📖 About","📚 Glossary"])
+# Navigation handled by the tile launcher above (st.session_state['nav_view']);
+# the tab bodies below are unchanged and render one at a time as the active view.
 
 # Show the input sidebar only on the Optimiser tab. The active tab is client-side
 # state, so this is done in CSS: when any tab other than the first is selected,
@@ -2537,7 +2634,7 @@ st.markdown(
     unsafe_allow_html=True)
 
 
-with tab1:
+if _view == "optimiser":
     import os
     st.markdown('<h2 style="color:#4a9eff">Beyond Mean-Variance: Portfolio Optimiser with Derivatives &amp; Structured Products — A Mental Accounts Framework</h2>', unsafe_allow_html=True)
     st.markdown(
@@ -3668,15 +3765,15 @@ I would be glad to hear from you.
         'See <b>About</b> tab for full disclaimer.</div>',
         unsafe_allow_html=True)
 
-with tab_mc:
+elif _view == "scalable":
     import datetime as _dt
     st.markdown('<h2 style="color:#4a9eff">🧮 Scalable Optimiser — Monte-Carlo + CVaR</h2>',
                 unsafe_allow_html=True)
     st.markdown(
         "A **scenario-based** engine for **large portfolios** and **several derivatives at "
         "once** — the case the exact grid optimiser cannot reach. It samples joint return "
-        "scenarios and solves *maximise expected return subject to an Expected-Shortfall "
-        "floor* as a linear program. Cost grows **linearly** in the number of assets, so it "
+        "scenarios and solves *maximise expected return subject to an α-CVaR "
+        "(Expected-Shortfall at level α) floor* as a linear program. Cost grows **linearly** in the number of assets, so it "
         "scales to many securities; and any number of derivatives just add columns."
     )
     st.warning("**Beta — approximate engine.** Results carry Monte-Carlo sampling error and "
@@ -3706,7 +3803,7 @@ Set up the run in the sections below, then click Run:
 </tr>
 <tr style="border-bottom:1px solid #3a3a5a">
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">4</span></span></td>
-  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Constraint</strong> — Set the tail probability α, the Expected-Shortfall floor L (E[r | tail] ≥ L), and an optional max weight per asset</td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Constraint</strong> — Set the tail probability α, the α-CVaR floor L (mean of the worst α% of outcomes ≥ L), and an optional max weight per asset</td>
 </tr>
 <tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">5</span></span></td>
@@ -3776,9 +3873,13 @@ After a run, the results show a details box, colour-coded weight bars, and an in
             "- **Scenario quality is everything.** The copula choice and the estimated means, "
             "vols and correlations drive the result; estimation error worsens as N grows "
             "(shrinkage/robust estimators are the natural next step).\n"
-            "- **ES, not the thesis VaR.** The constraint is Expected Shortfall (CVaR), the "
-            "coherent measure and the convex counterpart of the thesis's P(r<H) ≤ α. CVaR ≥ "
-            "VaR, so a CVaR floor is a conservative way to honour the VaR-style intent.\n"
+            "- **α-CVaR — a different ES from the Optimiser tab.** The constraint here is "
+            "α-CVaR, the mean of the worst α% of outcomes, which is convex and so solvable as "
+            "a linear program. The Optimiser tab's *Realised ES* is instead the thesis's "
+            "fixed-threshold mean E[r | r < H]; the two coincide only when H equals the "
+            "α-quantile, so the ES figures shown on the two tabs are not directly comparable. "
+            "α-CVaR is also the coherent, regulatory-standard measure, and α-CVaR ≥ VaR, so a "
+            "CVaR floor conservatively honours the thesis's P(r<H) ≤ α intent.\n"
             "- **Complements the grid.** The grid optimiser is exact for small N and remains "
             "the reference; this engine is the route for large, multi-derivative portfolios. "
             "The validation panel below cross-checks the engine against closed-form values.\n"
@@ -3912,7 +4013,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
     with cmc1:
         mc_alpha = st.slider("Tail probability α", 1, 25, 5, 1, format="%d%%", key="mc_alpha") / 100.0
     with cmc2:
-        mc_L = st.slider("Expected-Shortfall floor L  (E[r | tail] ≥ L)",
+        mc_L = st.slider("α-CVaR floor L  (mean of worst α% ≥ L)",
                          -40, 0, -20, 1, format="%d%%", key="mc_L") / 100.0
     with cmc3:
         _wm = st.slider("Max weight per asset", 5, 100, 100, 5, format="%d%%", key="mc_wmax")
@@ -4047,9 +4148,9 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                 _es2 = round(es * 100, 2)
                 _L2 = round(mc_L * 100, 2)
                 _feas = _es2 >= _L2
-                _badge = (f'<span style="color:#16a34a">✓ feasible — ES {_es2:.2f}% ≥ L {_L2:.2f}%</span>'
+                _badge = (f'<span style="color:#16a34a">✓ feasible — α-CVaR {_es2:.2f}% ≥ L {_L2:.2f}%</span>'
                           if _feas else
-                          f'<span style="color:#dc2626">✗ ES {_es2:.2f}% &lt; L {_L2:.2f}%</span>')
+                          f'<span style="color:#dc2626">✗ α-CVaR {_es2:.2f}% &lt; L {_L2:.2f}%</span>')
                 _wmax_txt = (f" · max weight/asset {int(round((mc_wmax or 1)*100))}%" if mc_wmax else "")
                 _univ = (f"{N} securit{'y' if N == 1 else 'ies'}"
                          + (f" + {K} derivative{'s' if K != 1 else ''}" if K else ""))
@@ -4062,11 +4163,11 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                     '<div style="color:#c9d1d9;font-size:.86rem;line-height:1.75">'
                     f'<b>Expected return:</b> {er*100:.2f}% &nbsp;·&nbsp; <b>Volatility:</b> {_sig*100:.2f}% '
                     f'&nbsp;·&nbsp; <b>Skewness:</b> {_skew:.3f}<br>'
-                    f'<b>Realised ES</b> (tail average at α = {mc_alpha*100:.0f}%)<b>:</b> '
+                    f'<b>Realised α-CVaR</b> (mean of worst α = {mc_alpha*100:.0f}%)<b>:</b> '
                     f'{es*100:.2f}% &nbsp; {_badge}<br>'
                     f'<b>Universe:</b> {_univ}<br>'
                     f'<b>Scenarios:</b> {int(mc_S):,} ({copula} copula){_wmax_txt}<br>'
-                    f'<b>Objective:</b> maximise E[r] subject to ES ≥ {mc_L*100:.0f}%<br>'
+                    f'<b>Objective:</b> maximise E[r] subject to α-CVaR ≥ {mc_L*100:.0f}%<br>'
                     '<span style="color:#8b949e;font-size:.8rem">Approximate scenario-based optimum '
                     '(CVaR linear program) — complements the exact grid engine.</span>'
                     '</div></div>')
@@ -4078,7 +4179,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                     f'Expected return</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
                     f'margin-top:.25rem">{er*100:.2f}%</div></div>'
                     f'<div style="flex:1"><div style="color:#4a9eff;font-weight:700;font-size:.95rem;line-height:1.2">'
-                    f'Realised ES (tail avg)</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
+                    f'Realised α-CVaR</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
                     f'margin-top:.25rem">{es*100:.2f}%</div></div>'
                     f'<div style="flex:1"><div style="color:#4a9eff;font-weight:700;font-size:.95rem;line-height:1.2">'
                     f'Securities / derivatives</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
@@ -4113,15 +4214,15 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                                 line=dict(color="#4a9eff", width=2.5),
                                 marker=dict(size=8, color="#4a9eff"),
                                 customdata=es_pct,
-                                hovertemplate="ES floor L: %{x:.1f}%<br>Max E[r]: %{y:.2f}%"
-                                              "<br>Realised ES: %{customdata:.2f}%<extra></extra>"))
+                                hovertemplate="α-CVaR floor L: %{x:.1f}%<br>Max E[r]: %{y:.2f}%"
+                                              "<br>Realised α-CVaR: %{customdata:.2f}%<extra></extra>"))
                             fig.add_trace(_go.Scatter(
                                 x=[mc_L * 100], y=[er * 100], mode="markers", name="Scalable CVaR optimum",
                                 marker=dict(size=18, color="#f59e0b", symbol="star",
                                             line=dict(color="#ffffff", width=1.2)),
                                 customdata=[es * 100],
-                                hovertemplate="<b>Scalable CVaR optimum</b><br>ES floor L: %{x:.1f}%"
-                                              "<br>E[r]: %{y:.2f}%<br>Realised ES: %{customdata:.2f}%<extra></extra>"))
+                                hovertemplate="<b>Scalable CVaR optimum</b><br>α-CVaR floor L: %{x:.1f}%"
+                                              "<br>E[r]: %{y:.2f}%<br>Realised α-CVaR: %{customdata:.2f}%<extra></extra>"))
                             fig.update_layout(
                                 template="plotly_dark", paper_bgcolor="#0d1117",
                                 plot_bgcolor="#0d1117", height=400,
@@ -4129,7 +4230,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                                            font=dict(color="white", size=15),
                                            x=0.5, xanchor="center", xref="paper"),
                                 margin=dict(l=10, r=10, t=52, b=40), hovermode="closest",
-                                xaxis=dict(title=dict(text="Expected-Shortfall floor L (%)",
+                                xaxis=dict(title=dict(text="α-CVaR floor L (%)",
                                                       font=dict(color="#c0c8d8", size=12)),
                                            color="#c0c8d8", gridcolor="#1e2130", zerolinecolor="#2a2a3a"),
                                 yaxis=dict(title=dict(text="Max expected return (%)",
@@ -4151,7 +4252,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                                 text=("<b>Scalable CVaR optimum</b><br>"
                                       f"E[r] = {er*100:.1f}%&nbsp; | &nbsp;Vol = {_sig*100:.1f}%<br>"
                                       f"Skew = {_skew:.2f}<br>"
-                                      f"Realised ES = {es*100:.1f}%&nbsp; (L = {mc_L*100:.0f}%)<br>"
+                                      f"Realised α-CVaR = {es*100:.1f}%&nbsp; (L = {mc_L*100:.0f}%)<br>"
                                       f"{_dtxt} · {'✓ feasible' if _feas else '✗ infeasible'}"),
                                 font=dict(color="#f59e0b", size=9),
                                 bgcolor="rgba(13,17,23,0.92)", bordercolor="#f59e0b", borderwidth=1,
@@ -4167,22 +4268,22 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                             try:
                                 import altair as alt
                                 dff = _pd.DataFrame({
-                                    "ES floor L (%)": [r["L"] * 100 for r in _okfr],
+                                    "α-CVaR floor L (%)": [r["L"] * 100 for r in _okfr],
                                     "Max expected return (%)": [r["er"] * 100 for r in _okfr],
-                                    "Realised ES (%)": [r["es"] * 100 for r in _okfr]})
+                                    "Realised α-CVaR (%)": [r["es"] * 100 for r in _okfr]})
                                 _base = alt.Chart(dff).encode(
-                                    x=alt.X("ES floor L (%):Q", scale=alt.Scale(zero=False)),
+                                    x=alt.X("α-CVaR floor L (%):Q", scale=alt.Scale(zero=False)),
                                     y=alt.Y("Max expected return (%):Q", scale=alt.Scale(zero=False)))
                                 _line = _base.mark_line(color="#4a9eff", strokeWidth=2.5)
                                 _pts = _base.mark_circle(color="#4a9eff", size=95).encode(
-                                    tooltip=[alt.Tooltip("ES floor L (%):Q", format=".1f"),
+                                    tooltip=[alt.Tooltip("α-CVaR floor L (%):Q", format=".1f"),
                                              alt.Tooltip("Max expected return (%):Q", format=".2f"),
-                                             alt.Tooltip("Realised ES (%):Q", format=".2f")])
+                                             alt.Tooltip("Realised α-CVaR (%):Q", format=".2f")])
                                 _star = alt.Chart(_pd.DataFrame({
-                                    "ES floor L (%)": [mc_L * 100],
+                                    "α-CVaR floor L (%)": [mc_L * 100],
                                     "Max expected return (%)": [er * 100]})).mark_point(
                                     shape="diamond", size=260, color="#f59e0b", filled=True).encode(
-                                    x="ES floor L (%):Q", y="Max expected return (%):Q")
+                                    x="α-CVaR floor L (%):Q", y="Max expected return (%):Q")
                                 st.altair_chart((_line + _pts + _star).interactive().properties(height=360),
                                                 use_container_width=True)
                                 st.caption("◆ marks the Scalable CVaR optimum. Hover points for coordinates.")
@@ -4279,7 +4380,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
 
 
 
-with tab_bt:
+elif _view == "backtest":
     import datetime as _dt
     st.markdown('<h2 style="color:#4a9eff">🔬 Out-of-Sample Backtest</h2>', unsafe_allow_html=True)
     st.markdown(
@@ -4672,7 +4773,7 @@ with tab_bt:
 
 
 
-with tab2:
+elif _view == "about":
     import os as _os
     col_a, col_b = st.columns([1, 3])
     with col_a:
@@ -4859,7 +4960,7 @@ Use the contact form in the **Optimiser tab**, or connect directly:
 </div>
 """, unsafe_allow_html=True)
 
-with tab3:
+elif _view == "glossary":
     st.markdown("## 📚 AI Glossary & Reference")
     st.markdown(
         "Click any term below for an AI-generated explanation, or type your own question. "
