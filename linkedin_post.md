@@ -22,9 +22,9 @@ It's built on the research I first developed in my MSc Finance thesis at USI Lug
 
 The optimiser returns **up to four portfolios** side by side — the Markowitz mean-variance optimum, the behavioural optimum without derivatives, the optimum with derivatives, and a same-risk comparison — so you can see exactly what the framework adds.
 
-🔗 Live app: https://sami-jeddou-behavioral-portfolio-optimizer.streamlit.app/?view=home
-🎓 Thesis (USI Lugano, 2012): https://thesis.bul.sbu.usi.ch/theses/1012-1112BenJeddou/pdf?1390987439
-📄 A step-by-step user guide and a one-page overview are available.
+🔗 Live app: [Link](https://sami-jeddou-behavioral-portfolio-optimizer.streamlit.app/?view=home)
+🎓 Thesis (USI Lugano, 2012): [Link](https://thesis.bul.sbu.usi.ch/theses/1012-1112BenJeddou/pdf?1390987439)
+📄 A step-by-step user guide is available.
 
 I'd genuinely value your thoughts — happy to connect and discuss with anyone interested in quantitative finance, risk, derivatives or portfolio construction. Feel free to reach out.
 
