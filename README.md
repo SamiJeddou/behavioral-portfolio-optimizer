@@ -27,6 +27,8 @@ Under the default base case (H = -10%, α = 5%), the no-derivative behavioural o
 
 The threshold H ranges from -40% to -1%, making the framework applicable to highly volatile assets including **cryptocurrencies and digital assets**, emerging market equities, and other non-traditional instruments — extending the mental-accounting approach to today's broader investment universe.
 
+Beyond the exact grid, the optimiser also includes a **scalable Monte-Carlo + CVaR engine** for institutional-size portfolios, and an **out-of-sample back-test** to check whether a chosen portfolio's modelled expectations hold on later data. Both are described under *Algorithm* below.
+
 ---
 
 ## Theoretical Background
@@ -60,6 +62,20 @@ Each state is assigned a probability using a Gaussian (or Student-t) copula, cor
 - *Grid search*: All weight combinations are evaluated. Those satisfying the mental-account constraint (VaR or ES) are kept as eligible. The highest-return eligible portfolio is selected as the starting point.
 - *Gradient refinement*: A COBYLA nonlinear optimiser refines the solution from that starting point, with the constraint embedded as a penalty term.
 
+### Scaling to large portfolios — Monte-Carlo + CVaR
+
+The exact grid above is precise, but its state space grows as *m^n'* and becomes impractical beyond a handful of assets. A second, **scalable engine** is included for institutional-size portfolios:
+
+- **Scenario generation** — joint return and derivative-payoff scenarios are sampled through a copula (Gaussian or Student-t). The Student-t copula captures tail dependence (assets crashing together).
+- **CVaR linear program** — the goal is solved as a Rockafellar–Uryasev CVaR linear program, so cost grows *linearly* in the number of assets and several derivatives can be optimised at once, even on different underlyings.
+- **Smooth frontier** — the frontier is swept with common random numbers so points are directly comparable.
+
+This engine uses an **α-CVaR** objective; it is a scalable complement to the exact grid rather than a bit-for-bit reproduction of it.
+
+### Out-of-sample back-test
+
+To test the *efficiency* of each optimisation method — not just its in-sample fit — the app can build portfolio weights on a construction window and then **buy-and-hold** those weights through a later, out-of-sample window, with any derivative marked to market, comparing expected against realised outcomes. It also reports the realised **alpha, beta and R²** of each security and of the portfolio against a benchmark you select (S&P 500, global ACWI, a 60/40 SPY-AGG blend, or any ticker), with an optional expected-market-return input that adds a CAPM required return and an ex-ante alpha.
+
 ---
 
 ## Constraint Methods & Resolutions
@@ -90,18 +106,26 @@ There are two independent choices — the **constraint method** (what downside r
 
 ---
 
-## Supported Derivatives
+## Supported Derivatives & Structured Products
+
+The library includes **16 predefined instruments plus a custom composer**:
 
 | Type | Description |
 |---|---|
-| `put` | Long put option |
-| `call` | Long call option |
-| `safety_collar` | Long put + short call |
-| `aggressive_collar` | Long call + short put |
-| `straddle` | Long call + long put (same strike) |
-| `strangle` | Long call + long put (different strikes) |
-| `cgn` | Capital-guaranteed note (capped or uncapped) |
-| `barrier_m` | Barrier-M note |
+| Put / Call | Standard European options |
+| Safety collar | Long put + short call |
+| Aggressive collar | Long call + short put |
+| Straddle / Strangle | Long call + long put (same or different strikes) |
+| Capital-guaranteed note | Uncapped or capped, with floor and participation rate |
+| Barrier-M note | Corridor note with digital components |
+| Bull call spread | Long call + short higher call — bullish, capped, lower cost than a call |
+| Bear put spread | Long put + short lower put — cheaper bearish hedge, capped |
+| Long butterfly (calls) | Long–short²–long calls — low-volatility "pin" bet, very cheap |
+| Call condor | Four-strike range bet with a flat maximum payoff between the inner strikes |
+| Reverse convertible | Zero-coupon bond − short put — high coupon, capped upside, principal at risk |
+| Discount certificate | Synthetic underlying − short call — bought at a discount, upside capped |
+| Outperformance certificate | Synthetic underlying + extra call — full downside, geared (>100%) upside |
+| Custom composer | Build any payoff from calls, puts, digitals, and zero-coupon bonds |
 
 ---
 
@@ -167,7 +191,7 @@ The Streamlit dashboard allows you to:
 - Visualise the three-curve efficient frontier (MV / Behavioral / Behavioral + derivative) in real time
 - Read optimal portfolio weights and statistics for the selected parameters
 
-🔗 **Live app**: [sami-jeddou-behavioral-portfolio-optimizer.streamlit.app](https://sami-jeddou-behavioral-portfolio-optimizer.streamlit.app)
+🔗 **Live app**: [sami-jeddou-behavioral-portfolio-optimizer.streamlit.app](https://sami-jeddou-behavioral-portfolio-optimizer.streamlit.app/?view=home)
 
 📄 **[User Guide (PDF)](https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf)** — step-by-step guide to using the app
 
@@ -202,14 +226,22 @@ The baseline result (10.21%) matches the thesis mean-variance result (10.23%) to
 
 ---
 
+## ✅ Recently added
+
+| Feature | Status |
+|---|---|
+| Scalable Monte-Carlo + CVaR engine (copula scenarios → CVaR linear program) for institutional-size portfolios | ✔ Live |
+| Out-of-sample back-test of optimised portfolios, with realised alpha / beta vs a chosen benchmark | ✔ Live |
+| Rigorous-ES mode (genuinely ES-aware optimisation) | ✔ Live |
+| Expanded library — 16 instruments + custom structured-product composer | ✔ Live |
+
 ## 🔮 Coming Soon
 
 | Feature | Status |
 |---|---|
-| REST API endpoint (FastAPI) — making the optimiser callable by external portfolio management, risk, and trading systems | 🔜 Planned |
-| Async job handling for long-running optimisations | 🔜 Planned |
-| Additional derivative types and structured product templates | 🔜 Planned |
-| Multi-period optimisation | 🔜 Planned |
+| Multi-period / multi-horizon optimisation | 🔜 Planned |
+| Productionised REST API & async job handling for institutional workflows | 🔜 Planned |
+| Further structured-product templates | 🔜 Planned |
 
 ## Author
 
