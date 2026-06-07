@@ -2386,6 +2386,32 @@ def _bt_metrics(pv, factor, H, T_years):
     ann_vol = float(np.std(rets, ddof=1) * np.sqrt(factor)) if len(rets) > 1 else float('nan')
     return cum, ann_ret, ann_vol, bool(cum < H)
 
+def _capm_alpha_beta(r_asset, r_bench, rf_per_period, factor):
+    """Realised CAPM regression of one return series on a benchmark over a window.
+
+    r_asset, r_bench : aligned 1-D arrays of per-period returns.
+    rf_per_period    : per-period risk-free rate (annual / factor).
+    factor           : periods per year, used to annualise the alpha intercept.
+    Returns (beta, alpha_annual, r2); any component is NaN where undefined.
+    """
+    a = np.asarray(r_asset, dtype=float)
+    m = np.asarray(r_bench, dtype=float)
+    n = min(a.size, m.size)
+    a, m = a[:n], m[:n]
+    mask = np.isfinite(a) & np.isfinite(m)
+    a, m = a[mask], m[mask]
+    if a.size < 3:
+        return float('nan'), float('nan'), float('nan')
+    ae = a - rf_per_period
+    me = m - rf_per_period
+    var_m = float(np.var(me))            # population variance (ddof=0)
+    if not np.isfinite(var_m) or var_m < 1e-12:
+        return float('nan'), float('nan'), float('nan')
+    beta = float(np.cov(ae, me, ddof=0)[0, 1] / var_m)
+    alpha_annual = float((ae.mean() - beta * me.mean()) * factor)
+    r2 = float(np.corrcoef(ae, me)[0, 1] ** 2) if ae.std() > 0 and me.std() > 0 else float('nan')
+    return beta, alpha_annual, r2
+
 def plot_backtest_paths(dates, pv1, pv2, label2):
     """Dark-themed cumulative value chart: no-derivative vs with-derivative."""
     import matplotlib.pyplot as plt
@@ -2660,21 +2686,10 @@ def plot_mc_frontier(rows):
     return fig
 
 
-# Navigation handled by the tile launcher above (st.session_state['nav_view']);
-# the tab bodies below are unchanged and render one at a time as the active view.
-
-# Show the input sidebar only on the Optimiser tab. The active tab is client-side
-# state, so this is done in CSS: when any tab other than the first is selected,
-# hide the sidebar (and its collapsed reopen control). Purely cosmetic — the
-# optimiser's widgets still exist and work when you return to the Optimiser tab.
-# Requires Optimiser to remain the first tab; depends on Streamlit's tab DOM.
-st.markdown(
-    "<style>"
-    'body:has([data-baseweb="tab-list"] button[role="tab"]:not(:first-of-type)[aria-selected="true"]) section[data-testid="stSidebar"],'
-    'body:has([data-baseweb="tab-list"] button[role="tab"]:not(:first-of-type)[aria-selected="true"]) [data-testid="stSidebarCollapsedControl"]'
-    "{display:none !important;}"
-    "</style>",
-    unsafe_allow_html=True)
+# Navigation is handled by the tile launcher above via the ?view= query param.
+# The section views below render one at a time as the active view. The input
+# sidebar is shown only on the Optimiser view; the hide for every other view is
+# applied near the top of the file, immediately after _view is read.
 
 
 if _view == "optimiser":
@@ -3292,7 +3307,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
             if note_html:
                 st.markdown(note_html, unsafe_allow_html=True)
 
-        # ── Compute all three portfolios ─────────────────────────────────────
+        # ── Compute all four portfolios ─────────────────────────────────────
         if _render_from_cache:
             # Already restored from cache at top — nd_res/dr_res already set
             pass
@@ -4681,6 +4696,30 @@ elif _view == "backtest":
              "unreliable when a derivative is in the portfolio, which the backtest always "
              "builds — and Rigorous ES is selected in the Risk measure section above.")
 
+    _bt_head("Benchmark (for α / β)")
+    bt_bench_choice = st.selectbox(
+        "Benchmark — the \"market\" for alpha & beta",
+        ["S&P 500 (^GSPC)", "Global ACWI (ACWI)", "60/40 SPY-AGG blend", "Type my own ticker"],
+        index=0, key="bt_bench",
+        help="Alpha and beta are measured against this benchmark over the evaluation window. "
+             "For a multi-asset or crypto portfolio, a broad or blended benchmark is more "
+             "meaningful than a single equity index.")
+    if bt_bench_choice.startswith("Type"):
+        bt_bench_custom = st.text_input("Benchmark ticker (Yahoo symbol)", value="^GSPC",
+                                        key="bt_bench_tk")
+    else:
+        bt_bench_custom = ""
+    _bcol1, _bcol2 = st.columns(2)
+    with _bcol1:
+        bt_rf = st.number_input("Risk-free rate (annual, %)", min_value=0.0, max_value=20.0,
+                                value=3.0, step=0.25, key="bt_rf",
+                                help="Used to form excess returns for the regression.") / 100.0
+    with _bcol2:
+        bt_erm_raw = st.text_input(
+            "Expected market return E[Rₘ] (annual %, optional)", value="", key="bt_erm",
+            help="Leave blank to report only realised α / β. Enter a value to add a CAPM "
+                 "required-return and an ex-ante (expected) alpha column, using the realised beta.")
+
     st.markdown(_BT_RULE, unsafe_allow_html=True)
     st.markdown(
         "<style>.st-key-bt_run button{font-size:1.1rem;font-weight:700;"
@@ -4808,6 +4847,118 @@ elif _view == "backtest":
                 except Exception as _ce:
                     st.warning(f"Chart unavailable: {_ce}")
 
+            # ── Alpha / beta of securities and portfolios vs a benchmark ────────
+            _bench_label = ""
+            try:
+                if bt_bench_choice.startswith("Type"):
+                    _btk = [t.strip().upper() for t in (bt_bench_custom or "").split(",") if t.strip()]
+                    _bench_tickers = _btk[:1] or ["^GSPC"]
+                    _bench_label = _bench_tickers[0]
+                elif bt_bench_choice.startswith("60/40"):
+                    _bench_tickers = ["SPY", "AGG"]
+                    _bench_label = "60/40 SPY-AGG"
+                else:
+                    _bench_tickers = {"S&P 500 (^GSPC)": ["^GSPC"],
+                                      "Global ACWI (ACWI)": ["ACWI"]}[bt_bench_choice]
+                    _bench_label = bt_bench_choice
+
+                _bpx, _berr = fetch_close_prices(_bench_tickers, bt_eval_start, bt_eval_end)
+                if _berr:
+                    raise RuntimeError(_berr)
+                _bpx = _bpx.reindex(ev_px.index).ffill().bfill()
+                if bt_bench_choice.startswith("60/40") and {"SPY", "AGG"}.issubset(_bpx.columns):
+                    _bench_ret = (0.6 * _bpx["SPY"].pct_change()
+                                  + 0.4 * _bpx["AGG"].pct_change()).values[1:]
+                else:
+                    _bcol = next((c for c in _bench_tickers if c in _bpx.columns), None)
+                    if _bcol is None:
+                        raise RuntimeError("benchmark series unavailable after alignment")
+                    _bench_ret = _bpx[_bcol].pct_change().values[1:]
+
+                rf_per = bt_rf / factor_eval
+                _sec_ret = ev_px[names].pct_change().values[1:]
+                _pv1_ret = np.diff(pv1) / pv1[:-1]
+                _pv2_ret = np.diff(pv2) / pv2[:-1]
+                _Lmin = min(len(_bench_ret), _sec_ret.shape[0], len(_pv1_ret), len(_pv2_ret))
+                _bench_ret = _bench_ret[:_Lmin]
+                _sec_ret = _sec_ret[:_Lmin]
+                _pv1_ret = _pv1_ret[:_Lmin]
+                _pv2_ret = _pv2_ret[:_Lmin]
+                if _Lmin < 3:
+                    raise RuntimeError("too few aligned observations for a regression")
+
+                _erm = None
+                _erm_s = (bt_erm_raw or "").strip().replace("%", "")
+                if _erm_s:
+                    try:
+                        _erm = float(_erm_s) / 100.0
+                    except ValueError:
+                        _erm = None
+
+                def _ab_row(nm, r_series, exp_ret, accent="#c9d1d9", strong=False):
+                    _b, _a, _r2 = _capm_alpha_beta(r_series, _bench_ret, rf_per, factor_eval)
+                    _fw = "700" if strong else "500"
+                    _b_s = f"{_b:.2f}" if np.isfinite(_b) else "—"
+                    _a_s = f"{_a:+.2%}" if np.isfinite(_a) else "—"
+                    _r2_s = f"{_r2:.2f}" if np.isfinite(_r2) else "—"
+                    _c = (f'<td style="padding:.4rem .5rem;color:{accent};font-weight:{_fw}">{nm}</td>'
+                          f'<td style="padding:.4rem .5rem;text-align:right;color:#fafafa">{_b_s}</td>'
+                          f'<td style="padding:.4rem .5rem;text-align:right;color:#fafafa">{_a_s}</td>'
+                          f'<td style="padding:.4rem .5rem;text-align:right;color:#9fb3d1">{_r2_s}</td>')
+                    if _erm is not None:
+                        if np.isfinite(_b) and exp_ret is not None:
+                            _req = bt_rf + _b * (_erm - bt_rf)
+                            _ea = exp_ret - _req
+                            _c += (f'<td style="padding:.4rem .5rem;text-align:right;color:#fafafa">{_req:.2%}</td>'
+                                   f'<td style="padding:.4rem .5rem;text-align:right;color:#fafafa">{_ea:+.2%}</td>')
+                        else:
+                            _c += ('<td style="padding:.4rem .5rem;text-align:right;color:#6b7a96">—</td>'
+                                   '<td style="padding:.4rem .5rem;text-align:right;color:#6b7a96">—</td>')
+                    return f'<tr style="border-bottom:1px solid #1b2230">{_c}</tr>'
+
+                _ab_rows = ""
+                for _i, _nm in enumerate(names):
+                    _ab_rows += _ab_row(_nm, _sec_ret[:, _i],
+                                        float(means[_i]) if _erm is not None else None)
+                _ab_rows += _ab_row("Portfolio P1 (no derivative)", _pv1_ret,
+                                    nd_res['expected_return'], accent="#4a9eff", strong=True)
+                _ab_rows += _ab_row("Portfolio P2 (with derivative)", _pv2_ret,
+                                    dr_res['expected_return'], accent="#f5b942", strong=True)
+
+                _ab_hdr = ('<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Holding</th>'
+                           '<th style="text-align:right;padding:.4rem .5rem;font-weight:600">β</th>'
+                           '<th style="text-align:right;padding:.4rem .5rem;font-weight:600">Realised α (ann.)</th>'
+                           '<th style="text-align:right;padding:.4rem .5rem;font-weight:600">R²</th>')
+                if _erm is not None:
+                    _ab_hdr += ('<th style="text-align:right;padding:.4rem .5rem;font-weight:600">CAPM req. (ann.)</th>'
+                                '<th style="text-align:right;padding:.4rem .5rem;font-weight:600">Expected α (ann.)</th>')
+
+                _ab_note = (
+                    f'Realised over the evaluation window ({_Lmin} {bt_freq.lower()} periods), '
+                    f'risk-free {bt_rf:.2%} p.a. β is the regression slope of excess returns, '
+                    f'α the annualised Jensen intercept, R² its fit. Portfolio β is measured '
+                    f'directly from the realised buy-and-hold path (so the derivative\u2019s '
+                    f'non-linearity is captured).')
+                if _erm is not None:
+                    _ab_note += (f' Expected α = model E[r] − CAPM required return, using your '
+                                 f'E[Rₘ] = {_erm:.2%} and the realised β.')
+
+                _ab_html = (
+                    '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
+                    'padding:.85rem 1rem;margin-top:1rem">'
+                    '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.2rem">'
+                    f'Alpha / Beta \u2014 vs {_bench_label}</div>'
+                    '<div style="color:#8b949e;font-size:.78rem;margin-bottom:.6rem">' + _ab_note + '</div>'
+                    '<table style="width:100%;border-collapse:collapse;font-size:.85rem;color:#c9d1d9">'
+                    f'<tr style="color:#9fb3d1">{_ab_hdr}</tr>{_ab_rows}</table></div>')
+                st.markdown(_ab_html, unsafe_allow_html=True)
+
+                if _erm is None:
+                    st.caption("Tip: enter an expected market return E[Rₘ] in the inputs above to add "
+                               "a CAPM required-return and an ex-ante (expected) alpha column.")
+            except Exception as _abe:
+                st.caption(f"α / β unavailable — {_abe}")
+
             # Rule-based verdict (no LLM)
             verdict = []
             d_ret = ann2 - ann1
@@ -4898,7 +5049,10 @@ elif _view == "about":
         "R code developed as part of my MSc Finance thesis at the Università della Svizzera italiana "
         "(USI Lugano, 2012), supervised by Prof. Enrico De Giorgi. The Python version adds support "
         "for live market data, a custom structured product composer, and an extended optimizer for "
-        "larger portfolios using differential evolution. It is based on the foundational work of "
+        "larger portfolios using differential evolution. It also includes a scalable "
+        "**Monte-Carlo + CVaR** engine for institutional-size portfolios and an "
+        "**out-of-sample back-test** that checks whether a chosen portfolio's modelled "
+        "expectations hold on later data. It is based on the foundational work of "
         "Das, Markowitz, Scheid & Statman (2010).")
     st.markdown(
         "Incorporating derivatives into the optimisation framework can simultaneously improve expected return "
@@ -4949,6 +5103,27 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
 - *≤ 4 securities*: exhaustive grid search over all weight combinations
 - *≥ 5 securities*: differential evolution — a global stochastic optimiser that scales to larger portfolios without exhaustive enumeration
 """)
+
+    st.markdown("### Scaling to large portfolios — Monte-Carlo + CVaR")
+    st.markdown(
+        "The exact grid above is precise, but its state space grows as *m^n′* and becomes "
+        "impractical beyond a handful of assets. A second, **scalable engine** is included for "
+        "institutional-size portfolios:")
+    st.markdown("""
+- **Scenario generation** — joint return and derivative-payoff scenarios are sampled through a copula (Gaussian or Student-t). The Student-t copula captures tail dependence — assets crashing together
+- **CVaR linear program** — the goal is solved as a Rockafellar–Uryasev CVaR linear program, so cost grows *linearly* in the number of assets and several derivatives can be optimised at once, even on different underlyings
+- **Smooth frontier** — the frontier is swept with common random numbers so points are directly comparable
+""")
+    st.markdown(
+        "This engine uses an **α-CVaR** objective; it is a scalable complement to the exact grid "
+        "rather than a bit-for-bit reproduction of it.")
+
+    st.markdown("### Out-of-sample back-test")
+    st.markdown(
+        "To test the *efficiency* of each optimisation method — not just its in-sample fit — the app "
+        "can build portfolio weights on a construction window and then **buy-and-hold** those weights "
+        "through a later, out-of-sample window, with any derivative marked to market, comparing "
+        "expected against realised outcomes.")
 
     st.markdown("### Constraint methods & resolutions")
     st.markdown("There are two independent choices — the **constraint method** "
