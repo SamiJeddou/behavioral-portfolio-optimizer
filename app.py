@@ -2889,7 +2889,7 @@ if _view == "optimiser":
         st.markdown("""
 <div class="info-box" style="color:#ffffff !important">
 
-<span style="color:#4a9eff;font-size:1.75rem;font-weight:700">👈 How to use this tool: Optimiser</span>
+<span style="color:#4a9eff;font-size:1.75rem;font-weight:700">👈 How to use this tool: Exact Portfolio Optimiser</span>
 
 Follow these steps in the sidebar:
 
@@ -4051,7 +4051,7 @@ elif _view == "scalable":
     st.markdown("""
 <div class="info-box" style="color:#ffffff !important">
 
-<span style="color:#4a9eff;font-size:1.75rem;font-weight:700">📋 How to use this tool: Scalable Optimiser</span>
+<span style="color:#4a9eff;font-size:1.75rem;font-weight:700">📋 How to use this tool: Scalable Portfolio Optimiser</span>
 
 Set up the run in the sections below, then click Run:
 
