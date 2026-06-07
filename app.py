@@ -5195,45 +5195,34 @@ elif _view == "about":
         "📄 **[Download the User Guide (PDF)](https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf)** — step-by-step guide to using the app",
         unsafe_allow_html=False)
     st.markdown(
-        "This app extends classical **Markowitz mean-variance theory** to portfolios that include "
-        "**derivatives and structured products**, using a **mental-accounting framework** with a "
-        "downside risk constraint. It is a **Python** reimplementation and extension of the original "
-        "R code developed as part of my MSc Finance thesis at the Università della Svizzera italiana "
-        "(USI Lugano, 2012), supervised by Prof. Enrico De Giorgi. The Python version adds support "
-        "for live market data, a custom structured product composer, and an extended optimizer for "
-        "larger portfolios using differential evolution. It also includes a scalable "
-        "**Monte-Carlo + CVaR** engine for institutional-size portfolios and an "
-        "**out-of-sample back-test** that checks whether a chosen portfolio's modelled "
-        "expectations hold on later data. It is based on the foundational work of "
-        "Das, Markowitz, Scheid & Statman (2010).")
+        "**Beyond Mean-Variance Portfolio Optimiser** is an interactive research tool that builds "
+        "goal-based portfolios which can include **derivatives and structured products** — something "
+        "classical Markowitz mean-variance optimisation handles poorly.")
     st.markdown(
-        "Incorporating derivatives into the optimisation framework can simultaneously improve expected return "
-        "and provide downside protection — effectively embedding a **hedging benefit** within the portfolio "
-        "construction process itself, rather than as a separate overlay. The optimal derivative weight is "
-        "endogenously determined by the downside constraint, unifying return-seeking and risk-limiting in "
-        "a single optimisation step.")
+        "Rather than trading return against variance, it **maximises expected return subject to a "
+        "downside rule you set** — either a maximum probability of loss (VaR) or a maximum expected "
+        "loss in the tail (Expected Shortfall) — and finds the portfolio, including any hedges, that "
+        "best meets that goal.")
+    st.markdown(
+        "It grew out of my MSc Finance thesis (USI Lugano, 2012), which extended the mental-accounting "
+        "framework of Das & Statman (2009) and Das, Markowitz, Scheid & Statman (2010). The original "
+        "optimiser was written in R; this app is a full Python re-implementation — corrected, validated "
+        "against the thesis, and extended with live market data, a structured-product composer, a "
+        "scalable Monte-Carlo + CVaR engine for large portfolios, and an out-of-sample back-test.")
 
-    st.markdown("### Professional background")
-    st.markdown(
-        "With over 20 years of experience in financial services transformation, I have delivered "
-        "large-scale risk, regulatory, and front-to-back programs at and for tier-1 institutions — "
-        "including BNP Paribas CIB, Crédit Agricole, BIL Luxembourg, and TMX Group — across roles "
-        "as senior consultant, program director, and independent transformation lead.")
-    st.markdown(
-        "**Education:** Engineering and finance background — MEng, MSc Project and Program Management, "
-        "École des Mines de Saint-Étienne · Master in Finance, USI Lugano · CFA Level I")
+    st.markdown("### Summary")
+    st.markdown("**In plain terms, this tool lets you:**")
     st.markdown("""
-**Key achievements:**
-- Delivered €2M+ annual cost savings and reduced operational risk across global operations
-- Designed and delivered greenfield risk and clearing platforms for CDS and OTC derivatives at leading central counterparties (CCPs)
-- Built and led a €25M+ portfolio of concurrent risk and finance transformation initiatives
-- Delivered major regulatory programs across multiple jurisdictions (EMIR, Basel IV, FRTB, IRRBB, IFRS 9, MiFID II, ISO 20022)
-
-I am currently available for senior transformation, program director, or portfolio management
-engagements — either freelance/contract or permanent — in France, Europe, or remote/hybrid.
+- **Set a goal, not a risk-aversion number** — tell it how much downside you will accept (e.g. "no more than a 5% chance of losing 10%") and it builds the best portfolio for that goal.
+- **Put derivatives inside the optimisation** — options, collars, capital-guaranteed and barrier notes (16 instruments) are priced and optimised *jointly* with your assets, not bolted on afterwards.
+- **Use real, live data** — pull 10,000+ tickers (equities, ETFs, crypto) from the market, or enter your own figures.
+- **Choose how hard it works** — four precision modes including a Turbo solver ~60× faster, plus a scalable Monte-Carlo + CVaR engine for institutional-size portfolios.
+- **Check it out-of-sample** — back-test the chosen portfolio on later data and read its realised alpha, beta and R² versus a benchmark.
+- **Understand every result** — built-in AI explanations and an interactive glossary turn the maths into plain language, and a one-click PDF captures the run.
 """)
+    st.markdown("*The sections below explain how it works, what you can configure, and the theory behind it.*")
 
-    st.markdown("### Algorithm")
+    st.markdown("### How it works — the optimisation algorithm")
     st.markdown(
         "The full algorithm is described in Das & Statman (2009) — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*. "
         "The original R implementation is provided in the appendix of the thesis (Jeddou, 2012). "
@@ -5255,6 +5244,28 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
 - *≤ 4 securities*: exhaustive grid search over all weight combinations
 - *≥ 5 securities*: differential evolution — a global stochastic optimiser that scales to larger portfolios without exhaustive enumeration
 """)
+
+    st.markdown("### Constraint methods & resolutions")
+    st.markdown("There are two independent choices — the **constraint method** "
+                "(what downside rule is enforced) and the **resolution / solver** "
+                "(how the optimiser searches). Two routing conditions can override "
+                "the resolution choice: the number of securities, and whether a "
+                "derivative is present.")
+    st.markdown("**The three constraint / objective methods**")
+    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Method</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">What it optimises</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Best / recommended for</th></tr></thead><tbody><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>VaR</strong> (Method I)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">max E[r] s.t. P(r &lt; H) ≤ α — a probability-of-shortfall threshold</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">The thesis's primary method; most cases</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>ES — thesis-faithful</strong> (default Method II)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">ES-eligible grid seed, but the COBYLA refinement still targets the <strong>VaR</strong> penalty — faithfully reproduces the original R thesis</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Reproducing the thesis tables exactly</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Rigorous ES</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">max E[r] s.t. ES ≥ L, with a genuinely <strong>ES-aware</strong> COBYLA penalty</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Real decision-making — recovers up to ~2.4pp of E[r] the thesis method leaves unused (e.g. L = −15%: 15.5% vs 13.2%)</td></tr></tbody></table>''', unsafe_allow_html=True)
+    st.markdown("**The four resolutions / solvers — and where each applies**")
+    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Resolution</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">VaR</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">ES (thesis)</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Rigorous ES</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Grid (m / m')</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Speed / reliability</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Best for</th></tr></thead><tbody><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Fast</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">21 / 15</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">fastest; coarse, visible discretisation error</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">quick previews</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Standard</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">35 / 50</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">moderate; safe with derivatives</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">daily work, derivative cases</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>High precision</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">51 / 99</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">slow (~15–30 min full frontier); thesis-grade</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">publication numbers, validation, derivative cases</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Turbo</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓ <em>(n ≤ 4, no-derivative)</em></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✗</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">51, coarse-to-fine</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">~seconds (~60× faster than High); <strong>unreliable with a derivative</strong> (up to 32% disagreement)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">fast no-derivative VaR frontier exploration</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Rigorous-ES</strong> (own mode, resolution fixed)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">51 (fixed)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">~seconds; ES-aware</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">ES decision-making</td></tr></tbody></table>''', unsafe_allow_html=True)
+    st.markdown("*Legend: ✓ available · ✗ deliberately disabled · — not applicable (separate fixed-resolution mode).*")
+    st.markdown("**Routing rules that override the resolution choice.** "
+                "Fast / Standard / High serve both **VaR** and **thesis-ES**; "
+                "**Turbo** is **VaR-only** and live only for **≤ 4 total securities "
+                "with no derivative** (it is hidden for ES and for 5+ securities); "
+                "**Rigorous-ES** is a separate mode whose resolution is fixed at m = 51. "
+                "The derivative counts toward the security total: **n ≤ 4 → exhaustive "
+                "grid search**, **n ≥ 5 → differential evolution** (stochastic global "
+                "optimiser). Only Turbo's and Rigorous-ES's coarse-to-fine seeding is "
+                "exposed to derivative basin-miss errors; the exhaustive-grid resolutions "
+                "are immune to that and limited only by grid coarseness.")
 
     st.markdown("### Scaling to large portfolios — Monte-Carlo + CVaR")
     st.markdown(
@@ -5280,28 +5291,6 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
         "a 60/40 blend, or any ticker), with an optional expected-market-return input that adds a "
         "CAPM required return and an ex-ante alpha.")
 
-    st.markdown("### Constraint methods & resolutions")
-    st.markdown("There are two independent choices — the **constraint method** "
-                "(what downside rule is enforced) and the **resolution / solver** "
-                "(how the optimiser searches). Two routing conditions can override "
-                "the resolution choice: the number of securities, and whether a "
-                "derivative is present.")
-    st.markdown("**The three constraint / objective methods**")
-    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Method</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">What it optimises</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Best / recommended for</th></tr></thead><tbody><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>VaR</strong> (Method I)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">max E[r] s.t. P(r &lt; H) ≤ α — a probability-of-shortfall threshold</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">The thesis's primary method; most cases</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>ES — thesis-faithful</strong> (default Method II)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">ES-eligible grid seed, but the COBYLA refinement still targets the <strong>VaR</strong> penalty — faithfully reproduces the original R thesis</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Reproducing the thesis tables exactly</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Rigorous ES</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">max E[r] s.t. ES ≥ L, with a genuinely <strong>ES-aware</strong> COBYLA penalty</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Real decision-making — recovers up to ~2.4pp of E[r] the thesis method leaves unused (e.g. L = −15%: 15.5% vs 13.2%)</td></tr></tbody></table>''', unsafe_allow_html=True)
-    st.markdown("**The four resolutions / solvers — and where each applies**")
-    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Resolution</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">VaR</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">ES (thesis)</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Rigorous ES</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Grid (m / m')</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Speed / reliability</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Best for</th></tr></thead><tbody><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Fast</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">21 / 15</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">fastest; coarse, visible discretisation error</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">quick previews</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Standard</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">35 / 50</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">moderate; safe with derivatives</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">daily work, derivative cases</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>High precision</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">51 / 99</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">slow (~15–30 min full frontier); thesis-grade</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">publication numbers, validation, derivative cases</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Turbo</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓ <em>(n ≤ 4, no-derivative)</em></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✗</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">51, coarse-to-fine</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">~seconds (~60× faster than High); <strong>unreliable with a derivative</strong> (up to 32% disagreement)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">fast no-derivative VaR frontier exploration</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Rigorous-ES</strong> (own mode, resolution fixed)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">51 (fixed)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">~seconds; ES-aware</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">ES decision-making</td></tr></tbody></table>''', unsafe_allow_html=True)
-    st.markdown("*Legend: ✓ available · ✗ deliberately disabled · — not applicable (separate fixed-resolution mode).*")
-    st.markdown("**Routing rules that override the resolution choice.** "
-                "Fast / Standard / High serve both **VaR** and **thesis-ES**; "
-                "**Turbo** is **VaR-only** and live only for **≤ 4 total securities "
-                "with no derivative** (it is hidden for ES and for 5+ securities); "
-                "**Rigorous-ES** is a separate mode whose resolution is fixed at m = 51. "
-                "The derivative counts toward the security total: **n ≤ 4 → exhaustive "
-                "grid search**, **n ≥ 5 → differential evolution** (stochastic global "
-                "optimiser). Only Turbo's and Rigorous-ES's coarse-to-fine seeding is "
-                "exposed to derivative basin-miss errors; the exhaustive-grid resolutions "
-                "are immune to that and limited only by grid coarseness.")
-
     st.markdown("### Data input & cleaning")
     st.markdown(
         "Four data input modes are supported. For live market data and CSV uploads, "
@@ -5313,7 +5302,7 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
 - **CSV upload**: upload historical prices — returns computed automatically with the same cleaning applied as for live data
 """)
 
-    st.markdown("### MVT / MAT Equivalence")
+    st.markdown("### The theory — MVT / MAT equivalence")
     st.markdown(
         "When no derivatives are present, the mean-variance and behavioral frontiers converge exactly. "
         "For any choice of H and α, there exists a unique implied risk-aversion coefficient λ such that "
@@ -5360,6 +5349,26 @@ The framework is designed to be extensible — future versions may incorporate a
 
 </div>
 """, unsafe_allow_html=True)
+
+    st.markdown("### About the author")
+    st.markdown(
+        "With over 20 years of experience in financial services transformation, I have delivered "
+        "large-scale risk, regulatory, and front-to-back programs at and for tier-1 institutions — "
+        "including BNP Paribas CIB, Crédit Agricole, BIL Luxembourg, and TMX Group — across roles "
+        "as senior consultant, program director, and independent transformation lead.")
+    st.markdown(
+        "**Education:** Engineering and finance background — MEng, MSc Project and Program Management, "
+        "École des Mines de Saint-Étienne · Master in Finance, USI Lugano · CFA Level I")
+    st.markdown("""
+**Key achievements:**
+- Delivered €2M+ annual cost savings and reduced operational risk across global operations
+- Designed and delivered greenfield risk and clearing platforms for CDS and OTC derivatives at leading central counterparties (CCPs)
+- Built and led a €25M+ portfolio of concurrent risk and finance transformation initiatives
+- Delivered major regulatory programs across multiple jurisdictions (EMIR, Basel IV, FRTB, IRRBB, IFRS 9, MiFID II, ISO 20022)
+
+I am currently available for senior transformation, program director, or portfolio management
+engagements — either freelance/contract or permanent — in France, Europe, or remote/hybrid.
+""")
 
     st.markdown("---")
     st.markdown("""
