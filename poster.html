@@ -88,6 +88,24 @@
   .tag.b{border-color:rgba(74,158,255,.5);color:#cfe4ff}
   .tag.gold{border-color:rgba(245,179,66,.5);color:#ffe6b0}
 
+  /* validation table (06) */
+  .vtab{width:100%;border-collapse:collapse;margin-top:13px;font-size:13.5px}
+  .vtab th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--violet);
+    font-weight:700;padding:0 10px 7px 0;border-bottom:1px solid var(--line)}
+  .vtab td{padding:8px 10px 8px 0;border-bottom:1px solid rgba(35,49,76,.5);color:var(--mut);
+    line-height:1.42;vertical-align:top}
+  .vtab td.k{color:var(--ink);font-weight:600;width:47%;padding-right:16px}
+  .vtab td b{color:var(--ink);font-weight:700}
+  .vtab tr:last-child td{border-bottom:none}
+  /* pipeline flow (07) */
+  .flow{display:flex;align-items:stretch;gap:5px;margin-top:13px}
+  .flow .stg{flex:1;background:#0e1b34;border:1px solid var(--line);border-radius:10px;
+    padding:9px 4px;font-size:10.5px;font-weight:600;color:var(--mut);text-align:center;
+    display:flex;align-items:center;justify-content:center;line-height:1.25}
+  .flow .stg.core{border-color:rgba(52,211,153,.55);background:rgba(52,211,153,.09);color:#b7f0db}
+  .flow .arr{flex:none;display:flex;align-items:center;color:var(--green);font-weight:700;font-size:13px}
+  .flowcap{font-size:11.5px;color:var(--dim);margin-top:9px;font-style:italic}
+
   .visbox{background:#0d1117;border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-top:12px}
   .visbox .cap{font-size:11.5px;color:var(--dim);margin-top:7px}
   .visbox .vt{font-size:12px;font-weight:700;color:var(--blue);letter-spacing:.4px;text-transform:uppercase;margin-bottom:8px}
@@ -203,7 +221,7 @@
   <!-- 05 headline -->
   <div class="grid">
     <div class="card span accent-gold">
-      <div class="head"><div class="num">05</div><div class="ttl">Scaled: Monte-Carlo + CVaR for institutional-scale portfolios</div></div>
+      <div class="head"><div class="num">05</div><div class="ttl">Scaled: a separate Monte-Carlo + CVaR optimiser for institutional-scale portfolios</div></div>
       <div class="twocol" style="grid-template-columns:1fr 1fr;gap:22px;align-items:stretch">
         <div style="display:flex;flex-direction:column;justify-content:flex-start">
           <p>The grid is exact but its state space grows as <b>mᴺ</b> — impossible past ~4 assets. The new engine instead <b>samples S joint scenarios</b> through a copula and solves the goal as a <b>linear program</b>.</p>
@@ -258,20 +276,30 @@
   <div class="grid">
     <div class="card accent-violet">
       <div class="head"><div class="num">06</div><div class="ttl">Validated: against theory and out-of-sample</div></div>
-      <p>Every figure is checked, not asserted — the engine is validated against the original thesis and against closed-form theory before any result is shown.</p>
-      <ul class="feat">
-        <li>On the thesis case, Monte-Carlo optima sit <b>on the exact grid mean-variance frontier to ~2–3 bp</b></li>
-        <li>Scenario Expected-Shortfall matches the <b>closed-form Normal value</b> (e.g. −28.4% vs −28.6%)</li>
-        <li>The frontier is <b>monotone</b>, the ES floor <b>binds exactly</b>, and infeasible floors are flagged</li>
-        <li>The <b>out-of-sample back-test</b> closes the loop — weights built on a construction window are buy-and-held through a later window, with the derivative marked to market</li>
-        <li>Approximate-but-scalable engine that <b>complements</b> the exact reference — never replaces it</li>
-        <li>Reproduces the thesis's published result tables <b>within discretisation noise</b> — the R-to-Python port is verified end-to-end, not reimplemented on faith</li>
-      </ul>
+      <p>Every figure is checked, not asserted — validated against the original thesis and against closed-form theory before any result is shown. The scalable engine <b>complements</b> the exact reference; it never replaces it.</p>
+      <table class="vtab">
+        <thead><tr><th>Validation check</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td class="k">MC optimum vs exact-grid MV frontier</td><td>on the frontier to <b>~2–3 bp</b></td></tr>
+          <tr><td class="k">Scenario Expected-Shortfall vs closed-form Normal</td><td><b>−28.4%</b> vs <b>−28.6%</b></td></tr>
+          <tr><td class="k">Frontier behaviour</td><td>monotone · ES floor <b>binds exactly</b> · infeasible floors flagged</td></tr>
+          <tr><td class="k">Thesis result tables (R&nbsp;→&nbsp;Python port)</td><td>reproduced <b>within discretisation noise</b>, end-to-end</td></tr>
+          <tr><td class="k">Out-of-sample back-test</td><td>weights held through a later window · derivative marked to market</td></tr>
+        </tbody>
+      </table>
     </div>
 
     <div class="card accent-green">
       <div class="head"><div class="num">07</div><div class="ttl">Engineered: a clean pipeline, AI-powered</div></div>
-      <p>A clean numerical pipeline: <b>copula scenarios → CVaR linear program → efficient frontier</b>, swept with common random numbers for a smooth, comparable frontier — all wrapped in an interactive app.</p>
+      <p>A clean numerical pipeline — every optimisation flows through the same stages:</p>
+      <div class="flow">
+        <div class="stg">Copula<br>scenarios</div><div class="arr">→</div>
+        <div class="stg core">Black–Scholes<br>pricing</div><div class="arr">→</div>
+        <div class="stg core">CVaR LP<br>(HiGHS)</div><div class="arr">→</div>
+        <div class="stg">Efficient<br>frontier</div><div class="arr">→</div>
+        <div class="stg">Interactive<br>app · PDF</div>
+      </div>
+      <div class="flowcap">Swept with common random numbers for a smooth, comparable frontier.</div>
       <ul class="feat green">
         <li><b>Live, interactive UI</b> — real-time charts, weight bars and a one-click <b>PDF report</b></li>
         <li><b>AI-powered glossary</b> explains derivatives, risk measures and portfolio theory in plain language</li>
