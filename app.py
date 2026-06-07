@@ -17,6 +17,7 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
                          dr_labels, dr_weights, dr_colors,
                          der_label_sel, H_val, _alpha, use_es, _L,
                          data_mode, names_in, grid_lbl, lam_summary,
+                         p0_stats=None, p0_labels=None, p0_weights=None, p0_colors=None,
                          fig_plotly=None, fig_png=None):
     """Generate a PDF summary report of optimisation results."""
     from reportlab.lib.pagesizes import A4
@@ -209,7 +210,7 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
             story.append(Paragraph(
                 'Purple dashed: MV frontier (Markowitz) · Blue: Behavioural frontier without derivatives · '
                 'Gold squares: Behavioural frontier with derivatives · '
-                'Green diamond: Portfolio (1) · Orange square: Portfolio (2) · Coral star: Portfolio (3)',
+                'Purple circle: Portfolio (0) · Green diamond: Portfolio (1) · Orange square: Portfolio (2) · Coral star: Portfolio (3)',
                 caption_style))
             story.append(Spacer(1, 8))
         except Exception as _chart_err:
@@ -217,6 +218,64 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
 
     # ── Page break — portfolios start on page 2 ──────────────────────────────
     story.append(PageBreak())
+
+    # ── Summary — resulting portfolios ───────────────────────────────────────
+    _p1_ref = nd_res['expected_return'] * 100 if nd_res else None
+    def _dpp(ret_pct):
+        if _p1_ref is None or ret_pct is None:
+            return '\u2014'
+        return f'{ret_pct - _p1_ref:+.2f} pp'
+    _sum = [['Portfolio', 'Exp. return', 'Std dev', 'Skewness', 'Gap vs (1)']]
+    if p0_stats:
+        _sum.append(['Portfolio (0) \u2014 Markowitz MV optimum',
+                     f"{p0_stats['expected_return']*100:.2f}%", f"{p0_stats['std_dev']*100:.2f}%",
+                     '0.000', _dpp(p0_stats['expected_return']*100)])
+    if nd_res:
+        _sum.append(['Portfolio (1) \u2014 Behavioural, no derivative',
+                     f"{nd_res['expected_return']*100:.2f}%", f"{nd_res['std_dev']*100:.2f}%",
+                     f"{nd_res['skewness']:.3f}", '\u2014'])
+    if dr_res and der_label_sel:
+        _sum.append([f'Portfolio (2) \u2014 with {der_label_sel}',
+                     f"{dr_res['expected_return']*100:.2f}%", f"{dr_res['std_dev']*100:.2f}%",
+                     f"{dr_res['skewness']:.3f}", _dpp(dr_res['expected_return']*100)])
+    if p3_return is not None:
+        _sum.append([f'Portfolio (3) \u2014 same variance as (1), with {der_label_sel}',
+                     f"{p3_return:.2f}%", f"{p3_std:.2f}%" if p3_std is not None else '\u2014',
+                     '\u2014', _dpp(p3_return)])
+    if len(_sum) > 1:
+        story += section_header('Summary \u2014 resulting portfolios', navy)
+        _stab = Table(_sum, colWidths=[7.2*cm, 2.6*cm, 2.2*cm, 2.2*cm, 2.3*cm])
+        _stab.setStyle(TableStyle([
+            ('BACKGROUND', (0,0), (-1,0), navy),
+            ('TEXTCOLOR', (0,0), (-1,0), white),
+            ('FONTSIZE', (0,0), (-1,-1), 8),
+            ('ROWBACKGROUNDS', (0,1), (-1,-1), [colors.HexColor('#f8f9fa'), white]),
+            ('GRID', (0,0), (-1,-1), 0.3, colors.HexColor('#dee2e6')),
+            ('ALIGN', (1,0), (-1,-1), 'RIGHT'),
+            ('VALIGN', (0,0), (-1,-1), 'MIDDLE'),
+        ]))
+        story.append(_stab)
+        story.append(Paragraph(
+            'Gap vs (1) = expected-return gap relative to Portfolio (1). '
+            'Portfolio (0) is a Gaussian mean-variance construct (skewness 0). '
+            'Portfolio (3) is interpolated from the derivative frontier (indicative only).',
+            caption_style))
+        story.append(Spacer(1, 8))
+
+    # ── Portfolio (0) — Markowitz MV optimum ─────────────────────────────────
+    if p0_stats:
+        story += section_header('Portfolio (0) \u2014 Markowitz mean-variance optimum (no derivative)',
+                                colors.HexColor('#a855f7'))
+        story.append(Paragraph(
+            "Minimum-variance portfolio at Portfolio (1)'s expected return \u2014 coincides with "
+            "Portfolio (1) when it is mean-variance efficient (the MVT/MAT equivalence). "
+            "Gaussian construct: skewness 0; tail probability from the normal model.",
+            caption_style))
+        story.append(metrics_table(p0_stats))
+        if p0_labels and p0_weights:
+            story.append(Spacer(1, 4))
+            story.append(weights_table(p0_labels, p0_weights, p0_colors, 'Security'))
+        story.append(Spacer(1, 8))
 
     # ── Portfolio (1) ─────────────────────────────────────────────────────────
     if nd_res:
@@ -2679,9 +2738,9 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
 
 </div>
 """, unsafe_allow_html=True)
-        st.markdown('''
+        with st.expander("Up to four portfolios can be generated as output of the optimisation", expanded=False):
+            st.markdown('''
 <div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#111111;font-size:.82rem">
-<b style="color:#1a6bbf">Up to four portfolios can be generated as output of the optimisation:</b><br><br>
 <b style="color:#a855f7">Portfolio (0)</b> — Markowitz mean-variance optimum (no derivative): the minimum-variance portfolio at Portfolio (1)'s expected return. It coincides with Portfolio (1) when Portfolio (1) is mean-variance efficient — directly demonstrating the MVT/MAT equivalence (shown whenever Portfolio (1) exists)<br>
 <b style="color:#10b981">Portfolio (1)</b> — Behavioural optimum without derivatives at the chosen constraint (H, α): mean-variance efficient via the mental-accounting framework, and coincides with Portfolio (0) when the implied λ equals 3.795 (the MVT/MAT equivalence)<br>
 <b style="color:#f59e0b">Portfolio (2)</b> — Behavioural optimum with derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
@@ -2856,9 +2915,9 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
         ]
 
         # Three portfolio perspectives note
-        st.markdown('''
+        with st.expander("Up to four portfolios can be generated as output of the optimisation", expanded=False):
+            st.markdown('''
 <div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#111111;font-size:.82rem">
-<b style="color:#1a6bbf">Up to four portfolios can be generated as output of the optimisation:</b><br><br>
 <b style="color:#a855f7">Portfolio (0)</b> — Markowitz mean-variance optimum (no derivative): the minimum-variance portfolio at Portfolio (1)'s expected return. It coincides with Portfolio (1) when Portfolio (1) is mean-variance efficient — directly demonstrating the MVT/MAT equivalence (shown whenever Portfolio (1) exists)<br>
 <b style="color:#10b981">Portfolio (1)</b> — Behavioural optimum without derivatives at the chosen constraint (H, α): mean-variance efficient via the mental-accounting framework, and coincides with Portfolio (0) when the implied λ equals 3.795 (the MVT/MAT equivalence)<br>
 <b style="color:#f59e0b">Portfolio (2)</b> — Behavioural optimum with derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
@@ -3072,21 +3131,21 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
                 st.plotly_chart(fig_plotly, use_container_width=True, config={'edits': {'annotationPosition': True, 'annotationTail': True, 'legendPosition': True}, 'displayModeBar': True})
 
         # ── Reading the chart — full width below columns ──────────────────────
-        st.markdown(
-            '<div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;'
-            'padding:.8rem 1rem;margin-top:.5rem;color:#111111;font-size:.82rem">'
-            '<b style="color:#1a6bbf">📐 Reading the chart</b> — '
-            'Without derivatives, the blue behavioural frontier should closely track the purple MV frontier, '
-            'confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010). '
-            'With derivatives, the frontiers may diverge — this is expected and is the core contribution of the framework: '
-            'derivatives allow the behavioural approach to reach portfolios that mean-variance optimisation cannot. '
-            'Small gaps below the MV frontier are grid discretisation. A blue point sitting <i>well</i> below it, however, '
-            'means the optimiser missed the true optimum for that H — in the no-derivative case the behavioural optimum is '
-            'mean-variance efficient and should lie on the purple frontier. This happens most often with '
-            '<b style="color:#d97706">Turbo</b>, whose coarse grid can be unreliable near the feasibility boundary; switch to '
-            'Standard or High precision for a clean frontier. (With derivatives, genuine divergence from the MV frontier is '
-            'expected and is the point of the framework.)</div>',
-            unsafe_allow_html=True)
+        with st.expander("📐 Reading the chart", expanded=False):
+            st.markdown(
+                '<div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;'
+                'padding:.8rem 1rem;margin-top:.5rem;color:#111111;font-size:.82rem">'
+                'Without derivatives, the blue behavioural frontier should closely track the purple MV frontier, '
+                'confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010). '
+                'With derivatives, the frontiers may diverge — this is expected and is the core contribution of the framework: '
+                'derivatives allow the behavioural approach to reach portfolios that mean-variance optimisation cannot. '
+                'Small gaps below the MV frontier are grid discretisation. A blue point sitting <i>well</i> below it, however, '
+                'means the optimiser missed the true optimum for that H — in the no-derivative case the behavioural optimum is '
+                'mean-variance efficient and should lie on the purple frontier. This happens most often with '
+                '<b style="color:#d97706">Turbo</b>, whose coarse grid can be unreliable near the feasibility boundary; switch to '
+                'Standard or High precision for a clean frontier. (With derivatives, genuine divergence from the MV frontier is '
+                'expected and is the point of the framework.)</div>',
+                unsafe_allow_html=True)
 
 
     # ── For cache render path: show params + chart from session state ───────
@@ -3548,13 +3607,36 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
                                         color='#e76f51', s=200, zorder=10,
                                         edgecolors='white', linewidths=0.8,
                                         label='Portfolio (3) — interpolated')
-                        # P2 orange square
-                        if _fd.get('der_xs') and _fd.get('H_val') is not None:
-                            try:
-                                _target = f"H={_fd['H_val']:.0%}"
-                                from app import build_frontier
-                            except Exception:
-                                pass
+                        # ── Portfolio (0) — Markowitz MV optimum (purple circle) ──
+                        _p0pt = _fd.get('mv_eq')
+                        if _p0pt:
+                            _ax.scatter([_p0pt[0]], [_p0pt[1]], marker='o', color='#a855f7',
+                                        s=90, zorder=11, edgecolors='white', linewidths=0.8,
+                                        label='Portfolio (0) — Markowitz MV optimum')
+                        # ── Portfolio (2) — behavioural optimum with derivative (orange square) ──
+                        _p2pt = (dr_res['std_dev']*100, dr_res['expected_return']*100) if dr_res else None
+                        if _p2pt:
+                            _ax.scatter([_p2pt[0]], [_p2pt[1]], marker='s', color='#f59e0b',
+                                        s=130, zorder=11, edgecolors='white', linewidths=0.8,
+                                        label='Portfolio (2) — optimum with derivative')
+                        # ── Labelled call-outs (squares linked to each portfolio with text) ──
+                        def _callout(pt, txt, color, dx, dy):
+                            if not pt:
+                                return
+                            _ax.annotate(txt, xy=(pt[0], pt[1]), xytext=(pt[0]+dx, pt[1]+dy),
+                                         fontsize=6.3, color='white', ha='left', va='center', zorder=20,
+                                         bbox=dict(boxstyle='round,pad=0.3', fc=color, ec='white', lw=0.5, alpha=0.95),
+                                         arrowprops=dict(arrowstyle='->', color=color, lw=1.0))
+                        _p1pt = (_nr['std_dev']*100, _nr['expected_return']*100) if _nr else None
+                        _p3pt = (_fd.get('p3_x'), _fd.get('p3_y')) if (_fd.get('p3_x') and _fd.get('p3_y')) else None
+                        if _p0pt:
+                            _callout(_p0pt, f"Portfolio (0)\nMarkowitz MV\n{_p0pt[1]:.1f}%  |  sd {_p0pt[0]:.1f}%", '#a855f7', -9, 3.2)
+                        if _p1pt:
+                            _callout(_p1pt, f"Portfolio (1)\nbehavioural, no deriv\n{_p1pt[1]:.1f}%  |  sd {_p1pt[0]:.1f}%", '#10b981', -10, -4.2)
+                        if _p2pt:
+                            _callout(_p2pt, f"Portfolio (2)\nwith {_fd.get('der_label','derivative')}\n{_p2pt[1]:.1f}%  |  sd {_p2pt[0]:.1f}%", '#f59e0b', 2.5, 3.2)
+                        if _p3pt:
+                            _callout(_p3pt, f"Portfolio (3)\nsame sd as (1)\n{_p3pt[1]:.1f}%  |  sd {_p3pt[0]:.1f}%", '#e76f51', 2.5, -4.2)
                         _ax.legend(fontsize=7, facecolor='#0d1a2e', edgecolor='#1a3a5c',
                                    labelcolor='#c0c8d8', loc='upper left')
                         plt.tight_layout(pad=1.5)
@@ -3575,6 +3657,10 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
                     H_val=H_val, _alpha=_alpha, use_es=use_es, _L=_L,
                     data_mode=data_mode, names_in=names_in,
                     grid_lbl=grid_lbl, lam_summary=_lam_s,
+                    p0_stats=_p0_stats,
+                    p0_labels=([names_in[i] if i < len(names_in) else f"Asset {i+1}" for i in range(len(_p0_weights))] if _p0_weights is not None else None),
+                    p0_weights=(list(_p0_weights) if _p0_weights is not None else None),
+                    p0_colors=([DONUT_COLORS[i % len(DONUT_COLORS)] for i in range(len(_p0_weights))] if _p0_weights is not None else None),
                     fig_png=_fig_png_for_pdf
                 )
                 # Store PDF bytes in session_state so download button doesn't trigger rerun loss
