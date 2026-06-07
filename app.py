@@ -2415,6 +2415,34 @@ def plot_backtest_paths(dates, pv1, pv2, label2):
     return fig
 
 
+def plot_backtest_paths_plotly(dates, pv1, pv2, label2):
+    """Interactive dark-themed cumulative value chart (Plotly): P1 vs P2."""
+    x = list(dates)
+    fig = go.Figure()
+    fig.add_hline(y=100, line=dict(color='#30363d', width=1, dash='dash'))
+    fig.add_trace(go.Scatter(
+        x=x, y=(100.0 * np.asarray(pv1, dtype=float)), mode='lines',
+        name='No derivative (P1)', line=dict(color='#10b981', width=2.4),
+        hovertemplate='<b>No derivative (P1)</b><br>%{x|%d %b %Y}<br>Value: %{y:.2f}<extra></extra>'))
+    if pv2 is not None:
+        fig.add_trace(go.Scatter(
+            x=x, y=(100.0 * np.asarray(pv2, dtype=float)), mode='lines',
+            name=label2, line=dict(color='#f59e0b', width=2.4),
+            hovertemplate='<b>%{fullData.name}</b><br>%{x|%d %b %Y}<br>Value: %{y:.2f}<extra></extra>'))
+    fig.update_layout(
+        title=dict(text='Out-of-sample buy-and-hold performance',
+                   font=dict(color='#c9d1d9', size=14), x=0.5, xanchor='center'),
+        paper_bgcolor='#0d1117', plot_bgcolor='#0d1117', font=dict(color='#c9d1d9'),
+        hovermode='x unified', margin=dict(l=10, r=10, t=46, b=10),
+        legend=dict(bgcolor='rgba(22,27,34,0.85)', bordercolor='#30363d', borderwidth=1,
+                    x=0.01, y=0.99, xanchor='left', yanchor='top'),
+        yaxis=dict(title='Portfolio value (entry = 100)', gridcolor='#21262d',
+                   zeroline=False, color='#8b949e'),
+        xaxis=dict(gridcolor='#21262d', color='#8b949e'),
+    )
+    return fig
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # Scalable Monte-Carlo + CVaR linear-program engine (Beta)
 # Cost is O(S*(N+K)) — linear in securities and derivatives, independent of grid
@@ -4738,31 +4766,44 @@ elif _view == "backtest":
                 f"Option life T = {T_years:.2f}y.  Constraint: {_con_txt}.")
 
             _tail_label = "Model P(r<H)" if bt_ct == "var" else "Model E[r|r<H] (tail avg)"
-            table = pd.DataFrame({
-                "Metric": ["Expected annual return", "Realised annual return",
-                           "Expected annual volatility", "Realised annual volatility",
-                           _tail_label,
-                           f"Window return (vs H = {bt_H:.0%})"],
-                "No derivative (P1)": [
-                    f"{nd_res['expected_return']:.2%}", f"{ann1:.2%}",
-                    f"{nd_res['std_dev']:.2%}", f"{vol1:.2%}",
-                    f"{nd_res['shortfall_stat']:.2%}",
-                    f"{cum1:.2%}  {'⚠ below H' if br1 else '✓'}"],
-                "With derivative (P2)": [
-                    f"{dr_res['expected_return']:.2%}", f"{ann2:.2%}",
-                    f"{dr_res['std_dev']:.2%}", f"{vol2:.2%}",
-                    f"{dr_res['shortfall_stat']:.2%}",
-                    f"{cum2:.2%}  {'⚠ below H' if br2 else '✓'}"],
-            })
-            st.table(table.set_index("Metric"))
+            _rows_bt = [
+                ("Expected annual return",     f"{nd_res['expected_return']:.2%}", f"{dr_res['expected_return']:.2%}"),
+                ("Realised annual return",     f"{ann1:.2%}",                      f"{ann2:.2%}"),
+                ("Expected annual volatility", f"{nd_res['std_dev']:.2%}",         f"{dr_res['std_dev']:.2%}"),
+                ("Realised annual volatility", f"{vol1:.2%}",                      f"{vol2:.2%}"),
+                (_tail_label,                  f"{nd_res['shortfall_stat']:.2%}",  f"{dr_res['shortfall_stat']:.2%}"),
+                (f"Window return (vs H = {bt_H:.0%})",
+                                               f"{cum1:.2%}  {'\u26a0 below H' if br1 else '\u2713'}",
+                                               f"{cum2:.2%}  {'\u26a0 below H' if br2 else '\u2713'}"),
+            ]
+            _bt_thead = ('<tr style="color:#9fb3d1">'
+                         '<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Metric</th>'
+                         '<th style="text-align:right;padding:.4rem .5rem;font-weight:600">No derivative (P1)</th>'
+                         '<th style="text-align:right;padding:.4rem .5rem;font-weight:600">With derivative (P2)</th></tr>')
+            _bt_trows = ""
+            for _m, _v1, _v2 in _rows_bt:
+                _bt_trows += ('<tr style="border-bottom:1px solid #1b2230">'
+                              f'<td style="padding:.4rem .5rem;color:#c9d1d9">{_m}</td>'
+                              f'<td style="padding:.4rem .5rem;color:#fafafa;font-weight:600;text-align:right">{_v1}</td>'
+                              f'<td style="padding:.4rem .5rem;color:#fafafa;font-weight:600;text-align:right">{_v2}</td></tr>')
+            _bt_table_html = (
+                '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:.85rem 1rem">'
+                '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.6rem">'
+                'Expected vs realised \u2014 out-of-sample</div>'
+                '<table style="width:100%;border-collapse:collapse;font-size:.85rem;color:#c9d1d9">'
+                + _bt_thead + _bt_trows + '</table></div>')
 
-            try:
-                fig = plot_backtest_paths(ev_px.index, pv1, pv2, f"With derivative (P2) — {bt_label}")
-                st.pyplot(fig, use_container_width=True)
-                import matplotlib.pyplot as _plt
-                _plt.close(fig)
-            except Exception as _ce:
-                st.warning(f"Chart unavailable: {_ce}")
+            _bt_left, _bt_right = st.columns([1, 1.2])
+            with _bt_left:
+                st.markdown(_bt_table_html, unsafe_allow_html=True)
+            with _bt_right:
+                try:
+                    _fig_bt_p = plot_backtest_paths_plotly(
+                        ev_px.index, pv1, pv2, f"With derivative (P2) \u2014 {bt_label}")
+                    st.plotly_chart(_fig_bt_p, use_container_width=True,
+                                    config={'edits': {'legendPosition': True}, 'displayModeBar': True})
+                except Exception as _ce:
+                    st.warning(f"Chart unavailable: {_ce}")
 
             # Rule-based verdict (no LLM)
             verdict = []
