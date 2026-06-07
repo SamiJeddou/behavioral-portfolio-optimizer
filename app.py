@@ -1434,92 +1434,42 @@ def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
     plt.tight_layout(rect=[0,0.02,1,1])
     return fig
 
-# ═════════════════════════════════════════════════════════════════════════════
+# ══════════════════════════════════════════════════════════════════════════════════
 # TILE-LAUNCHER HOME  (navigation only — no section content is changed)
-# ═════════════════════════════════════════════════════════════════════════════
-import os as _os
+# ═══════════════════════════════════════════════════════════════════════════════════
+import os as _os, base64 as _b64
 _HOME_DIR = _os.path.dirname(_os.path.abspath(__file__))
-if "nav_view" not in st.session_state:
-    st.session_state["nav_view"] = "home"
+_VIEWS = ("home", "optimiser", "scalable", "backtest", "about", "glossary")
 
-def _nav_go(v):
-    st.session_state["nav_view"] = v
+@st.cache_data(show_spinner=False)
+def _home_assets():
+    out = {}
+    for k, fn in (("OPT", "home_optimiser.png"), ("MC", "home_scalable.png"), ("BT", "home_backtest.png")):
+        fp = _os.path.join(_HOME_DIR, fn)
+        out[k] = ("data:image/png;base64," + _b64.b64encode(open(fp, "rb").read()).decode()) if _os.path.exists(fp) else ""
+    return out
 
-def _himg(name):
-    fp = _os.path.join(_HOME_DIR, name)
-    if not _os.path.exists(fp):
-        return
-    try:
-        st.image(fp, use_container_width=True)
-    except TypeError:
-        st.image(fp, use_column_width=True)
+_HOME_CSS = "<style>\n@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');\nsection[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl']{display:none!important;}\n.bmv-home{--blue:#4a9eff;--gold:#f5b942;--gold2:#caa14a;--green:#16a34a;--border:#30363d;\n  --surface:#161b22;--surface2:#1b2330;--text:#fafafa;--muted:#8b949e;--text2:#c9d1d9;\n  font-family:'IBM Plex Sans',sans-serif;color:var(--text)}\n.bmv-home *{box-sizing:border-box}\n.bmv-hero{display:flex;gap:16px;align-items:flex-start;margin:.2rem 0 1.5rem}\n.bmv-mark{width:46px;height:46px;border-radius:11px;flex:none;display:grid;place-items:center;\n  background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1205;font-weight:700;\n  font-family:'IBM Plex Serif',serif;font-size:1.5rem}\n.bmv-eyebrow{font-size:.66rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);margin-bottom:7px}\n.bmv-h1{font-family:'IBM Plex Serif',serif;font-weight:600;font-size:1.95rem;line-height:1.08;margin-bottom:8px}\n.bmv-h1 .em{color:var(--blue)}\n.bmv-lede{color:var(--text2);font-size:.92rem;max-width:62ch}\n.bmv-label{font-size:.64rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}\n.bmv-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}\n.bmv-tile{position:relative;display:flex;flex-direction:column;text-decoration:none;color:var(--text);\n  overflow:hidden;background:linear-gradient(165deg,var(--surface2),var(--surface));\n  border:1px solid var(--border);border-radius:16px;transition:.22s cubic-bezier(.2,.7,.3,1)}\n.bmv-tile:hover{transform:translateY(-4px);border-color:var(--accent,var(--blue));\n  box-shadow:0 22px 46px -24px var(--glow,rgba(74,158,255,.5))}\n.bmv-thumb{height:150px;background:#0a0e15;border-bottom:1px solid var(--border);\n  display:flex;align-items:center;justify-content:center;overflow:hidden}\n.bmv-thumb img{width:100%;height:100%;object-fit:contain;display:block;transition:.3s}\n.bmv-tile:hover .bmv-thumb img{transform:scale(1.03)}\n.bmv-body{padding:15px 16px;display:flex;flex-direction:column;flex:1}\n.bmv-thead{display:flex;align-items:center;gap:9px;margin-bottom:7px}\n.bmv-ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:1.05rem;flex:none;\n  background:var(--icobg,rgba(74,158,255,.12));border:1px solid var(--icobd,rgba(74,158,255,.3))}\n.bmv-tt{font-weight:600;font-size:1.05rem}\n.bmv-td{font-size:.8rem;color:var(--muted);line-height:1.5}\n.bmv-td b{color:var(--text2);font-weight:600}\n.bmv-foot{margin-top:auto;padding-top:13px;display:flex;align-items:center;justify-content:space-between}\n.bmv-tag{font-family:'IBM Plex Mono',monospace;font-size:.66rem;color:var(--text2);background:#0d1117;\n  border:1px solid var(--border);border-radius:6px;padding:3px 8px}\n.bmv-arw{font-size:1.05rem;color:var(--accent,var(--blue));opacity:0;transform:translateX(-4px);transition:.22s}\n.bmv-tile:hover .bmv-arw{opacity:1;transform:translateX(0)}\n.bmv-badge{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:.63rem;\n  color:var(--blue);background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.32);border-radius:6px;\n  padding:4px 8px;margin-top:11px;line-height:1.3;width:fit-content}\n.bmv-tile.blue{--accent:#4a9eff;--glow:rgba(74,158,255,.5);--icobg:rgba(74,158,255,.12);--icobd:rgba(74,158,255,.32)}\n.bmv-tile.gold{--accent:#f5b942;--glow:rgba(245,185,66,.45);--icobg:rgba(245,185,66,.12);--icobd:rgba(245,185,66,.32)}\n.bmv-tile.green{--accent:#16a34a;--glow:rgba(22,163,74,.45);--icobg:rgba(22,163,74,.14);--icobd:rgba(22,163,74,.34)}\n.bmv-tile.slate{--accent:#7d8aa0;--glow:rgba(125,138,160,.4);--icobg:rgba(125,138,160,.12);--icobd:rgba(125,138,160,.3)}\n.bmv-tiles.ref{grid-template-columns:repeat(3,1fr)}\n.bmv-tiles.ref .bmv-tile{flex-direction:row;align-items:center;gap:13px;padding:15px 16px}\n.bmv-tiles.ref .bmv-ico{width:38px;height:38px;font-size:1.15rem}\n.bmv-tiles.ref .bmv-tt{font-size:.95rem}\n.bmv-tiles.ref .bmv-td{font-size:.74rem;margin-top:2px}\n.bmv-aipill{display:inline-block;font-size:.55rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;\n  vertical-align:middle;margin-left:7px;padding:2px 7px;border-radius:999px;color:#1a1205;\n  background:linear-gradient(135deg,var(--gold),var(--gold2))}\n@media(max-width:640px){.bmv-tiles{grid-template-columns:1fr 1fr}.bmv-tiles.ref{grid-template-columns:1fr}}\n</style>"
+_HOME_HTML = '<div class="bmv-home">\n  <div class="bmv-hero">\n    <div class="bmv-mark">&beta;</div>\n    <div>\n      <div class="bmv-eyebrow">Quantitative portfolio suite</div>\n      <div class="bmv-h1">Beyond <span class="em">Mean-Variance</span></div>\n      <div class="bmv-lede">A behavioural mental-accounts optimiser on the Das&ndash;Statman framework. Pick a tool to begin.</div>\n    </div>\n  </div>\n  <div class="bmv-label">Tools</div>\n  <div class="bmv-tiles">\n    <a class="bmv-tile blue" href="?view=optimiser" target="_self">\n      <div class="bmv-thumb"><img src="__OPT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico">📊</span><span class="bmv-tt">Optimiser</span></div>\n        <div class="bmv-td">Exact grid engine on the Das&ndash;Statman states — VaR, thesis-faithful ES and rigorous-ES, with derivatives.</div>\n        <div class="bmv-foot"><span class="bmv-tag">grid · exact</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile gold" href="?view=scalable" target="_self">\n      <div class="bmv-thumb"><img src="__MC__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico">🧮</span><span class="bmv-tt">Scalable (MC)</span></div>\n        <div class="bmv-td">Monte-Carlo scenarios + &alpha;-CVaR linear program — scales to large, multi-derivative portfolios.</div>\n        <div class="bmv-foot"><span class="bmv-tag">scenario · LP · beta</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile green" href="?view=backtest" target="_self">\n      <div class="bmv-thumb"><img src="__BT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico">🔬</span><span class="bmv-tt">Backtest</span></div>\n        <div class="bmv-td">Out-of-sample walk-forward of the <b>Optimiser\'s grid</b> portfolios, derivative marked to market.</div>\n        <div class="bmv-badge">&#8627; tests Optimiser output — not the MC engine</div>\n        <div class="bmv-foot"><span class="bmv-tag">out-of-sample</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n  </div>\n  <div class="bmv-label">Reference</div>\n  <div class="bmv-tiles ref">\n    <a class="bmv-tile slate" href="?view=about" target="_self">\n      <span class="bmv-ico">📖</span>\n      <div><div class="bmv-tt">About</div><div class="bmv-td">Methods, framework and research.</div></div>\n    </a>\n    <a class="bmv-tile slate" href="?view=glossary" target="_self">\n      <span class="bmv-ico">📚</span>\n      <div><div class="bmv-tt">Glossary <span class="bmv-aipill">AI-powered</span></div><div class="bmv-td">VaR, ES, &alpha;-CVaR, copulas — plus natural-language Q&amp;A.</div></div>\n    </a>\n  </div>\n</div>'
 
 def _render_home():
-    st.markdown(
-        "<style>"
-        "section[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl']{display:none!important;}"
-        ".block-container .stButton>button{width:100%;text-align:left;font-weight:600;font-size:1rem;"
-        "background:linear-gradient(165deg,#1b2330,#161b22);border:1px solid #30363d;color:#fafafa;"
-        "border-radius:0 0 12px 12px;padding:.6rem .9rem;transition:.18s}"
-        ".block-container .stButton>button:hover{border-color:#4a9eff;color:#fff}"
-        ".block-container [data-testid='stImage'] img{border:1px solid #30363d;border-bottom:none;"
-        "border-radius:12px 12px 0 0}"
-        "</style>",
-        unsafe_allow_html=True)
-    st.markdown(
-        "<div style=\"display:flex;gap:16px;align-items:flex-start;margin:.2rem 0 1.3rem\">"
-        "<div style=\"width:46px;height:46px;border-radius:11px;display:grid;place-items:center;"
-        "background:linear-gradient(135deg,#f5b942,#caa14a);color:#1a1205;font-weight:700;"
-        "font-size:1.5rem;font-family:serif;flex:none\">&beta;</div><div>"
-        "<div style=\"font-size:.66rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;"
-        "color:#f5b942;margin-bottom:6px\">Quantitative portfolio suite</div>"
-        "<div style=\"font-size:1.9rem;font-weight:700;line-height:1.1\">Beyond "
-        "<span style=\"color:#4a9eff\">Mean-Variance</span></div>"
-        "<div style=\"color:#c9d1d9;font-size:.92rem;margin-top:6px\">A behavioural mental-accounts "
-        "optimiser on the Das&ndash;Statman framework. Pick a tool to begin.</div></div></div>",
-        unsafe_allow_html=True)
+    a = _home_assets()
+    html = _HOME_HTML.replace("__OPT__", a["OPT"]).replace("__MC__", a["MC"]).replace("__BT__", a["BT"])
+    st.markdown(_HOME_CSS + html, unsafe_allow_html=True)
 
-    def _label(t):
-        st.markdown(f"<div style=\"font-size:.64rem;font-weight:700;letter-spacing:.16em;"
-                    f"text-transform:uppercase;color:#8b949e;margin:.3rem 0 .1rem\">{t}</div>",
-                    unsafe_allow_html=True)
+def _go_home():
+    st.query_params["view"] = "home"
 
-    _label("Tools")
-    c1, c2, c3 = st.columns(3, gap="medium")
-    with c1:
-        _himg("home_optimiser.png")
-        st.button("📊  Optimiser", key="_h_opt", use_container_width=True,
-                  on_click=_nav_go, args=("optimiser",))
-        st.caption("Exact grid engine — VaR · thesis-faithful ES · rigorous-ES, with derivatives.")
-    with c2:
-        _himg("home_scalable.png")
-        st.button("🧮  Scalable (MC)", key="_h_mc", use_container_width=True,
-                  on_click=_nav_go, args=("scalable",))
-        st.caption("Monte-Carlo + α-CVaR LP — scales to large, multi-derivative portfolios.")
-    with c3:
-        _himg("home_backtest.png")
-        st.button("🔬  Backtest", key="_h_bt", use_container_width=True,
-                  on_click=_nav_go, args=("backtest",))
-        st.caption("Out-of-sample test of the Optimiser's grid portfolios — not the MC engine.")
+_view = st.query_params.get("view", "home")
+if _view not in _VIEWS:
+    _view = "home"
 
-    _label("Reference")
-    r1, r2, r3 = st.columns(3, gap="medium")
-    with r1:
-        st.button("📖  About", key="_h_about", use_container_width=True,
-                  on_click=_nav_go, args=("about",))
-        st.caption("Methods, framework and research.")
-    with r2:
-        st.button("📚  Glossary · AI-powered", key="_h_gloss", use_container_width=True,
-                  on_click=_nav_go, args=("glossary",))
-        st.caption("VaR, ES, α-CVaR, copulas — plus natural-language Q&A.")
-
-if st.session_state["nav_view"] == "home":
+if _view == "home":
     _render_home()
     st.stop()
 
-# ---- a section is selected: show a back-to-launcher control, hide the
-#      optimiser sidebar on views that don't use it ----
-_view = st.session_state["nav_view"]
+# A section is selected: hide the optimiser sidebar on views that don't use it,
+# and show a discreet back-to-launcher control.
 if _view != "optimiser":
     st.markdown(
         "<style>section[data-testid='stSidebar'],"
@@ -1527,8 +1477,7 @@ if _view != "optimiser":
         unsafe_allow_html=True)
 _bk, _bk_rest = st.columns([1, 6])
 with _bk:
-    st.button("◀  Tools", key="_nav_back", use_container_width=True,
-              on_click=_nav_go, args=("home",))
+    st.button("◀  Tools", key="_nav_back", use_container_width=True, on_click=_go_home)
 
 # ═════════════════════════════════════════════════════════════════════════════
 # SIDEBAR
