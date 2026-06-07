@@ -2433,7 +2433,7 @@ def plot_backtest_paths_plotly(dates, pv1, pv2, label2):
         title=dict(text='Out-of-sample buy-and-hold performance',
                    font=dict(color='#c9d1d9', size=14), x=0.5, xanchor='center'),
         paper_bgcolor='#0d1117', plot_bgcolor='#0d1117', font=dict(color='#c9d1d9'),
-        hovermode='x unified', margin=dict(l=10, r=10, t=46, b=10),
+        hovermode='x unified', margin=dict(l=10, r=10, t=46, b=10), height=440,
         legend=dict(bgcolor='rgba(22,27,34,0.85)', bordercolor='#30363d', borderwidth=1,
                     x=0.01, y=0.99, xanchor='left', yanchor='top'),
         yaxis=dict(title='Portfolio value (entry = 100)', gridcolor='#21262d',
@@ -4787,11 +4787,13 @@ elif _view == "backtest":
                               f'<td style="padding:.4rem .5rem;color:#fafafa;font-weight:600;text-align:right">{_v1}</td>'
                               f'<td style="padding:.4rem .5rem;color:#fafafa;font-weight:600;text-align:right">{_v2}</td></tr>')
             _bt_table_html = (
-                '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:.85rem 1rem">'
+                '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
+                'padding:.85rem 1rem;height:440px;display:flex;flex-direction:column;box-sizing:border-box">'
                 '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.6rem">'
                 'Expected vs realised \u2014 out-of-sample</div>'
-                '<table style="width:100%;border-collapse:collapse;font-size:.85rem;color:#c9d1d9">'
-                + _bt_thead + _bt_trows + '</table></div>')
+                '<div style="flex:1;overflow:auto">'
+                '<table style="width:100%;height:100%;border-collapse:collapse;font-size:.85rem;color:#c9d1d9">'
+                + _bt_thead + _bt_trows + '</table></div></div>')
 
             _bt_left, _bt_right = st.columns([1, 1.2])
             with _bt_left:
