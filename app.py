@@ -5190,14 +5190,14 @@ elif _view == "about":
 
     st.markdown("---")
 
-    st.markdown("### About this app")
+    st.markdown('<h3 style="color:#4a9eff">About this app</h3>', unsafe_allow_html=True)
     st.markdown(
         "📄 **[Download the User Guide (PDF)](https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf)** — step-by-step guide to using the app",
         unsafe_allow_html=False)
     st.markdown(
         "**Beyond Mean-Variance Portfolio Optimiser** is an interactive research tool that builds "
         "goal-based portfolios which can include **derivatives and structured products** — something "
-        "classical Markowitz mean-variance optimisation handles poorly.")
+        "the classical Markowitz mean-variance framework does not handle.")
     st.markdown(
         "Rather than trading return against variance, it **maximises expected return subject to a "
         "downside rule you set** — either a maximum probability of loss (VaR) or a maximum expected "
@@ -5210,7 +5210,7 @@ elif _view == "about":
         "against the thesis, and extended with live market data, a structured-product composer, a "
         "scalable Monte-Carlo + CVaR engine for large portfolios, and an out-of-sample back-test.")
 
-    st.markdown("### Summary")
+    st.markdown('<h3 style="color:#4a9eff">Summary</h3>', unsafe_allow_html=True)
     st.markdown("**In plain terms, this tool lets you:**")
     st.markdown("""
 - **Set a goal, not a risk-aversion number** — tell it how much downside you will accept (e.g. "no more than a 5% chance of losing 10%") and it builds the best portfolio for that goal.
@@ -5222,7 +5222,7 @@ elif _view == "about":
 """)
     st.markdown("*The sections below explain how it works, what you can configure, and the theory behind it.*")
 
-    st.markdown("### How it works — the optimisation algorithm")
+    st.markdown('<h3 style="color:#4a9eff">How it works — the grid optimisation algorithm</h3>', unsafe_allow_html=True)
     st.markdown(
         "The full algorithm is described in Das & Statman (2009) — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*. "
         "The original R implementation is provided in the appendix of the thesis (Jeddou, 2012). "
@@ -5245,7 +5245,7 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
 - *≥ 5 securities*: differential evolution — a global stochastic optimiser that scales to larger portfolios without exhaustive enumeration
 """)
 
-    st.markdown("### Constraint methods & resolutions")
+    st.markdown('<h3 style="color:#4a9eff">Constraint methods &amp; resolutions</h3>', unsafe_allow_html=True)
     st.markdown("There are two independent choices — the **constraint method** "
                 "(what downside rule is enforced) and the **resolution / solver** "
                 "(how the optimiser searches). Two routing conditions can override "
@@ -5267,42 +5267,7 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
                 "exposed to derivative basin-miss errors; the exhaustive-grid resolutions "
                 "are immune to that and limited only by grid coarseness.")
 
-    st.markdown("### Scaling to large portfolios — Monte-Carlo + CVaR")
-    st.markdown(
-        "The exact grid above is precise, but its state space grows as *m^n′* and becomes "
-        "impractical beyond a handful of assets. A second, **scalable engine** is included for "
-        "institutional-size portfolios:")
-    st.markdown("""
-- **Scenario generation** — joint return and derivative-payoff scenarios are sampled through a copula (Gaussian or Student-t). The Student-t copula captures tail dependence — assets crashing together
-- **CVaR linear program** — the goal is solved as a Rockafellar–Uryasev CVaR linear program, so cost grows *linearly* in the number of assets and several derivatives can be optimised at once, even on different underlyings
-- **Smooth frontier** — the frontier is swept with common random numbers so points are directly comparable
-""")
-    st.markdown(
-        "This engine uses an **α-CVaR** objective; it is a scalable complement to the exact grid "
-        "rather than a bit-for-bit reproduction of it.")
-
-    st.markdown("### Out-of-sample back-test")
-    st.markdown(
-        "To test the *efficiency* of each optimisation method — not just its in-sample fit — the app "
-        "can build portfolio weights on a construction window and then **buy-and-hold** those weights "
-        "through a later, out-of-sample window, with any derivative marked to market, comparing "
-        "expected against realised outcomes. It also reports the realised **alpha, beta and R\u00b2** "
-        "of each security and of the portfolio against a benchmark you select (S&P 500, global ACWI, "
-        "a 60/40 blend, or any ticker), with an optional expected-market-return input that adds a "
-        "CAPM required return and an ex-ante alpha.")
-
-    st.markdown("### Data input & cleaning")
-    st.markdown(
-        "Four data input modes are supported. For live market data and CSV uploads, "
-        "returns are automatically cleaned before being passed to the optimizer:")
-    st.markdown("""
-- **Default**: Das & Statman (2009) base case — 3 securities, pre-calibrated parameters, reproduces thesis results exactly
-- **Live market data**: any global ticker from Yahoo Finance, daily or monthly frequency, over a user-defined date range. Auto-adjusted for splits and dividends. Cleaned automatically: stale price rows (zero returns) are removed and outliers beyond ±5 standard deviations are winsorised
-- **Manual entry**: enter means, standard deviations, and correlations directly for 2–10 securities
-- **CSV upload**: upload historical prices — returns computed automatically with the same cleaning applied as for live data
-""")
-
-    st.markdown("### The theory — MVT / MAT equivalence")
+    st.markdown('<h3 style="color:#4a9eff">The theory — MVT / MAT equivalence</h3>', unsafe_allow_html=True)
     st.markdown(
         "When no derivatives are present, the mean-variance and behavioral frontiers converge exactly. "
         "For any choice of H and α, there exists a unique implied risk-aversion coefficient λ such that "
@@ -5328,10 +5293,45 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
         f'</div></div>',
         unsafe_allow_html=True)
 
-    st.markdown("### Supported derivatives & structured products")
+    st.markdown('<h3 style="color:#4a9eff">Scaling to large portfolios — Monte-Carlo + CVaR</h3>', unsafe_allow_html=True)
+    st.markdown(
+        "The exact grid above is precise, but its state space grows as *m^n′* and becomes "
+        "impractical beyond a handful of assets. A second, **scalable engine** is included for "
+        "institutional-size portfolios:")
+    st.markdown("""
+- **Scenario generation** — joint return and derivative-payoff scenarios are sampled through a copula (Gaussian or Student-t). The Student-t copula captures tail dependence — assets crashing together
+- **CVaR linear program** — the goal is solved as a Rockafellar–Uryasev CVaR linear program, so cost grows *linearly* in the number of assets and several derivatives can be optimised at once, even on different underlyings
+- **Smooth frontier** — the frontier is swept with common random numbers so points are directly comparable
+""")
+    st.markdown(
+        "This engine uses an **α-CVaR** objective; it is a scalable complement to the exact grid "
+        "rather than a bit-for-bit reproduction of it.")
+
+    st.markdown('<h3 style="color:#4a9eff">Out-of-sample back-test</h3>', unsafe_allow_html=True)
+    st.markdown(
+        "To test the *efficiency* of each optimisation method — not just its in-sample fit — the app "
+        "can build portfolio weights on a construction window and then **buy-and-hold** those weights "
+        "through a later, out-of-sample window, with any derivative marked to market, comparing "
+        "expected against realised outcomes. It also reports the realised **alpha, beta and R\u00b2** "
+        "of each security and of the portfolio against a benchmark you select (S&P 500, global ACWI, "
+        "a 60/40 blend, or any ticker), with an optional expected-market-return input that adds a "
+        "CAPM required return and an ex-ante alpha.")
+
+    st.markdown('<h3 style="color:#4a9eff">Data input &amp; cleaning</h3>', unsafe_allow_html=True)
+    st.markdown(
+        "Four data input modes are supported. For live market data and CSV uploads, "
+        "returns are automatically cleaned before being passed to the optimizer:")
+    st.markdown("""
+- **Default**: Das & Statman (2009) base case — 3 securities, pre-calibrated parameters, reproduces thesis results exactly
+- **Live market data**: any global ticker from Yahoo Finance, daily or monthly frequency, over a user-defined date range. Auto-adjusted for splits and dividends. Cleaned automatically: stale price rows (zero returns) are removed and outliers beyond ±5 standard deviations are winsorised
+- **Manual entry**: enter means, standard deviations, and correlations directly for 2–10 securities
+- **CSV upload**: upload historical prices — returns computed automatically with the same cleaning applied as for live data
+""")
+
+    st.markdown('<h3 style="color:#4a9eff">Supported derivatives &amp; structured products</h3>', unsafe_allow_html=True)
     st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Type</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Description</th></tr></thead><tbody><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Put / Call</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Standard European options</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Safety collar</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long put + short call</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Aggressive collar</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + short put</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Straddle / Strangle</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + long put (same or different strikes)</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Capital-guaranteed note</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Uncapped or capped, with floor and participation rate</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Barrier-M note</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Corridor note with digital components</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Bull call spread</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + short higher call — bullish, capped, lower cost than a call</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Bear put spread</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long put + short lower put — cheaper bearish hedge, capped</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long butterfly (calls)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long–short²–long calls — low-volatility &#8220;pin&#8221; bet, very cheap</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Call condor</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Four-strike range bet with a flat maximum payoff between the inner strikes</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Reverse convertible</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Zero-coupon bond − short put — high coupon, capped upside, principal at risk</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Discount certificate</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Synthetic underlying − short call — bought at a discount, upside capped</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Outperformance certificate</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Synthetic underlying + extra call — full downside, geared (&gt;100%) upside</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Custom composer</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Build any payoff from calls, puts, digitals, and zero-coupon bonds</td></tr></tbody></table>''', unsafe_allow_html=True)
 
-    st.markdown("### Academic references")
+    st.markdown('<h3 style="color:#4a9eff">Academic references</h3>', unsafe_allow_html=True)
     st.markdown("""
 - **Das, Sanjiv and Meir Statman (2009)** — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*
 - **Das, Sanjiv, Harry Markowitz, Jonathan Scheid and Meir Statman (2010)** — *Portfolio Optimization with Mental Accounts*, Journal of Financial and Quantitative Analysis, Vol. 45, No. 2, pp. 311–334
@@ -5350,7 +5350,9 @@ The framework is designed to be extensible — future versions may incorporate a
 </div>
 """, unsafe_allow_html=True)
 
-    st.markdown("### About the author")
+    st.markdown("---")
+
+    st.markdown('<h3 style="color:#4a9eff">About the author</h3>', unsafe_allow_html=True)
     st.markdown(
         "With over 20 years of experience in financial services transformation, I have delivered "
         "large-scale risk, regulatory, and front-to-back programs at and for tier-1 institutions — "
