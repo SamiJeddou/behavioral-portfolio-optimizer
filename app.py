@@ -72,7 +72,7 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
 
     def section_header(text, color=blue):
         return [
-            Paragraph(text, ParagraphStyle('SH', parent=styles['Heading2'],
+            Paragraph(_pdf_safe(text), ParagraphStyle('SH', parent=styles['Heading2'],
                        textColor=white, backColor=color, fontSize=10,
                        spaceBefore=8, spaceAfter=4, leftIndent=-6, rightIndent=-6,
                        borderPadding=(4,6,4,6))),
@@ -99,7 +99,7 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
                     self.canv.rect(0, 0, self.width * self.fraction, self.height, fill=1, stroke=0)
 
         # Header row
-        header = [Paragraph(f'<b>{title}</b>', ParagraphStyle('h', parent=styles["Normal"], fontSize=8, textColor=white)),
+        header = [Paragraph(f'<b>{_pdf_safe(title)}</b>', ParagraphStyle('h', parent=styles["Normal"], fontSize=8, textColor=white)),
                   Paragraph('<b>Weight</b>', ParagraphStyle('h', parent=styles["Normal"], fontSize=8, textColor=white)),
                   Paragraph('<b>Allocation</b>', ParagraphStyle('h', parent=styles["Normal"], fontSize=8, textColor=white))]
         rows = [header]
@@ -114,7 +114,7 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
             _wf = max(0.0, min(1.0, _wf))
             _col = _bar_colors[i % len(_bar_colors)]
             rows.append([
-                Paragraph(lbl, ParagraphStyle('c', parent=styles["Normal"], fontSize=8)),
+                Paragraph(_pdf_safe(lbl), ParagraphStyle('c', parent=styles["Normal"], fontSize=8)),
                 Paragraph(f'{_wf*100:.1f}%', ParagraphStyle('c', parent=styles["Normal"], fontSize=8, alignment=1)),
                 BarFlowable(_wf, _col, width=5*cm, height=0.3*cm),
             ])
@@ -168,7 +168,7 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
         ParagraphStyle('Sub', parent=styles['Normal'], fontSize=9, textColor=colors.grey)))
     story.append(Paragraph(
         f'Generated: {datetime.datetime.now().strftime("%d %B %Y, %H:%M")} | '
-        f'Constraint: {constraint_label} | Data: {data_mode.split("(")[0].strip()}',
+        f'Constraint: {_pdf_safe(constraint_label)} | Data: {_pdf_safe(data_mode.split("(")[0].strip())}',
         caption_style))
     story.append(HRFlowable(width='100%', thickness=1, color=blue, spaceAfter=8))
 
@@ -214,7 +214,7 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
                 caption_style))
             story.append(Spacer(1, 8))
         except Exception as _chart_err:
-            story.append(Paragraph(f'Chart export unavailable: {_chart_err}', caption_style))
+            story.append(Paragraph(f'Chart export unavailable: {_pdf_safe(str(_chart_err))}', caption_style))
 
     # ── Page break — portfolios start on page 2 ──────────────────────────────
     story.append(PageBreak())
@@ -4250,7 +4250,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                         "er": f"{er * 100:.2f}%", "es": f"{es * 100:.2f}%",
                         "vol": f"{_sig * 100:.2f}%", "skew": f"{_skew:.3f}",
                         "summary_html": (
-                            f"<b>Universe:</b> {_univ} &nbsp;&nbsp; "
+                            f"<b>Universe:</b> {_pdf_safe(_univ)} &nbsp;&nbsp; "
                             f"<b>Scenarios:</b> {int(mc_S):,} ({copula} copula){_wmax_ascii}<br/>"
                             f"<b>Objective:</b> maximise E[r] subject to alpha-CVaR &gt;= "
                             f"{mc_L * 100:.0f}% (alpha = {mc_alpha * 100:.0f}%)<br/>"
@@ -4262,7 +4262,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                                            "- complements the exact grid engine. Research & "
                                            "educational project; not investment advice."),
                     }
-                    _mc_der_lines = ([f"- <b>{d['label']}</b> - maturity {d['T']:.2f} y, "
+                    _mc_der_lines = ([f"- <b>{_pdf_safe(d['label'])}</b> - maturity {d['T']:.2f} y, "
                                       f"rate {d['r'] * 100:.1f}%" for d in der_specs]
                                      if der_specs else None)
                     _mc_wr = [(str(_lbl), float(_wi), str(_c))
