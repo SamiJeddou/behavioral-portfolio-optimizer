@@ -4075,6 +4075,10 @@ After a run, the results show a details box, colour-coded weight bars, and an in
         st.markdown(
             "- **Approximate.** Scenario estimates carry error of order S^(−1/2); tails need "
             "more scenarios than the body. Raise S for stability.\n"
+            "- **One-year horizon.** Losses are simulated over a single one-year period "
+            "(μ and σ are annualised), so the CVaR floor is a one-year tail limit. Each "
+            "derivative's *maturity* is set per row and can differ from this horizon; the horizon "
+            "itself — when the portfolio is valued — is fixed at one year.\n"
             "- **Scenario quality is everything.** The copula choice and the estimated means, "
             "vols and correlations drive the result; estimation error worsens as N grows "
             "(shrinkage/robust estimators are the natural next step).\n"
@@ -4669,6 +4673,11 @@ elif _view == "backtest":
             "- **Buy-and-hold, no rebalancing.** Weights are fixed at construction; the value "
             "path lets the weights drift naturally (true buy-and-hold). No transaction costs, "
             "no dividends beyond what auto-adjusted prices already reflect.\n"
+            "- **One-year construction horizon.** The weights being tested were optimised for a "
+            "*one-year* holding period (μ and σ are annualised), which lines up with an annual "
+            "mandate, annual risk budget, or roughly yearly rebalancing. This back-test then holds "
+            "those weights over the evaluation window you choose — which may be shorter or longer "
+            "than a year — to show how the one-year-optimised portfolio behaves when actually held.\n"
             "- **Single horizon.** The evaluation window is one option horizon, so the "
             "loss-threshold check is a *single realised outcome* versus the modelled probability "
             "α — not a frequency. A multi-window walk-forward (a richer realised P(r<H)) is a "
@@ -5204,11 +5213,17 @@ elif _view == "about":
         "loss in the tail (Expected Shortfall) — and finds the portfolio, including any hedges, that "
         "best meets that goal.")
     st.markdown(
+        "It provides **two optimisers**: a **grid optimiser** — the thesis method, which searches "
+        "exhaustively and is exact for small portfolios — and a **scalable Monte-Carlo + CVaR "
+        "optimiser** that simulates thousands of scenarios to handle large, institutional-size "
+        "portfolios. An **out-of-sample back-test** then holds the chosen portfolio on later, "
+        "unseen data and reports its realised performance (alpha, beta and R² versus a benchmark).")
+    st.markdown(
         "It grew out of my MSc Finance thesis (USI Lugano, 2012), which extended the mental-accounting "
         "framework of Das & Statman (2009) and Das, Markowitz, Scheid & Statman (2010). The original "
         "optimiser was written in R; this app is a full Python re-implementation — corrected, validated "
-        "against the thesis, and extended with live market data, a structured-product composer, a "
-        "scalable Monte-Carlo + CVaR engine for large portfolios, and an out-of-sample back-test.")
+        "against the thesis, and extended with live market data and a wider library of structured "
+        "products.")
 
     st.markdown('<h3 style="color:#4a9eff">Summary</h3>', unsafe_allow_html=True)
     st.markdown("**In plain terms, this tool lets you:**")
@@ -5220,6 +5235,9 @@ elif _view == "about":
 - **Check it out-of-sample** — back-test the chosen portfolio on later data and read its realised alpha, beta and R² versus a benchmark.
 - **Understand every result** — built-in AI explanations and an interactive glossary turn the maths into plain language, and a one-click PDF captures the run.
 """)
+    st.markdown("**The three building blocks at a glance:**")
+    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Grid optimiser</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Monte-Carlo optimiser</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Back-test</th></tr></thead><tbody><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Exhaustive grid search over portfolios — exact for small portfolios. Reproduces the thesis method and prices all 16 instruments, under a VaR or Expected-Shortfall limit.</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Simulates thousands of joint scenarios and solves a CVaR linear program; cost grows with the number of scenarios, not the number of assets.</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Freezes the chosen weights and holds them on later, unseen data, marking the derivative to market along the way.</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Best for:</strong> small portfolios needing thesis-grade precision; any of the 16 instruments.</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Best for:</strong> large, institutional-size portfolios with many assets and derivatives; α-CVaR tail control.</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Best for:</strong> out-of-sample validation — realised return, alpha, beta and R² versus a benchmark.</td></tr></tbody></table>''', unsafe_allow_html=True)
+
     st.markdown("*The sections below explain how it works, what you can configure, and the theory behind it.*")
 
     st.markdown("---")
@@ -5246,6 +5264,12 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
 - *≤ 4 securities*: exhaustive grid search over all weight combinations
 - *≥ 5 securities*: differential evolution — a global stochastic optimiser that scales to larger portfolios without exhaustive enumeration
 """)
+
+    st.markdown(
+        "The optimisation is single-period over a **one-year horizon**: because the inputs are "
+        "annualised, the weights, the expected return and the VaR/ES limit are all one-year "
+        "quantities — the portfolio is assumed to be set today and held for the year. This lines "
+        "up cleanly with an annual mandate, annual risk budget, or roughly yearly rebalancing.")
 
     st.markdown('<h3 style="color:#4a9eff">Constraint methods &amp; resolutions</h3>', unsafe_allow_html=True)
     st.markdown("There are two independent choices — the **constraint method** "
