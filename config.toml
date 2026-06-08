@@ -1,8 +1,0 @@
-[server]
-enableStaticServing = true
-
-[theme]
-backgroundColor = "#0d1117"
-secondaryBackgroundColor = "#1a1a2e"
-textColor = "#c0c8d8"
-font = "sans serif"
