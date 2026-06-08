@@ -399,7 +399,7 @@ def optimize_portfolio(U, n_securities, constraint_type='var',
 
         if best_weights is None:
             raise ValueError(
-                "No eligible portfolios found. Try relaxing H, alpha, or increasing m_prime.")
+                "No portfolio meets the risk limit at these settings. Try a more lenient loss threshold (H), allow a higher probability of loss (alpha), or use a higher resolution.")
 
     # ── Stage 1b: Differential evolution (5+ securities) ─────────────────────
     else:

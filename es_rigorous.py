@@ -40,7 +40,7 @@ def optimize_portfolio_es_rigorous(U, n_securities, CVARH=-0.10, L=-0.15,
     gc = np.arange(sc, 1.0, sc)
     w_c = _best_feasible(R, probs, CVARH, None, 'es', L, [gc] * nf)
     if w_c is None:
-        raise ValueError("No ES-eligible portfolios found. Relax L or CVARH.")
+        raise ValueError("No portfolio can meet the Expected-Shortfall floor at these settings. Try easing the ES floor (L) or a less strict tail threshold (H).")
 
     # Stage 2 — fine LOCAL ES-feasible grid around the coarse optimum
     sf = 1.0 / m_prime

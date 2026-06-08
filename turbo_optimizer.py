@@ -107,7 +107,7 @@ def optimize_portfolio_turbo(U, n_securities, constraint_type='var',
     gc = np.arange(sc, 1.0, sc)
     w_c = _best_feasible(R, probs, H, alpha, constraint_type, L, [gc] * nf)
     if w_c is None:
-        raise ValueError("No eligible portfolios found. Try relaxing H, alpha, or m_prime.")
+        raise ValueError("No portfolio meets the risk limit at these settings. Try a more lenient loss threshold (H), allow a higher probability of loss (alpha), or use a higher resolution.")
 
     # Stage 2 — fine LOCAL grid around the coarse optimum (at m_prime resolution)
     sf = 1.0 / mp_fine
