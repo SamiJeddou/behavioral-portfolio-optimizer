@@ -878,6 +878,19 @@ EXPLANATIONS = {
         "instruments built on the same Black-Scholes pricing principle: bull and bear spreads, "
         "a long butterfly and call condor, a reverse convertible, and discount and outperformance certificates."
     ),
+    "Rockafellar & Uryasev (2000) — Optimization of CVaR": (
+        "Rockafellar, R. Tyrrell and Stanislav Uryasev (2000) — 'Optimization of Conditional "
+        "Value-at-Risk', Journal of Risk, Vol. 2, No. 3, pp. 21-41 (generalised to arbitrary "
+        "loss distributions in Rockafellar & Uryasev (2002), Journal of Banking & Finance, "
+        "Vol. 26, No. 7, pp. 1443-1471). "
+        "This paper shows that Conditional Value-at-Risk (CVaR, also called Expected Shortfall) "
+        "can be minimised — or held above a floor — through a convex linear program, using one "
+        "auxiliary variable for the VaR level and one slack variable per scenario, without having "
+        "to estimate VaR first. The scalable Monte-Carlo engine in this app uses exactly this "
+        "formulation: it samples joint return and payoff scenarios through a copula and solves the "
+        "goal as an LP, so the cost grows linearly in the number of assets rather than as the exact "
+        "grid's m^N state space."
+    ),
     "Capital-guaranteed note (CGN)": (
         "A capital-guaranteed note combines a zero-coupon bond, which secures a protected floor at "
         "maturity, with a long option that provides upside participation. The investor gives up some "
@@ -5346,7 +5359,8 @@ elif _view == "glossary":
         "Academic references": [
             "Das & Statman (2009) — Beyond Mean-Variance",
             "Das, Markowitz, Scheid & Statman (2010) JFQA",
-            "Jeddou (2012) MSc thesis USI Lugano"
+            "Jeddou (2012) MSc thesis USI Lugano",
+            "Rockafellar & Uryasev (2000) — Optimization of CVaR"
         ]
     }
 
