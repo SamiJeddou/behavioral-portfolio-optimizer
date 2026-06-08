@@ -13,6 +13,7 @@ This project implements a **behavioural portfolio optimisation algorithm** that 
 - Incorporating **derivatives and structured products** (puts, calls, collars, straddles, strangles, capital-guaranteed notes, barrier-M notes) directly into the optimisation
 - Using a **mental-accounting framework** with a downside risk constraint: the probability of the portfolio return falling below a threshold H must not exceed α
 - Handling **non-normal return distributions** via Gaussian and Student-t copulas
+- Exposing the engines as a **callable service** — a REST API and an MCP server, so external portfolio, risk and trading systems (or an AI agent) can call the optimisation and back-testing engines directly
 - Proving the **equivalence between mean-variance and mental-accounting** optimisation at a given implied risk-aversion coefficient λ
 - Embedding a **hedging benefit** within the portfolio construction process itself — incorporating derivatives can simultaneously improve expected return and provide downside protection, with the optimal derivative weight endogenously determined by the downside constraint rather than imposed as an external hedge ratio
 
@@ -212,7 +213,7 @@ pip install -r Extras/requirements-api.txt
 uvicorn api.main:app --reload          # interactive docs at http://127.0.0.1:8000/docs
 ```
 
-Endpoints: `POST /optimise/scenario`, `POST /optimise/frontier`, `POST /optimise/grid`, `GET /health`. Send a universe + downside constraint as JSON; get the optimal portfolio back. Optional `x-api-key` auth via the `BMV_API_KEY` environment variable.
+Endpoints: `POST /optimise/scenario`, `POST /optimise/frontier`, `POST /optimise/grid`, `POST /backtest`, `GET /health`. Send a universe + downside constraint as JSON; get the optimal portfolio back. Optional `x-api-key` auth via the `BMV_API_KEY` environment variable.
 
 ```bash
 curl -s http://127.0.0.1:8000/optimise/scenario -H "Content-Type: application/json" -d '{
@@ -230,7 +231,7 @@ curl -s http://127.0.0.1:8000/optimise/scenario -H "Content-Type: application/js
 python Extras/mcp_server.py
 ```
 
-Exposes `optimise_scenario_tool` and `trace_frontier_tool`, so an MCP client (e.g. Claude Desktop) can call the optimiser in natural language.
+Exposes `optimise_scenario_tool`, `trace_frontier_tool` and `backtest_tool`, so an MCP client (e.g. Claude Desktop) can call the optimiser in natural language.
 
 Full request/response reference and the MCP client config are in [`Extras/README_API_MCP.md`](Extras/README_API_MCP.md).
 
@@ -256,6 +257,7 @@ The baseline result (10.21%) matches the thesis mean-variance result (10.23%) to
 | UI-free `core/` engine package with a typed API — embeddable in notebooks, services and pipelines | ✅ Shipped |
 | REST API (FastAPI) — optimiser callable by external portfolio, risk and trading systems | ✅ Shipped |
 | MCP server — optimiser callable as tools by AI agents | ✅ Shipped |
+| Out-of-sample backtesting callable via API & MCP (`/backtest`, `backtest_tool`) | ✅ Shipped |
 | Async job handling for long-running optimisations | 🔜 Planned |
 | Additional derivative types and structured-product templates | 🔜 Planned |
 | Multi-period optimisation | 🔜 Planned |
