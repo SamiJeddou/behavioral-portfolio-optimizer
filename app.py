@@ -1675,6 +1675,50 @@ def _home_assets():
         out[k] = ("data:image/png;base64," + _b64.b64encode(open(fp, "rb").read()).decode()) if _os.path.exists(fp) else ""
     return out
 
+def _mc_joint_scatter(R_sec, names, weights, alpha, ia=None, ib=None):
+    """Plotly scatter of two assets' Monte-Carlo joint-return scenarios, with the joint
+    lower-tail (both <= their alpha-quantile) highlighted — the actual scenarios fed to
+    the scalable CVaR program."""
+    import numpy as _np, plotly.graph_objects as _go
+    R = _np.asarray(R_sec, dtype=float)
+    N = len(names)
+    wv = _np.abs(_np.asarray(weights, dtype=float)[:N]) if weights is not None else _np.ones(N)
+    order = list(_np.argsort(-wv))
+    if ia is None: ia = order[0]
+    if ib is None: ib = order[1] if N > 1 else order[0]
+    if ia == ib: ib = (ia + 1) % N
+    xa = R[:, ia] * 100.0; yb = R[:, ib] * 100.0
+    qa = _np.quantile(xa, alpha); qb = _np.quantile(yb, alpha)
+    crash = (xa <= qa) & (yb <= qb)
+    S = len(xa)
+    if S > 4000:
+        keep = _np.zeros(S, bool)
+        keep[_np.random.RandomState(0).choice(S, 4000, replace=False)] = True
+    else:
+        keep = _np.ones(S, bool)
+    fig = _go.Figure()
+    fig.add_trace(_go.Scattergl(
+        x=xa[keep & ~crash], y=yb[keep & ~crash], mode="markers",
+        marker=dict(size=3, color="#4a9eff", opacity=0.28),
+        name="joint scenarios", hoverinfo="skip"))
+    fig.add_trace(_go.Scattergl(
+        x=xa[keep & crash], y=yb[keep & crash], mode="markers",
+        marker=dict(size=4, color="#d15866", opacity=0.75),
+        name="joint tail (both \u2264 %d%% quantile)" % int(round(alpha * 100)),
+        hoverinfo="skip"))
+    fig.update_layout(
+        template="plotly_dark", paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+        height=460, margin=dict(l=10, r=10, t=46, b=10),
+        title=dict(text="Joint return scenarios \u00b7 %s vs %s" % (names[ia], names[ib]),
+                   x=0.5, font=dict(color="white", size=15)),
+        xaxis=dict(title="%s return (%%)" % names[ia], gridcolor="#1e2130",
+                   zeroline=True, zerolinecolor="#3a3a5a"),
+        yaxis=dict(title="%s return (%%)" % names[ib], gridcolor="#1e2130",
+                   zeroline=True, zerolinecolor="#3a3a5a"),
+        legend=dict(bgcolor="rgba(13,17,23,0.6)", bordercolor="#3a3a5a", borderwidth=1))
+    return fig
+
+
 _HOME_CSS = "<style>[data-testid='stAppViewContainer']{background:radial-gradient(1000px 560px at 78% -12%,rgba(74,158,255,.12),transparent 60%),radial-gradient(760px 420px at -5% 112%,rgba(245,185,66,.07),transparent 55%),#0d1117 !important}[data-testid='stHeader']{background:transparent !important}[data-testid='stMain'],section.main{background:transparent !important}section[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl']{display:none!important}.bmv-home{--blue:#4a9eff;--gold:#f5b942;--gold2:#caa14a;--green:#16a34a;--border:#30363d;--surface:#161b22;--surface2:#1b2330;--text:#fafafa;--muted:#8b949e;--text2:#c9d1d9;font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--text)}.bmv-home *{box-sizing:border-box}.bmv-hero{display:flex;gap:16px;align-items:flex-start;margin:.2rem 0 1.5rem}.bmv-mark{width:46px;height:46px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1205;font-weight:700;font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.5rem}.bmv-eyebrow{font-size:.84rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9;margin-bottom:9px}.bmv-eyebrow .w{color:var(--gold);font-style:italic}.bmv-h1{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-weight:600;font-size:1.95rem;line-height:1.08;margin-bottom:8px}.bmv-h1 .em{color:var(--blue)}.bmv-lede{color:var(--text2);font-size:.92rem;max-width:62ch}.bmv-sub{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.2rem;font-weight:500;color:#aeb9c9;margin-top:5px}.bmv-label{font-size:.64rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}.bmv-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}.bmv-tile{position:relative;display:flex;flex-direction:column;text-decoration:none;color:var(--text);overflow:hidden;background:linear-gradient(165deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:16px;transition:.22s cubic-bezier(.2,.7,.3,1)}.bmv-tile:hover{transform:translateY(-4px);border-color:var(--accent,var(--blue));box-shadow:0 22px 46px -24px var(--glow,rgba(74,158,255,.5))}.bmv-thumb{height:150px;background:#0a0e15;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden}.bmv-thumb img{width:100%;height:100%;object-fit:contain;display:block;transition:.3s}.bmv-tile:hover .bmv-thumb img{transform:scale(1.03)}.bmv-body{padding:15px 16px;display:flex;flex-direction:column;flex:1}.bmv-thead{display:flex;align-items:center;gap:9px;margin-bottom:7px}.bmv-ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:1.05rem;flex:none;background:var(--icobg,rgba(74,158,255,.12));border:1px solid var(--icobd,rgba(74,158,255,.3))}.bmv-tt{font-weight:600;font-size:1.05rem}.bmv-td{font-size:.8rem;color:var(--muted);line-height:1.5}.bmv-td b{color:var(--text2);font-weight:600}.bmv-foot{margin-top:auto;padding-top:13px;display:flex;align-items:center;justify-content:space-between}.bmv-tag{font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.66rem;color:var(--text2);background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:3px 8px}.bmv-arw{font-size:1.05rem;color:var(--accent,var(--blue));opacity:0;transform:translateX(-4px);transition:.22s}.bmv-tile:hover .bmv-arw{opacity:1;transform:translateX(0)}.bmv-badge{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.63rem;color:var(--blue);background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.32);border-radius:6px;padding:4px 8px;margin-top:11px;line-height:1.3;width:fit-content}.bmv-tile.blue{--accent:#4a9eff;--glow:rgba(74,158,255,.5);--icobg:rgba(74,158,255,.12);--icobd:rgba(74,158,255,.32)}.bmv-tile.gold{--accent:#f5b942;--glow:rgba(245,185,66,.45);--icobg:rgba(245,185,66,.12);--icobd:rgba(245,185,66,.32)}.bmv-tile.green{--accent:#16a34a;--glow:rgba(22,163,74,.45);--icobg:rgba(22,163,74,.14);--icobd:rgba(22,163,74,.34)}.bmv-tile.slate{--accent:#7d8aa0;--glow:rgba(125,138,160,.4);--icobg:rgba(125,138,160,.12);--icobd:rgba(125,138,160,.3)}.bmv-tiles.ref{grid-template-columns:repeat(3,1fr)}.bmv-tiles.ref .bmv-tile{flex-direction:row;align-items:center;gap:13px;padding:15px 16px}.bmv-tiles.ref .bmv-ico{width:38px;height:38px;font-size:1.15rem}.bmv-tiles.ref .bmv-tt{font-size:.95rem}.bmv-tiles.ref .bmv-td{font-size:.74rem;margin-top:2px}.bmv-aipill{display:inline-block;font-size:.55rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;vertical-align:middle;margin-left:7px;padding:2px 7px;border-radius:999px;color:#1a1205;background:linear-gradient(135deg,var(--gold),var(--gold2))}@media(max-width:640px){.bmv-tiles{grid-template-columns:1fr 1fr}.bmv-tiles.ref{grid-template-columns:1fr}}</style>"
 _HOME_HTML = '<div class="bmv-home">\n  <div class="bmv-hero">\n    <div class="bmv-mark">&beta;</div>\n    <div>\n      <div class="bmv-eyebrow">Portfolio Optimisation <span class="w">with</span> Derivatives &amp; Structured Products</div>\n      <div class="bmv-h1">Beyond <span class="em">Mean-Variance</span></div>\n      <div class="bmv-sub">Mental Accounting Framework</div>\n    </div>\n  </div>\n  <div class="bmv-label">Tools</div>\n  <div class="bmv-tiles">\n    <a class="bmv-tile blue" href="?view=optimiser" target="_self">\n      <div class="bmv-thumb"><img src="__OPT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico">📊</span><span class="bmv-tt">Grid Portfolio Optimiser</span></div>\n        <div class="bmv-td">Exact grid engine on the Das&ndash;Statman states — VaR, thesis-faithful ES and rigorous-ES, with derivatives.</div>\n        <div class="bmv-foot"><span class="bmv-tag">grid · exact</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile gold" href="?view=scalable" target="_self">\n      <div class="bmv-thumb"><img src="__MC__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico">🧮</span><span class="bmv-tt">Scalable Portfolio Optimiser</span></div>\n        <div class="bmv-td">Monte-Carlo scenarios + &alpha;-CVaR linear program — scales to large, multi-derivative portfolios.</div>\n        <div class="bmv-foot"><span class="bmv-tag">scenario · LP · beta</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile green" href="?view=backtest" target="_self">\n      <div class="bmv-thumb"><img src="__BT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico">🔬</span><span class="bmv-tt">Backtest</span></div>\n        <div class="bmv-td">Out-of-sample walk-forward of the <b>Optimiser\'s</b> portfolios, derivative marked to market.</div>\n        <div class="bmv-badge">&#8627; realised alpha &amp; beta vs a benchmark</div>\n        <div class="bmv-foot"><span class="bmv-tag">out-of-sample</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n  </div>\n  <div class="bmv-label">Reference</div>\n  <div class="bmv-tiles ref">\n    <a class="bmv-tile slate" href="?view=about" target="_self">\n      <span class="bmv-ico">📖</span>\n      <div><div class="bmv-tt">About</div><div class="bmv-td">Methods, framework and research.</div></div>\n    </a>\n    <a class="bmv-tile slate" href="?view=glossary" target="_self">\n      <span class="bmv-ico">📚</span>\n      <div><div class="bmv-tt">Glossary <span class="bmv-aipill">AI-powered</span></div><div class="bmv-td">VaR, ES, &alpha;-CVaR, copulas — plus natural-language Q&amp;A.</div></div>\n    </a>\n    <a class=\"bmv-tile slate\" href=\"https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf\">\n      <span class=\"bmv-ico\">📘</span>\n      <div><div class=\"bmv-tt\">User Guide</div><div class=\"bmv-td\">Step-by-step tour of the app (PDF download).</div></div>\n    </a>\n  </div>\n</div>'
 
@@ -4191,6 +4235,22 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                                 st.caption(f"(frontier chart unavailable: {_fe})")
                     else:
                         st.caption("No feasible frontier points for these settings.")
+
+                # ── Joint return scenarios (copula scatter) — the actual MC scenarios used ──
+                st.markdown("#### Joint return scenarios")
+                st.caption("The actual Monte-Carlo scenarios fed to the CVaR program. The red "
+                           "lower-left cluster is the joint-crash tail dependence the copula "
+                           "captures (more pronounced with a Student-t copula).")
+                if N >= 2:
+                    _wabs = np.abs(np.asarray(w, dtype=float)[:N])
+                    _ord = list(np.argsort(-_wabs))
+                    _ca, _cb = st.columns(2)
+                    _ia = _ca.selectbox("Asset A", names, index=int(_ord[0]), key="mc_scat_a")
+                    _ib = _cb.selectbox("Asset B", names, index=int(_ord[1]), key="mc_scat_b")
+                    st.plotly_chart(
+                        _mc_joint_scatter(R_sec, names, w, mc_alpha,
+                                          ia=names.index(_ia), ib=names.index(_ib)),
+                        use_container_width=True)
 
                 # Portfolio weights box (full width, below the row)
                 _rows = []
