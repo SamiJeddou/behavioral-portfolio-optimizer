@@ -335,17 +335,20 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
 
 # ── Shared helpers for the scalable + backtest PDF reports ────────────────────
 def _pdf_safe(s):
-    """Replace glyphs the base PDF font can't render with ASCII equivalents."""
+    """Replace glyphs the base PDF font can't render with ASCII equivalents, and
+    XML-escape &, <, > so ReportLab's Paragraph parser doesn't treat them as markup
+    (e.g. 'P(r < H)' or a '<=' from a '≤' would otherwise open an unclosed tag).
+    Intended markup such as <b>/<br/> is added by callers *outside* this function."""
     if s is None:
         return ""
-    s = str(s)
+    s = str(s).replace("&", "&amp;")
     for a, b in (("\u2264", "<="), ("\u2265", ">="), ("\u2014", "-"), ("\u2013", "-"),
                  ("\u2022", "-"), ("\u00b7", "|"), ("\u26a0", "(!)"), ("\u2713", "(ok)"),
                  ("\u2605", "*"), ("\u03b1", "alpha"), ("\u03c3", "sigma"), ("\u03b2", "beta"),
                  ("\u00b2", "^2"), ("\u2009", " "), ("\u00a0", " "), ("\u2192", "->"),
                  ("\u00d7", "x")):
         s = s.replace(a, b)
-    return s
+    return s.replace("<", "&lt;").replace(">", "&gt;")
 
 
 def _md_bold(s):
