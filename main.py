@@ -1,3 +1,7 @@
+# © 2026 Sami Jeddou. All rights reserved.
+# Published publicly for demonstration and evaluation only — no license is granted.
+# Copying, modification, redistribution, or reuse (in whole or in part) without the
+# author's prior written permission is prohibited.
 """REST adapter — exposes the Beyond Mean-Variance engines over HTTP.
 
 A thin translation layer: JSON request -> typed core dataclasses -> engine wrapper ->

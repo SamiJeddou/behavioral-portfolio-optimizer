@@ -1,3 +1,7 @@
+# © 2026 Sami Jeddou. All rights reserved.
+# Published publicly for demonstration and evaluation only — no license is granted.
+# Copying, modification, redistribution, or reuse (in whole or in part) without the
+# author's prior written permission is prohibited.
 # Re-render poster.html -> poster.png (2x) and poster.pdf, matching the original pipeline.
 # Requires: pip install playwright ; python -m playwright install chromium
 from playwright.sync_api import sync_playwright

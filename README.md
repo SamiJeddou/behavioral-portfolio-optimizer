@@ -2,6 +2,8 @@
 
 > Extending Markowitz mean-variance theory to portfolios with derivatives and structured products using a mental-accounting framework.
 
+**© 2026 Sami Jeddou — All rights reserved.** Published publicly for demonstration and evaluation only; **no license is granted** (see [LICENSE](LICENSE)). No copying, modification, redistribution, or reuse without the author's prior written permission.
+
 ![Portfolio Optimiser Output — annotated sample showing each section of a run (chart, summary of portfolios, and per-portfolio details); illustrative only, not live results](sample_output_annotated.png)
 
 ---
@@ -287,4 +289,6 @@ It is provided for **educational and research purposes only** and does not const
 
 ## License
 
-MIT License — see [LICENSE](LICENSE) for details.
+© 2026 Sami Jeddou. **All rights reserved** — see [LICENSE](LICENSE).
+
+This repository is shared publicly for demonstration and evaluation only. No license is granted: you may view the code, but may not copy, modify, redistribute, or use it (in whole or in part) without the author's prior written permission.

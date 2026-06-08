@@ -1,3 +1,7 @@
+# © 2026 Sami Jeddou. All rights reserved.
+# Published publicly for demonstration and evaluation only — no license is granted.
+# Copying, modification, redistribution, or reuse (in whole or in part) without the
+# author's prior written permission is prohibited.
 """  # v4
 Behavioral Portfolio Optimizer — Streamlit Dashboard
 Full version with: live market data, manual input, CSV upload,
@@ -3768,7 +3772,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
         '<div style="text-align:center;color:#556a8a;font-size:.75rem;margin-top:2rem;padding:.6rem">'
         '⚠️ For educational &amp; research purposes only — not financial advice. '
         'Based on Das &amp; Statman (2009), Das, Markowitz, Scheid &amp; Statman (2010) and Jeddou (2012). '
-        'See <b>About</b> tab for full disclaimer.</div>',
+        'See <b>About</b> tab for full disclaimer.<br>© 2026 Sami Jeddou · All rights reserved.</div>',
         unsafe_allow_html=True)
 
 elif _view == "scalable":
