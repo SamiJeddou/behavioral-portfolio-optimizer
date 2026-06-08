@@ -103,5 +103,31 @@ def trace_frontier_tool(
     return {"frontier": [p.to_dict() for p in pts]}
 
 
+@mcp.tool()
+def backtest_tool(
+    tickers: list[str], construction: list[str], evaluation: list[str], derivative: dict,
+    floor: float = -0.15, alpha: float = 0.05, kind: str = "es_thesis",
+    benchmark: Optional[str] = None, freq: str = "Daily", rf: float = 0.0,
+    resolution: str = "standard",
+) -> dict:
+    """Out-of-sample backtest: build the optimum on a construction window, hold it through an
+    evaluation window (the derivative is marked to market), and compare a no-derivative (P1) and
+    with-derivative (P2) portfolio — realised vs expected return/volatility, loss-threshold
+    breach, and realised alpha/beta vs an optional benchmark.
+
+    tickers: symbols. construction/evaluation: [start, end] ISO dates. derivative: required dict
+    {type, params, [underlying_idx, T, r, vol_override, label]} (underlying_idx -1 = auto-pick the
+    highest-volatility security). floor/alpha/kind: the downside constraint used to build the
+    portfolios. benchmark: symbol for alpha/beta. resolution: fast | standard | high.
+    """
+    from core.backtest import run_backtest
+    con = Constraint(kind=kind, H=floor, alpha=alpha, L=floor)
+    derivative.setdefault("underlying_idx", -1)
+    der = _derivatives([derivative])[0]
+    return run_backtest(tickers=tickers, construction=(construction[0], construction[1]),
+                        evaluation=(evaluation[0], evaluation[1]), constraint=con, derivative=der,
+                        benchmark=benchmark, freq=freq, rf=rf, resolution=resolution).to_dict()
+
+
 if __name__ == "__main__":
     mcp.run()
