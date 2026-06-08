@@ -1797,6 +1797,7 @@ _NAV_FOOTER = (
     'Built by <b style="color:#7d8aa0">Sami Jeddou</b> &nbsp;·&nbsp; '
     '<a href="?view=about" target="_self" style="color:#7fb3e8;text-decoration:none">About &amp; contact</a> &nbsp;·&nbsp; '
     '<a href="https://www.linkedin.com/in/sami-jeddou-25787a404" target="_blank" style="color:#7fb3e8;text-decoration:none">Connect on LinkedIn</a>'
+    '<div style="margin-top:.5rem;color:#46566f;font-size:.72rem">\u00a9 2026 Sami Jeddou \u00b7 All rights reserved</div>'
     '</div>'
 )
 
