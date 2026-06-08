@@ -20,6 +20,7 @@ from pydantic import BaseModel, Field
 
 from core.types import AssetUniverse, DerivativeSpec, Constraint
 from core.optimise import optimise_scenario, scenario_frontier, optimise_grid
+from core.backtest import run_backtest
 
 app = FastAPI(
     title="Beyond Mean-Variance Portfolio Optimiser API",
@@ -83,6 +84,18 @@ class GridRequest(BaseModel):
     resolution: str = "standard"
 
 
+class BacktestRequest(BaseModel):
+    tickers: list[str]
+    construction: list[str] = Field(..., description="[start, end] ISO dates", min_length=2, max_length=2)
+    evaluation: list[str] = Field(..., description="[start, end] ISO dates", min_length=2, max_length=2)
+    constraint: ConstraintIn
+    derivative: DerivativeIn = Field(..., description="Required — P1 (no deriv) vs P2 (with deriv)")
+    benchmark: Optional[str] = None
+    freq: str = "Daily"
+    rf: float = 0.0
+    resolution: str = "standard"
+
+
 # ── Helpers ───────────────────────────────────────────────────────────────────
 def _require_key(x_api_key: Optional[str]) -> None:
     expected = os.environ.get("BMV_API_KEY")
@@ -108,7 +121,7 @@ def _derivatives(ds: list[DerivativeIn]) -> list[DerivativeSpec]:
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 @app.get("/health")
 def health():
-    return {"status": "ok", "engines": ["grid", "scenario"]}
+    return {"status": "ok", "engines": ["grid", "scenario", "backtest"]}
 
 
 @app.post("/optimise/scenario")
@@ -143,6 +156,22 @@ def grid_endpoint(req: GridRequest, x_api_key: Optional[str] = Header(None)):
     try:
         res = optimise_grid(_universe(req.universe), _constraint(req.constraint),
                             derivatives=_derivatives(req.derivatives), resolution=req.resolution)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    return res.to_dict()
+
+
+@app.post("/backtest")
+def backtest_endpoint(req: BacktestRequest, x_api_key: Optional[str] = Header(None)):
+    _require_key(x_api_key)
+    try:
+        res = run_backtest(
+            tickers=req.tickers,
+            construction=(req.construction[0], req.construction[1]),
+            evaluation=(req.evaluation[0], req.evaluation[1]),
+            constraint=_constraint(req.constraint),
+            derivative=_derivatives([req.derivative])[0],
+            benchmark=req.benchmark, freq=req.freq, rf=req.rf, resolution=req.resolution)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
     return res.to_dict()
