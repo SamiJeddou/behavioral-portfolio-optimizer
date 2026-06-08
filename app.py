@@ -5309,7 +5309,7 @@ Connect directly, or send me a message below:
                 st.warning("Please fill in all fields before sending.")
 
 elif _view == "glossary":
-    st.markdown("## 📚 AI Glossary & Reference")
+    st.markdown('<h3 style="color:#4a9eff">📚 AI Glossary &amp; Reference</h3>', unsafe_allow_html=True)
     st.markdown(
         "Click any term below for an AI-generated explanation, or type your own question. "
         "Answers are tailored to the context of behavioural portfolio optimisation.")
