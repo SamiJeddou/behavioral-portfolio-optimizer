@@ -1,7 +1,3 @@
-# © 2026 Sami Jeddou. All rights reserved.
-# Published publicly for demonstration and evaluation only — no license is granted.
-# Copying, modification, redistribution, or reuse (in whole or in part) without the
-# author's prior written permission is prohibited.
 """REST adapter — exposes the Beyond Mean-Variance engines over HTTP.
 
 A thin translation layer: JSON request -> typed core dataclasses -> engine wrapper ->
@@ -32,17 +28,6 @@ app = FastAPI(
     description="Goal-based portfolio optimisation with derivatives — exact grid and "
                 "scalable Monte-Carlo + CVaR engines. Research/educational; not investment advice.",
 )
-
-
-COPYRIGHT = "© 2026 Sami Jeddou. All rights reserved."
-
-
-@app.middleware("http")
-async def _copyright_header(request, call_next):
-    """Stamp an ownership notice on every API response."""
-    response = await call_next(request)
-    response.headers["X-Copyright"] = "Copyright (c) 2026 Sami Jeddou - All rights reserved"
-    return response
 
 
 # ── Request schemas (mirror the core dataclasses) ─────────────────────────────
@@ -136,7 +121,7 @@ def _derivatives(ds: list[DerivativeIn]) -> list[DerivativeSpec]:
 # ── Endpoints ─────────────────────────────────────────────────────────────────
 @app.get("/health")
 def health():
-    return {"status": "ok", "engines": ["grid", "scenario", "backtest"], "copyright": COPYRIGHT}
+    return {"status": "ok", "engines": ["grid", "scenario", "backtest"]}
 
 
 @app.post("/optimise/scenario")

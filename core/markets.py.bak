@@ -1,7 +1,3 @@
-# © 2026 Sami Jeddou. All rights reserved.
-# Published publicly for demonstration and evaluation only — no license is granted.
-# Copying, modification, redistribution, or reuse (in whole or in part) without the
-# author's prior written permission is prohibited.
 """Data layer — fetch prices, clean returns, derive an AssetUniverse.
 
 The moved functions are unchanged. On top of them sits a swappable DataSource: any
@@ -75,7 +71,7 @@ def fetch_tickers(tickers, start, end, freq):
         # Download with group_by='ticker' to get consistent multi-ticker structure
         raw_full = yf.download(tickers, start=str(start), end=str(end),
                                auto_adjust=True, progress=False,
-                               group_by='column', threads=False)
+                               group_by='column')
 
         # Handle both single and multi-ticker cases robustly
         if raw_full.empty:
@@ -138,7 +134,7 @@ def fetch_close_prices(tickers, start, end):
     try:
         import yfinance as yf
         raw_full = yf.download(tickers, start=str(start), end=str(end),
-                               auto_adjust=True, progress=False, group_by='column', threads=False)
+                               auto_adjust=True, progress=False, group_by='column')
         if raw_full is None or raw_full.empty:
             return None, "No data returned — check tickers and date range."
         if isinstance(raw_full.columns, pd.MultiIndex):

@@ -1,7 +1,3 @@
-# © 2026 Sami Jeddou. All rights reserved.
-# Published publicly for demonstration and evaluation only — no license is granted.
-# Copying, modification, redistribution, or reuse (in whole or in part) without the
-# author's prior written permission is prohibited.
 """Out-of-sample backtest performance math — UI-free.
 
 Buy-and-hold portfolio value paths, realised window/annualised return & volatility with
@@ -102,15 +98,6 @@ def run_backtest(tickers, construction, evaluation, constraint, derivative,
     means, sigs, corr, names, _ = stats_from_prices(con_px, freq)
     if len(names) < 2:
         raise RuntimeError("Fewer than two usable securities after cleaning.")
-    _m_eff = 51 if ct == "es_rigorous" else m_bt
-    _states = _m_eff ** len(names)
-    _BUDGET = 10_000_000
-    if _states > _BUDGET:
-        raise ValueError(
-            f"Exact-grid backtest would need {_m_eff}^{len(names)} = {_states:,} "
-            f"states (budget {_BUDGET:,}). The grid engine is practical for about 4 "
-            f"assets; reduce the universe, lower the resolution, or use the scalable "
-            f"Monte-Carlo engine for larger universes.")
     cov = corr_to_cov(sigs, corr)
     sigs = _np.asarray(sigs, float)
 
@@ -157,32 +144,18 @@ def run_backtest(tickers, construction, evaluation, constraint, derivative,
     verdict = []
     d_ret = ann2 - ann1
     d_vol = vol2 - vol1
-    der_used = abs(w2_der) >= 0.005  # did the optimiser actually use the derivative?
-
     if d_ret > 0.005:
-        verdict.append(f"The with-derivative portfolio (P2) realised {d_ret:.2%} more annual "
-                       f"return than the no-derivative portfolio (P1).")
+        verdict.append(f"The derivative added {d_ret:.2%} of realised annual return versus "
+                       f"the no-derivative portfolio.")
     elif d_ret < -0.005:
-        verdict.append(f"The with-derivative portfolio (P2) realised {-d_ret:.2%} less annual "
-                       f"return than the no-derivative portfolio (P1).")
+        verdict.append(f"The derivative cost {-d_ret:.2%} of realised annual return this window.")
     else:
-        verdict.append("The two portfolios realised broadly similar annual returns.")
-
-    # honest attribution: only credit the derivative when it actually carried weight
-    if der_used:
-        verdict.append(f"The optimiser allocated {w2_der:.1%} to the derivative, so this "
-                       f"difference reflects the hedge together with any security re-weighting "
-                       f"around it.")
-    else:
-        verdict.append(f"The optimiser placed almost no weight on the derivative "
-                       f"({w2_der:.1%}); this difference therefore comes from the two portfolios "
-                       f"holding different security weights, not from the hedge.")
-
+        verdict.append("Realised returns of the two portfolios were broadly similar.")
     if not _np.isnan(d_vol):
         if d_vol < -0.005:
-            verdict.append(f"Realised volatility was {-d_vol:.2%} lower in P2.")
+            verdict.append(f"It also reduced realised volatility by {-d_vol:.2%}.")
         elif d_vol > 0.005:
-            verdict.append(f"Realised volatility was {d_vol:.2%} higher in P2.")
+            verdict.append(f"It raised realised volatility by {d_vol:.2%}.")
     if br1 and not br2:
         verdict.append(f"P1 breached the {H:.0%} loss threshold while P2 did not - "
                        f"the protection held this window.")

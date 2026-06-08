@@ -1,7 +1,3 @@
-# © 2026 Sami Jeddou. All rights reserved.
-# Published publicly for demonstration and evaluation only — no license is granted.
-# Copying, modification, redistribution, or reuse (in whole or in part) without the
-# author's prior written permission is prohibited.
 """MCP server — exposes the Beyond Mean-Variance engines as tools for AI agents.
 
 Lets Claude / ChatGPT / any MCP client call the optimiser in natural language. Each
@@ -50,18 +46,6 @@ from core.optimise import optimise_scenario, scenario_frontier
 mcp = FastMCP("beyond-mean-variance")
 
 
-COPYRIGHT = "© 2026 Sami Jeddou. All rights reserved."
-
-
-def _with_copyright(d):
-    """Stamp the ownership notice onto a response dict."""
-    try:
-        d["copyright"] = COPYRIGHT
-    except Exception:
-        pass
-    return d
-
-
 def _universe(names, means, sigmas, corr) -> AssetUniverse:
     return AssetUniverse(names=names, means=np.array(means, float),
                          sigmas=np.array(sigmas, float), corr=np.array(corr, float))
@@ -97,8 +81,8 @@ def optimise_scenario_tool(
     """
     u = _universe(names, means, sigmas, corr)
     con = Constraint(kind="es_thesis", H=floor, alpha=alpha, L=floor)
-    return _with_copyright(optimise_scenario(u, con, derivatives=_derivatives(derivatives),
-                             scenarios=scenarios, copula=copula, w_max=w_max).to_dict())
+    return optimise_scenario(u, con, derivatives=_derivatives(derivatives),
+                             scenarios=scenarios, copula=copula, w_max=w_max).to_dict()
 
 
 @mcp.tool()
@@ -116,7 +100,7 @@ def trace_frontier_tool(
                      L=(floors[0] if floors else -0.20))
     pts = scenario_frontier(u, con, floors=floors, scenarios=scenarios,
                             copula=copula, w_max=w_max)
-    return {"frontier": [p.to_dict() for p in pts], "copyright": COPYRIGHT}
+    return {"frontier": [p.to_dict() for p in pts]}
 
 
 @mcp.tool()
@@ -138,11 +122,10 @@ def backtest_tool(
     """
     from core.backtest import run_backtest
     con = Constraint(kind=kind, H=floor, alpha=alpha, L=floor)
-    derivative.setdefault("underlying_idx", -1)
     der = _derivatives([derivative])[0]
-    return _with_copyright(run_backtest(tickers=tickers, construction=(construction[0], construction[1]),
+    return run_backtest(tickers=tickers, construction=(construction[0], construction[1]),
                         evaluation=(evaluation[0], evaluation[1]), constraint=con, derivative=der,
-                        benchmark=benchmark, freq=freq, rf=rf, resolution=resolution).to_dict())
+                        benchmark=benchmark, freq=freq, rf=rf, resolution=resolution).to_dict()
 
 
 if __name__ == "__main__":
