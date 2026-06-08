@@ -142,3 +142,31 @@ class FrontierPoint:
     def to_dict(self) -> dict:
         return {"x": _jsonable(self.x), "y": _jsonable(self.y),
                 "label": self.label, "feasible": bool(self.feasible)}
+
+
+@dataclass
+class BacktestResult:
+    p1: PortfolioResult                       # no-derivative (construction optimum)
+    p2: PortfolioResult                       # with-derivative
+    underlying: str                           # derivative underlying name
+    derivative_weight: float                  # optimal weight on the derivative in P2
+    realised: dict                            # expected vs realised return/vol, breach flags
+    paths: dict                               # {'dates':[...], 'pv1':[...], 'pv2':[...]}
+    verdict: list                             # plain-language summary lines
+    alpha_beta: dict | None = None            # per-portfolio & per-security beta/alpha/r2 vs benchmark
+
+    def to_dict(self) -> dict:
+        return {
+            "p1": self.p1.to_dict(),
+            "p2": self.p2.to_dict(),
+            "underlying": self.underlying,
+            "derivative_weight": _jsonable(self.derivative_weight),
+            "realised": {k: {kk: _jsonable(vv) for kk, vv in v.items()}
+                         if isinstance(v, dict) else _jsonable(v)
+                         for k, v in self.realised.items()},
+            "paths": {"dates": list(self.paths.get("dates", [])),
+                      "pv1": [_jsonable(x) for x in self.paths.get("pv1", [])],
+                      "pv2": [_jsonable(x) for x in self.paths.get("pv2", [])]},
+            "verdict": list(self.verdict),
+            "alpha_beta": self.alpha_beta,
+        }
