@@ -144,18 +144,32 @@ def run_backtest(tickers, construction, evaluation, constraint, derivative,
     verdict = []
     d_ret = ann2 - ann1
     d_vol = vol2 - vol1
+    der_used = abs(w2_der) >= 0.005  # did the optimiser actually use the derivative?
+
     if d_ret > 0.005:
-        verdict.append(f"The derivative added {d_ret:.2%} of realised annual return versus "
-                       f"the no-derivative portfolio.")
+        verdict.append(f"The with-derivative portfolio (P2) realised {d_ret:.2%} more annual "
+                       f"return than the no-derivative portfolio (P1).")
     elif d_ret < -0.005:
-        verdict.append(f"The derivative cost {-d_ret:.2%} of realised annual return this window.")
+        verdict.append(f"The with-derivative portfolio (P2) realised {-d_ret:.2%} less annual "
+                       f"return than the no-derivative portfolio (P1).")
     else:
-        verdict.append("Realised returns of the two portfolios were broadly similar.")
+        verdict.append("The two portfolios realised broadly similar annual returns.")
+
+    # honest attribution: only credit the derivative when it actually carried weight
+    if der_used:
+        verdict.append(f"The optimiser allocated {w2_der:.1%} to the derivative, so this "
+                       f"difference reflects the hedge together with any security re-weighting "
+                       f"around it.")
+    else:
+        verdict.append(f"The optimiser placed almost no weight on the derivative "
+                       f"({w2_der:.1%}); this difference therefore comes from the two portfolios "
+                       f"holding different security weights, not from the hedge.")
+
     if not _np.isnan(d_vol):
         if d_vol < -0.005:
-            verdict.append(f"It also reduced realised volatility by {-d_vol:.2%}.")
+            verdict.append(f"Realised volatility was {-d_vol:.2%} lower in P2.")
         elif d_vol > 0.005:
-            verdict.append(f"It raised realised volatility by {d_vol:.2%}.")
+            verdict.append(f"Realised volatility was {d_vol:.2%} higher in P2.")
     if br1 and not br2:
         verdict.append(f"P1 breached the {H:.0%} loss threshold while P2 did not - "
                        f"the protection held this window.")
