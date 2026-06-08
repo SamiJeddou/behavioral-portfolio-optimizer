@@ -71,7 +71,7 @@ def fetch_tickers(tickers, start, end, freq):
         # Download with group_by='ticker' to get consistent multi-ticker structure
         raw_full = yf.download(tickers, start=str(start), end=str(end),
                                auto_adjust=True, progress=False,
-                               group_by='column')
+                               group_by='column', threads=False)
 
         # Handle both single and multi-ticker cases robustly
         if raw_full.empty:
@@ -134,7 +134,7 @@ def fetch_close_prices(tickers, start, end):
     try:
         import yfinance as yf
         raw_full = yf.download(tickers, start=str(start), end=str(end),
-                               auto_adjust=True, progress=False, group_by='column')
+                               auto_adjust=True, progress=False, group_by='column', threads=False)
         if raw_full is None or raw_full.empty:
             return None, "No data returned — check tickers and date range."
         if isinstance(raw_full.columns, pd.MultiIndex):

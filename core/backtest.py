@@ -98,6 +98,15 @@ def run_backtest(tickers, construction, evaluation, constraint, derivative,
     means, sigs, corr, names, _ = stats_from_prices(con_px, freq)
     if len(names) < 2:
         raise RuntimeError("Fewer than two usable securities after cleaning.")
+    _m_eff = 51 if ct == "es_rigorous" else m_bt
+    _states = _m_eff ** len(names)
+    _BUDGET = 10_000_000
+    if _states > _BUDGET:
+        raise ValueError(
+            f"Exact-grid backtest would need {_m_eff}^{len(names)} = {_states:,} "
+            f"states (budget {_BUDGET:,}). The grid engine is practical for about 4 "
+            f"assets; reduce the universe, lower the resolution, or use the scalable "
+            f"Monte-Carlo engine for larger universes.")
     cov = corr_to_cov(sigs, corr)
     sigs = _np.asarray(sigs, float)
 
