@@ -331,6 +331,226 @@ def generate_pdf_report(constraint_label, nd_res, dr_res, p3_return, p3_std,
     doc.build(story)
     buf.seek(0)
     return buf.getvalue()
+
+
+# ── Shared helpers for the scalable + backtest PDF reports ────────────────────
+def _pdf_safe(s):
+    """Replace glyphs the base PDF font can't render with ASCII equivalents."""
+    if s is None:
+        return ""
+    s = str(s)
+    for a, b in (("\u2264", "<="), ("\u2265", ">="), ("\u2014", "-"), ("\u2013", "-"),
+                 ("\u2022", "-"), ("\u00b7", "|"), ("\u26a0", "(!)"), ("\u2713", "(ok)"),
+                 ("\u2605", "*"), ("\u03b1", "alpha"), ("\u03c3", "sigma"), ("\u03b2", "beta"),
+                 ("\u00b2", "^2"), ("\u2009", " "), ("\u00a0", " "), ("\u2192", "->"),
+                 ("\u00d7", "x")):
+        s = s.replace(a, b)
+    return s
+
+
+def _md_bold(s):
+    """Convert simple **bold** markdown to PDF-safe <b>bold</b>."""
+    parts = _pdf_safe(s).split("**")
+    return "".join(p if i % 2 == 0 else f"<b>{p}</b>" for i, p in enumerate(parts))
+
+
+def _styled_pdf(title, subtitle, blocks,
+                footer_note="Beyond Mean-Variance Portfolio Optimiser | Jeddou (2026)"):
+    """Generic styled report builder, matching the look of the grid PDF.
+
+    blocks: list of dicts, each one of:
+      {"type":"section","text":...,"color":"blue|green|gold|navy"}
+      {"type":"para","text": HTML-ish string}
+      {"type":"caption","text":...}
+      {"type":"spacer","h":points}
+      {"type":"metrics","items":[(label,value), ...]}
+      {"type":"table","data":[[...], ...],"header":bool,"col_widths":[...]}
+      {"type":"weights","rows":[(label, fraction, hexcolor), ...]}
+      {"type":"image","png":bytes,"width":cm,"caption":...}
+    """
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+    from reportlab.lib.units import cm
+    from reportlab.lib import colors
+    from reportlab.platypus import (SimpleDocTemplate, Paragraph, Spacer,
+                                     Table, TableStyle, HRFlowable,
+                                     Image as RLImage, Flowable)
+    from reportlab.lib.enums import TA_CENTER
+    from reportlab.lib.utils import ImageReader
+    import io as _io
+
+    navy = colors.HexColor('#0d1a2e'); blue = colors.HexColor('#1a6bbf')
+    green = colors.HexColor('#10b981'); gold = colors.HexColor('#f59e0b')
+    light = colors.HexColor('#5b6b86'); white = colors.white
+    _accent = {'blue': blue, 'green': green, 'gold': gold, 'navy': navy}
+
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle('T2', parent=styles['Title'], textColor=navy,
+                                 fontSize=16, spaceAfter=2)
+    sub_style = ParagraphStyle('S2', parent=styles['Normal'], textColor=light,
+                               fontSize=9, spaceAfter=8)
+    body_style = ParagraphStyle('B2', parent=styles['Normal'], fontSize=9,
+                                spaceAfter=4, leading=13)
+    cap_style = ParagraphStyle('C2', parent=styles['Normal'], fontSize=8,
+                               textColor=colors.grey, spaceAfter=3, leading=11)
+
+    class _Doc(SimpleDocTemplate):
+        def handle_pageEnd(self):
+            self.canv.saveState(); self.canv.setFont('Helvetica', 8)
+            self.canv.setFillColor(colors.grey)
+            self.canv.drawCentredString(A4[0] / 2, 1.2 * cm,
+                                        f"Page {self.canv.getPageNumber()} - {footer_note}")
+            self.canv.restoreState(); super().handle_pageEnd()
+
+    class _Bar(Flowable):
+        def __init__(self, frac, c, width=6.5 * cm, height=0.34 * cm):
+            Flowable.__init__(self)
+            self.frac = max(0.0, min(1.0, frac)); self.c = c
+            self.width = width; self.height = height
+
+        def draw(self):
+            self.canv.setFillColor(colors.HexColor('#e9ecef'))
+            self.canv.rect(0, 0, self.width, self.height, fill=1, stroke=0)
+            if self.frac > 0:
+                self.canv.setFillColor(self.c)
+                self.canv.rect(0, 0, self.width * self.frac, self.height, fill=1, stroke=0)
+
+    def _section(text, color):
+        return Paragraph(_pdf_safe(text), ParagraphStyle(
+            'SH2', parent=styles['Heading2'], textColor=white, backColor=color,
+            fontSize=10, spaceBefore=8, spaceAfter=4, leftIndent=-6, rightIndent=-6,
+            borderPadding=(4, 6, 4, 6)))
+
+    buf = _io.BytesIO()
+    doc = _Doc(buf, pagesize=A4, leftMargin=2 * cm, rightMargin=2 * cm,
+               topMargin=2 * cm, bottomMargin=2.5 * cm)
+    story = [Paragraph(_pdf_safe(title), title_style)]
+    if subtitle:
+        story.append(Paragraph(_pdf_safe(subtitle), sub_style))
+    story.append(HRFlowable(width="100%", thickness=1.4, color=blue, spaceAfter=8))
+
+    for blk in blocks:
+        t = blk.get("type")
+        if t == "section":
+            story.append(_section(blk["text"], _accent.get(blk.get("color", "blue"), blue)))
+        elif t == "para":
+            story.append(Paragraph(blk["text"], body_style))
+        elif t == "caption":
+            story.append(Paragraph(blk["text"], cap_style))
+        elif t == "spacer":
+            story.append(Spacer(1, blk.get("h", 6)))
+        elif t == "metrics":
+            items = blk["items"]
+            cells = [[Paragraph(
+                f'<font color="#1a6bbf" size="9"><b>{_pdf_safe(lab)}</b></font><br/>'
+                f'<font size="14"><b>{_pdf_safe(val)}</b></font>',
+                ParagraphStyle('M2', parent=styles['Normal'], alignment=TA_CENTER, leading=16))
+                for lab, val in items]]
+            tbl = Table(cells, colWidths=[(17.0 / len(items)) * cm for _ in items])
+            tbl.setStyle(TableStyle([
+                ('BOX', (0, 0), (-1, -1), 0.5, colors.HexColor('#d0d7e2')),
+                ('INNERGRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#d0d7e2')),
+                ('BACKGROUND', (0, 0), (-1, -1), colors.HexColor('#f4f7fb')),
+                ('TOPPADDING', (0, 0), (-1, -1), 8), ('BOTTOMPADDING', (0, 0), (-1, -1), 8),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE')]))
+            story.append(tbl); story.append(Spacer(1, 6))
+        elif t == "table":
+            data = blk["data"]; header = blk.get("header", True)
+            tdata = []
+            for ri, row in enumerate(data):
+                if header and ri == 0:
+                    tdata.append([Paragraph(f'<b><font color="white">{_pdf_safe(c)}</font></b>',
+                                            body_style) for c in row])
+                else:
+                    tdata.append([Paragraph(_pdf_safe(c), body_style) for c in row])
+            tbl = Table(tdata, colWidths=blk.get("col_widths"))
+            ts = [('GRID', (0, 0), (-1, -1), 0.4, colors.HexColor('#d0d7e2')),
+                  ('TOPPADDING', (0, 0), (-1, -1), 4), ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                  ('LEFTPADDING', (0, 0), (-1, -1), 6), ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+                  ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                  ('ROWBACKGROUNDS', (0, 1), (-1, -1), [white, colors.HexColor('#f4f7fb')])]
+            if header:
+                ts.append(('BACKGROUND', (0, 0), (-1, 0), blue))
+            tbl.setStyle(TableStyle(ts)); story.append(tbl); story.append(Spacer(1, 6))
+        elif t == "weights":
+            wdata = []
+            for lab, frac, c in blk["rows"]:
+                try:
+                    _bc = colors.HexColor(c)
+                except Exception:
+                    _bc = blue
+                wdata.append([Paragraph(f'<font color="{c}"><b>{_pdf_safe(lab)}</b></font>', body_style),
+                              _Bar(float(frac), _bc),
+                              Paragraph(f'<b>{float(frac) * 100:.1f}%</b>', body_style)])
+            tbl = Table(wdata, colWidths=[5 * cm, 7 * cm, 2 * cm])
+            tbl.setStyle(TableStyle([('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                                     ('TOPPADDING', (0, 0), (-1, -1), 2),
+                                     ('BOTTOMPADDING', (0, 0), (-1, -1), 2)]))
+            story.append(tbl); story.append(Spacer(1, 6))
+        elif t == "image" and blk.get("png"):
+            try:
+                ir = ImageReader(_io.BytesIO(blk["png"])); iw, ih = ir.getSize()
+                w = blk.get("width", 17 * cm); h = w * ih / float(iw)
+                story.append(RLImage(_io.BytesIO(blk["png"]), width=w, height=h))
+                if blk.get("caption"):
+                    story.append(Paragraph(_pdf_safe(blk["caption"]), cap_style))
+                story.append(Spacer(1, 6))
+            except Exception:
+                pass
+
+    doc.build(story)
+    return buf.getvalue()
+
+
+def generate_mc_pdf_report(meta, weight_rows, der_lines=None, fig_png=None):
+    """Build the Scalable (Monte-Carlo + CVaR) optimiser results PDF."""
+    blocks = [
+        {"type": "section", "text": "Scalable Monte-Carlo + CVaR optimum", "color": "gold"},
+        {"type": "metrics", "items": [
+            ("Expected return", meta["er"]), ("Realised CVaR", meta["es"]),
+            ("Volatility", meta["vol"]), ("Skewness", meta["skew"])]},
+        {"type": "para", "text": meta["summary_html"]},
+    ]
+    if der_lines:
+        blocks.append({"type": "section", "text": "Derivative pricing used", "color": "blue"})
+        for dl in der_lines:
+            blocks.append({"type": "para", "text": dl})
+    if fig_png:
+        blocks.append({"type": "section", "text": "Return / tail-risk frontier", "color": "blue"})
+        blocks.append({"type": "image", "png": fig_png, "caption": meta.get("chart_caption", "")})
+    blocks.append({"type": "section", "text": "Portfolio weights", "color": "blue"})
+    blocks.append({"type": "weights", "rows": weight_rows})
+    if meta.get("footer_caption"):
+        blocks.append({"type": "caption", "text": meta["footer_caption"]})
+    return _styled_pdf("Scalable Portfolio Optimiser - Results",
+                       meta.get("subtitle", ""), blocks,
+                       footer_note="Scalable MC + CVaR Optimiser | Beyond Mean-Variance | Jeddou (2026)")
+
+
+def generate_backtest_pdf_report(meta, summary_rows, ab_rows=None,
+                                 verdict_lines=None, fig_png=None):
+    """Build the Out-of-Sample Backtest results PDF."""
+    blocks = [{"type": "para", "text": meta["period_html"]}]
+    if fig_png:
+        blocks.append({"type": "section", "text": "Out-of-sample portfolio paths", "color": "green"})
+        blocks.append({"type": "image", "png": fig_png, "caption": meta.get("chart_caption", "")})
+    blocks.append({"type": "section", "text": "Expected vs realised", "color": "blue"})
+    blocks.append({"type": "table", "data": summary_rows, "header": True,
+                   "col_widths": None})
+    if ab_rows:
+        blocks.append({"type": "section", "text": "Alpha / beta vs benchmark", "color": "blue"})
+        blocks.append({"type": "table", "data": ab_rows, "header": True, "col_widths": None})
+    if verdict_lines:
+        blocks.append({"type": "section", "text": "Verdict", "color": "green"})
+        for v in verdict_lines:
+            blocks.append({"type": "para", "text": v})
+    if meta.get("footer_caption"):
+        blocks.append({"type": "caption", "text": meta["footer_caption"]})
+    return _styled_pdf("Out-of-Sample Backtest - Results",
+                       meta.get("subtitle", ""), blocks,
+                       footer_note="Out-of-Sample Backtest | Beyond Mean-Variance | Jeddou (2026)")
+
+
 from scipy.optimize import minimize
 from io import StringIO
 from datetime import date, timedelta
@@ -340,6 +560,11 @@ from behavioral_portfolio_optimizer import (
 )
 from turbo_optimizer import optimize_portfolio_turbo
 from es_rigorous import optimize_portfolio_es_rigorous
+from core.pricing import (
+    _SYN_UNDERLYING, _COMPONENT_PRESETS, preset_components, build_der_config,
+    _bt_legs, _leg_value, mtm_gross_path, _mc_leg_intrinsic, _mc_leg_value_vec,
+    mc_der_returns,
+)
 from scipy.stats import norm as _norm
 from scipy.optimize import brentq as _brentq
 
@@ -1131,86 +1356,12 @@ def fetch_tickers(tickers, start, end, freq):
         return None, None, None, None, None, str(e), {}
 
 # Synthetic long underlying via put-call parity (prices to exactly 1.0, payoff = spot_T)
-_SYN_UNDERLYING = [
-    {"type": "long_call", "strike": 1.0},
-    {"type": "short_put",  "strike": 1.0},
-    {"type": "zcb",        "notional": 1.0},
-]
-_COMPONENT_PRESETS = {
-    "bull_call_spread", "bear_put_spread", "butterfly_call", "condor_call",
-    "reverse_convertible", "discount_certificate", "outperformance_certificate",
-}
+# _SYN_UNDERLYING -> moved to core/pricing.py
+# _COMPONENT_PRESETS -> moved to core/pricing.py
 
-def preset_components(der_type, p):
-    """Map a preset instrument + its params to a list of pricer components."""
-    if der_type == "bull_call_spread":
-        return [{"type": "long_call", "strike": p["k1"]},
-                {"type": "short_call", "strike": p["k2"]}]
-    if der_type == "bear_put_spread":
-        return [{"type": "long_put", "strike": p["k1"]},
-                {"type": "short_put", "strike": p["k2"]}]
-    if der_type == "butterfly_call":
-        c, w = p["center"], p["width"]
-        return [{"type": "long_call", "strike": c - w},
-                {"type": "short_call", "strike": c},
-                {"type": "short_call", "strike": c},
-                {"type": "long_call", "strike": c + w}]
-    if der_type == "condor_call":
-        c, wi, wo = p["center"], p["w_in"], p["w_out"]
-        return [{"type": "long_call", "strike": c - wo},
-                {"type": "short_call", "strike": c - wi},
-                {"type": "short_call", "strike": c + wi},
-                {"type": "long_call", "strike": c + wo}]
-    if der_type == "reverse_convertible":
-        return [{"type": "zcb", "notional": 1.0},
-                {"type": "short_put", "strike": p["kp"]}]
-    if der_type == "discount_certificate":
-        return _SYN_UNDERLYING + [{"type": "short_call", "strike": p["kc"]}]
-    if der_type == "outperformance_certificate":
-        return _SYN_UNDERLYING + [{"type": "long_call", "strike": p["k"]}]
-    return []
+# preset_components -> moved to core/pricing.py
 
-def build_der_config(der_type, der_params, sigs, underlying_idx):
-    # Defaults follow the thesis (vol = underlying's std dev, r = 3%, T = 1y);
-    # the sidebar sliders can override each of them.
-    base = {"underlying_index": underlying_idx,
-            "vol": der_params.get("vol", sigs[underlying_idx]),
-            "S0": 1.0,
-            "r":  der_params.get("r", 0.03),
-            "T":  der_params.get("T", 1.0)}
-    if der_type == "put":
-        return {**base, "type":"put", "strike":der_params["strike"]}
-    elif der_type == "call":
-        return {**base, "type":"call", "strike":der_params["strike"]}
-    elif der_type == "straddle":
-        return {**base, "type":"straddle", "strike":der_params["strike"]}
-    elif der_type == "safety_collar":
-        return {**base, "type":"safety_collar",
-                "strike_p":der_params["strike_p"],"strike_c":der_params["strike_c"]}
-    elif der_type == "aggressive_collar":
-        return {**base, "type":"aggressive_collar",
-                "strike_p":der_params["strike_p"],"strike_c":der_params["strike_c"]}
-    elif der_type == "strangle":
-        return {**base, "type":"strangle",
-                "strike_kp":der_params["strike_kp"],"strike_kc":der_params["strike_kc"]}
-    elif der_type == "cgn_uncapped":
-        return {**base, "type":"cgn","floor":der_params["floor"],
-                "participation":der_params["participation"],
-                "cap":None,"cgn_premium":der_params["premium"]}
-    elif der_type == "cgn_capped":
-        return {**base, "type":"cgn","floor":der_params["floor"],
-                "participation":der_params["participation"],
-                "cap":der_params["cap"],"cgn_premium":der_params["premium"]}
-    elif der_type == "barrier_m":
-        return {**base, "type":"barrier_m",
-                "M":der_params["M"],"premium_bm":der_params["premium_bm"]}
-    elif der_type in _COMPONENT_PRESETS:
-        return {**base, "type": "custom",
-                "components": preset_components(der_type, der_params),
-                "premium": der_params.get("premium", 0.0)}
-    elif der_type == "custom":
-        return {**base, "type":"custom","components":der_params["components"]}
-    return None
+# build_der_config -> moved to core/pricing.py
 
 @st.cache_data
 def compute_mv_frontier(means_t, cov_t):
@@ -2492,74 +2643,11 @@ def stats_from_prices(prices, freq):
     names = list(rets.columns)
     return means, sigs, corr, names, factor
 
-def _bt_legs(der_type, der_params):
-    """Return (legs, norm_mode, premium) for the backtest, or (None, None, None) if
-    unsupported. Strikes are fractions of the entry spot (S0 = 1). norm_mode is
-    'gross' for collars (engine divides the return by P0+C0) else 'net'."""
-    prem = float(der_params.get("premium", 0.0))
-    if der_type == "call":
-        return [{"type": "long_call", "strike": der_params["strike"]}], "net", 0.0
-    if der_type == "put":
-        return [{"type": "long_put", "strike": der_params["strike"]}], "net", 0.0
-    if der_type == "straddle":
-        K = der_params["strike"]
-        return [{"type": "long_call", "strike": K}, {"type": "long_put", "strike": K}], "net", 0.0
-    if der_type == "strangle":
-        return [{"type": "long_put", "strike": der_params["strike_kp"]},
-                {"type": "long_call", "strike": der_params["strike_kc"]}], "net", 0.0
-    if der_type == "safety_collar":
-        return [{"type": "long_put", "strike": der_params["strike_p"]},
-                {"type": "short_call", "strike": der_params["strike_c"]}], "gross", 0.0
-    if der_type == "aggressive_collar":
-        return [{"type": "long_call", "strike": der_params["strike_c"]},
-                {"type": "short_put", "strike": der_params["strike_p"]}], "gross", 0.0
-    if der_type in ("cgn_uncapped", "cgn_capped"):
-        f = der_params["floor"]; y = der_params["participation"]
-        legs = [{"type": "zcb", "notional": 1.0 + f},
-                {"type": "long_call", "strike": 1.0 + f, "qty": y}]
-        if der_type == "cgn_capped":
-            legs.append({"type": "short_call", "strike": 1.0 + der_params["cap"], "qty": y})
-        return legs, "net", float(der_params.get("premium", 0.0))
-    if der_type in _COMPONENT_PRESETS:
-        return preset_components(der_type, der_params), "net", prem
-    return None, None, None
+# _bt_legs -> moved to core/pricing.py
 
-def _leg_value(leg, s, remT, vol, r):
-    """Signed Black-Scholes value of one leg at spot s with remaining maturity remT.
-    Honours an optional 'qty' multiplier (e.g. CGN participation rate)."""
-    q = float(leg.get("qty", 1.0))
-    t = leg["type"]
-    if t == "zcb":
-        return q * float(leg.get("notional", 1.0)) * np.exp(-r * remT)
-    K = leg["strike"]
-    if t == "long_call":  return  q * bs_call(vol, s, r, remT, K)
-    if t == "short_call": return -q * bs_call(vol, s, r, remT, K)
-    if t == "long_put":   return  q * bs_put(vol, s, r, remT, K)
-    if t == "short_put":  return -q * bs_put(vol, s, r, remT, K)
-    return 0.0
+# _leg_value -> moved to core/pricing.py
 
-def mtm_gross_path(legs, norm_mode, prem, spot_path, T, vol, r):
-    """Mark-to-market gross-return path of the derivative over a realised underlying
-    price path. Entry spot normalised to 1.0; remaining maturity shrinks linearly
-    (option entered at the start, expiring at the end). V_t = signed Black-Scholes
-    value of the legs. Consistent with the engine's per-instrument return definition:
-        g_t = 1 + (V_t - paid) / normalizer
-    where paid = fair value * (1 + premium), and normalizer = gross premium (P0+C0)
-    for collars, else paid. For net instruments this reduces to V_t / paid."""
-    spot_path = np.asarray(spot_path, dtype=float)
-    s_rel = spot_path / float(spot_path[0])
-    n = len(s_rel)
-    leg_v0 = [_leg_value(lg, 1.0, T, vol, r) for lg in legs]
-    V0 = float(np.sum(leg_v0))
-    gross = float(np.sum(np.abs(leg_v0)))
-    paid = V0 * (1.0 + prem)
-    normalizer = gross if norm_mode == "gross" else paid
-    if abs(normalizer) < 1e-9:
-        return None
-    remT = np.maximum(T * (1.0 - np.linspace(0.0, 1.0, n)), 1e-6)
-    V = np.array([sum(_leg_value(lg, s_rel[i], remT[i], vol, r) for lg in legs)
-                  for i in range(n)])
-    return 1.0 + (V - paid) / normalizer
+# mtm_gross_path -> moved to core/pricing.py
 
 def _bt_portfolio_path(sec_gross, w_sec, der_gross=None, w_der=0.0):
     """Buy-and-hold portfolio value path, normalised to start at 1.0."""
@@ -2712,62 +2800,11 @@ def mc_generate_scenarios(means, sigs, corr, S=10000, copula="gaussian", dof=5, 
         Z = _norm.ppf(np.clip(U, 1e-12, 1 - 1e-12))
     return means[None, :] + sigs[None, :] * Z
 
-def _mc_leg_intrinsic(leg, spot_T):
-    """Terminal intrinsic value of a leg at terminal spot (array)."""
-    q = float(leg.get("qty", 1.0)); t = leg["type"]
-    if t == "zcb":        return q * float(leg.get("notional", 1.0)) * np.ones_like(spot_T)
-    K = leg["strike"]
-    if t == "long_call":  return  q * np.maximum(spot_T - K, 0.0)
-    if t == "short_call": return -q * np.maximum(spot_T - K, 0.0)
-    if t == "long_put":   return  q * np.maximum(K - spot_T, 0.0)
-    if t == "short_put":  return -q * np.maximum(K - spot_T, 0.0)
-    return np.zeros_like(spot_T)
+# _mc_leg_intrinsic -> moved to core/pricing.py
 
-def _mc_leg_value_vec(leg, s, remT, vol, r):
-    """Vectorised signed Black-Scholes value of one leg at the horizon: spot array s,
-    scalar remaining maturity remT (>0). Mirrors the engine's BS formula so a
-    marked-to-market option at the horizon is priced consistently with inception."""
-    q = float(leg.get("qty", 1.0)); t = leg["type"]
-    s = np.asarray(s, float)
-    if t == "zcb":
-        return q * float(leg.get("notional", 1.0)) * np.exp(-r * remT) * np.ones_like(s)
-    K = leg["strike"]
-    if vol <= 0 or remT <= 0:
-        return _mc_leg_intrinsic(leg, s)
-    s_safe = np.maximum(s, 1e-12)
-    sq = vol * np.sqrt(remT)
-    d1 = (np.log(s_safe / K) + (r + 0.5 * vol * vol) * remT) / sq
-    d2 = d1 - sq
-    call = s_safe * _norm.cdf(d1) - K * np.exp(-r * remT) * _norm.cdf(d2)
-    put  = K * np.exp(-r * remT) * _norm.cdf(-d2) - s_safe * _norm.cdf(-d1)
-    if t == "long_call":  return  q * call
-    if t == "short_call": return -q * call
-    if t == "long_put":   return  q * put
-    if t == "short_put":  return -q * put
-    return np.zeros_like(s)
+# _mc_leg_value_vec -> moved to core/pricing.py
 
-def mc_der_returns(der_type, der_params, und_ret, vol, r=0.03, T=1.0, horizon=1.0):
-    """Per-scenario derivative return, priced from its Black-Scholes legs. The option
-    is bought at inception (full maturity T) and valued at the optimisation horizon:
-    intrinsic if it expires at/before the horizon (T<=horizon), otherwise a
-    Black-Scholes mark-to-market with the remaining maturity (T-horizon). Same return
-    definition as the engine/backtest."""
-    legs, norm_mode, prem = _bt_legs(der_type, der_params)
-    if legs is None:
-        return None
-    leg_v0 = [_leg_value(lg, 1.0, T, vol, r) for lg in legs]
-    V0 = float(np.sum(leg_v0)); gross = float(np.sum(np.abs(leg_v0)))
-    paid = V0 * (1.0 + prem)
-    normalizer = gross if norm_mode == "gross" else paid
-    if abs(normalizer) < 1e-9:
-        return None
-    spot_T = 1.0 + np.asarray(und_ret, float)
-    remT = max(float(T) - float(horizon), 0.0)
-    if remT <= 1e-9:
-        payoff = np.sum([_mc_leg_intrinsic(lg, spot_T) for lg in legs], axis=0)
-    else:
-        payoff = np.sum([_mc_leg_value_vec(lg, spot_T, remT, vol, r) for lg in legs], axis=0)
-    return (payoff - paid) / normalizer
+# mc_der_returns -> moved to core/pricing.py
 
 def mc_build_matrix(R_sec, der_specs, sigs, names, r=0.03, T=1.0, horizon=1.0):
     """Stack S x N security returns with one return column per derivative spec.
@@ -4533,6 +4570,81 @@ After a run, the results show a details box, colour-coded weight bars, and an in
                     '</div></div>',
                     unsafe_allow_html=True)
 
+                # ── PDF export — same button style as the grid optimiser ──
+                try:
+                    _mc_fig_png = None
+                    try:
+                        import matplotlib; matplotlib.use('Agg')
+                        import matplotlib.pyplot as _pltmc; import io as _iomc
+                        if _okfr:
+                            _fx = [r["L"] * 100 for r in _okfr]
+                            _fy = [r["er"] * 100 for r in _okfr]
+                            _fm, _axm = _pltmc.subplots(figsize=(10, 5.2))
+                            _fm.patch.set_facecolor('#0d1117'); _axm.set_facecolor('#0d1117')
+                            _axm.tick_params(colors='#c0c8d8', labelsize=8)
+                            _axm.spines[:].set_color('#1a3a5c')
+                            _axm.set_xlabel('alpha-CVaR floor L (%)', fontsize=9, color='#c0c8d8')
+                            _axm.set_ylabel('Max expected return (%)', fontsize=9, color='#c0c8d8')
+                            _axm.set_title('Return / Tail-Risk Frontier (Monte-Carlo + CVaR)',
+                                           fontsize=10, color='white', pad=8)
+                            _axm.grid(True, color='#1a3a5c', linewidth=0.5, alpha=0.5)
+                            _axm.plot(_fx, _fy, 'o-', color='#4a9eff', linewidth=1.6,
+                                      markersize=6, label='Frontier')
+                            _axm.scatter([mc_L * 100], [er * 100], marker='*', color='#f59e0b',
+                                         s=240, edgecolors='white', linewidths=0.8, zorder=10,
+                                         label='Scalable CVaR optimum')
+                            _axm.legend(fontsize=8, facecolor='#0d1a2e', edgecolor='#1a3a5c',
+                                        labelcolor='#c0c8d8', loc='upper left')
+                            _pltmc.tight_layout(pad=1.2)
+                            _bmc = _iomc.BytesIO()
+                            _fm.savefig(_bmc, format='png', dpi=150, facecolor='#0d1117',
+                                        bbox_inches='tight')
+                            _pltmc.close(_fm); _mc_fig_png = _bmc.getvalue()
+                    except Exception:
+                        _mc_fig_png = None
+                    _wmax_ascii = (f" | max weight/asset {int(round((mc_wmax or 1) * 100))}%"
+                                   if mc_wmax else "")
+                    _mc_meta = {
+                        "subtitle": "Monte-Carlo scenarios + alpha-CVaR linear program",
+                        "er": f"{er * 100:.2f}%", "es": f"{es * 100:.2f}%",
+                        "vol": f"{_sig * 100:.2f}%", "skew": f"{_skew:.3f}",
+                        "summary_html": (
+                            f"<b>Universe:</b> {_univ} &nbsp;&nbsp; "
+                            f"<b>Scenarios:</b> {int(mc_S):,} ({copula} copula){_wmax_ascii}<br/>"
+                            f"<b>Objective:</b> maximise E[r] subject to alpha-CVaR &gt;= "
+                            f"{mc_L * 100:.0f}% (alpha = {mc_alpha * 100:.0f}%)<br/>"
+                            f"<b>Feasibility:</b> "
+                            f"{'feasible (floor binding)' if _feas else 'infeasible'}"),
+                        "chart_caption": ("Each point is the maximum expected return achievable for "
+                                          "one Expected-Shortfall floor; the star marks the chosen optimum."),
+                        "footer_caption": ("Approximate scenario-based optimum (CVaR linear program) "
+                                           "- complements the exact grid engine. Research & "
+                                           "educational project; not investment advice."),
+                    }
+                    _mc_der_lines = ([f"- <b>{d['label']}</b> - maturity {d['T']:.2f} y, "
+                                      f"rate {d['r'] * 100:.1f}%" for d in der_specs]
+                                     if der_specs else None)
+                    _mc_wr = [(str(_lbl), float(_wi), str(_c))
+                              for (_lbl, _wi, _isd, _c) in _rows if float(_wi) > 1e-6][:30]
+                    _mc_pdf = generate_mc_pdf_report(_mc_meta, _mc_wr,
+                                                     der_lines=_mc_der_lines, fig_png=_mc_fig_png)
+                    st.session_state['_mc_pdf_bytes'] = _mc_pdf
+                    st.session_state['_mc_pdf_name'] = f"scalable_cvar_optimiser_{mc_L * 100:.0f}pct.pdf"
+                except Exception as _mc_pdf_err:
+                    st.session_state['_mc_pdf_bytes'] = None
+                    st.caption(f"PDF generation failed: {_mc_pdf_err}")
+
+                if st.session_state.get('_mc_pdf_bytes'):
+                    st.markdown("---")
+                    _mcl, _mcc, _mcr = st.columns([1, 2, 1])
+                    with _mcc:
+                        st.download_button(
+                            label="📄 Export & Download PDF Report",
+                            data=st.session_state['_mc_pdf_bytes'],
+                            file_name=st.session_state.get('_mc_pdf_name', 'scalable_results.pdf'),
+                            mime="application/pdf", type="primary",
+                            key="mc_pdf_download", use_container_width=True)
+
             # ---- validation panel ----
             if mc_validate:
                 st.markdown("---")
@@ -5162,6 +5274,70 @@ elif _view == "backtest":
                     "\n\n*One evaluation window is a single draw — read the loss-threshold "
                     "outcome as one realisation, not a probability." + _es_note + "*")
 
+            # ── PDF export — same button style as the grid optimiser ──
+            try:
+                _bt_fig_png = None
+                try:
+                    import matplotlib; matplotlib.use('Agg')
+                    import matplotlib.pyplot as _pltbt; import io as _iobt
+                    _fb, _axb = _pltbt.subplots(figsize=(10, 5.0))
+                    _fb.patch.set_facecolor('#0d1117'); _axb.set_facecolor('#0d1117')
+                    _axb.tick_params(colors='#c0c8d8', labelsize=8)
+                    _axb.spines[:].set_color('#1a3a5c')
+                    _axb.set_ylabel('Portfolio value (indexed)', fontsize=9, color='#c0c8d8')
+                    _axb.set_title('Out-of-sample portfolio paths', fontsize=10,
+                                   color='white', pad=8)
+                    _axb.grid(True, color='#1a3a5c', linewidth=0.5, alpha=0.5)
+                    _bx = list(ev_px.index)
+                    _axb.plot(_bx, pv1, color='#10b981', linewidth=1.6, label='No derivative (P1)')
+                    _axb.plot(_bx, pv2, color='#f59e0b', linewidth=1.6, label='With derivative (P2)')
+                    _axb.legend(fontsize=8, facecolor='#0d1a2e', edgecolor='#1a3a5c',
+                                labelcolor='#c0c8d8', loc='upper left')
+                    _fb.autofmt_xdate(); _pltbt.tight_layout(pad=1.2)
+                    _bbt = _iobt.BytesIO()
+                    _fb.savefig(_bbt, format='png', dpi=150, facecolor='#0d1117',
+                                bbox_inches='tight')
+                    _pltbt.close(_fb); _bt_fig_png = _bbt.getvalue()
+                except Exception:
+                    _bt_fig_png = None
+                _bt_sum = [["Metric", "No derivative (P1)", "With derivative (P2)"]]
+                for _m, _v1, _v2 in _rows_bt:
+                    _bt_sum.append([_m, _v1, _v2])
+                _bt_meta = {
+                    "subtitle": (f"Construction {bt_con_start} -> {bt_con_end}  |  "
+                                 f"Evaluation {bt_eval_start} -> {bt_eval_end}"),
+                    "period_html": (
+                        f"<b>Derivative underlying:</b> {names[u_idx]} "
+                        f"(sigma {vol_u * 100:.1f}%) &nbsp;&nbsp; "
+                        f"<b>Optimal derivative weight in P2:</b> {w2_der * 100:.1f}% &nbsp;&nbsp; "
+                        f"<b>Option life:</b> {T_years:.2f} y<br/>"
+                        f"<b>Constraint:</b> {_pdf_safe(_con_txt)}"),
+                    "chart_caption": ("Fixed weights from the construction window, held through the "
+                                      "evaluation window; the derivative is marked to market each step."),
+                    "footer_caption": ("Out-of-sample buy-and-hold of the grid optimiser's portfolios. "
+                                       "One evaluation window is a single draw. Research & educational "
+                                       "project; not investment advice."),
+                }
+                _bt_verdict = [_md_bold(v) for v in verdict]
+                _bt_pdf = generate_backtest_pdf_report(_bt_meta, _bt_sum,
+                                                       verdict_lines=_bt_verdict, fig_png=_bt_fig_png)
+                st.session_state['_bt_pdf_bytes'] = _bt_pdf
+                st.session_state['_bt_pdf_name'] = "backtest_results.pdf"
+            except Exception as _bt_pdf_err:
+                st.session_state['_bt_pdf_bytes'] = None
+                st.caption(f"PDF generation failed: {_bt_pdf_err}")
+
+            if st.session_state.get('_bt_pdf_bytes'):
+                st.markdown("---")
+                _btl, _btc, _btr = st.columns([1, 2, 1])
+                with _btc:
+                    st.download_button(
+                        label="📄 Export & Download PDF Report",
+                        data=st.session_state['_bt_pdf_bytes'],
+                        file_name=st.session_state.get('_bt_pdf_name', 'backtest_results.pdf'),
+                        mime="application/pdf", type="primary",
+                        key="bt_pdf_download", use_container_width=True)
+
         except Exception as _e:
             st.error(str(_e))
             import traceback as _tb
@@ -5203,6 +5379,32 @@ elif _view == "about":
     st.markdown(
         "📄 **[Download the User Guide (PDF)](https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf)** — step-by-step guide to using the app",
         unsafe_allow_html=False)
+    _paper_file = "Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf"
+    if _os.path.exists(_paper_file):
+        try:
+            with open(_paper_file, "rb") as _ppf:
+                _paper_bytes = _ppf.read()
+            _pcol_l, _pcol_c, _pcol_r = st.columns([1, 2, 1])
+            with _pcol_c:
+                st.download_button(
+                    "📄 Download the technical paper (PDF)",
+                    data=_paper_bytes, file_name=_paper_file,
+                    mime="application/pdf", type="primary",
+                    key="paper_dl", use_container_width=True)
+            st.caption("A short companion note — the work, the approaches, the mathematical "
+                       "framework and the validation.")
+        except Exception:
+            st.markdown(
+                "📄 **[Download the technical paper (PDF)]"
+                "(https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/"
+                "main/Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf)** — the work, the "
+                "approaches and the mathematical framework", unsafe_allow_html=False)
+    else:
+        st.markdown(
+            "📄 **[Download the technical paper (PDF)]"
+            "(https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/"
+            "main/Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf)** — the work, the "
+            "approaches and the mathematical framework", unsafe_allow_html=False)
     st.markdown(
         "**Beyond Mean-Variance Portfolio Optimiser** is an interactive research tool that builds "
         "goal-based portfolios which can include **derivatives and structured products** — something "
