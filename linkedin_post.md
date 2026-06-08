@@ -20,6 +20,8 @@ It's built on the research I first developed in my MSc Finance thesis at USI Lug
 
 🔬 An **out-of-sample back-test**: build the weights on a construction window, then buy-and-hold them through a later window with the derivative marked to market — to see whether what the model expected actually held, and to read off the realised **alpha and beta** of each holding and of the portfolio against a benchmark of your choice.
 
+🔌 **Callable beyond the app** — the optimisation **and** back-testing engines are exposed through a REST API and an MCP server, so external portfolio, risk and trading systems — or an AI agent — can call them directly, not just through this interface.
+
 The optimiser returns **up to four portfolios** side by side — the Markowitz mean-variance optimum, the behavioural optimum without derivatives, the optimum with derivatives, and a same-risk comparison — so you can see exactly what the framework adds.
 
 🔗 Live app: [Link](https://sami-jeddou-behavioral-portfolio-optimizer.streamlit.app/?view=home)
@@ -28,4 +30,4 @@ The optimiser returns **up to four portfolios** side by side — the Markowitz m
 
 I'd genuinely value your thoughts — happy to connect and discuss with anyone interested in quantitative finance, risk, derivatives or portfolio construction. Feel free to reach out.
 
-#QuantitativeFinance #PortfolioOptimisation #RiskManagement #Derivatives #StructuredProducts #Python #MentalAccounting #CVaR #FinTech
+#QuantitativeFinance #PortfolioOptimisation #RiskManagement #Derivatives #StructuredProducts #Python #MentalAccounting #CVaR #MCP #FinTech

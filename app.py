@@ -3728,7 +3728,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
 </div>
 """, unsafe_allow_html=True)
 
-    with st.expander("ℹ️  How this engine works", expanded=True):
+    with st.expander("ℹ️  How this engine works", expanded=False):
         st.markdown(
             "1. **Scenarios.** Draw S joint return scenarios for all securities at once via a "
             "copula — Gaussian (the thesis's multivariate-Normal assumption) or Student-t "
@@ -5058,6 +5058,10 @@ elif _view == "about":
         "optimiser** that simulates thousands of scenarios to handle large, institutional-size "
         "portfolios. An **out-of-sample back-test** then holds the chosen portfolio on later, "
         "unseen data and reports its realised performance (alpha, beta and R² versus a benchmark).")
+    st.markdown(
+        "**Callable beyond the app.** The optimisation and back-testing engines are exposed through a "
+        "REST API and an MCP server, so external portfolio, risk and trading systems — or an AI agent — "
+        "can call them directly, not just through this interface.")
     st.markdown(
         "It grew out of my MSc Finance thesis (USI Lugano, 2012), which extended the mental-accounting "
         "framework of Das & Statman (2009) and Das, Markowitz, Scheid & Statman (2010). The original "
