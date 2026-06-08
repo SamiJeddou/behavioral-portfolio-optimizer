@@ -1715,7 +1715,8 @@ def _mc_joint_scatter(R_sec, names, weights, alpha, ia=None, ib=None):
                    zeroline=True, zerolinecolor="#3a3a5a"),
         yaxis=dict(title="%s return (%%)" % names[ib], gridcolor="#1e2130",
                    zeroline=True, zerolinecolor="#3a3a5a"),
-        legend=dict(bgcolor="rgba(13,17,23,0.6)", bordercolor="#3a3a5a", borderwidth=1))
+        legend=dict(bgcolor="rgba(13,17,23,0.6)", bordercolor="#3a3a5a", borderwidth=1,
+                    font=dict(color="#ffffff", size=12)))
     return fig
 
 
