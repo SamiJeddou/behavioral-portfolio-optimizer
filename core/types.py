@@ -8,7 +8,18 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Any
+import math
 import numpy as np
+
+
+def _jsonable(x):
+    """JSON-safe scalar: non-finite floats (NaN/inf) -> None, numpy floats -> float."""
+    if isinstance(x, (float, np.floating)):
+        x = float(x)
+        return x if math.isfinite(x) else None
+    if isinstance(x, (int, np.integer)):
+        return int(x)
+    return x
 
 
 # ── Inputs ────────────────────────────────────────────────────────────────────
@@ -112,13 +123,12 @@ class PortfolioResult:
         """JSON-friendly form for an API / MCP response."""
         return {
             "labels": list(self.labels),
-            "weights": [float(x) for x in self.weights],
-            "expected_return": self.expected_return,
-            "std_dev": self.std_dev,
-            "shortfall_stat": self.shortfall_stat,
-            "feasible": self.feasible,
-            "meta": {k: (float(v) if isinstance(v, (int, float, np.floating)) else v)
-                     for k, v in self.meta.items()},
+            "weights": [_jsonable(x) for x in self.weights],
+            "expected_return": _jsonable(self.expected_return),
+            "std_dev": _jsonable(self.std_dev),
+            "shortfall_stat": _jsonable(self.shortfall_stat),
+            "feasible": bool(self.feasible),
+            "meta": {k: _jsonable(v) for k, v in self.meta.items()},
         }
 
 
@@ -130,4 +140,5 @@ class FrontierPoint:
     feasible: bool = True
 
     def to_dict(self) -> dict:
-        return {"x": self.x, "y": self.y, "label": self.label, "feasible": self.feasible}
+        return {"x": _jsonable(self.x), "y": _jsonable(self.y),
+                "label": self.label, "feasible": bool(self.feasible)}
