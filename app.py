@@ -5407,8 +5407,8 @@ The framework is designed to be extensible — future versions may incorporate a
 - Built and led a €25M+ portfolio of concurrent risk and finance transformation initiatives
 - Delivered major regulatory programs across multiple jurisdictions (EMIR, Basel IV, FRTB, IRRBB, IFRS 9, MiFID II, ISO 20022)
 
-I am currently available for senior transformation, program director, or portfolio management
-engagements — either freelance/contract or permanent — in France, Europe, or remote/hybrid.
+Open to senior transformation, program director, or portfolio management
+engagements — freelance, contract, or permanent — in France, Europe, or remote/hybrid.
 """)
 
     st.markdown("---")
