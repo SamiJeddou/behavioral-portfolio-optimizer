@@ -5370,7 +5370,9 @@ elif _view == "glossary":
         st.session_state["glossary_term"] = ""
 
     for category, terms in GLOSSARY_TERMS.items():
-        st.markdown(f"**{category}**")
+        st.markdown(
+            f'<h4 style="color:#4a9eff;margin:0.4rem 0 0.25rem">{category.replace("&", "&amp;")}</h4>',
+            unsafe_allow_html=True)
         cols = st.columns(3)
         for i, term in enumerate(terms):
             if cols[i % 3].button(term, key=f"gloss_{term}", use_container_width=True):
