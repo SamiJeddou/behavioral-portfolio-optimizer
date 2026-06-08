@@ -5030,9 +5030,27 @@ elif _view == "about":
     st.markdown("---")
 
     st.markdown('<h3 style="color:#4a9eff">About this app</h3>', unsafe_allow_html=True)
-    st.markdown(
-        "📄 **[Download the User Guide (PDF)](https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf)** — step-by-step guide to using the app",
-        unsafe_allow_html=False)
+    _guide_file = "Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf"
+    _guide_url = ("https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/"
+                  "main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf")
+    _guide_link_md = ("📄 **[Download the User Guide (PDF)]"
+                      f"({_guide_url})** — step-by-step guide to using the app")
+    if _os.path.exists(_guide_file):
+        try:
+            with open(_guide_file, "rb") as _ugf:
+                _guide_bytes = _ugf.read()
+            _gcol_l, _gcol_c, _gcol_r = st.columns([1, 2, 1])
+            with _gcol_c:
+                st.download_button(
+                    "📄 Download the User Guide (PDF)",
+                    data=_guide_bytes, file_name=_guide_file,
+                    mime="application/pdf", type="primary",
+                    key="guide_dl", use_container_width=True)
+            st.caption("A step-by-step guide to using the app.")
+        except Exception:
+            st.markdown(_guide_link_md, unsafe_allow_html=False)
+    else:
+        st.markdown(_guide_link_md, unsafe_allow_html=False)
     _paper_file = "Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf"
     if _os.path.exists(_paper_file):
         try:
