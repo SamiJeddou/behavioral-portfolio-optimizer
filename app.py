@@ -1106,13 +1106,13 @@ GRID_OPTIONS = {
 GRID_EXPLANATIONS = {
     "⚡ Fast (m=21, m'=15)": (
         "Uses a coarse grid of 21 return scenarios per security and 15 weight steps per dimension. "
-        "Runs in ~10-20 seconds. Results are directionally correct and useful for exploring "
+        "Runs quickly — seconds for a small universe. Results are directionally correct and useful for exploring "
         "parameters, but weights and expected returns may differ from the precise solution by "
         "a few percentage points. Recommended for initial exploration and parameter sensitivity testing."
     ),
     "⚖️  Standard (m=35, m'=50)": (
         "Uses a medium grid with 35 return scenarios and 50 weight steps per dimension. "
-        "Runs in approximately 3–8 minutes depending on the number of securities and derivative type. Provides a good balance between speed and accuracy — "
+        "Minutes-scale on a full local run (longer with more securities or derivatives). Provides a good balance between speed and accuracy — "
         "results are close to the precise solution in most cases. "
         "Recommended for most use cases once you have identified the right parameters."
     ),
@@ -1120,7 +1120,7 @@ GRID_EXPLANATIONS = {
         "Matches the original thesis parameters exactly — 51 return scenarios and 99 weight steps, "
         "the same values used in Das & Statman (2009) and Jeddou (2012). "
         "Results are publication-quality and directly comparable to academic benchmarks. "
-        "May take 15–30 minutes depending on the number of securities and derivative type. "
+        "Minutes to tens of minutes on a full local run (longer with more securities or derivatives). "
         "Recommended for final results and for verifying the equivalence point."
     ),
     "🚀 Turbo (High-precision accuracy, ~seconds)": (
@@ -2220,8 +2220,8 @@ with st.sidebar:
                                label_visibility="collapsed",key="grid_lbl")
         m_val,mp_val=GRID_OPTIONS[grid_lbl]
         if _n_total >= 5:
-            st.caption("ℹ️ With 5+ securities the exact grid is replaced by a differential-evolution solver — slower, and on the free hosted demo it can stall. For large universes the Scalable Monte-Carlo optimiser is faster and built to scale."
-                       "")
+            st.caption("ℹ️ Turbo is unavailable for 5+ securities — the "
+                       "differential-evolution solver is used automatically.")
 
     # AI-powered grid explanation
     st.markdown(
@@ -2229,16 +2229,16 @@ with st.sidebar:
         unsafe_allow_html=True)
 
     if "Rigorous" in grid_lbl:
-        st.markdown('<div class="warn-box">⚡ Rigorous ES uses a fixed coarse-to-fine engine (resolution does not apply) — fast for small universes. For many assets or CVaR at scale, the Scalable Monte-Carlo optimiser is the better fit.</div>',
+        st.markdown('<div class="warn-box">⚡ Fast for small universes. For many assets or CVaR at scale, use the Scalable Monte-Carlo optimiser.</div>',
                     unsafe_allow_html=True)
     elif "Turbo" in grid_lbl:
-        st.markdown('<div class="warn-box">⚡ Runs in ~seconds at High-precision accuracy (VaR constraint).</div>',
+        st.markdown('<div class="warn-box">⚡ Returns in seconds (VaR, up to 4 assets).</div>',
                     unsafe_allow_html=True)
     elif "High precision" in grid_lbl:
-        st.markdown('<div class="warn-box">⚠️ Finest exact grid (m=51) — the most precise and the heaviest mode. Cost rises steeply with the number of securities, and on the free hosted demo it may stall or not finish. Keep the universe small for a quick run (Turbo, the default, handles VaR with up to 4 assets); for larger portfolios or CVaR/ES at scale use the Scalable Monte-Carlo optimiser; run High locally for exact research-grade results.</div>',
+        st.markdown('<div class="warn-box">⚠️ The heaviest mode — likely to stall on the free hosted demo. Use Turbo (the default) for fast VaR, the Scalable Monte-Carlo optimiser for larger / CVaR portfolios, or run locally for exact results.</div>',
                     unsafe_allow_html=True)
     elif "Standard" in grid_lbl:
-        st.markdown('<div class="warn-box">⏱️ Medium-resolution exact grid (m=35) — more precise than Fast, lighter than High, but still heavy and it grows fast with the number of securities; on the free hosted demo it may not finish. Keep the universe small for a quick run, or use the Scalable Monte-Carlo optimiser for larger / CVaR portfolios; run Standard locally for an exact result.</div>',
+        st.markdown('<div class="warn-box">⏱️ Heavy on the free hosted demo — may not finish beyond a few assets. For larger or CVaR portfolios use the Scalable Monte-Carlo optimiser; run locally for the exact result.</div>',
                     unsafe_allow_html=True)
 
     st.divider()
@@ -4728,7 +4728,7 @@ elif _view == "backtest":
 
     _bt_head("Grid resolution")
     bt_res = st.selectbox(
-        "Grid precision", ["Fast", "Standard", "High"], index=1, key="bt_res",
+        "Grid precision", ["Fast", "Standard", "High"], index=0, key="bt_res",
         help="Weight-grid precision for the construction optimiser "
              "(Fast m=21 / Standard m=35 / High m=51). Turbo is omitted here — it is "
              "unreliable when a derivative is in the portfolio, which the backtest always "
@@ -4743,6 +4743,12 @@ elif _view == "backtest":
         f'<div style="color:#1a3a5c;margin-top:.4rem">'
         f'{GRID_EXPLANATIONS.get(_bt_grid_key, "No explanation available.")}</div></details>',
         unsafe_allow_html=True)
+    if bt_res == "High":
+        st.markdown('<div class="warn-box">⚠️ The heaviest mode — and a backtest re-optimises at every walk-forward window, so on the free hosted demo it is likely to stall. Use Fast here and keep the universe small, or run High locally.</div>',
+                    unsafe_allow_html=True)
+    elif bt_res == "Standard":
+        st.markdown('<div class="warn-box">⏱️ Heavy on the free hosted demo — a backtest re-optimises at every window, so this may not finish beyond a few assets. Use Fast for a quick run, or run Standard locally.</div>',
+                    unsafe_allow_html=True)
 
     _bt_head("Benchmark (for α / β)")
     bt_bench_choice = st.selectbox(
