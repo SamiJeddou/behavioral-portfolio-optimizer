@@ -106,6 +106,30 @@ There are two independent choices — the **constraint method** (what downside r
 | `cgn` | Capital-guaranteed note (capped or uncapped) |
 | `barrier_m` | Barrier-M note |
 
+## Backtest Engine
+
+The backtest engine evaluates the constructed portfolios **out of sample** with a walk-forward procedure, so realised performance is measured on data the optimiser never saw during construction.
+
+**Walk-forward methodology**
+
+- The price history is split into rolling estimation / holding windows.
+- At each rebalance date the **construction optimiser** (the same grid engine used in the Optimiser) is re-fit on the trailing estimation window to build the behavioural portfolio, including its derivative.
+- That portfolio is then held over the following out-of-sample window, with any **derivative marked to market** each period using the same pricing as the optimiser.
+- Period returns are chained across all windows into a realised equity curve.
+
+**Outputs**
+
+- Realised out-of-sample return, volatility and the downside / shortfall statistic.
+- A **CAPM regression against a benchmark** — realised **alpha, beta and R²** — to show whether the behavioural / derivative tilt produced out-of-sample alpha rather than just beta.
+- Out-of-sample equity curves for the constructed portfolios, plotted side by side.
+
+**Resolution & safeguards**
+
+- Runs the grid construction optimiser at a selectable resolution — **Fast (m=21) / Standard (m=35) / High (m=51)**. **Turbo is not offered** here: the backtest always builds a derivative, where Turbo's coarse-to-fine VaR shortcut is unreliable. **Rigorous ES** is chosen via the risk-measure control.
+- Because the optimiser is re-run at **every** walk-forward window, the cost is higher than a single optimisation. A **state-space guard** rejects any run whose grid (m^N states) would exceed a safe budget, returning a clear message instead of hanging.
+
+**Availability** — exposed in the app as the **Backtest** tool, and callable headless via **`POST /backtest`** (REST) and **`backtest_tool`** (MCP).
+
 ---
 
 ## Project Structure
