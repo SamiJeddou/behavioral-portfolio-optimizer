@@ -2220,8 +2220,8 @@ with st.sidebar:
                                label_visibility="collapsed",key="grid_lbl")
         m_val,mp_val=GRID_OPTIONS[grid_lbl]
         if _n_total >= 5:
-            st.caption("ℹ️ Turbo is unavailable for 5+ securities — the "
-                       "differential-evolution solver is used automatically.")
+            st.caption("ℹ️ With 5+ securities the exact grid is replaced by a differential-evolution solver — slower, and on the free hosted demo it can stall. For large universes the Scalable Monte-Carlo optimiser is faster and built to scale."
+                       "")
 
     # AI-powered grid explanation
     st.markdown(
@@ -2229,16 +2229,16 @@ with st.sidebar:
         unsafe_allow_html=True)
 
     if "Rigorous" in grid_lbl:
-        st.markdown('<div class="warn-box">⚡ Rigorous ES runs at high-precision accuracy (m=51) in ~seconds — resolution is fixed for this mode.</div>',
+        st.markdown('<div class="warn-box">⚡ Rigorous ES uses a fixed coarse-to-fine engine (resolution does not apply) — fast for small universes. For many assets or CVaR at scale, the Scalable Monte-Carlo optimiser is the better fit.</div>',
                     unsafe_allow_html=True)
     elif "Turbo" in grid_lbl:
         st.markdown('<div class="warn-box">⚡ Runs in ~seconds at High-precision accuracy (VaR constraint).</div>',
                     unsafe_allow_html=True)
     elif "High precision" in grid_lbl:
-        st.markdown('<div class="warn-box">⚠️ May take 15–30 min or more. Recommended for final results only.</div>',
+        st.markdown('<div class="warn-box">⚠️ Finest exact grid (m=51) — the most precise and the heaviest mode. Cost rises steeply with the number of securities, and on the free hosted demo it may stall or not finish. Keep the universe small for a quick run (Turbo, the default, handles VaR with up to 4 assets); for larger portfolios or CVaR/ES at scale use the Scalable Monte-Carlo optimiser; run High locally for exact research-grade results.</div>',
                     unsafe_allow_html=True)
     elif "Standard" in grid_lbl:
-        st.markdown('<div class="warn-box">⏱️ ~3–8 min or more depending on securities and derivative type.</div>',
+        st.markdown('<div class="warn-box">⏱️ Medium-resolution exact grid (m=35) — more precise than Fast, lighter than High, but still heavy and it grows fast with the number of securities; on the free hosted demo it may not finish. Keep the universe small for a quick run, or use the Scalable Monte-Carlo optimiser for larger / CVaR portfolios; run Standard locally for an exact result.</div>',
                     unsafe_allow_html=True)
 
     st.divider()
