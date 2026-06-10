@@ -1087,8 +1087,7 @@ def get_ai_chat_response(question, portfolio_context=""):
         )
         return message.content[0].text
     except Exception:
-        return ("AI response unavailable — the custom question feature requires an Anthropic API key. "
-                "Please check the pre-written explanations above for common terms.")
+        return None
 
 
 DEFAULT_MEANS = [0.05, 0.10, 0.25]
@@ -5543,6 +5542,8 @@ elif _view == "glossary":
         st.session_state["glossary_response"] = ""
     if "glossary_term" not in st.session_state:
         st.session_state["glossary_term"] = ""
+    if "glossary_notice" not in st.session_state:
+        st.session_state["glossary_notice"] = ""
 
     for category, terms in GLOSSARY_TERMS.items():
         st.markdown(
@@ -5552,6 +5553,7 @@ elif _view == "glossary":
         for i, term in enumerate(terms):
             if cols[i % 3].button(term, key=f"gloss_{term}", use_container_width=True):
                 st.session_state["glossary_term"] = term
+                st.session_state["glossary_notice"] = ""
                 with st.spinner(f"Looking up: {term}..."):
                     st.session_state["glossary_response"] = get_explanation(term)
         st.markdown("")
@@ -5565,13 +5567,28 @@ elif _view == "glossary":
         if custom_q.strip():
             st.session_state["glossary_term"] = custom_q
             with st.spinner("Thinking..."):
-                st.session_state["glossary_response"] = get_ai_chat_response(
+                answer = get_ai_chat_response(
                     custom_q,
                     portfolio_context=f"Portfolio has {len(means_in)} securities with means {[f'{m*100:.1f}%' for m in means_in]}")
+            if answer:
+                st.session_state["glossary_response"] = answer
+                st.session_state["glossary_notice"] = ""
+            else:
+                st.session_state["glossary_response"] = ""
+                st.session_state["glossary_notice"] = (
+                    "Custom AI answers aren't enabled in this demo, but the glossary above covers "
+                    "each term with a clear, pre-written explanation. Have a look there for the concept you're after.")
         else:
             st.warning("Please enter a question first.")
 
-    if st.session_state["glossary_response"]:
+    if st.session_state["glossary_notice"]:
+        st.markdown("---")
+        st.info(st.session_state["glossary_notice"], icon="💡")
+        if st.button("Clear response", key="gloss_clear_notice"):
+            st.session_state["glossary_notice"] = ""
+            st.session_state["glossary_term"] = ""
+            st.rerun()
+    elif st.session_state["glossary_response"]:
         st.markdown("---")
         st.markdown(f"**{st.session_state['glossary_term']}**")
         st.markdown(
@@ -5579,7 +5596,7 @@ elif _view == "glossary":
             f'padding:1rem 1.2rem;color:#c0c8d8;font-size:.9rem;line-height:1.6">'
             f'{st.session_state["glossary_response"]}</div>',
             unsafe_allow_html=True)
-        if st.button("Clear response"):
+        if st.button("Clear response", key="gloss_clear_resp"):
             st.session_state["glossary_response"] = ""
             st.session_state["glossary_term"] = ""
             st.rerun()
