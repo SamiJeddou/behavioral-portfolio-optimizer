@@ -93,6 +93,20 @@ There are two independent choices — the **constraint method** (what downside r
 
 ---
 
+## Worked examples
+
+A complete, annotated walkthrough of a single optimiser run — inputs through to the efficient frontiers it produces — is available as a slide deck: **[Worked Examples (PDF)](https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Worked_Examples.pdf)**.
+
+**The setup — the four inputs that define a run** (Engine 1 · Grid Optimiser — Exact): portfolio data, the derivative / structured product, the mental-account (downside) constraint, and the grid resolution.
+
+![Worked example - setup: portfolio data, derivative, mental-account constraint and grid-resolution input panels](worked_example_setup.png)
+
+**The result — mean-variance vs behavioural efficient frontiers.** With no derivative the Markowitz and behavioural frontiers coincide (the MVT/MAT equivalence); adding the straddle opens a third frontier above both, reaching a higher expected return at the same downside limit.
+
+![Worked example - result: Markowitz, behavioural, and derivative (straddle) efficient frontiers](worked_example_result.png)
+
+---
+
 ## Supported Derivatives
 
 | Type | Description |
