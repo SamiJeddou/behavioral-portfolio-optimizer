@@ -5311,6 +5311,10 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
                 "exposed to derivative basin-miss errors; the exhaustive-grid resolutions "
                 "are immune to that and limited only by grid coarseness.")
 
+    st.image("grid_routing.png", use_container_width=True)
+    st.caption("Grid Optimiser — how the constraint, resolution and engine are chosen "
+               "(blue = you choose · gold = the tool decides automatically).")
+
     st.markdown('<h3 style="color:#4a9eff">The theory — MVT / MAT equivalence</h3>', unsafe_allow_html=True)
     st.markdown(
         "When no derivatives are present, the mean-variance and behavioral frontiers converge exactly. "
@@ -5379,6 +5383,21 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
         "of each security and of the portfolio against a benchmark you select (S&P 500, global ACWI, "
         "a 60/40 blend, or any ticker), with an optional expected-market-return input that adds a "
         "CAPM required return and an ex-ante alpha.")
+
+    st.markdown("**Resolution &amp; routing.** "
+                "The back-test reuses the same three constraint methods — VaR, thesis-faithful ES, "
+                "and Rigorous-ES (fixed m = 51). It offers three resolutions — Fast (m = 21, m&prime; = 15), "
+                "Standard (m = 35, m&prime; = 50) and High (m = 51, m&prime; = 99) — but **not Turbo**: "
+                "because the optimiser is re-run at every walk-forward window, Turbo&rsquo;s coarse-to-fine "
+                "seeding is not reliable across the rolling windows, so it is deliberately omitted. "
+                "The same security-count routing applies under the hood "
+                "(**n &le; 4 → exhaustive grid**, **n &ge; 5 → differential evolution**). "
+                "Re-optimising at every window makes the back-test the heaviest path, so **Fast** is "
+                "recommended on the hosted demo, with Standard / High better run locally.")
+
+    st.image("backtest_routing.png", use_container_width=True)
+    st.caption("Back-test — same constraint choice, resolutions without Turbo, re-optimised at "
+               "every walk-forward window (blue = you choose · gold = the tool decides automatically).")
 
     st.markdown("---")
 
