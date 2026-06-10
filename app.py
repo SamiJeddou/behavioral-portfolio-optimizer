@@ -2199,6 +2199,7 @@ with st.sidebar:
     # Turbo accelerates the VaR path only; hide it when ES is selected. Rigorous
     # ES uses the high-precision (m=51) state space via the fast coarse-to-fine
     # engine, so its resolution is fixed and the selector does not apply.
+    _n_total = n_sec_total + (1 if der_type is not None else 0)
     if use_es_rigorous:
         grid_lbl="🚀 Rigorous ES — high-precision accuracy (~seconds)"
         m_val,mp_val=51,99
@@ -2219,13 +2220,15 @@ with st.sidebar:
         grid_lbl=st.selectbox("Resolution",_res_keys,
                                label_visibility="collapsed",key="grid_lbl")
         m_val,mp_val=GRID_OPTIONS[grid_lbl]
-        if _n_total >= 5:
-            st.caption("ℹ️ Turbo is unavailable for 5+ securities — the "
-                       "differential-evolution solver is used automatically.")
 
     # AI-powered grid explanation
+    _ai_expl = GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")
+    if _n_total >= 5 and not use_es_rigorous:
+        _ai_expl += (" ⚠️ Note — with 5+ instruments the exhaustive grid is too large, so the "
+                     "optimiser automatically uses the differential-evolution solver instead; the "
+                     "result is a near-optimal approximation, not an exact every-combination search.")
     st.markdown(
-        f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'        '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What does this resolution mean?</summary>'        f'<div style="color:#1a3a5c;margin-top:.4rem">{GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")}</div></details>',
+        f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'        '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What does this resolution mean?</summary>'        f'<div style="color:#1a3a5c;margin-top:.4rem">{_ai_expl}</div></details>',
         unsafe_allow_html=True)
 
     if "Rigorous" in grid_lbl:
@@ -2233,6 +2236,9 @@ with st.sidebar:
                     unsafe_allow_html=True)
     elif "Turbo" in grid_lbl:
         st.markdown('<div class="warn-box">⚡ Returns in seconds (VaR, up to 4 assets).</div>',
+                    unsafe_allow_html=True)
+    elif _n_total >= 5:
+        st.markdown('<div class="warn-box">⚠️ With ' + str(_n_total) + ' instruments the exhaustive grid is too large to enumerate, so the optimiser automatically switches to the <b>differential-evolution</b> solver — an automatic guided search. Your <b>' + grid_lbl.split("(")[0].strip() + '</b> choice no longer runs an exact, every-combination grid; the result is a fast, near-optimal approximation. For an exact grid keep to 4 instruments or fewer, or use the Scalable Monte-Carlo optimiser for larger / CVaR portfolios.</div>',
                     unsafe_allow_html=True)
     elif "High precision" in grid_lbl:
         st.markdown('<div class="warn-box">⚠️ The heaviest mode — likely to stall on the free hosted demo. Use Turbo (the default) for fast VaR, the Scalable Monte-Carlo optimiser for larger / CVaR portfolios, or <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer/blob/main/Run_Locally_Guide.pdf" target="_blank" rel="noopener" style="color:#fde68a;text-decoration:underline;font-weight:600">run locally</a> for exact results.</div>',
