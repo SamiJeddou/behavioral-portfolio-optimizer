@@ -2235,10 +2235,10 @@ with st.sidebar:
         st.markdown('<div class="warn-box">⚡ Returns in seconds (VaR, up to 4 assets).</div>',
                     unsafe_allow_html=True)
     elif "High precision" in grid_lbl:
-        st.markdown('<div class="warn-box">⚠️ The heaviest mode — likely to stall on the free hosted demo. Use Turbo (the default) for fast VaR, the Scalable Monte-Carlo optimiser for larger / CVaR portfolios, or run locally for exact results.</div>',
+        st.markdown('<div class="warn-box">⚠️ The heaviest mode — likely to stall on the free hosted demo. Use Turbo (the default) for fast VaR, the Scalable Monte-Carlo optimiser for larger / CVaR portfolios, or <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer/blob/main/Run_Locally_Guide.pdf" target="_blank" rel="noopener" style="color:#fde68a;text-decoration:underline;font-weight:600">run locally</a> for exact results.</div>',
                     unsafe_allow_html=True)
     elif "Standard" in grid_lbl:
-        st.markdown('<div class="warn-box">⏱️ Heavy on the free hosted demo — may not finish beyond a few assets. For larger or CVaR portfolios use the Scalable Monte-Carlo optimiser; run locally for the exact result.</div>',
+        st.markdown('<div class="warn-box">⏱️ Heavy on the free hosted demo — may not finish beyond a few assets. For larger or CVaR portfolios use the Scalable Monte-Carlo optimiser; <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer/blob/main/Run_Locally_Guide.pdf" target="_blank" rel="noopener" style="color:#fde68a;text-decoration:underline;font-weight:600">run locally</a> for the exact result.</div>',
                     unsafe_allow_html=True)
 
     st.divider()
@@ -4744,10 +4744,10 @@ elif _view == "backtest":
         f'{GRID_EXPLANATIONS.get(_bt_grid_key, "No explanation available.")}</div></details>',
         unsafe_allow_html=True)
     if bt_res == "High":
-        st.markdown('<div class="warn-box">⚠️ The heaviest mode — and a backtest re-optimises at every walk-forward window, so on the free hosted demo it is likely to stall. Use Fast here and keep the universe small, or run High locally.</div>',
+        st.markdown('<div class="warn-box">⚠️ The heaviest mode — and a backtest re-optimises at every walk-forward window, so on the free hosted demo it is likely to stall. Use Fast here and keep the universe small, or <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer/blob/main/Run_Locally_Guide.pdf" target="_blank" rel="noopener" style="color:#fde68a;text-decoration:underline;font-weight:600">run High locally</a>.</div>',
                     unsafe_allow_html=True)
     elif bt_res == "Standard":
-        st.markdown('<div class="warn-box">⏱️ Heavy on the free hosted demo — a backtest re-optimises at every window, so this may not finish beyond a few assets. Use Fast for a quick run, or run Standard locally.</div>',
+        st.markdown('<div class="warn-box">⏱️ Heavy on the free hosted demo — a backtest re-optimises at every window, so this may not finish beyond a few assets. Use Fast for a quick run, or <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer/blob/main/Run_Locally_Guide.pdf" target="_blank" rel="noopener" style="color:#fde68a;text-decoration:underline;font-weight:600">run Standard locally</a>.</div>',
                     unsafe_allow_html=True)
 
     _bt_head("Benchmark (for α / β)")
