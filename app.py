@@ -5311,7 +5311,7 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
                 "exposed to derivative basin-miss errors; the exhaustive-grid resolutions "
                 "are immune to that and limited only by grid coarseness.")
 
-    st.image("grid_routing.png", use_container_width=True)
+    st.image("grid_routing.png", width=600)
     st.caption("Grid Optimiser — how the constraint, resolution and engine are chosen "
                "(blue = you choose · gold = the tool decides automatically).")
 
@@ -5395,7 +5395,7 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
                 "Re-optimising at every window makes the back-test the heaviest path, so **Fast** is "
                 "recommended on the hosted demo, with Standard / High better run locally.")
 
-    st.image("backtest_routing.png", use_container_width=True)
+    st.image("backtest_routing.png", width=600)
     st.caption("Back-test — same constraint choice, resolutions without Turbo, re-optimised at "
                "every walk-forward window (blue = you choose · gold = the tool decides automatically).")
 
