@@ -42,7 +42,7 @@ This work is based on the mental-accounting portfolio theory introduced in:
 The MVT/MAT equivalence — first proven in Das, Markowitz, Scheid & Statman (2010) JFQA and applied in Chapter 4 of Jeddou (2012) — shows that for a given threshold H and shortfall probability α, there exists an implied risk-aversion coefficient λ such that the mean-variance optimal portfolio and the behavioural optimal portfolio are identical — **when no derivatives are present**. Adding derivatives breaks this equivalence and reveals the superiority of the behavioural approach.
 
 This Python implementation is based on the original R program developed as part of:
-> **Sami Jeddou** (2012) — *"Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios"*, Master in Finance Thesis, Università della Svizzera italiana (USI Lugano), supervised by Prof. Enrico De Giorgi. [PDF — USI institutional repository](https://thesis.bul.sbu.usi.ch/theses/1012-1112BenJeddou/pdf?1390987439)
+> **Sami Ben Jeddou** (2012) — *"Beyond Mean-Variance: Options and Structured Products in Behavioral Portfolios"*, Master in Finance Thesis, Università della Svizzera italiana (USI Lugano), supervised by Prof. Enrico De Giorgi. [PDF — USI institutional repository](https://thesis.bul.sbu.usi.ch/theses/1012-1112BenJeddou/pdf?1390987439)
 
 The thesis extended the empirical analysis of Das & Statman (2009) through additional derivative simulations and broader parameter analysis. This app further develops that work with live market data connectivity, an expanded derivative library, an interactive optimisation interface, and PDF export.
 
