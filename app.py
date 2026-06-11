@@ -1851,133 +1851,134 @@ with _bk:
 # SIDEBAR
 # ═════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
-    st.markdown("### ⚙️ Optimisation Parameters")
+    st.markdown('<h3 style="text-align:center">⚙️ Optimisation Parameters</h3>', unsafe_allow_html=True)
     st.divider()
 
     # ── 1. Data source ────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">1</span><span style="display:block">📂 PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
-    st.markdown(
-        '<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0 .6rem 0;font-size:.82rem">'
-        '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: How these inputs are built</summary>'
-        '<div style="color:#1a3a5c;margin-top:.4rem">From the prices of your chosen securities, the app computes period returns, cleans them (drops stale rows, winsorises ±5σ outliers), and annualises them into the three inputs the optimiser needs — expected returns, volatilities, and the correlation matrix (×252 for daily data, ×12 for monthly). These primary securities are assumed <b>multivariate normal</b>, the foundation of the framework; any derivative is then priced by Black-Scholes on the <b>highest-volatility security</b> and layered on top, which is how non-normal payoffs enter an otherwise Gaussian portfolio.</div></details>',
-        unsafe_allow_html=True)
-    data_mode = st.radio("Data source",
-        ["Default (3-asset sample case)",
-         "Live market data (Yahoo Finance)",
-         "Enter manually",
-         "Upload CSV"],
-        index=0, label_visibility="collapsed", key="data_mode")
+    with st.container():
+        st.markdown('<div class="section-header" id="sec1hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">1</span><span style="display:block">📂 PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
+        st.markdown(
+            '<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0 .6rem 0;font-size:.82rem">'
+            '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: How these inputs are built</summary>'
+            '<div style="color:#1a3a5c;margin-top:.4rem">From the prices of your chosen securities, the app computes period returns, cleans them (drops stale rows, winsorises ±5σ outliers), and annualises them into the three inputs the optimiser needs — expected returns, volatilities, and the correlation matrix (×252 for daily data, ×12 for monthly). These primary securities are assumed <b>multivariate normal</b>, the foundation of the framework; any derivative is then priced by Black-Scholes on the <b>highest-volatility security</b> and layered on top, which is how non-normal payoffs enter an otherwise Gaussian portfolio.</div></details>',
+            unsafe_allow_html=True)
+        data_mode = st.radio("Data source",
+            ["Default (3-asset sample case)",
+             "Live market data (Yahoo Finance)",
+             "Enter manually",
+             "Upload CSV"],
+            index=0, label_visibility="collapsed", key="data_mode")
 
-    means_in=DEFAULT_MEANS[:]; sigs_in=DEFAULT_SIGS[:]
-    corr_in=[r[:] for r in DEFAULT_CORR]; names_in=DEFAULT_NAMES[:]
-    last_prices={}; data_valid=True
+        means_in=DEFAULT_MEANS[:]; sigs_in=DEFAULT_SIGS[:]
+        corr_in=[r[:] for r in DEFAULT_CORR]; names_in=DEFAULT_NAMES[:]
+        last_prices={}; data_valid=True
 
-    if data_mode=="Default (3-asset sample case)":
-        st.markdown('<div class="ok-box">✓ Default base case loaded — Means: 5%, 10%, 25% | Std devs: 5%, 20%, 50%</div>',
-                    unsafe_allow_html=True)
+        if data_mode=="Default (3-asset sample case)":
+            st.markdown('<div class="ok-box">✓ Default base case loaded — Means: 5%, 10%, 25% | Std devs: 5%, 20%, 50%</div>',
+                        unsafe_allow_html=True)
 
-    elif data_mode=="Live market data (Yahoo Finance)":
-        ticker_str=st.text_input("Ticker symbols (comma-separated)",
-                                  value="AAPL, MSFT, JPM",
-                                  placeholder="e.g. AAPL, MSFT, BNP.PA, GS")
-        col1,col2=st.columns(2)
-        d_start=col1.date_input("From", value=date(2020,1,1))
-        d_end  =col2.date_input("To",   value=date.today()-timedelta(days=1))
-        freq   =st.radio("Return frequency",["Daily","Monthly"],horizontal=True)
-        st.session_state['_live_period'] = f"{d_start.isoformat()} → {d_end.isoformat()}"
-        st.session_state['_live_freq'] = freq
-        fetch_btn=st.button("🔄 Fetch data", use_container_width=True)
-        if fetch_btn:
-            tickers=[t.strip().upper() for t in ticker_str.split(",") if t.strip()]
-            with st.spinner(f"Fetching {len(tickers)} tickers from Yahoo Finance..."):
-                m,s,c,n,lp,err,cleaning=fetch_tickers(tickers,d_start,d_end,freq)
-            if err:
-                st.error(f"Fetch failed: {err}"); data_valid=False
+        elif data_mode=="Live market data (Yahoo Finance)":
+            ticker_str=st.text_input("Ticker symbols (comma-separated)",
+                                      value="AAPL, MSFT, JPM",
+                                      placeholder="e.g. AAPL, MSFT, BNP.PA, GS")
+            col1,col2=st.columns(2)
+            d_start=col1.date_input("From", value=date(2020,1,1))
+            d_end  =col2.date_input("To",   value=date.today()-timedelta(days=1))
+            freq   =st.radio("Return frequency",["Daily","Monthly"],horizontal=True)
+            st.session_state['_live_period'] = f"{d_start.isoformat()} → {d_end.isoformat()}"
+            st.session_state['_live_freq'] = freq
+            fetch_btn=st.button("🔄 Fetch data", use_container_width=True)
+            if fetch_btn:
+                tickers=[t.strip().upper() for t in ticker_str.split(",") if t.strip()]
+                with st.spinner(f"Fetching {len(tickers)} tickers from Yahoo Finance..."):
+                    m,s,c,n,lp,err,cleaning=fetch_tickers(tickers,d_start,d_end,freq)
+                if err:
+                    st.error(f"Fetch failed: {err}"); data_valid=False
+                else:
+                    st.session_state["live_data"]=(m,s,c,n,lp)
+                    st.markdown(f'<div class="ok-box">✓ Loaded: {", ".join(n)} '                            f'({cleaning.get("observations","?")} observations after cleaning)</div>',
+                                unsafe_allow_html=True)
+                    if cleaning.get("stale_rows_removed"):
+                        st.markdown(f'<div class="warn-box">⚠️ {cleaning["stale_rows_removed"]} stale price rows removed.</div>',
+                                    unsafe_allow_html=True)
+                    if cleaning.get("outliers_winsorised"):
+                        st.markdown(f'<div class="warn-box">⚠️ {cleaning["outliers_winsorised"]} outlier returns winsorised (±5σ).</div>',
+                                    unsafe_allow_html=True)
+                    if cleaning.get("warning"):
+                        st.markdown(f'<div class="warn-box">⚠️ {cleaning["warning"]}</div>',
+                                    unsafe_allow_html=True)
+            if "live_data" in st.session_state:
+                means_in,sigs_in,corr_in,names_in,last_prices=st.session_state["live_data"]
+                factor_label="annualised" if freq=="Daily" else "annualised (monthly)"
+                with st.expander("Preview statistics"):
+                    df_prev=pd.DataFrame({
+                        "Asset":names_in,
+                        f"Mean ({factor_label})":[f"{m*100:.2f}%" for m in means_in],
+                        "Std dev":[f"{s*100:.2f}%" for s in sigs_in]})
+                    st.dataframe(df_prev,hide_index=True)
+                    st.markdown("**Correlation matrix**")
+                    corr_df=pd.DataFrame(corr_in,index=names_in,columns=names_in)
+                    st.dataframe(corr_df.round(3))
             else:
-                st.session_state["live_data"]=(m,s,c,n,lp)
-                st.markdown(f'<div class="ok-box">✓ Loaded: {", ".join(n)} '                            f'({cleaning.get("observations","?")} observations after cleaning)</div>',
-                            unsafe_allow_html=True)
-                if cleaning.get("stale_rows_removed"):
-                    st.markdown(f'<div class="warn-box">⚠️ {cleaning["stale_rows_removed"]} stale price rows removed.</div>',
-                                unsafe_allow_html=True)
-                if cleaning.get("outliers_winsorised"):
-                    st.markdown(f'<div class="warn-box">⚠️ {cleaning["outliers_winsorised"]} outlier returns winsorised (±5σ).</div>',
-                                unsafe_allow_html=True)
-                if cleaning.get("warning"):
-                    st.markdown(f'<div class="warn-box">⚠️ {cleaning["warning"]}</div>',
-                                unsafe_allow_html=True)
-        if "live_data" in st.session_state:
-            means_in,sigs_in,corr_in,names_in,last_prices=st.session_state["live_data"]
-            factor_label="annualised" if freq=="Daily" else "annualised (monthly)"
-            with st.expander("Preview statistics"):
-                df_prev=pd.DataFrame({
-                    "Asset":names_in,
-                    f"Mean ({factor_label})":[f"{m*100:.2f}%" for m in means_in],
-                    "Std dev":[f"{s*100:.2f}%" for s in sigs_in]})
-                st.dataframe(df_prev,hide_index=True)
-                st.markdown("**Correlation matrix**")
-                corr_df=pd.DataFrame(corr_in,index=names_in,columns=names_in)
-                st.dataframe(corr_df.round(3))
-        else:
-            data_valid=False
+                data_valid=False
 
-    elif data_mode=="Enter manually":
-        n_assets=st.number_input("Number of securities",2,10,3,1)
-        names_in,means_in,sigs_in=[],[],[]
-        st.markdown("**Returns (annualised)**")
-        for i in range(n_assets):
-            c1,c2,c3=st.columns([2,1,1])
-            nm=c1.text_input(f"Name",value=f"Asset {i+1}",key=f"nm_{i}")
-            mn=c2.number_input("Mean%",value=DEFAULT_MEANS[i]*100 if i<3 else 10.0,
-                                key=f"mn_{i}",format="%.1f")/100
-            sg=c3.number_input("Std%", value=DEFAULT_SIGS[i]*100  if i<3 else 20.0,
-                                key=f"sg_{i}",format="%.1f")/100
-            names_in.append(nm); means_in.append(mn); sigs_in.append(sg)
-        st.markdown("**Correlations**")
-        corr_in=[[1.0]*n_assets for _ in range(n_assets)]
-        for i in range(n_assets):
-            for j in range(i+1,n_assets):
-                dv=DEFAULT_CORR[i][j] if i<3 and j<3 else 0.0
-                v=st.slider(f"ρ({names_in[i]}, {names_in[j]})",-1.0,1.0,dv,0.05,
-                             key=f"cr_{i}_{j}")
-                corr_in[i][j]=corr_in[j][i]=v
-        cv=corr_to_cov(sigs_in,corr_in)
-        if np.any(np.linalg.eigvalsh(cv)<-1e-8):
-            st.error("⚠️ Correlation matrix not positive semi-definite."); data_valid=False
+        elif data_mode=="Enter manually":
+            n_assets=st.number_input("Number of securities",2,10,3,1)
+            names_in,means_in,sigs_in=[],[],[]
+            st.markdown("**Returns (annualised)**")
+            for i in range(n_assets):
+                c1,c2,c3=st.columns([2,1,1])
+                nm=c1.text_input(f"Name",value=f"Asset {i+1}",key=f"nm_{i}")
+                mn=c2.number_input("Mean%",value=DEFAULT_MEANS[i]*100 if i<3 else 10.0,
+                                    key=f"mn_{i}",format="%.1f")/100
+                sg=c3.number_input("Std%", value=DEFAULT_SIGS[i]*100  if i<3 else 20.0,
+                                    key=f"sg_{i}",format="%.1f")/100
+                names_in.append(nm); means_in.append(mn); sigs_in.append(sg)
+            st.markdown("**Correlations**")
+            corr_in=[[1.0]*n_assets for _ in range(n_assets)]
+            for i in range(n_assets):
+                for j in range(i+1,n_assets):
+                    dv=DEFAULT_CORR[i][j] if i<3 and j<3 else 0.0
+                    v=st.slider(f"ρ({names_in[i]}, {names_in[j]})",-1.0,1.0,dv,0.05,
+                                 key=f"cr_{i}_{j}")
+                    corr_in[i][j]=corr_in[j][i]=v
+            cv=corr_to_cov(sigs_in,corr_in)
+            if np.any(np.linalg.eigvalsh(cv)<-1e-8):
+                st.error("⚠️ Correlation matrix not positive semi-definite."); data_valid=False
 
-    elif data_mode=="Upload CSV":
-        st.markdown('<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:8px;padding:.6rem 1rem;margin-bottom:.5rem;color:#111111;font-size:.82rem">'
-                    '📋 <b>Format:</b> First col = dates, remaining cols = asset prices.</div>',
-                    unsafe_allow_html=True)
-        sample="""Date,Low_Risk,Mid_Risk,High_Risk
-2020-01-02,100,100,100
-2020-01-03,100.05,100.15,100.40
-2020-01-06,100.08,100.30,100.85
-2020-01-07,100.12,100.10,101.20
-2020-01-08,100.09,100.45,100.60"""
-        st.download_button("⬇ Sample CSV",sample,"sample.csv","text/csv")
-        uploaded=st.file_uploader("Upload CSV",type=["csv"])
-        if uploaded:
-            try:
-                means_in,sigs_in,corr_in,names_in=parse_csv(uploaded)
-                st.markdown(f'<div class="ok-box">✓ {len(means_in)} assets: '
-                            f'{", ".join(names_in)}</div>',unsafe_allow_html=True)
-            except Exception as e:
-                st.error(f"Parse error: {e}"); data_valid=False
-        else:
-            data_valid=False
+        elif data_mode=="Upload CSV":
+            st.markdown('<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:8px;padding:.6rem 1rem;margin-bottom:.5rem;color:#111111;font-size:.82rem">'
+                        '📋 <b>Format:</b> First col = dates, remaining cols = asset prices.</div>',
+                        unsafe_allow_html=True)
+            sample="""Date,Low_Risk,Mid_Risk,High_Risk
+    2020-01-02,100,100,100
+    2020-01-03,100.05,100.15,100.40
+    2020-01-06,100.08,100.30,100.85
+    2020-01-07,100.12,100.10,101.20
+    2020-01-08,100.09,100.45,100.60"""
+            st.download_button("⬇ Sample CSV",sample,"sample.csv","text/csv")
+            uploaded=st.file_uploader("Upload CSV",type=["csv"])
+            if uploaded:
+                try:
+                    means_in,sigs_in,corr_in,names_in=parse_csv(uploaded)
+                    st.markdown(f'<div class="ok-box">✓ {len(means_in)} assets: '
+                                f'{", ".join(names_in)}</div>',unsafe_allow_html=True)
+                except Exception as e:
+                    st.error(f"Parse error: {e}"); data_valid=False
+            else:
+                data_valid=False
 
-    # Method notice
-    n_sec_total=len(means_in)
-    if n_sec_total>=5:
-        st.markdown('<div class="warn-box">⚡ 5+ securities detected — '
-                    'differential evolution optimizer will be used automatically.</div>',
-                    unsafe_allow_html=True)
+        # Method notice
+        n_sec_total=len(means_in)
+        if n_sec_total>=5:
+            st.markdown('<div class="warn-box">⚡ 5+ securities detected — '
+                        'differential evolution optimizer will be used automatically.</div>',
+                        unsafe_allow_html=True)
 
     st.divider()
 
     # ── 2. Derivative ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">2</span><span style="display:block">📊 DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header" id="sec2hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">2</span><span style="display:block">📊 DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
     der_label_sel=st.selectbox("Type",list(PREDEFINED_DERIVATIVES.keys()),
                                 index=0,label_visibility="collapsed",key="der_label_sel")
     der_type=PREDEFINED_DERIVATIVES[der_label_sel]
@@ -5566,7 +5567,7 @@ elif _view == "glossary":
         for i, term in enumerate(terms):
             if cols[i % 3].button(term, key=f"gloss_{term}", use_container_width=True):
                 st.session_state["glossary_term"] = term
-                st.session_state["glossary_notice"] = ""
+                st.session_state["glossary_notice"] = f"Showing explanation for {term} — see below."
                 with st.spinner(f"Looking up: {term}..."):
                     st.session_state["glossary_response"] = get_explanation(term)
         st.markdown("")
@@ -5579,29 +5580,15 @@ elif _view == "glossary":
     if st.button("🤖 Ask AI", type="primary"):
         if custom_q.strip():
             st.session_state["glossary_term"] = custom_q
+            st.session_state["glossary_notice"] = ""
             with st.spinner("Thinking..."):
-                answer = get_ai_chat_response(
+                st.session_state["glossary_response"] = get_ai_chat_response(
                     custom_q,
                     portfolio_context=f"Portfolio has {len(means_in)} securities with means {[f'{m*100:.1f}%' for m in means_in]}")
-            if answer:
-                st.session_state["glossary_response"] = answer
-                st.session_state["glossary_notice"] = ""
-            else:
-                st.session_state["glossary_response"] = ""
-                st.session_state["glossary_notice"] = (
-                    "Custom AI answers aren't enabled in this demo, but the glossary above covers "
-                    "each term with a clear, pre-written explanation. Have a look there for the concept you're after.")
         else:
             st.warning("Please enter a question first.")
 
-    if st.session_state["glossary_notice"]:
-        st.markdown("---")
-        st.info(st.session_state["glossary_notice"], icon="💡")
-        if st.button("Clear response", key="gloss_clear_notice"):
-            st.session_state["glossary_notice"] = ""
-            st.session_state["glossary_term"] = ""
-            st.rerun()
-    elif st.session_state["glossary_response"]:
+    if st.session_state["glossary_response"]:
         st.markdown("---")
         st.markdown(f"**{st.session_state['glossary_term']}**")
         st.markdown(
@@ -5609,9 +5596,10 @@ elif _view == "glossary":
             f'padding:1rem 1.2rem;color:#c0c8d8;font-size:.9rem;line-height:1.6">'
             f'{st.session_state["glossary_response"]}</div>',
             unsafe_allow_html=True)
-        if st.button("Clear response", key="gloss_clear_resp"):
+        if st.button("Clear response"):
             st.session_state["glossary_response"] = ""
             st.session_state["glossary_term"] = ""
+            st.session_state["glossary_notice"] = ""
             st.rerun()
 
 # Shared footer on every view except About (which hosts the contact form)
