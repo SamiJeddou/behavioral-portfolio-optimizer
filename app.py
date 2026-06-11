@@ -603,9 +603,9 @@ st.markdown("""
 <style>
 .main{background:#0d1117}.block-container{padding-top:1.5rem;padding-left:2.5rem !important;padding-right:2.5rem !important}
 h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
-.info-box{background:#1a1a2e;border:1px solid #1a6bbf;border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem;color:#ffffff !important}
+.info-box{background:#1a1a2e;border:none;border-radius:8px;padding:1rem 1.2rem;margin-bottom:1rem;color:#ffffff !important}
 .warn-box{background:#1a1200;border:1px solid #f59e0b;border-radius:6px;padding:.5rem 1rem;color:#f59e0b;font-size:.82rem;margin-top:.3rem}
-.ok-box{background:#ffffff;border:1px solid #10b981;border-radius:6px;padding:.5rem 1rem;color:#1a5c3a;font-size:.82rem;margin-top:.3rem}
+.ok-box{background:rgba(16,185,129,.12);border:1px solid #2f8f68;border-radius:6px;padding:.5rem 1rem;color:#86e0b0;font-size:.82rem;margin-top:.3rem}
 
     /* Larger tab labels */
     button[data-baseweb="tab"] p {
@@ -639,6 +639,34 @@ section[data-testid="stSidebar"] [data-baseweb="select"] *{color:#e7ecf4 !import
 section[data-testid="stSidebar"] [data-testid="stExpander"]{background:#161b22 !important;border-color:#30363d !important}
 section[data-testid="stSidebar"] [data-testid="stExpander"] summary,section[data-testid="stSidebar"] [data-testid="stExpander"] p{color:#e7ecf4 !important}
 section[data-testid="stSidebar"] [data-testid="stSliderTickBarMin"],section[data-testid="stSidebar"] [data-testid="stSliderTickBarMax"],section[data-testid="stSidebar"] [data-testid="stSliderThumbValue"]{color:#ffffff !important}
+/* Frames around each numbered section (the container that holds that section's header) */
+section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:has(#sec1hdr):not(:has(#sec2hdr)),section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:has(#sec2hdr):not(:has(#sec1hdr)),section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:has(#sec3hdr):not(:has(#sec1hdr)),section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:has(#sec4hdr):not(:has(#sec1hdr)){border:1px solid #30363d;border-radius:12px;background:linear-gradient(165deg,#1b2330,#161b22);padding:.55rem .65rem}
+section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:has(#sec1hdr):not(:has(#sec2hdr)) [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:last-child [data-testid="stMarkdownContainer"],section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:has(#sec2hdr):not(:has(#sec1hdr)) [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:last-child [data-testid="stMarkdownContainer"],section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:has(#sec3hdr):not(:has(#sec1hdr)) [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:last-child [data-testid="stMarkdownContainer"],section[data-testid="stSidebar"] [data-testid="stVerticalBlockBorderWrapper"]:has(#sec4hdr):not(:has(#sec1hdr)) [data-testid="stVerticalBlock"] > [data-testid="stElementContainer"]:last-child [data-testid="stMarkdownContainer"]{margin-bottom:0 !important}
+/* Gold bottom buttons: Run optimiser + Reset/New simulation */
+section[data-testid="stSidebar"] .st-key-run_opt_btn div.stButton > button,section[data-testid="stSidebar"] .st-key-reset_sim_btn div.stButton > button,section[data-testid="stSidebar"] .st-key-fetch_btn div.stButton > button,section[data-testid="stSidebar"] .st-key-sample_csv_btn div.stDownloadButton > button,section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button{background:linear-gradient(180deg,#E3C77E 0%,#C9A24B 100%) !important;border:none !important;border-bottom:3px solid #9a7b2e !important;color:#0d1117 !important;text-shadow:none !important}
+section[data-testid="stSidebar"] .st-key-run_opt_btn div.stButton > button:hover,section[data-testid="stSidebar"] .st-key-reset_sim_btn div.stButton > button:hover,section[data-testid="stSidebar"] .st-key-fetch_btn div.stButton > button:hover,section[data-testid="stSidebar"] .st-key-sample_csv_btn div.stDownloadButton > button:hover,section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"] button:hover{background:linear-gradient(180deg,#edd596 0%,#d4b15e 100%) !important}
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzone"]{background:rgba(255,255,255,.05) !important;border:1px solid #34527a !important;align-items:center !important;text-align:center !important}
+section[data-testid="stSidebar"] .st-key-sample_csv_btn div.stDownloadButton{display:flex !important;justify-content:center !important}
+section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"],section[data-testid="stSidebar"] [data-testid="stFileUploaderDropzoneInstructions"] *{color:#c0c8d8 !important}
+/* ── Dark main content: convert hard-coded light panels to the frame shade ─────── */
+section[data-testid="stMain"] [style*="background: rgb(255, 255, 255)"][style*="border-radius: 50%"]{background:#E3C77E !important}
+section[data-testid="stMain"] [style*="background: rgb(255, 255, 255)"]:not([style*="border-radius: 50%"]),section[data-testid="stMain"] [style*="background: rgb(255, 251, 234)"],section[data-testid="stMain"] [style*="background: rgb(240, 244, 255)"]{background:#1b2330 !important;border-color:#30363d !important}
+section[data-testid="stMain"] [style*="color: rgb(17, 17, 17)"],section[data-testid="stMain"] [style*="color: rgb(51, 51, 51)"],section[data-testid="stMain"] [style*="color: rgb(85, 85, 85)"],section[data-testid="stMain"] [style*="color: rgb(26, 58, 107)"],section[data-testid="stMain"] [style*="color: rgb(26, 58, 92)"]{color:#e7ecf4 !important}
+/* remove Streamlit's default table cell borders inside the How-to / Output-chart info boxes */
+section[data-testid="stMain"] .info-box table,section[data-testid="stMain"] .info-box table th,section[data-testid="stMain"] .info-box table td,section[data-testid="stMain"] .info-box table tr{border:none !important}
+/* Gold "Tools" back button (top of page) */
+.st-key-_nav_back div.stButton > button{background:linear-gradient(180deg,#E3C77E 0%,#C9A24B 100%) !important;border:none !important;border-bottom:3px solid #9a7b2e !important;color:#0d1117 !important;text-shadow:none !important}
+.st-key-_nav_back div.stButton > button:hover{background:linear-gradient(180deg,#edd596 0%,#d4b15e 100%) !important}
+/* Dark text on gold primary buttons in main area (PDF export, run buttons) */
+section[data-testid="stMain"] button[kind="primary"],section[data-testid="stMain"] button[kind="primary"] *{color:#0d1117 !important}
+/* Frameless Summary table (the #0d1a2e box) */
+section[data-testid="stMain"] [style*="background: rgb(13, 26, 46)"] table,section[data-testid="stMain"] [style*="background: rgb(13, 26, 46)"] table td,section[data-testid="stMain"] [style*="background: rgb(13, 26, 46)"] table th,section[data-testid="stMain"] [style*="background: rgb(13, 26, 46)"] table tr{border:none !important}
+/* Half-width, centered PDF export button */
+.st-key-pdf_download div.stDownloadButton > button{width:50% !important}
+.st-key-pdf_download div.stDownloadButton{display:flex !important;justify-content:center !important}
+/* Portfolio result frames — match the Optimisation Parameters section frame */
+section[data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"]{border-color:#30363d !important}
+section[data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"]:has(.pf-frame-marker):not(:has([data-testid="stVerticalBlockBorderWrapper"] .pf-frame-marker)){background:#1b2330 !important}
 </style>""", unsafe_allow_html=True)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -1500,8 +1528,8 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     # ── Layout ────────────────────────────────────────────────────────────────
     fig.update_layout(
         template='plotly_dark',
-        paper_bgcolor='#0d1117',
-        plot_bgcolor='#0d1117',
+        paper_bgcolor='#1b2330',
+        plot_bgcolor='#1b2330',
         title=dict(
             text='Mean-Variance vs Behavioural Portfolio Efficient Frontier',
             font=dict(color='white', size=15),
@@ -1512,16 +1540,18 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         xaxis=dict(
             title=dict(text='Portfolio Risk — Standard Deviation (%)',
                        font=dict(color='#c0c8d8', size=13)),
-            gridcolor='#1e2130', gridwidth=0.5,
+            gridcolor='#3a4660', gridwidth=1, showgrid=False,
             color='#c0c8d8', zerolinecolor='#2a2a3a',
+            showline=True, linecolor='#c0c8d8', linewidth=1, mirror=False,
             range=[max(0, min(mv_x) - 1),
                    max(max(mv_x), max(der_x) if der_x else 0) * 1.06]
         ),
         yaxis=dict(
             title=dict(text='Expected Return (%)',
                        font=dict(color='#c0c8d8', size=13)),
-            gridcolor='#1e2130', gridwidth=0.5,
+            gridcolor='#3a4660', gridwidth=1, showgrid=True,
             color='#c0c8d8', zerolinecolor='#2a2a3a',
+            showline=True, linecolor='#c0c8d8', linewidth=1, mirror=False,
             range=[min(min(mv_y), min(nd_y)) - 2,
                    max(max(mv_y), max(der_y) if der_y else 0) * 1.08]
         ),
@@ -1845,7 +1875,7 @@ if _view != "optimiser":
         unsafe_allow_html=True)
 _bk, _bk_rest = st.columns([1, 6])
 with _bk:
-    st.button("◀  Tools", key="_nav_back", use_container_width=True, on_click=_go_home)
+    st.button("🏠  Home", key="_nav_back", use_container_width=True, on_click=_go_home)
 
 # ═════════════════════════════════════════════════════════════════════════════
 # SIDEBAR
@@ -1858,9 +1888,9 @@ with st.sidebar:
     with st.container():
         st.markdown('<div class="section-header" id="sec1hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">1</span><span style="display:block">📂 PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
         st.markdown(
-            '<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0 .6rem 0;font-size:.82rem">'
-            '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: How these inputs are built</summary>'
-            '<div style="color:#1a3a5c;margin-top:.4rem">From the prices of your chosen securities, the app computes period returns, cleans them (drops stale rows, winsorises ±5σ outliers), and annualises them into the three inputs the optimiser needs — expected returns, volatilities, and the correlation matrix (×252 for daily data, ×12 for monthly). These primary securities are assumed <b>multivariate normal</b>, the foundation of the framework; any derivative is then priced by Black-Scholes on the <b>highest-volatility security</b> and layered on top, which is how non-normal payoffs enter an otherwise Gaussian portfolio.</div></details>',
+            '<details style="background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0 .6rem 0;font-size:.82rem">'
+            '<summary style="cursor:pointer;color:#79b6ff;font-weight:600;list-style:none">✨ AI-powered: How these inputs are built</summary>'
+            '<div style="color:#aebccd;margin-top:.4rem">From the prices of your chosen securities, the app computes period returns, cleans them (drops stale rows, winsorises ±5σ outliers), and annualises them into the three inputs the optimiser needs — expected returns, volatilities, and the correlation matrix (×252 for daily data, ×12 for monthly). These primary securities are assumed <b>multivariate normal</b>, the foundation of the framework; any derivative is then priced by Black-Scholes on the <b>highest-volatility security</b> and layered on top, which is how non-normal payoffs enter an otherwise Gaussian portfolio.</div></details>',
             unsafe_allow_html=True)
         data_mode = st.radio("Data source",
             ["Default (3-asset sample case)",
@@ -1887,7 +1917,7 @@ with st.sidebar:
             freq   =st.radio("Return frequency",["Daily","Monthly"],horizontal=True)
             st.session_state['_live_period'] = f"{d_start.isoformat()} → {d_end.isoformat()}"
             st.session_state['_live_freq'] = freq
-            fetch_btn=st.button("🔄 Fetch data", use_container_width=True)
+            fetch_btn=st.button("🔄 Fetch data", use_container_width=True, key="fetch_btn")
             if fetch_btn:
                 tickers=[t.strip().upper() for t in ticker_str.split(",") if t.strip()]
                 with st.spinner(f"Fetching {len(tickers)} tickers from Yahoo Finance..."):
@@ -1947,7 +1977,7 @@ with st.sidebar:
                 st.error("⚠️ Correlation matrix not positive semi-definite."); data_valid=False
 
         elif data_mode=="Upload CSV":
-            st.markdown('<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:8px;padding:.6rem 1rem;margin-bottom:.5rem;color:#111111;font-size:.82rem">'
+            st.markdown('<div style="background:rgba(255,255,255,.05);border:1px solid #34527a;border-radius:8px;padding:.6rem 1rem;margin-bottom:.5rem;color:#c0c8d8;font-size:.82rem">'
                         '📋 <b>Format:</b> First col = dates, remaining cols = asset prices.</div>',
                         unsafe_allow_html=True)
             sample="""Date,Low_Risk,Mid_Risk,High_Risk
@@ -1956,7 +1986,7 @@ with st.sidebar:
     2020-01-06,100.08,100.30,100.85
     2020-01-07,100.12,100.10,101.20
     2020-01-08,100.09,100.45,100.60"""
-            st.download_button("⬇ Sample CSV",sample,"sample.csv","text/csv")
+            st.download_button("⬇ Sample CSV",sample,"sample.csv","text/csv",key="sample_csv_btn")
             uploaded=st.file_uploader("Upload CSV",type=["csv"])
             if uploaded:
                 try:
@@ -1978,299 +2008,304 @@ with st.sidebar:
     st.divider()
 
     # ── 2. Derivative ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header" id="sec2hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">2</span><span style="display:block">📊 DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
-    der_label_sel=st.selectbox("Type",list(PREDEFINED_DERIVATIVES.keys()),
-                                index=0,label_visibility="collapsed",key="der_label_sel")
-    der_type=PREDEFINED_DERIVATIVES[der_label_sel]
-    der_params={}
+    with st.container():
+        st.markdown('<div class="section-header" id="sec2hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">2</span><span style="display:block">📊 DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
+        der_label_sel=st.selectbox("Type",list(PREDEFINED_DERIVATIVES.keys()),
+                                    index=0,label_visibility="collapsed",key="der_label_sel")
+        der_type=PREDEFINED_DERIVATIVES[der_label_sel]
+        der_params={}
 
-    # Payoff diagram + AI explanation render here — directly under the dropdown,
-    # above the parameters. Filled in after the sliders below set the params.
-    _diag_box = st.container()
+        # Payoff diagram + AI explanation render here — directly under the dropdown,
+        # above the parameters. Filled in after the sliders below set the params.
+        _diag_box = st.container()
 
-    # Underlying selector (shown for all non-None derivative types)
-    if der_type is not None:
-        underlying_idx=st.selectbox(
-            "Underlying security",
-            options=list(range(len(names_in))),
-            format_func=lambda i: names_in[i],
-            index=min(len(names_in)-1, 2))
-        der_params["underlying_idx"]=underlying_idx
+        # Underlying selector (shown for all non-None derivative types)
+        if der_type is not None:
+            underlying_idx=st.selectbox(
+                "Underlying security",
+                options=list(range(len(names_in))),
+                format_func=lambda i: names_in[i],
+                index=min(len(names_in)-1, 2))
+            der_params["underlying_idx"]=underlying_idx
 
-        # Volatility — default = std dev of underlying security (model-consistent)
-        auto_vol=sigs_in[underlying_idx]
-        vol_override=st.number_input(
-            "Volatility (annualised %)",
-            value=round(auto_vol*100,1), min_value=1.0, max_value=200.0,
-            format="%.1f", step=0.5) / 100
-        der_params["vol"]=vol_override
-        st.caption(f"Default: {auto_vol*100:.1f}% (std dev of {names_in[underlying_idx]}). Override for implied vol.")
+            # Volatility — default = std dev of underlying security (model-consistent)
+            auto_vol=sigs_in[underlying_idx]
+            vol_override=st.number_input(
+                "Volatility (annualised %)",
+                value=round(auto_vol*100,1), min_value=1.0, max_value=200.0,
+                format="%.1f", step=0.5) / 100
+            der_params["vol"]=vol_override
+            st.caption(f"Default: {auto_vol*100:.1f}% (std dev of {names_in[underlying_idx]}). Override for implied vol.")
 
-        rf=st.number_input("Risk-free rate (%)",value=3.0,min_value=0.0,
-                            max_value=20.0,format="%.1f",step=0.1)/100
-        mat=st.slider("Maturity (years)",0.25,3.0,1.0,0.05)
-        der_params["r"]=rf; der_params["T"]=mat
+            rf=st.number_input("Risk-free rate (%)",value=3.0,min_value=0.0,
+                                max_value=20.0,format="%.1f",step=0.1)/100
+            mat=st.slider("Maturity (years)",0.25,3.0,1.0,0.05)
+            der_params["r"]=rf; der_params["T"]=mat
 
-    if der_type in ("put","call","straddle"):
-        der_params["strike"]=st.slider(
-            "Strike (fraction of spot)",0.5,2.0,
-            1.4 if der_type=="put" else (1.2 if der_type=="call" else 0.7),0.05)
-    elif der_type in ("safety_collar","aggressive_collar"):
-        der_params["strike_p"]=st.slider("Put strike",0.5,1.5,1.2,0.05)
-        der_params["strike_c"]=st.slider("Call strike",1.0,2.0,1.6,0.05)
-    elif der_type=="strangle":
-        der_params["strike_kp"]=st.slider("Put strike (Kp)",0.5,1.2,0.8,0.05)
-        der_params["strike_kc"]=st.slider("Call strike (Kc)",0.8,1.5,0.9,0.05)
-    elif der_type in ("cgn_uncapped","cgn_capped"):
-        der_params["floor"]        =st.slider("Floor (%)",0.0,10.0,1.0,0.5)/100
-        der_params["participation"]=st.slider("Participation (%)",50,150,100,10)/100
-        der_params["premium"]      =st.slider("Premium (%)",0.0,20.0,0.0,1.0)/100
-        if der_type=="cgn_capped":
-            der_params["cap"]=st.slider("Cap (%)",5.0,50.0,20.0,5.0)/100
-    elif der_type=="barrier_m":
-        der_params["M"]         =st.slider("Barrier M (%)",10,60,40,5)/100
-        der_params["premium_bm"]=st.slider("Premium (%)",0.0,20.0,10.0,1.0)/100
+        if der_type in ("put","call","straddle"):
+            der_params["strike"]=st.slider(
+                "Strike (fraction of spot)",0.5,2.0,
+                1.4 if der_type=="put" else (1.2 if der_type=="call" else 0.7),0.05)
+        elif der_type in ("safety_collar","aggressive_collar"):
+            der_params["strike_p"]=st.slider("Put strike",0.5,1.5,1.2,0.05)
+            der_params["strike_c"]=st.slider("Call strike",1.0,2.0,1.6,0.05)
+        elif der_type=="strangle":
+            der_params["strike_kp"]=st.slider("Put strike (Kp)",0.5,1.2,0.8,0.05)
+            der_params["strike_kc"]=st.slider("Call strike (Kc)",0.8,1.5,0.9,0.05)
+        elif der_type in ("cgn_uncapped","cgn_capped"):
+            der_params["floor"]        =st.slider("Floor (%)",0.0,10.0,1.0,0.5)/100
+            der_params["participation"]=st.slider("Participation (%)",50,150,100,10)/100
+            der_params["premium"]      =st.slider("Premium (%)",0.0,20.0,0.0,1.0)/100
+            if der_type=="cgn_capped":
+                der_params["cap"]=st.slider("Cap (%)",5.0,50.0,20.0,5.0)/100
+        elif der_type=="barrier_m":
+            der_params["M"]         =st.slider("Barrier M (%)",10,60,40,5)/100
+            der_params["premium_bm"]=st.slider("Premium (%)",0.0,20.0,10.0,1.0)/100
 
-    elif der_type=="bull_call_spread":
-        der_params["k1"]=st.slider("Lower call strike (K₁)",0.7,1.3,1.0,0.05)
-        der_params["k2"]=st.slider("Upper call strike (K₂)",0.9,2.0,1.3,0.05)
-        st.caption("Bullish, capped. Keep K₂ > K₁.")
-    elif der_type=="bear_put_spread":
-        der_params["k1"]=st.slider("Upper put strike (K₁)",0.7,1.3,1.0,0.05)
-        der_params["k2"]=st.slider("Lower put strike (K₂)",0.4,1.1,0.8,0.05)
-        st.caption("Bearish / cheaper hedge, capped. Keep K₂ < K₁.")
-    elif der_type=="butterfly_call":
-        der_params["center"]=st.slider("Centre strike",0.7,1.4,1.0,0.05)
-        der_params["width"] =st.slider("Wing width",0.05,0.5,0.15,0.05)
-        st.caption("Pays most when the underlying finishes near the centre strike.")
-    elif der_type=="condor_call":
-        der_params["center"]=st.slider("Centre strike",0.7,1.4,1.0,0.05)
-        der_params["w_in"] =st.slider("Inner half-width",0.05,0.30,0.10,0.05)
-        der_params["w_out"]=st.slider("Outer half-width",0.15,0.60,0.25,0.05)
-        st.caption("Flat maximum payoff between the inner strikes. Keep outer > inner.")
-    elif der_type=="reverse_convertible":
-        der_params["kp"]     =st.slider("Put strike (Kp)",0.5,1.1,0.9,0.05)
-        der_params["premium"]=st.slider("Issuer premium (%)",0.0,20.0,0.0,1.0)/100
-        st.caption("High coupon, capped upside; principal at risk below Kp.")
-    elif der_type=="discount_certificate":
-        der_params["kc"]     =st.slider("Cap — call strike (Kc)",1.0,1.8,1.2,0.05)
-        der_params["premium"]=st.slider("Issuer premium (%)",0.0,20.0,0.0,1.0)/100
-        st.caption("Underlying bought at a discount, upside capped at Kc.")
-    elif der_type=="outperformance_certificate":
-        der_params["k"]      =st.slider("Participation strike (K)",0.8,1.5,1.0,0.05)
-        der_params["premium"]=st.slider("Issuer premium (%)",0.0,20.0,0.0,1.0)/100
-        st.caption("Full downside, geared (>100%) upside above K.")
+        elif der_type=="bull_call_spread":
+            der_params["k1"]=st.slider("Lower call strike (K₁)",0.7,1.3,1.0,0.05)
+            der_params["k2"]=st.slider("Upper call strike (K₂)",0.9,2.0,1.3,0.05)
+            st.caption("Bullish, capped. Keep K₂ > K₁.")
+        elif der_type=="bear_put_spread":
+            der_params["k1"]=st.slider("Upper put strike (K₁)",0.7,1.3,1.0,0.05)
+            der_params["k2"]=st.slider("Lower put strike (K₂)",0.4,1.1,0.8,0.05)
+            st.caption("Bearish / cheaper hedge, capped. Keep K₂ < K₁.")
+        elif der_type=="butterfly_call":
+            der_params["center"]=st.slider("Centre strike",0.7,1.4,1.0,0.05)
+            der_params["width"] =st.slider("Wing width",0.05,0.5,0.15,0.05)
+            st.caption("Pays most when the underlying finishes near the centre strike.")
+        elif der_type=="condor_call":
+            der_params["center"]=st.slider("Centre strike",0.7,1.4,1.0,0.05)
+            der_params["w_in"] =st.slider("Inner half-width",0.05,0.30,0.10,0.05)
+            der_params["w_out"]=st.slider("Outer half-width",0.15,0.60,0.25,0.05)
+            st.caption("Flat maximum payoff between the inner strikes. Keep outer > inner.")
+        elif der_type=="reverse_convertible":
+            der_params["kp"]     =st.slider("Put strike (Kp)",0.5,1.1,0.9,0.05)
+            der_params["premium"]=st.slider("Issuer premium (%)",0.0,20.0,0.0,1.0)/100
+            st.caption("High coupon, capped upside; principal at risk below Kp.")
+        elif der_type=="discount_certificate":
+            der_params["kc"]     =st.slider("Cap — call strike (Kc)",1.0,1.8,1.2,0.05)
+            der_params["premium"]=st.slider("Issuer premium (%)",0.0,20.0,0.0,1.0)/100
+            st.caption("Underlying bought at a discount, upside capped at Kc.")
+        elif der_type=="outperformance_certificate":
+            der_params["k"]      =st.slider("Participation strike (K)",0.8,1.5,1.0,0.05)
+            der_params["premium"]=st.slider("Issuer premium (%)",0.0,20.0,0.0,1.0)/100
+            st.caption("Full downside, geared (>100%) upside above K.")
 
-    elif der_type=="custom":
-        st.markdown("**Build your structured product**")
-        st.markdown("*Add components one by one:*")
-        if "components" not in st.session_state:
-            st.session_state["components"]=[]
+        elif der_type=="custom":
+            st.markdown("**Build your structured product**")
+            st.markdown("*Add components one by one:*")
+            if "components" not in st.session_state:
+                st.session_state["components"]=[]
 
-        with st.expander("➕ Add component"):
-            ct=st.selectbox("Component type",COMPONENT_TYPES,key="ct_sel")
-            if "zcb" not in ct:
-                k_val=st.number_input("Strike (fraction of spot)",
-                                       0.5,2.0,1.0,0.05,key="k_inp")
+            with st.expander("➕ Add component"):
+                ct=st.selectbox("Component type",COMPONENT_TYPES,key="ct_sel")
+                if "zcb" not in ct:
+                    k_val=st.number_input("Strike (fraction of spot)",
+                                           0.5,2.0,1.0,0.05,key="k_inp")
+                else:
+                    k_val=1.0
+                notional=st.number_input("Notional",0.01,10.0,1.0,0.1,key="n_inp")
+                mat_c=st.number_input("Maturity (years)",0.25,3.0,
+                                        der_params.get("T",1.0),0.05,key="mc_inp")
+                if st.button("Add component"):
+                    st.session_state["components"].append({
+                        "type":ct,"strike":k_val,
+                        "notional":notional,"maturity":mat_c})
+
+            if st.session_state["components"]:
+                st.markdown("**Current components:**")
+                for i,c in enumerate(st.session_state["components"]):
+                    cols=st.columns([4,1])
+                    label=f"{c['type']} | K={c['strike']} | N={c['notional']} | T={c['maturity']}y"
+                    cols[0].markdown(f"`{label}`")
+                    if cols[1].button("✕",key=f"rm_{i}"):
+                        st.session_state["components"].pop(i)
+                        st.rerun()
+                der_params["components"]=st.session_state["components"]
+
+                # Live payoff diagram
+                if len(der_params["components"])>0:
+                    vol_c=der_params.get("vol",sigs_in[der_params.get("underlying_idx",0)])
+                    fig_pay=plot_payoff(
+                        der_params["components"],vol_c,1.0,
+                        der_params.get("r",0.03),der_params.get("T",1.0),
+                        names_in[der_params.get("underlying_idx",0)])
+                    st.pyplot(fig_pay,use_container_width=True)
+                    plt.close(fig_pay)
             else:
-                k_val=1.0
-            notional=st.number_input("Notional",0.01,10.0,1.0,0.1,key="n_inp")
-            mat_c=st.number_input("Maturity (years)",0.25,3.0,
-                                    der_params.get("T",1.0),0.05,key="mc_inp")
-            if st.button("Add component"):
-                st.session_state["components"].append({
-                    "type":ct,"strike":k_val,
-                    "notional":notional,"maturity":mat_c})
+                data_valid=False
+                st.info("Add at least one component to continue.")
 
-        if st.session_state["components"]:
-            st.markdown("**Current components:**")
-            for i,c in enumerate(st.session_state["components"]):
-                cols=st.columns([4,1])
-                label=f"{c['type']} | K={c['strike']} | N={c['notional']} | T={c['maturity']}y"
-                cols[0].markdown(f"`{label}`")
-                if cols[1].button("✕",key=f"rm_{i}"):
-                    st.session_state["components"].pop(i)
-                    st.rerun()
-            der_params["components"]=st.session_state["components"]
-
-            # Live payoff diagram
-            if len(der_params["components"])>0:
-                vol_c=der_params.get("vol",sigs_in[der_params.get("underlying_idx",0)])
-                fig_pay=plot_payoff(
-                    der_params["components"],vol_c,1.0,
-                    der_params.get("r",0.03),der_params.get("T",1.0),
-                    names_in[der_params.get("underlying_idx",0)])
-                st.pyplot(fig_pay,use_container_width=True)
-                plt.close(fig_pay)
-        else:
-            data_valid=False
-            st.info("Add at least one component to continue.")
-
-    # Render the payoff diagram + AI explanation into the box reserved directly
-    # under the dropdown (above the parameters). Computed here so der_params is set.
-    if der_type is not None and der_type != "custom":
-        with _diag_box:
-            if "underlying_idx" in der_params:
-                try:
-                    _cfg = build_der_config(der_type, der_params,
-                                            np.array(sigs_in), der_params["underlying_idx"])
-                    if _cfg:
-                        _cfg["r"] = der_params.get("r", 0.03)
-                        _cfg["T"] = der_params.get("T", 1.0)
-                        _figp = plot_named_payoff(_cfg, names_in[der_params["underlying_idx"]])
-                        st.pyplot(_figp, use_container_width=True)
-                        plt.close(_figp)
-                except Exception:
-                    pass
-            st.markdown(
-                f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
-                f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What is this instrument?</summary>'
-                f'<div style="color:#1a3a5c;margin-top:.4rem">{get_explanation(der_label_sel)}</div></details>',
-                unsafe_allow_html=True)
+        # Render the payoff diagram + AI explanation into the box reserved directly
+        # under the dropdown (above the parameters). Computed here so der_params is set.
+        if der_type is not None and der_type != "custom":
+            with _diag_box:
+                if "underlying_idx" in der_params:
+                    try:
+                        _cfg = build_der_config(der_type, der_params,
+                                                np.array(sigs_in), der_params["underlying_idx"])
+                        if _cfg:
+                            _cfg["r"] = der_params.get("r", 0.03)
+                            _cfg["T"] = der_params.get("T", 1.0)
+                            _figp = plot_named_payoff(_cfg, names_in[der_params["underlying_idx"]])
+                            st.pyplot(_figp, use_container_width=True)
+                            plt.close(_figp)
+                    except Exception:
+                        pass
+                st.markdown(
+                    f'<details style="background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
+                    f'<summary style="cursor:pointer;color:#79b6ff;font-weight:600;list-style:none">✨ AI-powered: What is this instrument?</summary>'
+                    f'<div style="color:#aebccd;margin-top:.4rem">{get_explanation(der_label_sel)}</div></details>',
+                    unsafe_allow_html=True)
 
     st.divider()
 
     # ── 3. Constraint ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">3</span><span style="display:block">🎯 MENTAL-ACCOUNT CONSTRAINT</span></div>', unsafe_allow_html=True)
+    with st.container():
+        st.markdown('<div class="section-header" id="sec3hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">3</span><span style="display:block">🎯 MENTAL-ACCOUNT CONSTRAINT</span></div>', unsafe_allow_html=True)
 
-    # AI explanation renders here — right after the title, above the choices.
-    _con_box = st.container()
+        # AI explanation renders here — right after the title, above the choices.
+        _con_box = st.container()
 
-    # VaR / ES toggle
-    constraint_type = st.radio(
-        "Constraint type",
-        ["VaR — Value at Risk", "ES — Expected Shortfall", "ES — Rigorous (beyond thesis)"],
-        index=0, horizontal=True)
-    use_es = constraint_type.startswith("ES")
-    use_es_rigorous = "Rigorous" in constraint_type
+        # VaR / ES toggle
+        constraint_type = st.radio(
+            "Constraint type",
+            ["VaR — Value at Risk", "ES — Expected Shortfall", "ES — Rigorous (beyond thesis)"],
+            index=0, horizontal=True)
+        use_es = constraint_type.startswith("ES")
+        use_es_rigorous = "Rigorous" in constraint_type
 
-    # Fill the box reserved above (under the title) with the matching explanation.
-    with _con_box:
-        if not use_es:
-            _ckey, _clabel = "var", "What is the VaR constraint?"
-        else:
-            _ckey   = "es_rigorous" if use_es_rigorous else "es"
-            _clabel = "What is the ES constraint?"
-        st.markdown(
-            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0 .6rem 0;font-size:.82rem">'
-            f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: {_clabel}</summary>'
-            f'<div style="color:#1a3a5c;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS[_ckey]}</div></details>',
-            unsafe_allow_html=True)
-
-    H_val = st.slider("Threshold H (%)", -40, -1, -10, 1) / 100
-    st.markdown(
-        '<div style="background:#ffffff;border:1px solid #3a3a5a;border-radius:6px;'
-        'padding:.3rem .8rem;color:#555555;font-size:.76rem;margin-top:.2rem">'
-        'Range extended to -40% to accommodate highly volatile assets '
-        '(e.g. cryptocurrencies, emerging market equities).</div>',
-        unsafe_allow_html=True)
-
-    if not use_es:
-        alpha_val = st.slider("Max shortfall probability α (%)", 1, 15, 5, 1) / 100
-        L_val     = None
-        # Formula box — white background
-        st.markdown(
-            '<div style="background:#ffffff;border:1px solid #3a3a5a;border-radius:6px;'
-            'padding:.4rem 1rem;color:#333333;font-size:.78rem;margin-top:.3rem">'
-            'VaR constraint: P(return &lt; H) ≤ α</div>',
-            unsafe_allow_html=True)
-        # Implied lambda — between formula and AI explanation
-        cov_for_lam = corr_to_cov(sigs_in, corr_in)
-        lam = implied_lambda(H_val, alpha_val, means_in, cov_for_lam)
-        if lam is not None:
+        # Fill the box reserved above (under the title) with the matching explanation.
+        with _con_box:
+            if not use_es:
+                _ckey, _clabel = "var", "What is the VaR constraint?"
+            else:
+                _ckey   = "es_rigorous" if use_es_rigorous else "es"
+                _clabel = "What is the ES constraint?"
             st.markdown(
-                f'<div style="background:#ffffff;border:1px solid #1a6bbf;border-radius:6px;'
-                f'padding:.5rem 1rem;margin-top:.3rem;color:#1a3a6b;font-size:.85rem">'
-                f'<b>Implied risk-aversion λ = {lam:.4f}</b><br>'
-                f'<span style="color:#555555;font-size:.78rem">'
-                f'MV optimal at λ={lam:.2f} ≡ behavioural optimal at H={H_val:.0%}, α={alpha_val:.0%}'
-                f'</span></div>',
+                f'<details style="background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0 .6rem 0;font-size:.82rem">'
+                f'<summary style="cursor:pointer;color:#79b6ff;font-weight:600;list-style:none">✨ AI-powered: {_clabel}</summary>'
+                f'<div style="color:#aebccd;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS[_ckey]}</div></details>',
                 unsafe_allow_html=True)
-        else:
-            st.markdown('<div style="background:#fffbea;border:1px solid #f59e0b;border-radius:6px;'
-                        'padding:.4rem 1rem;color:#7a4f00;font-size:.78rem;margin-top:.3rem">'
-                        '⚠️ Implied λ not available — the VaR constraint may be too tight or too loose for the current portfolio.</div>',
-                        unsafe_allow_html=True)
-    else:
-        alpha_val = None
-        L_val     = st.slider("ES lower bound L (%)", -50, -1, -15, 1) / 100
-        # Formula box — white background
+
+        H_val = st.slider("Threshold H (%)", -40, -1, -10, 1) / 100
         st.markdown(
-            '<div style="background:#ffffff;border:1px solid #3a3a5a;border-radius:6px;'
-            'padding:.4rem 1rem;color:#333333;font-size:.78rem;margin-top:.3rem">'
-            'ES constraint: E[return | return &lt; H] ≥ L</div>',
+            '<div style="background:rgba(255,255,255,.05);border:1px solid #3a3a5a;border-radius:6px;'
+            'padding:.3rem .8rem;color:#9aa7bd;font-size:.76rem;margin-top:.2rem">'
+            'Range extended to -40% to accommodate highly volatile assets '
+            '(e.g. cryptocurrencies, emerging market equities).</div>',
             unsafe_allow_html=True)
 
-    # Implied lambda block already handled above for VaR case
-    if use_es:
-        pass  # no lambda for ES
+        if not use_es:
+            alpha_val = st.slider("Max shortfall probability α (%)", 1, 15, 5, 1) / 100
+            L_val     = None
+            # Formula box — white background
+            st.markdown(
+                '<div style="background:rgba(255,255,255,.05);border:1px solid #3a3a5a;border-radius:6px;'
+                'padding:.4rem 1rem;color:#c0c8d8;font-size:.78rem;margin-top:.3rem">'
+                'VaR constraint: P(return &lt; H) ≤ α</div>',
+                unsafe_allow_html=True)
+            # Implied lambda — between formula and AI explanation
+            cov_for_lam = corr_to_cov(sigs_in, corr_in)
+            lam = implied_lambda(H_val, alpha_val, means_in, cov_for_lam)
+            if lam is not None:
+                st.markdown(
+                    f'<div style="background:rgba(255,255,255,.05);border:1px solid #1a6bbf;border-radius:6px;'
+                    f'padding:.5rem 1rem;margin-top:.3rem;color:#9ec5ff;font-size:.85rem">'
+                    f'<b>Implied risk-aversion λ = {lam:.4f}</b><br>'
+                    f'<span style="color:#9aa7bd;font-size:.78rem">'
+                    f'MV optimal at λ={lam:.2f} ≡ behavioural optimal at H={H_val:.0%}, α={alpha_val:.0%}'
+                    f'</span></div>',
+                    unsafe_allow_html=True)
+            else:
+                st.markdown('<div style="background:rgba(245,158,11,.10);border:1px solid #f59e0b;border-radius:6px;'
+                            'padding:.4rem 1rem;color:#f0b860;font-size:.78rem;margin-top:.3rem">'
+                            '⚠️ Implied λ not available — the VaR constraint may be too tight or too loose for the current portfolio.</div>',
+                            unsafe_allow_html=True)
+        else:
+            alpha_val = None
+            L_val     = st.slider("ES lower bound L (%)", -50, -1, -15, 1) / 100
+            # Formula box — white background
+            st.markdown(
+                '<div style="background:rgba(255,255,255,.05);border:1px solid #3a3a5a;border-radius:6px;'
+                'padding:.4rem 1rem;color:#c0c8d8;font-size:.78rem;margin-top:.3rem">'
+                'ES constraint: E[return | return &lt; H] ≥ L</div>',
+                unsafe_allow_html=True)
+
+        # Implied lambda block already handled above for VaR case
+        if use_es:
+            pass  # no lambda for ES
 
     st.divider()
 
     # ── 4. Grid ───────────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">4</span><span style="display:block">⚡ GRID RESOLUTION</span></div>', unsafe_allow_html=True)
-    # Turbo accelerates the VaR path only; hide it when ES is selected. Rigorous
-    # ES uses the high-precision (m=51) state space via the fast coarse-to-fine
-    # engine, so its resolution is fixed and the selector does not apply.
-    _n_total = n_sec_total + (1 if der_type is not None else 0)
-    if use_es_rigorous:
-        grid_lbl="🚀 Rigorous ES — high-precision accuracy (~seconds)"
-        m_val,mp_val=51,99
-    else:
-        # Turbo (coarse-to-fine) only runs on the VaR path with <=4 TOTAL
-        # securities — the derivative counts toward the total. For ES, or for
-        # 5+ total securities, optimize_portfolio_turbo silently delegates to
-        # the original solver (differential evolution), so the "~seconds"
-        # promise no longer holds and the label would misrepresent which
-        # engine ran. Hide the Turbo option in those cases. This mirrors the
-        # engine gate: use_de = (method=='auto' and n_securities >= 5).
+    with st.container():
+        st.markdown('<div class="section-header" id="sec4hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">4</span><span style="display:block">⚡ GRID RESOLUTION</span></div>', unsafe_allow_html=True)
+        # Turbo accelerates the VaR path only; hide it when ES is selected. Rigorous
+        # ES uses the high-precision (m=51) state space via the fast coarse-to-fine
+        # engine, so its resolution is fixed and the selector does not apply.
         _n_total = n_sec_total + (1 if der_type is not None else 0)
-        _hide_turbo = use_es or (_n_total >= 5)
-        _res_keys=[k for k in GRID_OPTIONS
-                   if not (_hide_turbo and GRID_OPTIONS[k][1]=='turbo')]
-        if st.session_state.get("grid_lbl") not in _res_keys:
-            st.session_state["grid_lbl"]=_res_keys[0]
-        grid_lbl=st.selectbox("Resolution",_res_keys,
-                               label_visibility="collapsed",key="grid_lbl")
-        m_val,mp_val=GRID_OPTIONS[grid_lbl]
+        if use_es_rigorous:
+            grid_lbl="🚀 Rigorous ES — high-precision accuracy (~seconds)"
+            m_val,mp_val=51,99
+        else:
+            # Turbo (coarse-to-fine) only runs on the VaR path with <=4 TOTAL
+            # securities — the derivative counts toward the total. For ES, or for
+            # 5+ total securities, optimize_portfolio_turbo silently delegates to
+            # the original solver (differential evolution), so the "~seconds"
+            # promise no longer holds and the label would misrepresent which
+            # engine ran. Hide the Turbo option in those cases. This mirrors the
+            # engine gate: use_de = (method=='auto' and n_securities >= 5).
+            _n_total = n_sec_total + (1 if der_type is not None else 0)
+            _hide_turbo = use_es or (_n_total >= 5)
+            _res_keys=[k for k in GRID_OPTIONS
+                       if not (_hide_turbo and GRID_OPTIONS[k][1]=='turbo')]
+            if st.session_state.get("grid_lbl") not in _res_keys:
+                st.session_state["grid_lbl"]=_res_keys[0]
+            grid_lbl=st.selectbox("Resolution",_res_keys,
+                                   label_visibility="collapsed",key="grid_lbl")
+            m_val,mp_val=GRID_OPTIONS[grid_lbl]
 
-    # AI-powered grid explanation
-    _ai_expl = GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")
-    if _n_total >= 5 and not use_es_rigorous:
-        _ai_expl += (" ⚠️ Note — with 5+ instruments the exhaustive grid is too large, so the "
-                     "optimiser automatically uses the differential-evolution solver instead; the "
-                     "result is a near-optimal approximation, not an exact every-combination search.")
-    st.markdown(
-        f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'        '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: What does this resolution mean?</summary>'        f'<div style="color:#1a3a5c;margin-top:.4rem">{_ai_expl}</div></details>',
-        unsafe_allow_html=True)
+        # AI-powered grid explanation
+        _ai_expl = GRID_EXPLANATIONS.get(grid_lbl, "No explanation available.")
+        if _n_total >= 5 and not use_es_rigorous:
+            _ai_expl += (" ⚠️ Note — with 5+ instruments the exhaustive grid is too large, so the "
+                         "optimiser automatically uses the differential-evolution solver instead; the "
+                         "result is a near-optimal approximation, not an exact every-combination search.")
+        st.markdown(
+            f'<details style="background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'        '<summary style="cursor:pointer;color:#79b6ff;font-weight:600;list-style:none">✨ AI-powered: What does this resolution mean?</summary>'        f'<div style="color:#aebccd;margin-top:.4rem">{_ai_expl}</div></details>',
+            unsafe_allow_html=True)
 
-    if "Rigorous" in grid_lbl:
-        st.markdown('<div class="warn-box">⚡ Fast for small universes. For many assets or CVaR at scale, use the Scalable Monte-Carlo optimiser.</div>',
-                    unsafe_allow_html=True)
-    elif "Turbo" in grid_lbl:
-        st.markdown('<div class="warn-box">⚡ Returns in seconds (VaR, up to 4 assets).</div>',
-                    unsafe_allow_html=True)
-    elif _n_total >= 5:
-        st.markdown('<div class="warn-box">⚠️ With ' + str(_n_total) + ' instruments the exhaustive grid is too large to enumerate, so the optimiser automatically switches to the <b>differential-evolution</b> solver — an automatic guided search. Your <b>' + grid_lbl.split("(")[0].strip() + '</b> choice no longer runs an exact, every-combination grid; the result is a fast, near-optimal approximation. For an exact grid keep to 4 instruments or fewer, or use the Scalable Monte-Carlo optimiser for larger / CVaR portfolios.</div>',
-                    unsafe_allow_html=True)
-    elif "High precision" in grid_lbl:
-        st.markdown('<div class="warn-box">⚠️ The heaviest mode — likely to stall on the free hosted demo. Use Turbo (the default) for fast VaR, the Scalable Monte-Carlo optimiser for larger / CVaR portfolios, or <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer/blob/main/Run_Locally_Guide.pdf" target="_blank" rel="noopener" style="color:#fde68a;text-decoration:underline;font-weight:600">run locally</a> for exact results.</div>',
-                    unsafe_allow_html=True)
-    elif "Standard" in grid_lbl:
-        st.markdown('<div class="warn-box">⏱️ Heavy on the free hosted demo — may not finish beyond a few assets. For larger or CVaR portfolios use the Scalable Monte-Carlo optimiser; <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer/blob/main/Run_Locally_Guide.pdf" target="_blank" rel="noopener" style="color:#fde68a;text-decoration:underline;font-weight:600">run locally</a> for the exact result.</div>',
-                    unsafe_allow_html=True)
+        if "Rigorous" in grid_lbl:
+            st.markdown('<div class="warn-box">⚡ Fast for small universes. For many assets or CVaR at scale, use the Scalable Monte-Carlo optimiser.</div>',
+                        unsafe_allow_html=True)
+        elif "Turbo" in grid_lbl:
+            st.markdown('<div class="warn-box">⚡ Returns in seconds (VaR, up to 4 assets).</div>',
+                        unsafe_allow_html=True)
+        elif _n_total >= 5:
+            st.markdown('<div class="warn-box">⚠️ With ' + str(_n_total) + ' instruments the exhaustive grid is too large to enumerate, so the optimiser automatically switches to the <b>differential-evolution</b> solver — an automatic guided search. Your <b>' + grid_lbl.split("(")[0].strip() + '</b> choice no longer runs an exact, every-combination grid; the result is a fast, near-optimal approximation. For an exact grid keep to 4 instruments or fewer, or use the Scalable Monte-Carlo optimiser for larger / CVaR portfolios.</div>',
+                        unsafe_allow_html=True)
+        elif "High precision" in grid_lbl:
+            st.markdown('<div class="warn-box">⚠️ The heaviest mode — likely to stall on the free hosted demo. Use Turbo (the default) for fast VaR, the Scalable Monte-Carlo optimiser for larger / CVaR portfolios, or <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer/blob/main/Run_Locally_Guide.pdf" target="_blank" rel="noopener" style="color:#fde68a;text-decoration:underline;font-weight:600">run locally</a> for exact results.</div>',
+                        unsafe_allow_html=True)
+        elif "Standard" in grid_lbl:
+            st.markdown('<div class="warn-box">⏱️ Heavy on the free hosted demo — may not finish beyond a few assets. For larger or CVaR portfolios use the Scalable Monte-Carlo optimiser; <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer/blob/main/Run_Locally_Guide.pdf" target="_blank" rel="noopener" style="color:#fde68a;text-decoration:underline;font-weight:600">run locally</a> for the exact result.</div>',
+                        unsafe_allow_html=True)
 
     st.divider()
     run_btn=st.button(
         "5  ▶  RUN OPTIMISER",
         type="primary",
         use_container_width=True,
-        disabled=not data_valid)
+        disabled=not data_valid,
+        key="run_opt_btn")
 
     reset_btn=st.button(
         "↩  Reset / New Simulation",
         type="secondary",
-        use_container_width=True)
+        use_container_width=True,
+        key="reset_sim_btn")
 
     # No session_state mutations inside sidebar — handled outside
 
@@ -2332,9 +2367,10 @@ if not run_btn and _run_active and _has_results:
 # MAIN
 # ═════════════════════════════════════════════════════════════════════════════
 def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
-    with st.expander("📋 Portfolio data", expanded=True):
-        hs = "background:#1a6bbf;color:#ffffff;font-weight:bold;padding:6px 10px;text-align:left"
-        cs = "background:#ffffff;color:#111111;padding:5px 10px;border-bottom:1px solid #e0e0e0"
+    st.markdown('<span style="font-size:16px;font-weight:600;color:#E3C77E">📋 Portfolio data</span>', unsafe_allow_html=True)
+    with st.container():
+        hs = "background:#E3C77E;color:#0d1117;font-weight:bold;padding:6px 10px;text-align:center"
+        cs = "background:#1b2330;color:#e7ecf4;padding:5px 10px;border-bottom:1px solid #30363d;text-align:center"
         rows = "".join(
             f"<tr><td style='{cs}'>{names_in[i]}</td>"
             f"<td style='{cs}'>{means_in[i]*100:.2f}%</td>"
@@ -2346,7 +2382,7 @@ def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
             f"<th style='{hs}'>Std deviation</th></tr>{rows}</table>",
             unsafe_allow_html=True)
         st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
-        st.markdown("**Correlation matrix**")
+        st.markdown('<span style="font-size:16px;font-weight:600;color:#E3C77E">Correlation matrix</span>', unsafe_allow_html=True)
         n = len(names_in)
         corr_rows = "".join(
             f"<tr><td style='{hs}'>{names_in[i]}</td>"
@@ -2358,9 +2394,8 @@ def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
             f"<tr><th style='{hs}'></th>{col_headers}</tr>{corr_rows}</table>",
             unsafe_allow_html=True)
 
-# ── Finance banner ────────────────────────────────────────────────────────
-st.markdown("<div style='height:0.6rem'></div>", unsafe_allow_html=True)
-st.markdown(f'''
+# ── Finance banner (hidden — removed at user request) ───────────────────────
+if False: st.markdown(f'''
 <div style="width:100%;background:#020c1b;padding:0;margin:0">
 
 <div style="max-width:900px;margin:0 auto;background:linear-gradient(135deg,#020c1b 0%,#071428 40%,#0a1a35 70%,#020c1b 100%);border-radius:0;overflow:hidden;border:none;display:flex;align-items:stretch;font-family:monospace;margin-bottom:0">
@@ -2721,26 +2756,26 @@ if _view == "optimiser":
 
     if not _run_active:
         st.markdown("""
-<div class="info-box" style="color:#ffffff !important">
+<div class="info-box" style="color:#ffffff !important;background:linear-gradient(165deg,#1b2330,#161b22)">
 
-<span style="color:#4a9eff;font-size:1.75rem;font-weight:700">👈 How to use this tool: Grid Portfolio Optimiser</span>
+<span style="color:#E3C77E;font-size:1.4rem;font-weight:700">👈 How to use this tool: Grid Portfolio Optimiser</span>
 
 Follow these steps in the sidebar:
 
 <table style="width:100%;border-collapse:collapse;color:#ffffff">
-<tr style="border-bottom:1px solid #3a3a5a">
+<tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">1</span></span></td>
   <td style="padding:.5rem .5rem .5rem .3rem"><strong>Portfolio data</strong> — Choose a data source: default base case, live market tickers, manual entry, or CSV upload</td>
 </tr>
-<tr style="border-bottom:1px solid #3a3a5a">
+<tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">2</span></span></td>
   <td style="padding:.5rem .5rem .5rem .3rem"><strong>Derivative &amp; parameters</strong> — Select a derivative or structured product type and set its characteristics (strike, maturity, floor, participation, etc.)</td>
 </tr>
-<tr style="border-bottom:1px solid #3a3a5a">
+<tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">3</span></span></td>
   <td style="padding:.5rem .5rem .5rem .3rem"><strong>Constraint</strong> — Choose VaR or ES, set threshold H, then set α for VaR (P(r &lt; H) ≤ α) or L for ES (E[r | r &lt; H] ≥ L)</td>
 </tr>
-<tr style="border-bottom:1px solid #3a3a5a">
+<tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">4</span></span></td>
   <td style="padding:.5rem .5rem .5rem .3rem"><strong>Grid resolution</strong> — Turbo (default) gives thesis-level VaR accuracy in seconds; Fast for a quick preview; High precision for exact thesis-grade results (and for ES runs)</td>
 </tr>
@@ -2753,40 +2788,40 @@ Follow these steps in the sidebar:
 </div>
 """, unsafe_allow_html=True)
         st.markdown("""
-<div class="info-box" style="color:#ffffff !important">
+<div class="info-box" style="color:#ffffff !important;background:linear-gradient(165deg,#1b2330,#161b22)">
 
-<span style="color:#4a9eff;font-size:1.4rem;font-weight:700">📈 Output chart</span>
+<span style="color:#E3C77E;font-size:1.4rem;font-weight:700">📈 Output chart</span>
 
 The chart shows the efficient frontiers and up to four portfolio markers (see sample output at the bottom of this section):
 
 <table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
 <tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Curves</td></tr>
-<tr style="border-bottom:1px solid #2a2a3a">
+<tr>
   <td style="padding:.3rem .5rem;white-space:nowrap">🟣 <strong>Purple dashed</strong></td>
   <td style="padding:.3rem .5rem">Mean-variance efficient frontier (Markowitz) — no derivative</td>
 </tr>
-<tr style="border-bottom:1px solid #2a2a3a">
+<tr>
   <td style="padding:.3rem .5rem;white-space:nowrap">🔵 <strong>Blue dots</strong></td>
   <td style="padding:.3rem .5rem">Behavioural efficient frontier — no derivative (each dot is the optimum portfolio for one H constraint level)</td>
 </tr>
-<tr style="border-bottom:1px solid #2a2a3a">
+<tr>
   <td style="padding:.3rem .5rem;white-space:nowrap">🟡 <strong>Gold squares</strong></td>
   <td style="padding:.3rem .5rem">Behavioural optimum portfolios — derivative frontier (one point per H level, with the selected derivative)</td>
 </tr>
-<tr><td colspan="2" style="padding:.5rem .5rem .3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Portfolio markers</td></tr>
-<tr style="border-bottom:1px solid #2a2a3a">
+<tr><td colspan="2" style="padding:1.6rem .5rem .3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Portfolio markers</td></tr>
+<tr>
   <td style="padding:.3rem .5rem;white-space:nowrap">🟣 <strong>Purple dot (white frame)</strong></td>
   <td style="padding:.3rem .5rem"><strong>Portfolio (0) — Markowitz MV optimum</strong> — the minimum-variance (mean-variance-efficient) portfolio at Portfolio (1)'s expected return. It lands on Portfolio (1) when Portfolio (1) is mean-variance efficient — the MVT/MAT equivalence. Shown whenever Portfolio (1) exists.</td>
 </tr>
-<tr style="border-bottom:1px solid #2a2a3a">
+<tr>
   <td style="padding:.3rem .5rem;white-space:nowrap">🟢 <strong>Green diamond</strong></td>
   <td style="padding:.3rem .5rem"><strong>Portfolio (1)</strong> — Behavioural optimum without derivatives at the selected H and α constraint. Shown only when a feasible portfolio exists; when it coincides with the Markowitz MV optimum it confirms the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010).</td>
 </tr>
-<tr style="border-bottom:1px solid #2a2a3a">
+<tr>
   <td style="padding:.3rem .5rem;white-space:nowrap">🟠 <strong>Orange square (white frame)</strong></td>
   <td style="padding:.3rem .5rem"><strong>Portfolio (2)</strong> — Behavioural optimum portfolio with the selected derivative at the chosen H and α constraint. Highlighted separately from the frontier squares to identify the specific selected constraint point.</td>
 </tr>
-<tr style="border-bottom:1px solid #2a2a3a">
+<tr>
   <td style="padding:.3rem .5rem;white-space:nowrap">🔴 <strong>Coral star (white frame)</strong></td>
   <td style="padding:.3rem .5rem"><strong>Portfolio (3)</strong> — Interpolated point on the derivative frontier at the same standard deviation as Portfolio (1). Shows the return achievable with derivatives at equivalent risk — indicative only, not always available (requires derivative frontier to overlap with Portfolio (1) risk level).</td>
 </tr>
@@ -2808,9 +2843,9 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
 </div>
 ''', unsafe_allow_html=True)
         st.markdown("""
-<div style="border:1px solid #2a4a6a;border-radius:8px;padding:.9rem 1.2rem;margin-top:.6rem;color:#111111">
+<div style="border:1px solid #30363d;border-radius:12px;padding:.9rem 1.2rem;margin-top:.6rem;color:#111111;background:linear-gradient(165deg,#1b2330,#161b22)">
 
-<span style="color:#4a9eff;font-size:1.4rem;font-weight:700">📝 Notes</span>
+<span style="color:#E3C77E;font-size:1.4rem;font-weight:700">📝 Notes</span>
 
 <span style="color:#4a9eff;font-weight:700">MVT/MAT equivalence:</span><br>At the equivalence point (λ=3.795, H=-10%, α=5%), the purple and blue curves meet exactly — confirming the MVT/MAT equivalence proven in Das, Markowitz, Scheid & Statman (2010). Adding derivatives shifts the frontier upward (gold squares above blue dots), revealing what the behavioural approach with derivatives can unlock beyond mean-variance.
 
@@ -2826,7 +2861,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
         if os.path.exists(_sample_img):
             st.markdown(
                 '<div style="text-align:center;margin:1rem 0 .6rem 0">'
-                '<span style="font-size:1.3rem;font-weight:700;color:#4a9eff">'
+                '<span style="font-size:1.3rem;font-weight:700;color:#E3C77E">'
                 '🖼️ Sample Output</span><br>'
                 '<span style="font-size:.85rem;color:#c0c8d8">'
                 'Annotated example showing what each section looks like after a run — illustrative only, not live results</span>'
@@ -2856,6 +2891,8 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
         lam_summary = _cache.get('lam_summary', '—')
         names_in = _cache.get('names_in', [])
         sigs_arr = _cache.get('sigs_arr', None)
+        means_arr = _cache.get('means_arr', None)
+        cov_mat = _cache.get('cov_mat', None)
         asset_labels = _cache.get('asset_labels', [])
         constraint_str = _cache.get('constraint_str', '')
         grid_lbl = _cache.get('grid_lbl', '')
@@ -3169,7 +3206,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
                 def _lbl(t): return f'<div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">{t}</div>'
                 def _val(v): return f'<div style="margin-bottom:.6rem">{v}</div>'
                 _html = (
-                    '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;min-height:560px;'
+                    '<div style="background:#1b2330;border:1px solid #1a3a5c;border-radius:8px;min-height:560px;'
                     'padding:.8rem 1rem;color:#c0c8d8;font-size:.8rem">'
                     '<div style="color:#4a9eff;font-weight:700;font-size:.85rem;'
                     'margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">'
@@ -3193,7 +3230,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
         # ── Reading the chart — full width below columns ──────────────────────
         with st.expander("📐 Reading the chart", expanded=False):
             st.markdown(
-                '<div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;'
+                '<div style="background:#ffffff;border:none;border-radius:8px;'
                 'padding:.8rem 1rem;margin-top:.5rem;color:#111111;font-size:.82rem">'
                 'Without derivatives, the blue behavioural frontier should closely track the purple MV frontier, '
                 'confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010). '
@@ -3253,7 +3290,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
         constraint_label = f"H={H_val:.0%}, α={_alpha:.0%}" if not use_es else f"H={H_val:.0%}, L={_L:.0%}"
         _lam_suffix = f" — implied λ = {lam_summary}" if lam_summary and lam_summary != "—" else ""
         st.markdown(
-            f'<h3 style="color:#4a9eff;text-align:center">'
+            f'<h3 style="color:#E3C77E;text-align:center">'
             f'Optimal portfolios with {constraint_label}{_lam_suffix}</h3>',
             unsafe_allow_html=True)
 
@@ -3263,65 +3300,67 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
                               delta_txt=None, method_txt=None, note_html=None, show_feasibility=False):
             """Render one portfolio: header box, then metrics left / donut centre / bars right."""
             # Header box
-            st.markdown(header_html, unsafe_allow_html=True)
-            st.caption(caption_txt)
-            # Three-column layout: metrics | donut | bars
-            col_m, col_d, col_b = st.columns([1.2, 1, 1.4])
-            with col_m:
-                _mr1, _mr2 = st.columns(2)
-                _mr1.metric("Expected return",
-                            f"{stats['expected_return']*100:.2f}%",
-                            delta=delta_txt)
-                _mr2.metric("Std deviation", f"{stats['std_dev']*100:.2f}%")
-                _mr3, _mr4 = st.columns(2)
-                _mr3.metric("Skewness", f"{stats['skewness']:.3f}")
-                _mr4.metric("Realised ES" if use_es else "Realised P(r<H)",
-                            f"{stats['shortfall_stat']*100:.2f}%",
-                            help=("Realized expected shortfall E[r | r<H] at this optimal "
-                                  "portfolio (average return in the tail below H). The ES "
-                                  "constraint requires this to stay ≥ L — the limit set in the sidebar."
-                                  if use_es else
-                                  "Realized P(r<H) at this optimal portfolio (probability the "
-                                  "return falls below the threshold H). The VaR constraint requires "
-                                  "this to stay ≤ α — the limit set in the sidebar."))
-                if show_feasibility:
-                    _sf2 = round(stats['shortfall_stat']*100, 2)
-                    if use_es:
-                        _lim2 = round(_L*100, 2) if _L is not None else None
-                        _ok2 = (_lim2 is None) or (_sf2 >= _lim2)
-                        _lim_txt = f"L limit {_lim2:.2f}%" if _lim2 is not None else "L limit"
-                        _btxt = (f"✓ {_sf2:.2f}% ≥ {_lim_txt}" if _ok2
-                                 else f"✗ {_sf2:.2f}% &lt; {_lim_txt} (drifted past limit)")
-                    else:
-                        _lim2 = round(_alpha*100, 2) if _alpha is not None else None
-                        _ok2 = (_lim2 is None) or (_sf2 <= _lim2)
-                        _lim_txt = f"α limit {_lim2:.2f}%" if _lim2 is not None else "α limit"
-                        _btxt = (f"✓ {_sf2:.2f}% ≤ {_lim_txt}" if _ok2
-                                 else f"✗ {_sf2:.2f}% &gt; {_lim_txt}")
-                    _mr4.markdown(f'<div style="color:{"#16a34a" if _ok2 else "#dc2626"};'
-                                f'font-size:.74rem;margin-top:-.5rem;margin-bottom:.2rem">{_btxt}</div>',
-                                unsafe_allow_html=True)
-                if method_txt:
-                    st.caption(f"Method: {method_txt}")
-            with col_d:
-                _svg = make_donut_svg(weights, labels, colors, size=150)
-                if _svg:
-                    st.markdown(f'<div style="display:flex;justify-content:center;margin-top:1.8rem">{_svg}</div>', unsafe_allow_html=True)
-            with col_b:
-                st.markdown('<div style="font-weight:600;font-size:.9rem;margin-bottom:.4rem">Portfolio weights</div>', unsafe_allow_html=True)
-                for i, w in enumerate(weights):
-                    _c = colors[i % len(colors)]
-                    _l = labels[i]
-                    st.markdown(
-                        f'<div style="margin-bottom:.45rem">'
-                        f'<div><span style="color:{_c};font-weight:600">{_l}</span>'
-                        f'<span style="color:{_c}"> — {w*100:.1f}%</span></div>'
-                        f'<div style="height:6px;background:#1a2a3a;border-radius:3px;margin-top:3px">'
-                        f'<div style="height:6px;width:{w*100:.1f}%;background:{_c};border-radius:3px"></div>'
-                        f'</div></div>',
-                        unsafe_allow_html=True)
-            if note_html:
-                st.markdown(note_html, unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+                st.markdown(header_html, unsafe_allow_html=True)
+                st.caption(caption_txt)
+                # Three-column layout: metrics | donut | bars
+                col_m, col_d, col_b = st.columns([1.2, 1, 1.4])
+                with col_m:
+                    _mr1, _mr2 = st.columns(2)
+                    _mr1.metric("Expected return",
+                                f"{stats['expected_return']*100:.2f}%",
+                                delta=delta_txt)
+                    _mr2.metric("Std deviation", f"{stats['std_dev']*100:.2f}%")
+                    _mr3, _mr4 = st.columns(2)
+                    _mr3.metric("Skewness", f"{stats['skewness']:.3f}")
+                    _mr4.metric("Realised ES" if use_es else "Realised P(r<H)",
+                                f"{stats['shortfall_stat']*100:.2f}%",
+                                help=("Realized expected shortfall E[r | r<H] at this optimal "
+                                      "portfolio (average return in the tail below H). The ES "
+                                      "constraint requires this to stay ≥ L — the limit set in the sidebar."
+                                      if use_es else
+                                      "Realized P(r<H) at this optimal portfolio (probability the "
+                                      "return falls below the threshold H). The VaR constraint requires "
+                                      "this to stay ≤ α — the limit set in the sidebar."))
+                    if show_feasibility:
+                        _sf2 = round(stats['shortfall_stat']*100, 2)
+                        if use_es:
+                            _lim2 = round(_L*100, 2) if _L is not None else None
+                            _ok2 = (_lim2 is None) or (_sf2 >= _lim2)
+                            _lim_txt = f"L limit {_lim2:.2f}%" if _lim2 is not None else "L limit"
+                            _btxt = (f"✓ {_sf2:.2f}% ≥ {_lim_txt}" if _ok2
+                                     else f"✗ {_sf2:.2f}% &lt; {_lim_txt} (drifted past limit)")
+                        else:
+                            _lim2 = round(_alpha*100, 2) if _alpha is not None else None
+                            _ok2 = (_lim2 is None) or (_sf2 <= _lim2)
+                            _lim_txt = f"α limit {_lim2:.2f}%" if _lim2 is not None else "α limit"
+                            _btxt = (f"✓ {_sf2:.2f}% ≤ {_lim_txt}" if _ok2
+                                     else f"✗ {_sf2:.2f}% &gt; {_lim_txt}")
+                        _mr4.markdown(f'<div style="color:{"#16a34a" if _ok2 else "#dc2626"};'
+                                    f'font-size:.74rem;margin-top:-.5rem;margin-bottom:.2rem">{_btxt}</div>',
+                                    unsafe_allow_html=True)
+                    if method_txt:
+                        st.caption(f"Method: {method_txt}")
+                with col_d:
+                    _svg = make_donut_svg(weights, labels, colors, size=150)
+                    if _svg:
+                        st.markdown(f'<div style="display:flex;justify-content:center;margin-top:1.8rem">{_svg}</div>', unsafe_allow_html=True)
+                with col_b:
+                    st.markdown('<div style="font-weight:600;font-size:.9rem;margin-bottom:.4rem">Portfolio weights</div>', unsafe_allow_html=True)
+                    for i, w in enumerate(weights):
+                        _c = colors[i % len(colors)]
+                        _l = labels[i]
+                        st.markdown(
+                            f'<div style="margin-bottom:.45rem">'
+                            f'<div><span style="color:{_c};font-weight:600">{_l}</span>'
+                            f'<span style="color:{_c}"> — {w*100:.1f}%</span></div>'
+                            f'<div style="height:6px;background:#1a2a3a;border-radius:3px;margin-top:3px">'
+                            f'<div style="height:6px;width:{w*100:.1f}%;background:{_c};border-radius:3px"></div>'
+                            f'</div></div>',
+                            unsafe_allow_html=True)
+                if note_html:
+                    st.markdown(note_html, unsafe_allow_html=True)
 
         # ── Compute all four portfolios ─────────────────────────────────────
         if _render_from_cache:
@@ -3416,23 +3455,23 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
                     f'<tr style="border-top:1px solid #1a2a3a">'
                     f'<td style="padding:.4rem .7rem"><span style="color:{_clr};font-weight:700">&#9679;</span> '
                     f'<span style="color:#dbe7ff">{_name}</span></td>'
-                    f'<td style="padding:.4rem .7rem;text-align:right;color:#dbe7ff">{_ret:.2f}%</td>'
-                    f'<td style="padding:.4rem .7rem;text-align:right;color:#dbe7ff">{_std:.2f}%</td>'
-                    f'<td style="padding:.4rem .7rem;text-align:right;color:#9fb3d1">{_skew}</td>'
-                    f'<td style="padding:.4rem .7rem;text-align:right;color:#dbe7ff">{_dlt}</td>'
+                    f'<td style="padding:.4rem .7rem;text-align:center;color:#dbe7ff">{_ret:.2f}%</td>'
+                    f'<td style="padding:.4rem .7rem;text-align:center;color:#dbe7ff">{_std:.2f}%</td>'
+                    f'<td style="padding:.4rem .7rem;text-align:center;color:#9fb3d1">{_skew}</td>'
+                    f'<td style="padding:.4rem .7rem;text-align:center;color:#dbe7ff">{_dlt}</td>'
                     f'</tr>')
             _summary_html = (
-                '<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'
+                '<div style="background:#0d1a2e;border:none;border-radius:8px;'
                 'padding:.6rem .8rem;margin:.2rem 0 1rem 0;overflow-x:auto">'
-                '<div style="color:#4a9eff;font-weight:700;font-size:.9rem;margin-bottom:.4rem;text-align:center">'
+                '<div style="color:#4a9eff;font-weight:700;font-size:.95rem;margin-bottom:.4rem;text-align:center">'
                 'Summary — resulting portfolios</div>'
                 '<table style="width:100%;border-collapse:collapse;font-size:.82rem">'
                 '<thead><tr style="color:#9fb3d1">'
-                '<th style="padding:.3rem .7rem;text-align:left">Portfolio</th>'
-                '<th style="padding:.3rem .7rem;text-align:right">Expected return</th>'
-                '<th style="padding:.3rem .7rem;text-align:right">Std deviation</th>'
-                '<th style="padding:.3rem .7rem;text-align:right">Skewness</th>'
-                '<th style="padding:.3rem .7rem;text-align:right">&Delta; vs (1)</th>'
+                '<th style="padding:.3rem .7rem;text-align:center">Portfolio</th>'
+                '<th style="padding:.3rem .7rem;text-align:center">Expected return</th>'
+                '<th style="padding:.3rem .7rem;text-align:center">Std deviation</th>'
+                '<th style="padding:.3rem .7rem;text-align:center">Skewness</th>'
+                '<th style="padding:.3rem .7rem;text-align:center">&Delta; vs (1)</th>'
                 '</tr></thead><tbody>' + _trs + '</tbody></table>'
                 '<div style="color:#6b7f99;font-size:.7rem;margin-top:.4rem">'
                 '&Delta; vs (1) = expected-return gap relative to Portfolio (1). '
@@ -3754,6 +3793,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
             'lam_summary': lam_summary,
             'names_in': names_in,
             'sigs_arr': sigs_arr,
+            'means_arr': means_arr, 'cov_mat': cov_mat,
             'asset_labels': asset_labels,
             'constraint_str': constraint_str,
             'grid_lbl': grid_lbl,
@@ -3819,19 +3859,19 @@ elif _view == "scalable":
 Set up the run in the sections below, then click Run:
 
 <table style="width:100%;border-collapse:collapse;color:#ffffff">
-<tr style="border-bottom:1px solid #3a3a5a">
+<tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">1</span></span></td>
   <td style="padding:.5rem .5rem .5rem .3rem"><strong>Data &amp; estimation</strong> — Choose a data source: live market tickers (estimated over a window) or the 3-asset thesis sample case (Das–Statman)</td>
 </tr>
-<tr style="border-bottom:1px solid #3a3a5a">
+<tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">2</span></span></td>
   <td style="padding:.5rem .5rem .5rem .3rem"><strong>Scenarios</strong> — Set the number of Monte-Carlo scenarios S and the copula (Gaussian, or Student-t for tail dependence)</td>
 </tr>
-<tr style="border-bottom:1px solid #3a3a5a">
+<tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">3</span></span></td>
   <td style="padding:.5rem .5rem .5rem .3rem"><strong>Derivatives</strong> (optional) — Add one or more derivatives (call, put, straddle, strangle, vertical spreads), each on any security</td>
 </tr>
-<tr style="border-bottom:1px solid #3a3a5a">
+<tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">4</span></span></td>
   <td style="padding:.5rem .5rem .5rem .3rem"><strong>Constraint</strong> — Set the tail probability α, the α-CVaR floor L (mean of the worst α% of outcomes ≥ L), and an optional max weight per asset</td>
 </tr>
@@ -3844,28 +3884,28 @@ Set up the run in the sections below, then click Run:
 </div>
 """, unsafe_allow_html=True)
     st.markdown("""
-<div class="info-box" style="color:#ffffff !important">
+<div class="info-box" style="color:#ffffff !important;background:linear-gradient(165deg,#1b2330,#161b22)">
 
-<span style="color:#4a9eff;font-size:1.4rem;font-weight:700">📈 Output chart</span>
+<span style="color:#E3C77E;font-size:1.4rem;font-weight:700">📈 Output chart</span>
 
 After a run, the results show a details box, colour-coded weight bars, and an interactive return / tail-risk frontier:
 
 <table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
 <tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Frontier chart</td></tr>
-<tr style="border-bottom:1px solid #2a2a3a">
+<tr>
   <td style="padding:.3rem .5rem;white-space:nowrap">🔵 <strong>Blue line + dots</strong></td>
   <td style="padding:.3rem .5rem">The return / tail-risk frontier — each dot is the <strong>maximum expected return</strong> achievable for one Expected-Shortfall floor L</td>
 </tr>
-<tr style="border-bottom:1px solid #2a2a3a">
+<tr>
   <td style="padding:.3rem .5rem;white-space:nowrap">⭐ <strong>Gold star</strong></td>
   <td style="padding:.3rem .5rem"><strong>Scalable CVaR optimum</strong> (your resulting portfolio) at the chosen floor L — hover for its expected return, L and realised ES</td>
 </tr>
-<tr style="border-bottom:1px solid #2a2a3a">
+<tr>
   <td style="padding:.3rem .5rem;white-space:nowrap">🖱️ <strong>Interactivity</strong></td>
   <td style="padding:.3rem .5rem">Hover any point for its coordinates; drag to zoom, double-click to reset</td>
 </tr>
 <tr><td colspan="2" style="padding:.5rem .5rem .3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Weights &amp; details</td></tr>
-<tr style="border-bottom:1px solid #2a2a3a">
+<tr>
   <td style="padding:.3rem .5rem;white-space:nowrap">📊 <strong>Weight bars</strong></td>
   <td style="padding:.3rem .5rem">Each security has its own colour; <span style="color:#f59e0b;font-weight:700">amber</span> bars are derivatives</td>
 </tr>
@@ -4715,11 +4755,11 @@ elif _view == "backtest":
         except Exception:
             pass
         st.markdown(
-            f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;'
+            f'<details style="background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;'
             f'padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
-            f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">'
+            f'<summary style="cursor:pointer;color:#79b6ff;font-weight:600;list-style:none">'
             f'✨ AI-powered: What is this instrument?</summary>'
-            f'<div style="color:#1a3a5c;margin-top:.4rem">{get_explanation(bt_label)}</div></details>',
+            f'<div style="color:#aebccd;margin-top:.4rem">{get_explanation(bt_label)}</div></details>',
             unsafe_allow_html=True)
 
     _bt_head("Risk measure")
@@ -4755,11 +4795,11 @@ elif _view == "backtest":
     _bt_grid_key = next((k for k in GRID_EXPLANATIONS
                          if bt_res in k and "Turbo" not in k and "Rigorous" not in k), bt_res)
     st.markdown(
-        f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;'
+        f'<details style="background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;'
         f'padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
-        f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">'
+        f'<summary style="cursor:pointer;color:#79b6ff;font-weight:600;list-style:none">'
         f'✨ AI-powered: What does this resolution mean?</summary>'
-        f'<div style="color:#1a3a5c;margin-top:.4rem">'
+        f'<div style="color:#aebccd;margin-top:.4rem">'
         f'{GRID_EXPLANATIONS.get(_bt_grid_key, "No explanation available.")}</div></details>',
         unsafe_allow_html=True)
     if bt_res == "High":
@@ -4793,11 +4833,11 @@ elif _view == "backtest":
             help="Leave blank to report only realised α / β. Enter a value to add a CAPM "
                  "required-return and an ex-ante (expected) alpha column, using the realised beta.")
     st.markdown(
-        f'<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;'
+        f'<details style="background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;'
         f'padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
-        f'<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">'
+        f'<summary style="cursor:pointer;color:#79b6ff;font-weight:600;list-style:none">'
         f'✨ AI-powered: What are alpha &amp; beta, and which benchmark?</summary>'
-        f'<div style="color:#1a3a5c;margin-top:.4rem">{BENCHMARK_EXPLANATION}</div></details>',
+        f'<div style="color:#aebccd;margin-top:.4rem">{BENCHMARK_EXPLANATION}</div></details>',
         unsafe_allow_html=True)
 
     st.markdown(_BT_RULE, unsafe_allow_html=True)
