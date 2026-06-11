@@ -1854,7 +1854,7 @@ with st.sidebar:
     st.divider()
 
     # ── 1. Data source ────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">1</span><span style="display:block">📂 PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">1</span><span style="display:block">📂 PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
     st.markdown(
         '<details style="background:#f0f4ff;border:1px solid #4a9eff;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0 .6rem 0;font-size:.82rem">'
         '<summary style="cursor:pointer;color:#4a9eff;font-weight:600;list-style:none">✨ AI-powered: How these inputs are built</summary>'
@@ -1976,7 +1976,7 @@ with st.sidebar:
     st.divider()
 
     # ── 2. Derivative ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">2</span><span style="display:block">📊 DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">2</span><span style="display:block">📊 DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
     der_label_sel=st.selectbox("Type",list(PREDEFINED_DERIVATIVES.keys()),
                                 index=0,label_visibility="collapsed",key="der_label_sel")
     der_type=PREDEFINED_DERIVATIVES[der_label_sel]
@@ -2129,7 +2129,7 @@ with st.sidebar:
     st.divider()
 
     # ── 3. Constraint ─────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">3</span><span style="display:block">🎯 MENTAL-ACCOUNT CONSTRAINT</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">3</span><span style="display:block">🎯 MENTAL-ACCOUNT CONSTRAINT</span></div>', unsafe_allow_html=True)
 
     # AI explanation renders here — right after the title, above the choices.
     _con_box = st.container()
@@ -2206,7 +2206,7 @@ with st.sidebar:
     st.divider()
 
     # ── 4. Grid ───────────────────────────────────────────────────────────────
-    st.markdown('<div class="section-header"><span style="display:inline-block;background:#4a9eff;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">4</span><span style="display:block">⚡ GRID RESOLUTION</span></div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">4</span><span style="display:block">⚡ GRID RESOLUTION</span></div>', unsafe_allow_html=True)
     # Turbo accelerates the VaR path only; hide it when ES is selected. Rigorous
     # ES uses the high-precision (m=51) state space via the fast coarse-to-fine
     # engine, so its resolution is fixed and the selector does not apply.
