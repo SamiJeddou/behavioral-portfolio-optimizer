@@ -616,7 +616,7 @@ h1{color:#fff;font-size:1.6rem}h2,h3{color:#c0c8d8}
         padding-left: 2.5rem !important;
         padding-right: 2.5rem !important;
     }
-.section-header{border-left:4px solid #1a6bbf;background:#1a1a2e;padding:.4rem .8rem;border-radius:0 6px 6px 0;margin-top:1.2rem;margin-bottom:.5rem;color:#E3C77E;font-weight:600;font-size:1.05rem;letter-spacing:.02em;text-align:center;overflow:hidden}
+.section-header{border:1px solid #30363d;background:linear-gradient(165deg,#1b2330,#161b22);padding:.4rem .8rem;border-radius:12px;margin-top:1.2rem;margin-bottom:.5rem;color:#E3C77E;font-weight:600;font-size:1.05rem;letter-spacing:.02em;text-align:center;overflow:hidden}
 #sh1 ~ #sh1{display:none !important}
 /* Hide any section-header or h2 that leaks into main content area */
 section[data-testid="stMain"] .section-header {display:none !important}
