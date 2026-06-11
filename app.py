@@ -2696,7 +2696,7 @@ def plot_mc_frontier(rows):
 
 if _view == "optimiser":
     import os
-    st.markdown('<h2 style="color:#4a9eff;margin-bottom:2px">Grid Portfolio Optimiser</h2><div style="color:#8b949e;font-size:0.95rem;margin-bottom:6px">Behavioural mean-variance with derivatives &amp; structured products — Das–Statman mental-accounts framework</div>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:#E3C77E;margin-bottom:2px">Grid Portfolio Optimiser</h2><div style="color:#8b949e;font-size:0.95rem;margin-bottom:6px">Behavioural mean-variance with derivatives &amp; structured products — Das–Statman mental-accounts framework</div>', unsafe_allow_html=True)
     st.markdown(
         "Classical portfolio optimisers stop at stocks and bonds. This app goes further — "
         "incorporating derivatives and structured products, handling **non-normal return distributions**, "
@@ -3783,7 +3783,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
 
 elif _view == "scalable":
     import datetime as _dt
-    st.markdown('<h2 style="color:#4a9eff">🧮 Scalable Optimiser — Monte-Carlo + CVaR</h2>',
+    st.markdown('<h2 style="color:#E3C77E">🧮 Scalable Optimiser — Monte-Carlo + CVaR</h2>',
                 unsafe_allow_html=True)
     st.markdown(
         "A **scenario-based** engine for **large portfolios** and **several derivatives at "
@@ -4490,7 +4490,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
 
 elif _view == "backtest":
     import datetime as _dt
-    st.markdown('<h2 style="color:#4a9eff">🔬 Out-of-Sample Backtest</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:#E3C77E">🔬 Out-of-Sample Backtest</h2>', unsafe_allow_html=True)
     st.markdown(
         "This tab is **self-contained and independent of the Optimiser tab** — it has its "
         "own inputs. It builds the optimal portfolio on a **construction period**, then "
