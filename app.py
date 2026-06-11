@@ -626,6 +626,18 @@ section[data-testid="stMain"] h2:has(+ hr) {display:none !important}
     section[data-testid="stSidebar"] div.stButton > button,section[data-testid="stSidebar"] div.stButton > button[kind="primary"]{background:linear-gradient(180deg,#5aabff 0%,#2d7dd2 100%) !important;border:none !important;border-bottom:3px solid #1a5fa0 !important;border-radius:8px !important;color:#ffffff !important;font-size:1.05rem !important;font-weight:700 !important;padding:.6rem 1rem !important;box-shadow:0 4px 8px rgba(0,0,0,0.5) !important;text-shadow:0 1px 2px rgba(0,0,0,0.3) !important;width:100% !important}
     section[data-testid="stSidebar"] div.stButton > button:hover{background:linear-gradient(180deg,#6bbfff 0%,#3a8de0 100%) !important;box-shadow:0 6px 14px rgba(0,0,0,0.6) !important;transform:translateY(-1px) !important}
     section[data-testid="stSidebar"] div.stButton > button:active{background:linear-gradient(180deg,#2d7dd2 0%,#1a5fa0 100%) !important;border-bottom:1px solid #1a5fa0 !important;transform:translateY(1px) !important}
+/* ── Dark sidebar theme (HTML boxes keep their own colours) ─────────────── */
+section[data-testid="stSidebar"]{background:#0d1117 !important}
+section[data-testid="stSidebar"] hr{border-color:#2a3a4a !important}
+section[data-testid="stSidebar"] h1,section[data-testid="stSidebar"] h2,section[data-testid="stSidebar"] h3,
+section[data-testid="stSidebar"] .stMarkdown p,section[data-testid="stSidebar"] .stMarkdown li,
+section[data-testid="stSidebar"] label,section[data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
+section[data-testid="stSidebar"] [role="radiogroup"] label *{color:#e7ecf4 !important}
+section[data-testid="stSidebar"] input,section[data-testid="stSidebar"] textarea{background:#161b22 !important;color:#e7ecf4 !important;-webkit-text-fill-color:#e7ecf4 !important}
+section[data-testid="stSidebar"] [data-baseweb="input"],section[data-testid="stSidebar"] [data-baseweb="select"]>div,section[data-testid="stSidebar"] [data-baseweb="base-input"]{background:#161b22 !important;border-color:#30363d !important}
+section[data-testid="stSidebar"] [data-baseweb="select"] *{color:#e7ecf4 !important}
+section[data-testid="stSidebar"] [data-testid="stExpander"]{background:#161b22 !important;border-color:#30363d !important}
+section[data-testid="stSidebar"] [data-testid="stExpander"] summary,section[data-testid="stSidebar"] [data-testid="stExpander"] p{color:#e7ecf4 !important}
 </style>""", unsafe_allow_html=True)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
