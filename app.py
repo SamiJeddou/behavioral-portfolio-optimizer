@@ -638,6 +638,7 @@ section[data-testid="stSidebar"] [data-baseweb="input"],section[data-testid="stS
 section[data-testid="stSidebar"] [data-baseweb="select"] *{color:#e7ecf4 !important}
 section[data-testid="stSidebar"] [data-testid="stExpander"]{background:#161b22 !important;border-color:#30363d !important}
 section[data-testid="stSidebar"] [data-testid="stExpander"] summary,section[data-testid="stSidebar"] [data-testid="stExpander"] p{color:#e7ecf4 !important}
+section[data-testid="stSidebar"] [data-testid="stSliderTickBarMin"],section[data-testid="stSidebar"] [data-testid="stSliderTickBarMax"],section[data-testid="stSidebar"] [data-testid="stSliderThumbValue"]{color:#ffffff !important}
 </style>""", unsafe_allow_html=True)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
