@@ -664,6 +664,9 @@ section[data-testid="stMain"] [style*="background: rgb(13, 26, 46)"] table,secti
 /* Half-width, centered PDF export button */
 .st-key-pdf_download div.stDownloadButton > button{width:50% !important}
 .st-key-pdf_download div.stDownloadButton{display:flex !important;justify-content:center !important}
+/* Half-width, centered Run/Export buttons on Backtest & Scalable pages */
+.st-key-bt_run div.stButton > button,.st-key-mc_run div.stButton > button,.st-key-bt_pdf_download div.stDownloadButton > button{width:50% !important}
+.st-key-bt_run div.stButton,.st-key-mc_run div.stButton,.st-key-bt_pdf_download div.stDownloadButton{display:flex !important;justify-content:center !important}
 /* Portfolio result frames — match the Optimisation Parameters section frame */
 section[data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"]{border-color:#30363d !important}
 section[data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"]:has(.pf-frame-marker):not(:has([data-testid="stVerticalBlockBorderWrapper"] .pf-frame-marker)){background:#1b2330 !important}
@@ -1831,7 +1834,7 @@ def _mc_pnl_distribution(port, alpha, es, floor, er):
     return fig
 
 
-_HOME_CSS = "<style>[data-testid='stAppViewContainer']{background:radial-gradient(1000px 560px at 78% -12%,rgba(74,158,255,.12),transparent 60%),radial-gradient(760px 420px at -5% 112%,rgba(245,185,66,.07),transparent 55%),#0d1117 !important}[data-testid='stHeader']{background:transparent !important}[data-testid='stMain'],section.main{background:transparent !important}section[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl']{display:none!important}.bmv-home{--blue:#4a9eff;--gold:#f5b942;--gold2:#caa14a;--green:#16a34a;--border:#30363d;--surface:#161b22;--surface2:#1b2330;--text:#fafafa;--muted:#8b949e;--text2:#c9d1d9;font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--text)}.bmv-home *{box-sizing:border-box}.bmv-hero{display:flex;gap:16px;align-items:flex-start;margin:.2rem 0 1.5rem}.bmv-mark{width:46px;height:46px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1205;font-weight:700;font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.5rem}.bmv-eyebrow{font-size:.84rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9;margin-bottom:9px}.bmv-eyebrow .w{color:var(--gold);font-style:italic}.bmv-h1{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-weight:600;font-size:1.95rem;line-height:1.08;margin-bottom:8px}.bmv-h1 .em{color:#E3C77E}.bmv-lede{color:var(--text2);font-size:.92rem;max-width:62ch}.bmv-sub{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.2rem;font-weight:500;color:#aeb9c9;margin-top:5px}.bmv-label{font-size:.64rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}.bmv-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}.bmv-tile{position:relative;display:flex;flex-direction:column;text-decoration:none;color:var(--text);overflow:hidden;background:linear-gradient(165deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:16px;transition:.22s cubic-bezier(.2,.7,.3,1)}.bmv-tile:hover{transform:translateY(-4px);border-color:var(--accent,var(--blue));box-shadow:0 22px 46px -24px var(--glow,rgba(74,158,255,.5))}.bmv-thumb{height:150px;background:#0a0e15;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden}.bmv-thumb img{width:100%;height:100%;object-fit:contain;display:block;transition:.3s}.bmv-tile:hover .bmv-thumb img{transform:scale(1.03)}.bmv-body{padding:15px 16px;display:flex;flex-direction:column;flex:1}.bmv-thead{display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:7px}.bmv-ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:1.05rem;flex:none;background:var(--icobg,rgba(74,158,255,.12));border:1px solid var(--icobd,rgba(74,158,255,.3))}.bmv-tt{font-weight:600;font-size:1.05rem}.bmv-tile.blue .bmv-tt,.bmv-tile.gold .bmv-tt,.bmv-tile.green .bmv-tt,.bmv-tile.slate .bmv-tt{color:#E3C77E}.bmv-home a.bmv-tile,.bmv-home a.bmv-tile:hover,.bmv-home a.bmv-tile:focus{text-decoration:none!important}.bmv-tile.blue .bmv-td,.bmv-tile.gold .bmv-td,.bmv-tile.green .bmv-td{text-align:center}.bmv-tile.green .bmv-badge{align-self:center;text-align:center}.bmv-tile.blue .bmv-foot,.bmv-tile.gold .bmv-foot,.bmv-tile.green .bmv-foot{justify-content:center}.bmv-td{font-size:.8rem;color:var(--muted);line-height:1.5}.bmv-td b{color:var(--text2);font-weight:600}.bmv-foot{margin-top:auto;padding-top:13px;display:flex;align-items:center;justify-content:space-between}.bmv-tag{font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.66rem;color:var(--text2);background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:3px 8px}.bmv-arw{font-size:1.05rem;color:var(--accent,var(--blue));opacity:0;transform:translateX(-4px);transition:.22s}.bmv-tile:hover .bmv-arw{opacity:1;transform:translateX(0)}.bmv-badge{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.63rem;color:var(--blue);background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.32);border-radius:6px;padding:4px 8px;margin-top:11px;line-height:1.3;width:fit-content}.bmv-tile.blue{--accent:#4a9eff;--glow:rgba(74,158,255,.5);--icobg:rgba(74,158,255,.12);--icobd:rgba(74,158,255,.32)}.bmv-tile.gold{--accent:#f5b942;--glow:rgba(245,185,66,.45);--icobg:rgba(245,185,66,.12);--icobd:rgba(245,185,66,.32)}.bmv-tile.green{--accent:#16a34a;--glow:rgba(22,163,74,.45);--icobg:rgba(22,163,74,.14);--icobd:rgba(22,163,74,.34)}.bmv-tile.slate{--accent:#7d8aa0;--glow:rgba(125,138,160,.4);--icobg:rgba(125,138,160,.12);--icobd:rgba(125,138,160,.3)}.bmv-tiles.ref{grid-template-columns:repeat(3,1fr)}.bmv-tiles.ref .bmv-tile{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:7px 9px;padding:15px 16px}.bmv-tiles.ref .bmv-tile>div{display:contents}.bmv-tiles.ref .bmv-td{flex-basis:100%}.bmv-tiles.ref .bmv-tt,.bmv-tiles.ref .bmv-td{text-align:center}.bmv-tiles.ref .bmv-ico{width:38px;height:38px;font-size:1.15rem}.bmv-tiles.ref .bmv-tt{font-size:.95rem}.bmv-tiles.ref .bmv-td{font-size:.74rem;margin-top:2px}.bmv-aipill{display:inline-block;font-size:.55rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;vertical-align:middle;margin-left:7px;padding:2px 7px;border-radius:999px;color:#1a1205;background:linear-gradient(135deg,var(--gold),var(--gold2))}@media(max-width:640px){.bmv-tiles{grid-template-columns:1fr 1fr}.bmv-tiles.ref{grid-template-columns:1fr}}</style>"
+_HOME_CSS = "<style>[data-testid='stAppViewContainer']{background:radial-gradient(1000px 560px at 78% -12%,rgba(74,158,255,.12),transparent 60%),radial-gradient(760px 420px at -5% 112%,rgba(245,185,66,.07),transparent 55%),#0d1117 !important}[data-testid='stHeader']{background:transparent !important}[data-testid='stMain'],section.main{background:transparent !important}section[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl']{display:none!important}.bmv-home{--blue:#4a9eff;--gold:#f5b942;--gold2:#caa14a;--green:#16a34a;--border:#30363d;--surface:#161b22;--surface2:#1b2330;--text:#fafafa;--muted:#8b949e;--text2:#c9d1d9;font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--text)}.bmv-home *{box-sizing:border-box}.bmv-hero{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;margin:.2rem 0 1.5rem}.bmv-mark{width:46px;height:46px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1205;font-weight:700;font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.5rem}.bmv-eyebrow{font-size:.84rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9;margin-bottom:9px}.bmv-eyebrow .w{color:var(--gold);font-style:italic}.bmv-h1{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-weight:600;font-size:1.95rem;line-height:1.08;margin-bottom:8px}.bmv-h1 .em{color:#E3C77E}.bmv-lede{color:var(--text2);font-size:.92rem;max-width:62ch}.bmv-sub{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.2rem;font-weight:500;color:#aeb9c9;margin-top:5px}.bmv-label{font-size:.64rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}.bmv-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}.bmv-tile{position:relative;display:flex;flex-direction:column;text-decoration:none;color:var(--text);overflow:hidden;background:linear-gradient(165deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:16px;transition:.22s cubic-bezier(.2,.7,.3,1)}.bmv-tile:hover{transform:translateY(-4px);border-color:var(--accent,var(--blue));box-shadow:0 22px 46px -24px var(--glow,rgba(74,158,255,.5))}.bmv-thumb{height:150px;background:#0a0e15;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden}.bmv-thumb img{width:100%;height:100%;object-fit:contain;display:block;transition:.3s}.bmv-tile:hover .bmv-thumb img{transform:scale(1.03)}.bmv-body{padding:15px 16px;display:flex;flex-direction:column;flex:1}.bmv-thead{display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:7px}.bmv-ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:1.05rem;flex:none;background:var(--icobg,rgba(74,158,255,.12));border:1px solid var(--icobd,rgba(74,158,255,.3))}.bmv-tt{font-weight:600;font-size:1.05rem}.bmv-tile.blue .bmv-tt,.bmv-tile.gold .bmv-tt,.bmv-tile.green .bmv-tt,.bmv-tile.slate .bmv-tt{color:#E3C77E}.bmv-home a.bmv-tile,.bmv-home a.bmv-tile:hover,.bmv-home a.bmv-tile:focus{text-decoration:none!important}.bmv-tile.blue .bmv-td,.bmv-tile.gold .bmv-td,.bmv-tile.green .bmv-td{text-align:center}.bmv-tile.green .bmv-badge{align-self:center;text-align:center}.bmv-tile.blue .bmv-foot,.bmv-tile.gold .bmv-foot,.bmv-tile.green .bmv-foot{justify-content:center}.bmv-td{font-size:.8rem;color:var(--muted);line-height:1.5}.bmv-td b{color:var(--text2);font-weight:600}.bmv-foot{margin-top:auto;padding-top:13px;display:flex;align-items:center;justify-content:space-between}.bmv-tag{font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.66rem;color:var(--text2);background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:3px 8px}.bmv-arw{font-size:1.05rem;color:var(--accent,var(--blue));opacity:0;transform:translateX(-4px);transition:.22s}.bmv-tile:hover .bmv-arw{opacity:1;transform:translateX(0)}.bmv-badge{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.63rem;color:var(--blue);background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.32);border-radius:6px;padding:4px 8px;margin-top:11px;line-height:1.3;width:fit-content}.bmv-tile.blue{--accent:#4a9eff;--glow:rgba(74,158,255,.5);--icobg:rgba(74,158,255,.12);--icobd:rgba(74,158,255,.32)}.bmv-tile.gold{--accent:#f5b942;--glow:rgba(245,185,66,.45);--icobg:rgba(245,185,66,.12);--icobd:rgba(245,185,66,.32)}.bmv-tile.green{--accent:#16a34a;--glow:rgba(22,163,74,.45);--icobg:rgba(22,163,74,.14);--icobd:rgba(22,163,74,.34)}.bmv-tile.slate{--accent:#7d8aa0;--glow:rgba(125,138,160,.4);--icobg:rgba(125,138,160,.12);--icobd:rgba(125,138,160,.3)}.bmv-tiles.ref{grid-template-columns:repeat(3,1fr)}.bmv-tiles.ref .bmv-tile{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:7px 9px;padding:15px 16px}.bmv-tiles.ref .bmv-tile>div{display:contents}.bmv-tiles.ref .bmv-td{flex-basis:100%}.bmv-tiles.ref .bmv-tt,.bmv-tiles.ref .bmv-td{text-align:center}.bmv-tiles.ref .bmv-ico{width:38px;height:38px;font-size:1.15rem}.bmv-tiles.ref .bmv-tt{font-size:.95rem}.bmv-tiles.ref .bmv-td{font-size:.74rem;margin-top:2px}.bmv-aipill{display:inline-block;font-size:.55rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;vertical-align:middle;margin-left:7px;padding:2px 7px;border-radius:999px;color:#1a1205;background:linear-gradient(135deg,var(--gold),var(--gold2))}@media(max-width:640px){.bmv-tiles{grid-template-columns:1fr 1fr}.bmv-tiles.ref{grid-template-columns:1fr}}</style>"
 _HOME_HTML = '<div class="bmv-home">\n  <div class="bmv-hero">\n    <div class="bmv-mark">&beta;</div>\n    <div>\n      <div class="bmv-eyebrow">Portfolio Optimisation <span class="w">with</span> Derivatives &amp; Structured Products</div>\n      <div class="bmv-h1">Beyond <span class="em">Mean-Variance</span></div>\n      <div class="bmv-sub">Mental Accounting Framework</div>\n    </div>\n  </div>\n  <div class="bmv-label">Tools</div>\n  <div class="bmv-tiles">\n    <a class="bmv-tile blue" href="?view=optimiser" target="_self">\n      <div class="bmv-thumb"><img src="__OPT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico">📊</span><span class="bmv-tt">Grid Portfolio Optimiser</span></div>\n        <div class="bmv-td">Exact grid engine on the Das&ndash;Statman states — VaR, thesis-faithful ES and rigorous-ES, with derivatives.</div>\n        <div class="bmv-foot"><span class="bmv-tag">grid · exact</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile gold" href="?view=scalable" target="_self">\n      <div class="bmv-thumb"><img src="__MC__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico">🧮</span><span class="bmv-tt">Scalable Portfolio Optimiser</span></div>\n        <div class="bmv-td">Monte-Carlo scenarios + &alpha;-CVaR linear program — scales to large, multi-derivative portfolios.</div>\n        <div class="bmv-foot"><span class="bmv-tag">scenario · LP · beta</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile green" href="?view=backtest" target="_self">\n      <div class="bmv-thumb"><img src="__BT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico">🔬</span><span class="bmv-tt">Backtest</span></div>\n        <div class="bmv-td">Out-of-sample walk-forward of the <b>Optimiser\'s</b> portfolios, derivative marked to market.</div>\n        <div class="bmv-badge">&#8627; realised alpha &amp; beta vs a benchmark</div>\n        <div class="bmv-foot"><span class="bmv-tag">out-of-sample</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n  </div>\n  <div class="bmv-label">Reference</div>\n  <div class="bmv-tiles ref">\n    <a class="bmv-tile slate" href="?view=about" target="_self">\n      <span class="bmv-ico">📖</span>\n      <div><div class="bmv-tt">About</div><div class="bmv-td">Methods, framework and research.</div></div>\n    </a>\n    <a class="bmv-tile slate" href="?view=glossary" target="_self">\n      <span class="bmv-ico">📚</span>\n      <div><div class="bmv-tt">Glossary <span class="bmv-aipill">AI-powered</span></div><div class="bmv-td">VaR, ES, &alpha;-CVaR, copulas — plus natural-language Q&amp;A.</div></div>\n    </a>\n    <a class=\"bmv-tile slate\" href=\"https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf\">\n      <span class=\"bmv-ico\">📘</span>\n      <div><div class=\"bmv-tt\">User Guide</div><div class=\"bmv-td\">Step-by-step tour of the app (PDF download).</div></div>\n    </a>\n  </div>\n</div>'
 
 _NAV_FOOTER = (
@@ -2665,8 +2668,10 @@ def plot_backtest_paths_plotly(dates, pv1, pv2, label2):
                     font=dict(color='#ffffff', size=12),
                     x=0.01, y=0.99, xanchor='left', yanchor='top'),
         yaxis=dict(title='Portfolio value (entry = 100)', gridcolor='#21262d',
-                   zeroline=False, color='#8b949e'),
-        xaxis=dict(gridcolor='#21262d', color='#8b949e'),
+                   zeroline=False, color='#8b949e',
+                   showline=True, linecolor='#c0c8d8', linewidth=1, mirror=False),
+        xaxis=dict(gridcolor='#21262d', color='#8b949e',
+                   showline=True, linecolor='#c0c8d8', linewidth=1, mirror=False),
     )
     return fig
 
@@ -2745,7 +2750,7 @@ def plot_mc_frontier(rows):
 
 if _view == "optimiser":
     import os
-    st.markdown('<h2 style="color:#E3C77E;margin-bottom:2px">Grid Portfolio Optimiser</h2><div style="color:#8b949e;font-size:0.95rem;margin-bottom:6px">Behavioural mean-variance with derivatives &amp; structured products — Das–Statman mental-accounts framework</div>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:#E3C77E;margin-bottom:2px;text-align:center">Grid Portfolio Optimiser</h2><div style="color:#8b949e;font-size:0.95rem;margin-bottom:6px;text-align:center">Behavioural mean-variance with derivatives &amp; structured products — Das–Statman mental-accounts framework</div>', unsafe_allow_html=True)
     st.markdown(
         "Classical portfolio optimisers stop at stocks and bonds. This app goes further — "
         "incorporating derivatives and structured products, handling **non-normal return distributions**, "
@@ -3837,7 +3842,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
 
 elif _view == "scalable":
     import datetime as _dt
-    st.markdown('<h2 style="color:#E3C77E">🧮 Scalable Optimiser — Monte-Carlo + CVaR</h2>',
+    st.markdown('<h2 style="color:#E3C77E;text-align:center">🧮 Scalable Optimiser — Monte-Carlo + CVaR</h2>',
                 unsafe_allow_html=True)
     st.markdown(
         "A **scenario-based** engine for **large portfolios** and **several derivatives at "
@@ -3852,12 +3857,11 @@ elif _view == "scalable":
                "replace it.")
 
     st.markdown("""
-<div class="info-box" style="color:#ffffff !important">
+<div class="info-box" style="color:#ffffff !important;background:linear-gradient(165deg,#1b2330,#161b22)">
 
-<span style="color:#4a9eff;font-size:1.75rem;font-weight:700">📋 How to use this tool: Scalable Portfolio Optimiser</span>
-
-Set up the run in the sections below, then click Run:
-
+<details>
+<summary style="color:#E3C77E;font-size:1.4rem;font-weight:700;cursor:pointer">📋 How to use this tool: Scalable Portfolio Optimiser</summary>
+<div style="margin:.6rem 0">Set up the run in the sections below, then click Run:</div>
 <table style="width:100%;border-collapse:collapse;color:#ffffff">
 <tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">1</span></span></td>
@@ -3880,16 +3884,15 @@ Set up the run in the sections below, then click Run:
   <td style="padding:.5rem .5rem .5rem .3rem"><strong>Run</strong> — Click <strong>▶ Run scalable optimiser</strong></td>
 </tr>
 </table>
-
+</details>
 </div>
 """, unsafe_allow_html=True)
     st.markdown("""
 <div class="info-box" style="color:#ffffff !important;background:linear-gradient(165deg,#1b2330,#161b22)">
 
-<span style="color:#E3C77E;font-size:1.4rem;font-weight:700">📈 Output chart</span>
-
-After a run, the results show a details box, colour-coded weight bars, and an interactive return / tail-risk frontier:
-
+<details>
+<summary style="color:#E3C77E;font-size:1.4rem;font-weight:700;cursor:pointer">📈 Output chart</summary>
+<div style="margin:.6rem 0">After a run, the results show a details box, colour-coded weight bars, and an interactive return / tail-risk frontier:</div>
 <table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
 <tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Frontier chart</td></tr>
 <tr>
@@ -3914,7 +3917,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
   <td style="padding:.3rem .5rem">Expected return, volatility, skewness and realised ES of the optimal portfolio, with a feasibility badge against the floor L</td>
 </tr>
 </table>
-
+</details>
 </div>
 """, unsafe_allow_html=True)
 
@@ -3963,7 +3966,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
         )
 
     st.markdown("---")
-    st.markdown("#### Inputs")
+    st.markdown('<h4 style="text-align:center">Inputs</h4>', unsafe_allow_html=True)
 
     _MC_RULE = "<hr style='border:none;border-top:1px solid #30363d;margin:1.2rem 0 0.55rem'>"
     def _mc_head(t, rule=True):
@@ -4544,7 +4547,7 @@ After a run, the results show a details box, colour-coded weight bars, and an in
 
 elif _view == "backtest":
     import datetime as _dt
-    st.markdown('<h2 style="color:#E3C77E">🔬 Out-of-Sample Backtest</h2>', unsafe_allow_html=True)
+    st.markdown('<h2 style="color:#E3C77E;text-align:center">🔬 Out-of-Sample Backtest</h2>', unsafe_allow_html=True)
     st.markdown(
         "This tab is **self-contained and independent of the Optimiser tab** — it has its "
         "own inputs. It builds the optimal portfolio on a **construction period**, then "
@@ -4655,7 +4658,7 @@ elif _view == "backtest":
         )
 
     st.markdown("---")
-    st.markdown("#### Inputs")
+    st.markdown('<h4 style="text-align:center">Inputs</h4>', unsafe_allow_html=True)
 
     _BT_RULE = "<hr style='border:none;border-top:1px solid #30363d;margin:1.2rem 0 0.55rem'>"
     def _bt_head(t, rule=True):
@@ -4665,7 +4668,7 @@ elif _view == "backtest":
 
     _bt_head("Securities & settings", rule=False)
     bt_tickers_raw = st.text_input(
-        "Tickers (comma-separated)", value="AAPL, MSFT, JPM, TLT", key="bt_tickers",
+        "Tickers (comma-separated)", value="AAPL, MSFT, JPM", key="bt_tickers",
         help="Yahoo Finance symbols. Pick the option's underlying in the Derivative section below.")
     bt_freq = st.selectbox("Return frequency", ["Daily", "Monthly"], index=0, key="bt_freq")
 
