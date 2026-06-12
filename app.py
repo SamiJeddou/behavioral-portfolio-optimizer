@@ -1923,7 +1923,14 @@ if _view == "home":
 # Push content clear of Streamlit's fixed top header so the back button isn't clipped.
 st.markdown(
     "<style>[data-testid='stMainBlockContainer'],section.main>.block-container,"
-    ".block-container{padding-top:3.5rem !important}</style>",
+    ".block-container{padding-top:3.5rem !important}"
+    "@media (max-width:740px){"
+    "section[data-testid='stMain'] div[data-testid='stVerticalBlockBorderWrapper']:has(.bmv-banner):has(h2)"
+    "{position:static !important;top:auto !important;box-shadow:none !important;border-bottom:none !important;"
+    "padding:.2rem 0 .4rem !important;margin-bottom:.3rem !important}"
+    "section[data-testid='stMain'] [data-testid='stMainBlockContainer']{padding-top:1rem !important}"
+    "section[data-testid='stMain'] [style*='100% - 570px']{max-width:100% !important}"
+    "}</style>",
     unsafe_allow_html=True)
 if _view != "optimiser":
     st.markdown(
