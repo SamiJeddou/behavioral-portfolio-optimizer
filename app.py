@@ -1930,7 +1930,12 @@ st.markdown(
     "padding:.2rem 0 .4rem !important;margin-bottom:.3rem !important}"
     "section[data-testid='stMain'] [data-testid='stMainBlockContainer']{padding-top:1rem !important}"
     "section[data-testid='stMain'] [style*='100% - 570px']{max-width:100% !important}"
-    "}</style>",
+    "}"
+    "section[data-testid='stSidebar'] [data-testid='stSidebarHeader'],"
+    "section[data-testid='stSidebar'] [data-testid='stSidebarCollapseButton'],"
+    "section[data-testid='stSidebar'] [data-testid='stBaseButton-headerNoPadding']"
+    "{z-index:1000 !important;position:relative !important}"
+    "</style>",
     unsafe_allow_html=True)
 if _view != "optimiser":
     st.markdown(
