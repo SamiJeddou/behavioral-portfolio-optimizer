@@ -657,6 +657,13 @@ section[data-testid="stMain"] .info-box table,section[data-testid="stMain"] .inf
 /* Gold "Tools" back button (top of page) */
 .st-key-_nav_back div.stButton > button{background:linear-gradient(180deg,#E3C77E 0%,#C9A24B 100%) !important;border:none !important;border-bottom:3px solid #9a7b2e !important;color:#0d1117 !important;text-shadow:none !important}
 .st-key-_nav_back div.stButton > button:hover{background:linear-gradient(180deg,#edd596 0%,#d4b15e 100%) !important}
+section[data-testid="stSidebar"] .st-key-_nav_back div.stButton > button{background:linear-gradient(180deg,#E3C77E 0%,#C9A24B 100%) !important;border-bottom:3px solid #9a7b2e !important;color:#0d1117 !important}
+section[data-testid="stSidebar"] .st-key-_nav_back div.stButton > button:hover{background:linear-gradient(180deg,#edd596 0%,#d4b15e 100%) !important}
+.st-key-_nav_back div.stButton > button{text-transform:uppercase !important}
+/* Glossary "Ask AI" button — double width */
+.st-key-gloss_ask div.stButton > button,.st-key-gloss_clear div.stButton > button{min-width:194px !important}
+.st-key-gloss_ask div.stButton{display:flex !important;justify-content:center !important}
+.st-key-gloss_clear{margin-top:1.1rem !important}
 /* Dark text on gold primary buttons in main area (PDF export, run buttons) */
 section[data-testid="stMain"] button[kind="primary"],section[data-testid="stMain"] button[kind="primary"] *{color:#0d1117 !important}
 /* Frameless Summary table (the #0d1a2e box) */
@@ -670,6 +677,7 @@ section[data-testid="stMain"] [style*="background: rgb(13, 26, 46)"] table,secti
 /* Portfolio result frames — match the Optimisation Parameters section frame */
 section[data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"]{border-color:#30363d !important}
 section[data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"]:has(.pf-frame-marker):not(:has([data-testid="stVerticalBlockBorderWrapper"] .pf-frame-marker)){background:#1b2330 !important}
+section[data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"]:has(.pf-frame-marker) [data-baseweb="input"],section[data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"]:has(.pf-frame-marker) [data-baseweb="base-input"],section[data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"]:has(.pf-frame-marker) [data-baseweb="select"]>div{background-color:#0d1117 !important}
 </style>""", unsafe_allow_html=True)
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -847,13 +855,26 @@ EXPLANATIONS = {
         "identical portfolios — when no derivatives are present."
     ),
     "Mental accounting": (
-        "Mental accounting, developed by Richard Thaler, is the tendency of individuals to "
-        "categorise and evaluate financial outcomes in separate mental 'accounts' rather than "
-        "as a unified portfolio. "
-        "In portfolio theory, Das & Statman (2009) formalise this as a downside constraint: "
-        "investors set a threshold H and maximum acceptable probability α of breaching it. "
-        "This framework naturally accommodates derivatives whose asymmetric payoffs "
-        "provide targeted protection for specific mental accounts."
+        "Mental accounting, introduced by Richard Thaler (1985, 1999), describes how people "
+        "mentally divide their money into separate 'accounts' according to its source or intended "
+        "purpose, and then make decisions account-by-account rather than across their wealth as a "
+        "whole. A windfall is spent more freely than salary; a dedicated 'holiday fund' is preserved "
+        "even while carrying expensive debt. Money is treated as non-fungible, even though "
+        "economically a dollar is a dollar."
+        "<br><br>"
+        "In <b>behavioural portfolio theory</b> (Shefrin &amp; Statman, 2000) this becomes a design "
+        "principle: instead of holding one mean-variance portfolio, the investor holds a layered "
+        "<b>pyramid</b> of sub-portfolios, each tied to a goal with its own risk tolerance — a "
+        "<b>safety layer</b> that must not be lost, an <b>income layer</b>, and an "
+        "<b>aspirational layer</b> reaching for upside."
+        "<br><br>"
+        "Das &amp; Statman (2009) formalise each mental account as a <b>downside constraint</b>: the "
+        "investor sets a threshold return H and a maximum acceptable probability α of finishing below "
+        "it, and the optimiser maximises expected return subject to that shortfall limit. Framed this "
+        "way, derivatives become natural tools — a protective put defends the safety layer's "
+        "threshold, while calls and structured notes add asymmetric upside to the aspirational layer. "
+        "This is precisely why a behavioural portfolio that embraces mental accounts can dominate a "
+        "single mean-variance portfolio that ignores them."
     ),
     "Behavioral portfolio theory": (
         "Behavioral portfolio theory (BPT), developed by Shefrin & Statman (2000) and extended "
@@ -925,6 +946,13 @@ EXPLANATIONS = {
         "This app is a Python reimplementation and extension of that work, adding further "
         "instruments built on the same Black-Scholes pricing principle: bull and bear spreads, "
         "a long butterfly and call condor, a reverse convertible, and discount and outperformance certificates."
+        "<br><br><a href='https://thesis.bul.sbu.usi.ch/theses/1012-1112BenJeddou/pdf?1390987439' "
+        "target='_blank' style='color:#E3C77E;font-weight:600;text-decoration:none'>"
+        "<svg width='15' height='15' viewBox='0 0 24 24' fill='none' stroke='#E3C77E' stroke-width='2' "
+        "stroke-linecap='round' stroke-linejoin='round' style='vertical-align:-2px;margin-right:.35rem'>"
+        "<path d='M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z'/>"
+        "<polyline points='14 2 14 8 20 8'/><line x1='16' y1='13' x2='8' y2='13'/>"
+        "<line x1='16' y1='17' x2='8' y2='17'/></svg>Read the full thesis (PDF) →</a>"
     ),
     "Rockafellar & Uryasev (2000) — Optimization of CVaR": (
         "Rockafellar, R. Tyrrell and Stanislav Uryasev (2000) — 'Optimization of Conditional "
@@ -1140,33 +1168,33 @@ DEFAULT_CORR  = [[1.0,0.0,0.0],[0.0,1.0,0.4],[0.0,0.4,1.0]]
 DEFAULT_NAMES = ["Sec 1 — Low risk","Sec 2 — Mid risk","Sec 3 — High risk"]
 
 GRID_OPTIONS = {
-    "🚀 Turbo (High-precision accuracy, ~seconds)": (51,'turbo'),
-    "⚡ Fast (m=21, m'=15)":           (21,15),
-    "⚖️  Standard (m=35, m'=50)":      (35,50),
-    "🎯 High precision (m=51, m'=99)": (51,99),
+    "Turbo (High-precision accuracy, ~seconds)": (51,'turbo'),
+    "Fast (m=21, m'=15)":           (21,15),
+    "Standard (m=35, m'=50)":      (35,50),
+    "High precision (m=51, m'=99)": (51,99),
 }
 
 GRID_EXPLANATIONS = {
-    "⚡ Fast (m=21, m'=15)": (
+    "Fast (m=21, m'=15)": (
         "Uses a coarse grid of 21 return scenarios per security and 15 weight steps per dimension. "
         "Runs quickly — seconds for a small universe. Results are directionally correct and useful for exploring "
         "parameters, but weights and expected returns may differ from the precise solution by "
         "a few percentage points. Recommended for initial exploration and parameter sensitivity testing."
     ),
-    "⚖️  Standard (m=35, m'=50)": (
+    "Standard (m=35, m'=50)": (
         "Uses a medium grid with 35 return scenarios and 50 weight steps per dimension. "
         "Minutes-scale on a full local run (longer with more securities or derivatives). Provides a good balance between speed and accuracy — "
         "results are close to the precise solution in most cases. "
         "Recommended for most use cases once you have identified the right parameters."
     ),
-    "🎯 High precision (m=51, m'=99)": (
+    "High precision (m=51, m'=99)": (
         "Matches the original thesis parameters exactly — 51 return scenarios and 99 weight steps, "
         "the same values used in Das & Statman (2009) and Jeddou (2012). "
         "Results are publication-quality and directly comparable to academic benchmarks. "
         "Minutes to tens of minutes on a full local run (longer with more securities or derivatives). "
         "Recommended for final results and for verifying the equivalence point."
     ),
-    "🚀 Turbo (High-precision accuracy, ~seconds)": (
+    "Turbo (High-precision accuracy, ~seconds)": (
         "Reproduces High-precision results (the m=51 state space and m'=99 weight resolution) "
         "for the VaR constraint, but replaces the exhaustive weight-grid search with a "
         "coarse-to-fine search plus pruning of negligible states. Runs in a few seconds instead "
@@ -1174,7 +1202,7 @@ GRID_EXPLANATIONS = {
         "return. Expected-Shortfall and 5+-security problems automatically use the standard solver. "
         "Recommended for fast, publication-quality VaR results."
     ),
-    "🚀 Rigorous ES — high-precision accuracy (~seconds)": (
+    "Rigorous ES — high-precision accuracy (~seconds)": (
         "Rigorous ES does not use the resolution grid you would choose for VaR. It runs on the "
         "high-precision m=51 state space with a fast coarse-to-fine weight search, delivering "
         "high-precision-grade accuracy in a few seconds. The setting is fixed for this mode."
@@ -1532,10 +1560,10 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     fig.update_layout(
         template='plotly_dark',
         paper_bgcolor='#1b2330',
-        plot_bgcolor='#1b2330',
+        plot_bgcolor='#0e1521',
         title=dict(
             text='Mean-Variance vs Behavioural Portfolio Efficient Frontier',
-            font=dict(color='white', size=15),
+            font=dict(color='#E3C77E', size=15),
             x=0.5,
             xanchor='center',
             xref='paper'
@@ -1543,18 +1571,18 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
         xaxis=dict(
             title=dict(text='Portfolio Risk — Standard Deviation (%)',
                        font=dict(color='#c0c8d8', size=13)),
-            gridcolor='#3a4660', gridwidth=1, showgrid=False,
+            gridcolor='#27344e', gridwidth=1, showgrid=True, griddash='dot',
             color='#c0c8d8', zerolinecolor='#2a2a3a',
-            showline=True, linecolor='#c0c8d8', linewidth=1, mirror=False,
+            showline=True, linecolor='#46566f', linewidth=1, mirror=True,
             range=[max(0, min(mv_x) - 1),
                    max(max(mv_x), max(der_x) if der_x else 0) * 1.06]
         ),
         yaxis=dict(
             title=dict(text='Expected Return (%)',
                        font=dict(color='#c0c8d8', size=13)),
-            gridcolor='#3a4660', gridwidth=1, showgrid=True,
+            gridcolor='#27344e', gridwidth=1, showgrid=True, griddash='dot',
             color='#c0c8d8', zerolinecolor='#2a2a3a',
-            showline=True, linecolor='#c0c8d8', linewidth=1, mirror=False,
+            showline=True, linecolor='#46566f', linewidth=1, mirror=True,
             range=[min(min(mv_y), min(nd_y)) - 2,
                    max(max(mv_y), max(der_y) if der_y else 0) * 1.08]
         ),
@@ -1717,12 +1745,19 @@ _HOME_DIR = _os.path.dirname(_os.path.abspath(__file__))
 _VIEWS = ("home", "optimiser", "scalable", "backtest", "about", "glossary")
 
 @st.cache_data(show_spinner=False)
-def _home_assets():
+def _home_assets(mtimes=None):
     out = {}
-    for k, fn in (("OPT", "home_optimiser.png"), ("MC", "home_scalable.png"), ("BT", "home_backtest.png")):
+    for k, fn in (("OPT", "home_optimiser_grid2.png"), ("MC", "home_optimiser_mcvar4.png"), ("BT", "home_optimiser_backtest.png")):
         fp = _os.path.join(_HOME_DIR, fn)
         out[k] = ("data:image/png;base64," + _b64.b64encode(open(fp, "rb").read()).decode()) if _os.path.exists(fp) else ""
     return out
+
+def _home_assets_key():
+    ms = []
+    for fn in ("home_optimiser_grid2.png", "home_optimiser_mcvar4.png", "home_optimiser_backtest.png"):
+        fp = _os.path.join(_HOME_DIR, fn)
+        ms.append(_os.path.getmtime(fp) if _os.path.exists(fp) else 0)
+    return tuple(ms)
 
 def _mc_joint_scatter(R_sec, names, weights, alpha, ia=None, ib=None):
     """Plotly scatter of two assets' Monte-Carlo joint-return scenarios, with the joint
@@ -1749,23 +1784,23 @@ def _mc_joint_scatter(R_sec, names, weights, alpha, ia=None, ib=None):
     fig.add_trace(_go.Scattergl(
         x=xa[keep & ~crash], y=yb[keep & ~crash], mode="markers",
         marker=dict(size=3, color="#4a9eff", opacity=0.28),
-        name="joint scenarios", hoverinfo="skip"))
+        name="joint scenarios", hovertemplate=f"{names[ia]}: %{{x:.1f}}%<br>{names[ib]}: %{{y:.1f}}%<extra></extra>"))
     fig.add_trace(_go.Scattergl(
         x=xa[keep & crash], y=yb[keep & crash], mode="markers",
         marker=dict(size=4, color="#d15866", opacity=0.75),
         name="joint tail (both \u2264 %d%% quantile)" % int(round(alpha * 100)),
-        hoverinfo="skip"))
+        hovertemplate=f"{names[ia]}: %{{x:.1f}}%<br>{names[ib]}: %{{y:.1f}}%<extra>tail</extra>"))
     fig.update_layout(
         template="plotly_dark", paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
         height=460, margin=dict(l=10, r=10, t=46, b=10),
         title=dict(text="Joint return scenarios \u00b7 %s vs %s" % (names[ia], names[ib]),
-                   x=0.5, font=dict(color="white", size=15)),
+                   x=0.5, font=dict(color="#E3C77E", size=15)),
         xaxis=dict(title="%s return (%%)" % names[ia], gridcolor="#1e2130",
                    zeroline=True, zerolinecolor="#3a3a5a"),
         yaxis=dict(title="%s return (%%)" % names[ib], gridcolor="#1e2130",
                    zeroline=True, zerolinecolor="#3a3a5a"),
         legend=dict(bgcolor="rgba(13,17,23,0.6)", bordercolor="#3a3a5a", borderwidth=1,
-                    font=dict(color="#ffffff", size=12)))
+                    font=dict(color="#ffffff", size=12), x=0.01, y=0.99, xanchor="left", yanchor="top"))
     return fig
 
 
@@ -1776,7 +1811,7 @@ def _mc_joint_scatter_view(R_sec, names, weights, alpha):
     optimisation results stay on screen (no full rerun, no need to click Run again)."""
     import numpy as _np
     names = list(names)
-    st.markdown("#### Joint return scenarios")
+    st.markdown('#### <span style="color:#E3C77E">Joint return scenarios</span>', unsafe_allow_html=True)
     st.caption("The actual Monte-Carlo scenarios fed to the CVaR program. The red "
                "lower-left cluster is the joint-crash tail dependence the copula "
                "captures (more pronounced with a Student-t copula).")
@@ -1791,7 +1826,7 @@ def _mc_joint_scatter_view(R_sec, names, weights, alpha):
     st.plotly_chart(
         _mc_joint_scatter(R_sec, names, weights, alpha,
                           ia=names.index(_ia), ib=names.index(_ib)),
-        use_container_width=True)
+        use_container_width=True, config={'edits': {'legendPosition': True}, 'displayModeBar': True})
 
 
 def _mc_pnl_distribution(port, alpha, es, floor, er):
@@ -1812,7 +1847,7 @@ def _mc_pnl_distribution(port, alpha, es, floor, er):
     colors = ["#d15866" if c <= var else "#4a9eff" for c in centers]
     fig = _go.Figure()
     fig.add_trace(_go.Bar(x=centers, y=counts, width=bw * 0.96,
-                          marker=dict(color=colors, line=dict(width=0)), hoverinfo="skip"))
+                          marker=dict(color=colors, line=dict(width=0)), hovertemplate="Return: %{x:.1f}%<br>Scenarios: %{y:.0f}<extra></extra>"))
     ymax = float(counts.max()) * 1.12 if counts.size else 1.0
     def _vline(xv, color, dash, text, ylab):
         fig.add_shape(type="line", x0=xv, x1=xv, y0=0, y1=ymax * 0.99,
@@ -1827,15 +1862,15 @@ def _mc_pnl_distribution(port, alpha, es, floor, er):
     fig.update_layout(template="plotly_dark", paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
                       height=420, bargap=0.02, showlegend=False, margin=dict(l=10, r=10, t=46, b=10),
                       title=dict(text="Portfolio return distribution \u00b7 worst-\u03b1 tail shaded",
-                                 x=0.5, font=dict(color="white", size=15)),
+                                 x=0.5, font=dict(color="#E3C77E", size=15)),
                       xaxis=dict(title="Portfolio return (%)", gridcolor="#1e2130",
                                  zeroline=True, zerolinecolor="#3a3a5a"),
                       yaxis=dict(title="Scenarios", gridcolor="#1e2130"))
     return fig
 
 
-_HOME_CSS = "<style>[data-testid='stAppViewContainer']{background:radial-gradient(1000px 560px at 78% -12%,rgba(74,158,255,.12),transparent 60%),radial-gradient(760px 420px at -5% 112%,rgba(245,185,66,.07),transparent 55%),#0d1117 !important}[data-testid='stHeader']{background:transparent !important}[data-testid='stMain'],section.main{background:transparent !important}section[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl']{display:none!important}.bmv-home{--blue:#4a9eff;--gold:#f5b942;--gold2:#caa14a;--green:#16a34a;--border:#30363d;--surface:#161b22;--surface2:#1b2330;--text:#fafafa;--muted:#8b949e;--text2:#c9d1d9;font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--text)}.bmv-home *{box-sizing:border-box}.bmv-hero{display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center;margin:.2rem 0 1.5rem}.bmv-mark{width:46px;height:46px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1205;font-weight:700;font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.5rem}.bmv-eyebrow{font-size:.84rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9;margin-bottom:9px}.bmv-eyebrow .w{color:var(--gold);font-style:italic}.bmv-h1{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-weight:600;font-size:1.95rem;line-height:1.08;margin-bottom:8px}.bmv-h1 .em{color:#E3C77E}.bmv-lede{color:var(--text2);font-size:.92rem;max-width:62ch}.bmv-sub{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.2rem;font-weight:500;color:#aeb9c9;margin-top:5px}.bmv-label{font-size:.64rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}.bmv-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}.bmv-tile{position:relative;display:flex;flex-direction:column;text-decoration:none;color:var(--text);overflow:hidden;background:linear-gradient(165deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:16px;transition:.22s cubic-bezier(.2,.7,.3,1)}.bmv-tile:hover{transform:translateY(-4px);border-color:var(--accent,var(--blue));box-shadow:0 22px 46px -24px var(--glow,rgba(74,158,255,.5))}.bmv-thumb{height:150px;background:#0a0e15;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden}.bmv-thumb img{width:100%;height:100%;object-fit:contain;display:block;transition:.3s}.bmv-tile:hover .bmv-thumb img{transform:scale(1.03)}.bmv-body{padding:15px 16px;display:flex;flex-direction:column;flex:1}.bmv-thead{display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:7px}.bmv-ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:1.05rem;flex:none;background:var(--icobg,rgba(74,158,255,.12));border:1px solid var(--icobd,rgba(74,158,255,.3))}.bmv-tt{font-weight:600;font-size:1.05rem}.bmv-tile.blue .bmv-tt,.bmv-tile.gold .bmv-tt,.bmv-tile.green .bmv-tt,.bmv-tile.slate .bmv-tt{color:#E3C77E}.bmv-home a.bmv-tile,.bmv-home a.bmv-tile:hover,.bmv-home a.bmv-tile:focus{text-decoration:none!important}.bmv-tile.blue .bmv-td,.bmv-tile.gold .bmv-td,.bmv-tile.green .bmv-td{text-align:center}.bmv-tile.green .bmv-badge{align-self:center;text-align:center}.bmv-tile.blue .bmv-foot,.bmv-tile.gold .bmv-foot,.bmv-tile.green .bmv-foot{justify-content:center}.bmv-td{font-size:.8rem;color:var(--muted);line-height:1.5}.bmv-td b{color:var(--text2);font-weight:600}.bmv-foot{margin-top:auto;padding-top:13px;display:flex;align-items:center;justify-content:space-between}.bmv-tag{font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.66rem;color:var(--text2);background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:3px 8px}.bmv-arw{font-size:1.05rem;color:var(--accent,var(--blue));opacity:0;transform:translateX(-4px);transition:.22s}.bmv-tile:hover .bmv-arw{opacity:1;transform:translateX(0)}.bmv-badge{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.63rem;color:var(--blue);background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.32);border-radius:6px;padding:4px 8px;margin-top:11px;line-height:1.3;width:fit-content}.bmv-tile.blue{--accent:#4a9eff;--glow:rgba(74,158,255,.5);--icobg:rgba(74,158,255,.12);--icobd:rgba(74,158,255,.32)}.bmv-tile.gold{--accent:#f5b942;--glow:rgba(245,185,66,.45);--icobg:rgba(245,185,66,.12);--icobd:rgba(245,185,66,.32)}.bmv-tile.green{--accent:#16a34a;--glow:rgba(22,163,74,.45);--icobg:rgba(22,163,74,.14);--icobd:rgba(22,163,74,.34)}.bmv-tile.slate{--accent:#7d8aa0;--glow:rgba(125,138,160,.4);--icobg:rgba(125,138,160,.12);--icobd:rgba(125,138,160,.3)}.bmv-tiles.ref{grid-template-columns:repeat(3,1fr)}.bmv-tiles.ref .bmv-tile{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:7px 9px;padding:15px 16px}.bmv-tiles.ref .bmv-tile>div{display:contents}.bmv-tiles.ref .bmv-td{flex-basis:100%}.bmv-tiles.ref .bmv-tt,.bmv-tiles.ref .bmv-td{text-align:center}.bmv-tiles.ref .bmv-ico{width:38px;height:38px;font-size:1.15rem}.bmv-tiles.ref .bmv-tt{font-size:.95rem}.bmv-tiles.ref .bmv-td{font-size:.74rem;margin-top:2px}.bmv-aipill{display:inline-block;font-size:.55rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;vertical-align:middle;margin-left:7px;padding:2px 7px;border-radius:999px;color:#1a1205;background:linear-gradient(135deg,var(--gold),var(--gold2))}@media(max-width:640px){.bmv-tiles{grid-template-columns:1fr 1fr}.bmv-tiles.ref{grid-template-columns:1fr}}</style>"
-_HOME_HTML = '<div class="bmv-home">\n  <div class="bmv-hero">\n    <div class="bmv-mark">&beta;</div>\n    <div>\n      <div class="bmv-eyebrow">Portfolio Optimisation <span class="w">with</span> Derivatives &amp; Structured Products</div>\n      <div class="bmv-h1">Beyond <span class="em">Mean-Variance</span></div>\n      <div class="bmv-sub">Mental Accounting Framework</div>\n    </div>\n  </div>\n  <div class="bmv-label">Tools</div>\n  <div class="bmv-tiles">\n    <a class="bmv-tile blue" href="?view=optimiser" target="_self">\n      <div class="bmv-thumb"><img src="__OPT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico">📊</span><span class="bmv-tt">Grid Portfolio Optimiser</span></div>\n        <div class="bmv-td">Exact grid engine on the Das&ndash;Statman states — VaR, thesis-faithful ES and rigorous-ES, with derivatives.</div>\n        <div class="bmv-foot"><span class="bmv-tag">grid · exact</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile gold" href="?view=scalable" target="_self">\n      <div class="bmv-thumb"><img src="__MC__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico">🧮</span><span class="bmv-tt">Scalable Portfolio Optimiser</span></div>\n        <div class="bmv-td">Monte-Carlo scenarios + &alpha;-CVaR linear program — scales to large, multi-derivative portfolios.</div>\n        <div class="bmv-foot"><span class="bmv-tag">scenario · LP · beta</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile green" href="?view=backtest" target="_self">\n      <div class="bmv-thumb"><img src="__BT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico">🔬</span><span class="bmv-tt">Backtest</span></div>\n        <div class="bmv-td">Out-of-sample walk-forward of the <b>Optimiser\'s</b> portfolios, derivative marked to market.</div>\n        <div class="bmv-badge">&#8627; realised alpha &amp; beta vs a benchmark</div>\n        <div class="bmv-foot"><span class="bmv-tag">out-of-sample</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n  </div>\n  <div class="bmv-label">Reference</div>\n  <div class="bmv-tiles ref">\n    <a class="bmv-tile slate" href="?view=about" target="_self">\n      <span class="bmv-ico">📖</span>\n      <div><div class="bmv-tt">About</div><div class="bmv-td">Methods, framework and research.</div></div>\n    </a>\n    <a class="bmv-tile slate" href="?view=glossary" target="_self">\n      <span class="bmv-ico">📚</span>\n      <div><div class="bmv-tt">Glossary <span class="bmv-aipill">AI-powered</span></div><div class="bmv-td">VaR, ES, &alpha;-CVaR, copulas — plus natural-language Q&amp;A.</div></div>\n    </a>\n    <a class=\"bmv-tile slate\" href=\"https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf\">\n      <span class=\"bmv-ico\">📘</span>\n      <div><div class=\"bmv-tt\">User Guide</div><div class=\"bmv-td\">Step-by-step tour of the app (PDF download).</div></div>\n    </a>\n  </div>\n</div>'
+_HOME_CSS = "<style>[data-testid='stAppViewContainer']{background:radial-gradient(1000px 560px at 78% -12%,rgba(74,158,255,.12),transparent 60%),radial-gradient(760px 420px at -5% 112%,rgba(245,185,66,.07),transparent 55%),#0d1117 !important}[data-testid='stHeader']{background:transparent !important}[data-testid='stMain'],section.main{background:transparent !important}section[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl']{display:none!important}.bmv-home{--blue:#4a9eff;--gold:#f5b942;--gold2:#caa14a;--green:#16a34a;--border:#30363d;--surface:#161b22;--surface2:#1b2330;--text:#fafafa;--muted:#8b949e;--text2:#c9d1d9;font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--text)}.bmv-home *{box-sizing:border-box}.bmv-hero{display:flex;flex-direction:row;gap:14px;align-items:center;justify-content:center;text-align:left;margin:.2rem 0 1.5rem}.bmv-mark{width:46px;height:46px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1205;font-weight:700;font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.5rem}.bmv-eyebrow{font-size:.84rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9;margin-bottom:9px}.bmv-eyebrow .w{color:var(--gold);font-style:italic}.bmv-h1{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-weight:600;font-size:1.95rem;line-height:1.08;margin-bottom:8px}.bmv-h1 .em{color:#E3C77E}.bmv-lede{color:var(--text2);font-size:.92rem;max-width:62ch}.bmv-sub{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.2rem;font-weight:500;color:#aeb9c9;margin-top:5px}.bmv-label{font-size:.64rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}.bmv-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}.bmv-tile{position:relative;display:flex;flex-direction:column;text-decoration:none;color:var(--text);overflow:hidden;background:linear-gradient(165deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:16px;transition:.22s cubic-bezier(.2,.7,.3,1)}.bmv-tile:hover{transform:translateY(-4px);border-color:var(--accent,var(--blue));box-shadow:0 22px 46px -24px var(--glow,rgba(74,158,255,.5))}.bmv-thumb{height:150px;background:#0a0e15;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden}.bmv-thumb img{width:100%;height:100%;object-fit:contain;display:block;transition:.3s}.bmv-tile:hover .bmv-thumb img{transform:scale(1.03)}.bmv-body{padding:15px 16px;display:flex;flex-direction:column;flex:1}.bmv-thead{display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:7px}.bmv-ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:1.05rem;flex:none;background:var(--icobg,rgba(74,158,255,.12));border:1px solid var(--icobd,rgba(74,158,255,.3))}.bmv-tt{font-weight:600;font-size:1.05rem;letter-spacing:.05em}.bmv-tile.blue .bmv-tt,.bmv-tile.gold .bmv-tt,.bmv-tile.green .bmv-tt,.bmv-tile.slate .bmv-tt{color:#E3C77E}.bmv-home a.bmv-tile,.bmv-home a.bmv-tile:hover,.bmv-home a.bmv-tile:focus{text-decoration:none!important}.bmv-tile.blue .bmv-td,.bmv-tile.gold .bmv-td,.bmv-tile.green .bmv-td{text-align:center}.bmv-tile.green .bmv-badge{align-self:center;text-align:center}.bmv-tile.blue .bmv-foot,.bmv-tile.gold .bmv-foot,.bmv-tile.green .bmv-foot{justify-content:center}.bmv-td{font-size:.8rem;color:var(--muted);line-height:1.5}.bmv-td b{color:var(--text2);font-weight:600}.bmv-foot{margin-top:auto;padding-top:13px;display:flex;align-items:center;justify-content:space-between}.bmv-tag{font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.66rem;color:var(--text2);background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:3px 8px}.bmv-arw{font-size:1.05rem;color:var(--accent,var(--blue));opacity:0;transform:translateX(-4px);transition:.22s}.bmv-tile:hover .bmv-arw{opacity:1;transform:translateX(0)}.bmv-badge{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.63rem;color:var(--blue);background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.32);border-radius:6px;padding:4px 8px;margin-top:11px;line-height:1.3;width:fit-content}.bmv-tile.blue{--accent:#4a9eff;--glow:rgba(74,158,255,.5);--icobg:rgba(74,158,255,.12);--icobd:rgba(74,158,255,.32)}.bmv-tile.gold{--accent:#f5b942;--glow:rgba(245,185,66,.45);--icobg:rgba(245,185,66,.12);--icobd:rgba(245,185,66,.32)}.bmv-tile.green{--accent:#16a34a;--glow:rgba(22,163,74,.45);--icobg:rgba(22,163,74,.14);--icobd:rgba(22,163,74,.34)}.bmv-tile.slate{--accent:#7d8aa0;--glow:rgba(125,138,160,.4);--icobg:rgba(125,138,160,.12);--icobd:rgba(125,138,160,.3)}.bmv-tiles.ref{grid-template-columns:repeat(3,1fr)}.bmv-tiles.ref .bmv-tile{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:7px 9px;padding:15px 16px}.bmv-tiles.ref .bmv-tile>div{display:contents}.bmv-tiles.ref .bmv-td{flex-basis:100%}.bmv-tiles.ref .bmv-tt,.bmv-tiles.ref .bmv-td{text-align:center}.bmv-tiles.ref .bmv-ico{width:38px;height:38px;font-size:1.15rem}.bmv-tiles.ref .bmv-tt{font-size:.95rem}.bmv-tiles.ref .bmv-td{font-size:.74rem;margin-top:2px}.bmv-aipill{display:inline-block;font-size:.55rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;vertical-align:middle;margin-left:7px;padding:2px 7px;border-radius:999px;color:#1a1205;background:linear-gradient(135deg,var(--gold),var(--gold2))}@media(max-width:640px){.bmv-tiles{grid-template-columns:1fr 1fr}.bmv-tiles.ref{grid-template-columns:1fr}}</style>"
+_HOME_HTML = '<div class="bmv-home">\n  <div class="bmv-hero">\n    <div class="bmv-mark">&beta;</div>\n    <div>\n      <div class="bmv-eyebrow">Portfolio Optimisation <span class="w">with</span> Derivatives &amp; Structured Products</div>\n      <div class="bmv-h1">Beyond <span class="em">Mean-Variance</span></div>\n      <div class="bmv-sub">Mental Accounting Framework</div>\n    </div>\n  </div>\n  <div class="bmv-label">Tools</div>\n  <div class="bmv-tiles">\n    <a class="bmv-tile blue" href="?view=optimiser" target="_self">\n      <div class="bmv-thumb"><img src="__OPT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></span><span class="bmv-tt">Grid Portfolio Optimiser</span></div>\n        <div class="bmv-td">Exact grid engine on the Das&ndash;Statman states — VaR, thesis-faithful ES and rigorous-ES, with derivatives.</div>\n        <div class="bmv-foot"><span class="bmv-tag">grid · exact</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile gold" href="?view=scalable" target="_self">\n      <div class="bmv-thumb"><img src="__MC__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f5b942" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span><span class="bmv-tt">Scalable Portfolio Optimiser</span></div>\n        <div class="bmv-td">Monte-Carlo scenarios + &alpha;-CVaR linear program — scales to large, multi-derivative portfolios.</div>\n        <div class="bmv-foot"><span class="bmv-tag">scenario · LP · beta</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile green" href="?view=backtest" target="_self">\n      <div class="bmv-thumb"><img src="__BT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#26a641" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span class="bmv-tt">Backtest</span></div>\n        <div class="bmv-td">Out-of-sample walk-forward of the <b>Optimiser\'s</b> portfolios, derivative marked to market.</div>\n        <div class="bmv-badge">&#8627; realised alpha &amp; beta vs a benchmark</div>\n        <div class="bmv-foot"><span class="bmv-tag">out-of-sample</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n  </div>\n  <div class="bmv-label">Reference</div>\n  <div class="bmv-tiles ref">\n    <a class="bmv-tile slate" href="?view=about" target="_self">\n      <span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa7bd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>\n      <div><div class="bmv-tt">About</div><div class="bmv-td">Methods, framework and research.</div></div>\n    </a>\n    <a class="bmv-tile slate" href="?view=glossary" target="_self">\n      <span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa7bd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>\n      <div><div class="bmv-tt">Glossary <span class="bmv-aipill">AI-powered</span></div><div class="bmv-td">VaR, ES, &alpha;-CVaR, copulas — plus natural-language Q&amp;A.</div></div>\n    </a>\n    <a class=\"bmv-tile slate\" href=\"https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf\">\n      <span class=\"bmv-ico\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#9aa7bd\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/><polyline points=\"10 9 9 9 8 9\"/></svg></span>\n      <div><div class=\"bmv-tt\">User Guide</div><div class=\"bmv-td\">Step-by-step tour of the app (PDF download).</div></div>\n    </a>\n  </div>\n</div>'
 
 _NAV_FOOTER = (
     '<div style="text-align:center;color:#556a8a;font-size:.78rem;margin-top:2.2rem;padding:.6rem 0 1rem">'
@@ -1847,7 +1882,7 @@ _NAV_FOOTER = (
 )
 
 def _render_home():
-    a = _home_assets()
+    a = _home_assets(_home_assets_key())
     html = _HOME_HTML.replace("__OPT__", a["OPT"]).replace("__MC__", a["MC"]).replace("__BT__", a["BT"])
     st.markdown(_HOME_CSS, unsafe_allow_html=True)   # styles only (own call)
     st.markdown(html, unsafe_allow_html=True)        # cards only (own call)
@@ -1859,6 +1894,25 @@ def _go_home():
 _view = st.query_params.get("view", "home")
 if _view not in _VIEWS:
     _view = "home"
+
+# Uppercase all button labels + centre all AI-powered boxes on the three tool
+# pages (Grid, Scalable, Backtest)
+if _view in ("optimiser", "scalable", "backtest"):
+    st.markdown(
+        "<style>section[data-testid='stMain'] .stButton button,"
+        "section[data-testid='stMain'] .stDownloadButton button,"
+        "section[data-testid='stMain'] [data-testid='stFileUploaderDropzone'] button,"
+        "section[data-testid='stSidebar'] .stButton button,"
+        "section[data-testid='stSidebar'] .stDownloadButton button,"
+        "section[data-testid='stSidebar'] [data-testid='stFileUploaderDropzone'] button"
+        "{text-transform:uppercase}"
+        "section[data-testid='stMain'] details[style*='rgba(74, 158, 255, 0.1)'],"
+        "section[data-testid='stSidebar'] details[style*='rgba(74, 158, 255, 0.1)']"
+        "{margin-left:auto !important;margin-right:auto !important;max-width:290px;box-sizing:border-box}"
+        "section[data-testid='stMain'] details[style*='rgba(74, 158, 255, 0.1)'] summary,"
+        "section[data-testid='stSidebar'] details[style*='rgba(74, 158, 255, 0.1)'] summary"
+        "{text-align:center}</style>",
+        unsafe_allow_html=True)
 
 if _view == "home":
     _render_home()
@@ -1876,20 +1930,25 @@ if _view != "optimiser":
         "<style>section[data-testid='stSidebar'],"
         "[data-testid='stSidebarCollapsedControl']{display:none!important;}</style>",
         unsafe_allow_html=True)
-_bk, _bk_rest = st.columns([1, 6])
-with _bk:
-    st.button("🏠  Home", key="_nav_back", use_container_width=True, on_click=_go_home)
+    if _view not in ("scalable", "backtest", "about", "glossary"):
+        _bk, _bk_rest = st.columns([1, 6])
+        with _bk:
+            st.button(":material/home: Back to Main Screen", key="_nav_back", use_container_width=True, on_click=_go_home)
 
 # ═════════════════════════════════════════════════════════════════════════════
 # SIDEBAR
 # ═════════════════════════════════════════════════════════════════════════════
 with st.sidebar:
-    st.markdown('<h3 style="text-align:center">⚙️ Optimisation Parameters</h3>', unsafe_allow_html=True)
+    with st.container():
+        st.markdown('<style>section[data-testid="stSidebar"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.sb-stick){position:sticky;top:0;z-index:100;background:#0d1117;padding:47px 0 .45rem;margin-top:-47px;box-shadow:0 8px 10px -8px rgba(0,0,0,.85)}</style><span class="sb-stick"></span>', unsafe_allow_html=True)
+        if _view == "optimiser":
+            st.button(":material/home: Back to Main Screen", key="_nav_back", use_container_width=True, on_click=_go_home)
+        st.markdown('<h3 style="text-align:center;margin-bottom:0">⚙️ <span style="color:#E3C77E">Optimisation Parameters</span></h3><div style="text-align:center;color:#E3C77E;font-size:.85rem;line-height:1;margin-top:-.55rem">▼</div>', unsafe_allow_html=True)
     st.divider()
 
     # ── 1. Data source ────────────────────────────────────────────────────────
     with st.container():
-        st.markdown('<div class="section-header" id="sec1hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">1</span><span style="display:block">📂 PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header" id="sec1hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">1</span><span style="display:block"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.45rem"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>PORTFOLIO DATA</span></div>', unsafe_allow_html=True)
         st.markdown(
             '<details style="background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;padding:.4rem .8rem;margin:.3rem 0 .6rem 0;font-size:.82rem">'
             '<summary style="cursor:pointer;color:#79b6ff;font-weight:600;list-style:none">✨ AI-powered: How these inputs are built</summary>'
@@ -1920,7 +1979,7 @@ with st.sidebar:
             freq   =st.radio("Return frequency",["Daily","Monthly"],horizontal=True)
             st.session_state['_live_period'] = f"{d_start.isoformat()} → {d_end.isoformat()}"
             st.session_state['_live_freq'] = freq
-            fetch_btn=st.button("🔄 Fetch data", use_container_width=True, key="fetch_btn")
+            fetch_btn=st.button(":material/cloud_download: Fetch data", use_container_width=True, key="fetch_btn")
             if fetch_btn:
                 tickers=[t.strip().upper() for t in ticker_str.split(",") if t.strip()]
                 with st.spinner(f"Fetching {len(tickers)} tickers from Yahoo Finance..."):
@@ -2012,7 +2071,7 @@ with st.sidebar:
 
     # ── 2. Derivative ─────────────────────────────────────────────────────────
     with st.container():
-        st.markdown('<div class="section-header" id="sec2hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">2</span><span style="display:block">📊 DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header" id="sec2hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">2</span><span style="display:block"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.45rem"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>DERIVATIVE / STRUCTURED PRODUCT</span></div>', unsafe_allow_html=True)
         der_label_sel=st.selectbox("Type",list(PREDEFINED_DERIVATIVES.keys()),
                                     index=0,label_visibility="collapsed",key="der_label_sel")
         der_type=PREDEFINED_DERIVATIVES[der_label_sel]
@@ -2166,7 +2225,7 @@ with st.sidebar:
 
     # ── 3. Constraint ─────────────────────────────────────────────────────────
     with st.container():
-        st.markdown('<div class="section-header" id="sec3hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">3</span><span style="display:block">🎯 MENTAL-ACCOUNT CONSTRAINT</span></div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header" id="sec3hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">3</span><span style="display:block"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.45rem"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>MENTAL-ACCOUNT CONSTRAINT</span></div>', unsafe_allow_html=True)
 
         # AI explanation renders here — right after the title, above the choices.
         _con_box = st.container()
@@ -2244,13 +2303,13 @@ with st.sidebar:
 
     # ── 4. Grid ───────────────────────────────────────────────────────────────
     with st.container():
-        st.markdown('<div class="section-header" id="sec4hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">4</span><span style="display:block">⚡ GRID RESOLUTION</span></div>', unsafe_allow_html=True)
+        st.markdown('<div class="section-header" id="sec4hdr"><span style="display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.6rem;height:1.6rem;line-height:1.6rem;text-align:center;font-size:1rem;font-weight:700">4</span><span style="display:block"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.45rem"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>GRID RESOLUTION</span></div>', unsafe_allow_html=True)
         # Turbo accelerates the VaR path only; hide it when ES is selected. Rigorous
         # ES uses the high-precision (m=51) state space via the fast coarse-to-fine
         # engine, so its resolution is fixed and the selector does not apply.
         _n_total = n_sec_total + (1 if der_type is not None else 0)
         if use_es_rigorous:
-            grid_lbl="🚀 Rigorous ES — high-precision accuracy (~seconds)"
+            grid_lbl="Rigorous ES — high-precision accuracy (~seconds)"
             m_val,mp_val=51,99
         else:
             # Turbo (coarse-to-fine) only runs on the VaR path with <=4 TOTAL
@@ -2298,14 +2357,14 @@ with st.sidebar:
 
     st.divider()
     run_btn=st.button(
-        "5  ▶  RUN OPTIMISER",
+        "▶  RUN OPTIMISER",
         type="primary",
         use_container_width=True,
         disabled=not data_valid,
         key="run_opt_btn")
 
     reset_btn=st.button(
-        "↩  Reset / New Simulation",
+        "↩  RESET / NEW SIMULATION",
         type="secondary",
         use_container_width=True,
         key="reset_sim_btn")
@@ -2370,9 +2429,9 @@ if not run_btn and _run_active and _has_results:
 # MAIN
 # ═════════════════════════════════════════════════════════════════════════════
 def show_portfolio_data(names_in, means_in, sigs_in, corr_in):
-    st.markdown('<span style="font-size:16px;font-weight:600;color:#E3C77E">📋 Portfolio data</span>', unsafe_allow_html=True)
+    st.markdown('<span style="font-size:16px;font-weight:600;color:#E3C77E"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.4rem"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>Portfolio data</span>', unsafe_allow_html=True)
     with st.container():
-        hs = "background:#E3C77E;color:#0d1117;font-weight:bold;padding:6px 10px;text-align:center"
+        hs = "background:rgba(16,185,129,.12);color:#86e0b0;font-weight:bold;padding:6px 10px;text-align:center"
         cs = "background:#1b2330;color:#e7ecf4;padding:5px 10px;border-bottom:1px solid #30363d;text-align:center"
         rows = "".join(
             f"<tr><td style='{cs}'>{names_in[i]}</td>"
@@ -2661,18 +2720,21 @@ def plot_backtest_paths_plotly(dates, pv1, pv2, label2):
             hovertemplate='<b>%{fullData.name}</b><br>%{x|%d %b %Y}<br>Value: %{y:.2f}<extra></extra>'))
     fig.update_layout(
         title=dict(text='Out-of-sample portfolio value — buy-and-hold (entry = 100)',
-                   font=dict(color='#c9d1d9', size=14), x=0.5, xanchor='center'),
-        paper_bgcolor='#0d1117', plot_bgcolor='#0d1117', font=dict(color='#c9d1d9'),
+                   font=dict(color='#E3C77E', size=14), x=0.5, xanchor='center'),
+        paper_bgcolor='#1b2330', plot_bgcolor='#0e1521', font=dict(color='#c9d1d9'),
         hovermode='x unified', margin=dict(l=10, r=10, t=46, b=10), height=440,
         legend=dict(bgcolor='rgba(22,27,34,0.85)', bordercolor='#30363d', borderwidth=1,
                     font=dict(color='#ffffff', size=12),
                     x=0.01, y=0.99, xanchor='left', yanchor='top'),
-        yaxis=dict(title='Portfolio value (entry = 100)', gridcolor='#21262d',
-                   zeroline=False, color='#8b949e',
-                   showline=True, linecolor='#c0c8d8', linewidth=1, mirror=False),
-        xaxis=dict(gridcolor='#21262d', color='#8b949e',
-                   showline=True, linecolor='#c0c8d8', linewidth=1, mirror=False),
+        yaxis=dict(title='Portfolio value (entry = 100)', color='#8b949e', zeroline=False),
+        xaxis=dict(color='#8b949e'),
     )
+    fig.update_xaxes(showgrid=True, gridcolor='#27344e', gridwidth=1, griddash='dot',
+                     showline=True, linecolor='#46566f', linewidth=1, mirror=True,
+                     showspikes=True, spikethickness=1)
+    fig.update_yaxes(showgrid=True, gridcolor='#27344e', gridwidth=1, griddash='dot',
+                     showline=True, linecolor='#46566f', linewidth=1, mirror=True,
+                     showspikes=True, spikethickness=1)
     return fig
 
 
@@ -2750,95 +2812,116 @@ def plot_mc_frontier(rows):
 
 if _view == "optimiser":
     import os
-    st.markdown('<h2 style="color:#E3C77E;margin-bottom:2px;text-align:center">Grid Portfolio Optimiser</h2><div style="color:#8b949e;font-size:0.95rem;margin-bottom:6px;text-align:center">Behavioural mean-variance with derivatives &amp; structured products — Das–Statman mental-accounts framework</div>', unsafe_allow_html=True)
-    st.markdown(
-        "Classical portfolio optimisers stop at stocks and bonds. This app goes further — "
-        "incorporating derivatives and structured products, handling **non-normal return distributions**, "
-        "and optimising under a risk constraint you define: either the probability of loss below "
-        "a threshold (**Value-at-Risk / VaR**) or the expected loss in the worst scenarios "
-        "(**Expected Shortfall / ES**).")
+    with st.container():
+        _bb_l, _bb_mid, _bb_x = st.columns([1, 3, 1], vertical_alignment="center")
+        with _bb_mid:
+            st.markdown('<style>section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2){position:sticky;top:60px;z-index:1000;background:#0d1117;border-bottom:1px solid #2a3340;box-shadow:0 8px 16px -10px rgba(0,0,0,.75);padding:.3rem 0 .85rem;margin-bottom:.7rem}section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2) div[data-testid="stVerticalBlock"]{gap:.5rem!important}section[data-testid="stMain"] [data-testid="stMainBlockContainer"]{padding-top:3.75rem!important}section[data-testid="stMain"] div[data-testid="stVerticalBlock"]>div[data-testid="stElementContainer"]:has(~ div[data-testid="stVerticalBlockBorderWrapper"] .bmv-banner){display:none}</style><div class="bmv-banner" style="display:flex;align-items:center;justify-content:center;gap:14px;margin:0"><div style="width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#E3C77E,#C9A24B);color:#1a1205;font-weight:700;font-family:Georgia,serif;font-size:1.35rem">&beta;</div><div style="text-align:left"><div style="font-size:.8rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9">Portfolio Optimisation <span style="color:#E3C77E;font-style:italic">with</span> Derivatives &amp; Structured Products</div><div style="font-family:Georgia,serif;font-weight:600;font-size:1.45rem;line-height:1.05;color:#fafafa">Beyond <span style="color:#E3C77E">Mean-Variance</span></div><div style="font-family:Georgia,serif;font-weight:500;font-size:1rem;color:#aeb9c9">Mental Accounting Framework</div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div style="background:#141a23;border:1px solid #C9A24B;border-radius:8px;padding:.12rem 1.2rem;margin:.85rem 0 .4rem;text-align:center"><h2 style="color:#E3C77E;margin:0;font-family:Georgia,serif;font-size:1.55rem;letter-spacing:.05em">Grid Portfolio Optimiser</h2></div>', unsafe_allow_html=True)
+    st.markdown('<div style="display:flex;align-items:center;gap:.55rem;background:transparent;border:1px solid rgba(231,236,244,0.2);border-radius:.5rem;padding:.68rem .9rem;margin:.2rem 0 1rem;color:#c0c8d8;font-size:.9rem"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span style="font-weight:600">Runs an exact grid optimisation of behavioural portfolios with derivatives &amp; structured products, under a VaR or Expected-Shortfall constraint you define.</span></div>', unsafe_allow_html=True)
 
 
     if not _run_active:
         st.markdown("""
 <div class="info-box" style="color:#ffffff !important;background:linear-gradient(165deg,#1b2330,#161b22)">
 
-<span style="color:#E3C77E;font-size:1.4rem;font-weight:700">👈 How to use this tool: Grid Portfolio Optimiser</span>
+<details>
+<summary style="color:#E3C77E;font-size:1.4rem;font-weight:700;cursor:pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:.5rem"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>How to use the Grid Portfolio Optimiser</summary>
 
-Follow these steps in the sidebar:
+Follow these steps in the left sidebar:
 
-<table style="width:100%;border-collapse:collapse;color:#ffffff">
+<table style="width:100%;border-collapse:collapse;color:#ffffff;table-layout:fixed"><colgroup><col style="width:96px"><col style="width:215px"><col></colgroup>
 <tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">1</span></span></td>
-  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Portfolio data</strong> — Choose a data source: default base case, live market tickers, manual entry, or CSV upload</td>
+  <td style="padding:.5rem .5rem .5rem .3rem;white-space:nowrap;vertical-align:top"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.4rem"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg><strong>Portfolio data</strong></td>
+  <td style="padding:.5rem .5rem .5rem .3rem;vertical-align:top">Choose a data source: default base case, live market tickers, manual entry, or CSV upload</td>
 </tr>
 <tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">2</span></span></td>
-  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Derivative &amp; parameters</strong> — Select a derivative or structured product type and set its characteristics (strike, maturity, floor, participation, etc.)</td>
+  <td style="padding:.5rem .5rem .5rem .3rem;white-space:nowrap;vertical-align:top"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.4rem"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg><strong>Derivative &amp; parameters</strong></td>
+  <td style="padding:.5rem .5rem .5rem .3rem;vertical-align:top">Select a derivative or structured product type and set its characteristics (strike, maturity, floor, participation, etc.)</td>
 </tr>
 <tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">3</span></span></td>
-  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Constraint</strong> — Choose VaR or ES, set threshold H, then set α for VaR (P(r &lt; H) ≤ α) or L for ES (E[r | r &lt; H] ≥ L)</td>
+  <td style="padding:.5rem .5rem .5rem .3rem;white-space:nowrap;vertical-align:top"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.4rem"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg><strong>Constraint</strong></td>
+  <td style="padding:.5rem .5rem .5rem .3rem;vertical-align:top">Choose VaR or ES, set threshold H, then set α for VaR (P(r &lt; H) ≤ α) or L for ES (E[r | r &lt; H] ≥ L)</td>
 </tr>
 <tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">4</span></span></td>
-  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Grid resolution</strong> — Turbo (default) gives thesis-level VaR accuracy in seconds; Fast for a quick preview; High precision for exact thesis-grade results (and for ES runs)</td>
+  <td style="padding:.5rem .5rem .5rem .3rem;white-space:nowrap;vertical-align:top"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.4rem"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg><strong>Grid resolution</strong></td>
+  <td style="padding:.5rem .5rem .5rem .3rem;vertical-align:top">Turbo (default) gives thesis-level VaR accuracy in seconds; Fast for a quick preview; High precision for exact thesis-grade results (and for ES runs)</td>
 </tr>
 <tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">5</span></span></td>
-  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Run</strong> — Click <strong>▶ Run optimiser</strong></td>
+  <td style="padding:.5rem .5rem .5rem .3rem;white-space:nowrap;vertical-align:top"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.4rem"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16"/></svg><strong>Run</strong></td>
+  <td style="padding:.5rem .5rem .5rem .3rem;vertical-align:top">Click <strong>▶ Run optimiser</strong></td>
 </tr>
 </table>
+</details>
 
 </div>
 """, unsafe_allow_html=True)
         st.markdown("""
 <div class="info-box" style="color:#ffffff !important;background:linear-gradient(165deg,#1b2330,#161b22)">
 
-<span style="color:#E3C77E;font-size:1.4rem;font-weight:700">📈 Output chart</span>
+<details>
+<summary style="color:#E3C77E;font-size:1.4rem;font-weight:700;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:.45rem"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>Output chart content</summary>
 
-The chart shows the efficient frontiers and up to four portfolio markers (see sample output at the bottom of this section):
+The chart shows the efficient frontiers and up to four portfolio markers:
 
-<table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
-<tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Curves</td></tr>
+<table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem;table-layout:fixed"><colgroup><col style="width:96px"><col style="width:215px"><col style="width:150px"><col></colgroup>
+<tr><td colspan="4" style="padding:.3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Curves</td></tr>
 <tr>
-  <td style="padding:.3rem .5rem;white-space:nowrap">🟣 <strong>Purple dashed</strong></td>
-  <td style="padding:.3rem .5rem">Mean-variance efficient frontier (Markowitz) — no derivative</td>
+  <td style="padding:.3rem .6rem;text-align:center;white-space:nowrap;vertical-align:middle"><span style="display:inline-block;width:22px;border-top:2.5px dashed #a855f7;vertical-align:middle"></span></td>
+  <td style="padding:.3rem .5rem;white-space:nowrap"><strong>Purple dashed</strong></td>
+  <td colspan="2" style="padding:.3rem .5rem">Mean-variance efficient frontier (Markowitz) — no derivative</td>
 </tr>
 <tr>
-  <td style="padding:.3rem .5rem;white-space:nowrap">🔵 <strong>Blue dots</strong></td>
-  <td style="padding:.3rem .5rem">Behavioural efficient frontier — no derivative (each dot is the optimum portfolio for one H constraint level)</td>
+  <td style="padding:.3rem .6rem;text-align:center;white-space:nowrap;vertical-align:middle"><span style="display:inline-block;width:9px;height:9px;background:#4a9eff;border-radius:50%;vertical-align:middle"></span></td>
+  <td style="padding:.3rem .5rem;white-space:nowrap"><strong>Blue dots</strong></td>
+  <td colspan="2" style="padding:.3rem .5rem">Behavioural efficient frontier — no derivative (each dot is the optimum portfolio for one H constraint level)</td>
 </tr>
 <tr>
-  <td style="padding:.3rem .5rem;white-space:nowrap">🟡 <strong>Gold squares</strong></td>
-  <td style="padding:.3rem .5rem">Behavioural optimum portfolios — derivative frontier (one point per H level, with the selected derivative)</td>
+  <td style="padding:.3rem .6rem;text-align:center;white-space:nowrap;vertical-align:middle"><span style="display:inline-block;width:10px;height:10px;background:#f5b942;vertical-align:middle"></span></td>
+  <td style="padding:.3rem .5rem;white-space:nowrap"><strong>Gold squares</strong></td>
+  <td colspan="2" style="padding:.3rem .5rem">Behavioural optimum portfolios — derivative frontier (one point per H level, with the selected derivative)</td>
 </tr>
-<tr><td colspan="2" style="padding:1.6rem .5rem .3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Portfolio markers</td></tr>
+<tr><td colspan="4" style="padding:1.6rem .5rem .3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Portfolio markers</td></tr>
 <tr>
-  <td style="padding:.3rem .5rem;white-space:nowrap">🟣 <strong>Purple dot (white frame)</strong></td>
-  <td style="padding:.3rem .5rem"><strong>Portfolio (0) — Markowitz MV optimum</strong> — the minimum-variance (mean-variance-efficient) portfolio at Portfolio (1)'s expected return. It lands on Portfolio (1) when Portfolio (1) is mean-variance efficient — the MVT/MAT equivalence. Shown whenever Portfolio (1) exists.</td>
-</tr>
-<tr>
-  <td style="padding:.3rem .5rem;white-space:nowrap">🟢 <strong>Green diamond</strong></td>
-  <td style="padding:.3rem .5rem"><strong>Portfolio (1)</strong> — Behavioural optimum without derivatives at the selected H and α constraint. Shown only when a feasible portfolio exists; when it coincides with the Markowitz MV optimum it confirms the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010).</td>
-</tr>
-<tr>
-  <td style="padding:.3rem .5rem;white-space:nowrap">🟠 <strong>Orange square (white frame)</strong></td>
-  <td style="padding:.3rem .5rem"><strong>Portfolio (2)</strong> — Behavioural optimum portfolio with the selected derivative at the chosen H and α constraint. Highlighted separately from the frontier squares to identify the specific selected constraint point.</td>
+  <td style="padding:.3rem .6rem;text-align:center;white-space:nowrap;vertical-align:middle"><span style="display:inline-block;width:10px;height:10px;background:#a855f7;border:2px solid #fff;border-radius:50%;vertical-align:middle"></span></td>
+  <td style="padding:.3rem .5rem;white-space:nowrap;vertical-align:middle"><strong>Purple dot (white frame)</strong></td>
+  <td style="padding:.3rem .5rem;vertical-align:top"><strong style="color:#a855f7">Portfolio (0)</strong><br><span style="color:#9aa7bd;font-size:.82em">Markowitz MV optimum</span></td>
+  <td style="padding:.3rem .5rem;vertical-align:top">The minimum-variance (mean-variance-efficient) portfolio at Portfolio (1)'s expected return. It lands on Portfolio (1) when Portfolio (1) is mean-variance efficient — the MVT/MAT equivalence. Shown whenever Portfolio (1) exists.</td>
 </tr>
 <tr>
-  <td style="padding:.3rem .5rem;white-space:nowrap">🔴 <strong>Coral star (white frame)</strong></td>
-  <td style="padding:.3rem .5rem"><strong>Portfolio (3)</strong> — Interpolated point on the derivative frontier at the same standard deviation as Portfolio (1). Shows the return achievable with derivatives at equivalent risk — indicative only, not always available (requires derivative frontier to overlap with Portfolio (1) risk level).</td>
+  <td style="padding:.3rem .6rem;text-align:center;white-space:nowrap;vertical-align:middle"><span style="display:inline-block;width:9px;height:9px;background:#10b981;transform:rotate(45deg);vertical-align:middle"></span></td>
+  <td style="padding:.3rem .5rem;white-space:nowrap;vertical-align:middle"><strong>Green diamond</strong></td>
+  <td style="padding:.3rem .5rem;white-space:nowrap;vertical-align:middle"><strong style="color:#10b981">Portfolio (1)</strong></td>
+  <td style="padding:.3rem .5rem;vertical-align:top">Behavioural optimum without derivatives at the selected H and α constraint. Shown only when a feasible portfolio exists; when it coincides with the Markowitz MV optimum it confirms the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010).</td>
 </tr>
 <tr>
-  <td style="padding:.3rem .5rem;white-space:nowrap">➡️ <strong>White dotted arrow</strong></td>
-  <td style="padding:.3rem .5rem">Return gap between Portfolio (1) and Portfolio (2) at the selected H and α constraint — illustrates the return uplift (or reduction) from adding derivatives.</td>
+  <td style="padding:.3rem .6rem;text-align:center;white-space:nowrap;vertical-align:middle"><span style="display:inline-block;width:10px;height:10px;background:#f59e0b;border:2px solid #fff;vertical-align:middle"></span></td>
+  <td style="padding:.3rem .5rem;white-space:nowrap;vertical-align:middle"><strong>Orange square (white frame)</strong></td>
+  <td style="padding:.3rem .5rem;white-space:nowrap;vertical-align:middle"><strong style="color:#f59e0b">Portfolio (2)</strong></td>
+  <td style="padding:.3rem .5rem;vertical-align:top">Behavioural optimum portfolio with the selected derivative at the chosen H and α constraint. Highlighted separately from the frontier squares to identify the specific selected constraint point.</td>
+</tr>
+<tr>
+  <td style="padding:.3rem .6rem;text-align:center;white-space:nowrap;vertical-align:middle"><span style="color:#e76f51;font-size:1.15em;vertical-align:middle;text-shadow:0 0 1.5px #fff">★</span></td>
+  <td style="padding:.3rem .5rem;white-space:nowrap;vertical-align:middle"><strong>Coral star (white frame)</strong></td>
+  <td style="padding:.3rem .5rem;white-space:nowrap;vertical-align:middle"><strong style="color:#e76f51">Portfolio (3)</strong></td>
+  <td style="padding:.3rem .5rem;vertical-align:top">Interpolated point on the derivative frontier at the same standard deviation as Portfolio (1). Shows the return achievable with derivatives at equivalent risk — indicative only, not always available (requires derivative frontier to overlap with Portfolio (1) risk level).</td>
+</tr>
+<tr>
+  <td style="padding:.3rem .6rem;text-align:center;white-space:nowrap;vertical-align:middle"><span style="display:inline-block;width:16px;border-top:2px dotted #fff;vertical-align:middle;margin-right:.1rem"></span><span style="color:#fff;vertical-align:middle">▸</span></td>
+  <td style="padding:.3rem .5rem;white-space:nowrap;vertical-align:middle"><strong>White dotted arrow</strong></td>
+  <td style="padding:.3rem .5rem;white-space:nowrap;vertical-align:top"><strong style="color:#c0c8d8">Return gap</strong></td>
+  <td style="padding:.3rem .5rem;vertical-align:top">Between Portfolio (1) and Portfolio (2) at the selected H and α constraint — illustrates the return uplift (or reduction) from adding derivatives.</td>
 </tr>
 </table>
+</details>
 
 </div>
 """, unsafe_allow_html=True)
-        with st.expander("Up to four portfolios can be generated as output of the optimisation", expanded=False):
+        with st.expander("**Up to four portfolios can be generated as output of the optimisation**", expanded=False, icon=":material/insights:"):
             st.markdown('''
 <div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#111111;font-size:.82rem">
 <b style="color:#a855f7">Portfolio (0)</b> — Markowitz mean-variance optimum (no derivative): the minimum-variance portfolio at Portfolio (1)'s expected return. It coincides with Portfolio (1) when Portfolio (1) is mean-variance efficient — directly demonstrating the MVT/MAT equivalence (shown whenever Portfolio (1) exists)<br>
@@ -2850,24 +2933,26 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
         st.markdown("""
 <div style="border:1px solid #30363d;border-radius:12px;padding:.9rem 1.2rem;margin-top:.6rem;color:#111111;background:linear-gradient(165deg,#1b2330,#161b22)">
 
-<span style="color:#E3C77E;font-size:1.4rem;font-weight:700">📝 Notes</span>
+<details>
+<summary style="color:#E3C77E;font-size:1.4rem;font-weight:700;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:.45rem"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></svg>Notes</summary>
 
-<span style="color:#4a9eff;font-weight:700">MVT/MAT equivalence:</span><br>At the equivalence point (λ=3.795, H=-10%, α=5%), the purple and blue curves meet exactly — confirming the MVT/MAT equivalence proven in Das, Markowitz, Scheid & Statman (2010). Adding derivatives shifts the frontier upward (gold squares above blue dots), revealing what the behavioural approach with derivatives can unlock beyond mean-variance.
+<span style="color:#4a9eff;font-weight:700">MVT/MAT equivalence:</span><br>At the equivalence point (λ=3.795, H=-10%, α=5%), the purple and blue curves meet exactly — confirming the MVT/MAT equivalence proven in Das, Markowitz, Scheid & Statman (2010).<br>Adding derivatives shifts the frontier upward (gold squares above blue dots), revealing what the behavioural approach with derivatives can unlock beyond mean-variance.
 
 <span style="color:#4a9eff;font-weight:700">Note on discrete vs continuous frontiers:</span><br>The behavioural frontiers are plotted at discrete constraint levels (H = -2%, -5%, -8%, -10%, -12%, -15%, -18%, -20%, -25%, -30%, -35%, -40%). Each point is the optimal portfolio for that specific mental-account threshold. The MV frontier is continuous as it is computed by sweeping the risk-aversion parameter λ — each MV portfolio corresponds to one behavioural portfolio via the MVT/MAT equivalence, demonstrating that both approaches converge to the same solution when no derivatives are present.
 
-<span style="color:#4a9eff;font-weight:700">Why some behavioural points may appear below the MV frontier:</span><br>When derivatives are present, or when the downside constraint is particularly binding at certain H values, some behavioural frontier points may fall below the MV frontier. This is mathematically correct — the behavioural approach optimises under an additional constraint (the shortfall threshold) which can restrict the feasible set. Without derivatives, both frontiers should coincide closely. With derivatives, the behavioural approach can outperform MV at higher risk levels while remaining protected at the threshold — this is the core insight of the framework. Use Standard or High precision resolution to reduce grid approximation errors.
+<span style="color:#4a9eff;font-weight:700">Why some behavioural points may appear below the MV frontier:</span><br>When derivatives are present, or when the downside constraint is particularly binding at certain H values, some behavioural frontier points may fall below the MV frontier. This is mathematically correct — the behavioural approach optimises under an additional constraint (the shortfall threshold) which can restrict the feasible set. Without derivatives, both frontiers should coincide closely.<br>With derivatives, the behavioural approach can outperform MV at higher risk levels while remaining protected at the threshold — this is the core insight of the framework. Use Standard or High precision resolution to reduce grid approximation errors.
+</details>
 
 </div>
 """, unsafe_allow_html=True)
         # Sample chart
         import os
         _sample_img = "sample_output_annotated.png" if os.path.exists("sample_output_annotated.png") else "sample_output.png"
-        if os.path.exists(_sample_img):
+        if False:  # Sample Output section removed — the sample screenshot lives in the README
             st.markdown(
                 '<div style="text-align:center;margin:1rem 0 .6rem 0">'
                 '<span style="font-size:1.3rem;font-weight:700;color:#E3C77E">'
-                '🖼️ Sample Output</span><br>'
+                '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:.4rem"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>Sample Output</span><br>'
                 '<span style="font-size:.85rem;color:#c0c8d8">'
                 'Annotated example showing what each section looks like after a run — illustrative only, not live results</span>'
                 '</div>',
@@ -2987,7 +3072,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
                            f'(Total execution time: {_fmt_t(total_elapsed)})</span>')
             uid = "prog_done"
             return (
-                f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'                f'padding:.4rem 1rem;margin-bottom:.5rem">'                f'<summary style="cursor:pointer;color:#10b981;font-weight:700;font-size:.78rem;'                f'list-style:none;display:flex;align-items:center;gap:.4rem">'                f'✅ Computation complete{t_str_total}'                f'<span id="eh" style="color:#c0c8d8;font-size:.7rem;margin-left:auto"></span>'                f'</summary>'                f'<style>details[open] #eh{{content:"none"}} details[open] #eh::after{{content:"▲ click to collapse"}} #eh::after{{content:"▼ click to expand"}}</style>'                f'<div style="margin-top:.4rem">' + rows + f'</div></details>'
+                f'<details style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;'                f'padding:.4rem 1rem;margin-bottom:1.6rem">'                f'<summary style="cursor:pointer;color:#10b981;font-weight:700;font-size:.78rem;'                f'list-style:none;display:flex;align-items:center;gap:.4rem">'                f'✅ Computation complete{t_str_total}'                f'<span id="eh" style="color:#c0c8d8;font-size:.7rem;margin-left:auto"></span>'                f'</summary>'                f'<style>details[open] #eh{{content:"none"}} details[open] #eh::after{{content:"▲ click to collapse"}} #eh::after{{content:"▼ click to expand"}}</style>'                f'<div style="margin-top:.4rem">' + rows + f'</div></details>'
             )
 
         # Steps: (label, desc, is_substep, is_timed)
@@ -3017,7 +3102,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
         ]
 
         # Three portfolio perspectives note
-        with st.expander("Up to four portfolios can be generated as output of the optimisation", expanded=False):
+        with st.expander("**Up to four portfolios can be generated as output of the optimisation**", expanded=False, icon=":material/insights:"):
             st.markdown('''
 <div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#111111;font-size:.82rem">
 <b style="color:#a855f7">Portfolio (0)</b> — Markowitz mean-variance optimum (no derivative): the minimum-variance portfolio at Portfolio (1)'s expected return. It coincides with Portfolio (1) when Portfolio (1) is mean-variance efficient — directly demonstrating the MVT/MAT equivalence (shown whenever Portfolio (1) exists)<br>
@@ -3164,6 +3249,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
             st.session_state['_fig_png'] = None  # will be built at PDF time
 
             # ── Simulation summary + chart side by side ───────────────────────
+            st.markdown('<div style="text-align:center;font-size:18px;font-weight:600;margin:0;color:#E3C77E"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.45rem"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Optimisation results</div><div style="text-align:center;color:#E3C77E;font-size:.85rem;line-height:1;margin:-.15rem 0 1.7rem">▼</div>', unsafe_allow_html=True)
             col_summary, col_chart = st.columns([1, 3.5])
 
             with col_summary:
@@ -3213,9 +3299,9 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
                 _html = (
                     '<div style="background:#1b2330;border:1px solid #1a3a5c;border-radius:8px;min-height:560px;'
                     'padding:.8rem 1rem;color:#c0c8d8;font-size:.8rem">'
-                    '<div style="color:#4a9eff;font-weight:700;font-size:.85rem;'
+                    '<div style="color:#E3C77E;font-weight:700;font-size:.85rem;'
                     'margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">'
-                    '📌 Optimisation Parameters <span style="color:#556a8a;font-size:.65rem;font-weight:400">(summary)</span></div>'
+                    '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.4rem"><line x1="21" y1="4" x2="14" y2="4"/><line x1="10" y1="4" x2="3" y2="4"/><line x1="21" y1="12" x2="12" y2="12"/><line x1="8" y1="12" x2="3" y2="12"/><line x1="21" y1="20" x2="16" y2="20"/><line x1="12" y1="20" x2="3" y2="20"/><line x1="14" y1="2" x2="14" y2="6"/><line x1="8" y1="10" x2="8" y2="14"/><line x1="16" y1="18" x2="16" y2="22"/></svg>Optimisation Parameters <span style="color:#556a8a;font-size:.7rem;font-weight:700">(summary)</span></div>'
                     + _lbl("DATA SOURCE") + _val(_data_src)
                     + ((_lbl("PERIOD") + _val(_period) + _lbl("FREQUENCY") + _val(_freq)) if _is_live else "")
                     + _lbl("SECURITIES") + _val(_securities)
@@ -3268,7 +3354,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
                    'padding:.8rem 1rem;color:#c0c8d8;font-size:.8rem">'
                    '<div style="color:#4a9eff;font-weight:700;font-size:.85rem;'
                    'margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">'
-                   '📌 Optimisation Parameters <span style="color:#556a8a;font-size:.65rem;font-weight:400">(summary)</span></div>'
+                   '📌 Optimisation Parameters <span style="color:#556a8a;font-size:.7rem;font-weight:700">(summary)</span></div>'
                    + _lbl_c('DATA SOURCE') + _val_c(data_mode.split('(')[0].strip())
                    + ((_lbl_c('PERIOD') + _val_c(st.session_state.get('_live_period','—'))
                        + _lbl_c('FREQUENCY') + _val_c(st.session_state.get('_live_freq','—')))
@@ -3280,6 +3366,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
                    + f'<div style="margin-bottom:.6rem;color:#10b981;font-weight:600">{lam_summary}</div>'
                    + _lbl_c('RESOLUTION') + _val_c(grid_lbl.split('(')[0].strip())
                    + '</div>')
+        st.markdown('<div style="text-align:center;font-size:18px;font-weight:600;margin:0;color:#E3C77E"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.45rem"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Optimisation results</div><div style="text-align:center;color:#E3C77E;font-size:.85rem;line-height:1;margin:-.15rem 0 1.7rem">▼</div>', unsafe_allow_html=True)
         _col_s_c, _col_ch_c = st.columns([1, 3.5])
         with _col_s_c:
             st.markdown(_html_c, unsafe_allow_html=True)
@@ -3778,7 +3865,7 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
             _col_l, _col_c, _col_r = st.columns([1, 2, 1])
             with _col_c:
                 st.download_button(
-                    label="📄 Export & Download PDF Report",
+                    label=":material/download: Export & Download PDF Report",
                     data=st.session_state['_pdf_bytes'],
                     file_name=st.session_state.get('_pdf_filename', 'report.pdf'),
                     mime="application/pdf",
@@ -3842,15 +3929,14 @@ The chart shows the efficient frontiers and up to four portfolio markers (see sa
 
 elif _view == "scalable":
     import datetime as _dt
-    st.markdown('<h2 style="color:#E3C77E;text-align:center">🧮 Scalable Optimiser — Monte-Carlo + CVaR</h2>',
-                unsafe_allow_html=True)
-    st.markdown(
-        "A **scenario-based** engine for **large portfolios** and **several derivatives at "
-        "once** — the case the exact grid optimiser cannot reach. It samples joint return "
-        "scenarios and solves *maximise expected return subject to an α-CVaR "
-        "(Expected-Shortfall at level α) floor* as a linear program. Cost grows **linearly** in the number of assets, so it "
-        "scales to many securities; and any number of derivatives just add columns."
-    )
+    with st.container():
+        _bb_l, _bb_mid, _bb_x = st.columns([1, 4.2, 1], vertical_alignment="center")
+        with _bb_l:
+            st.button(":material/home: Back to Main Screen", key="_nav_back", use_container_width=True, on_click=_go_home)
+        with _bb_mid:
+            st.markdown('<style>section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2){position:sticky;top:60px;z-index:1000;background:#0d1117;border-bottom:1px solid #2a3340;box-shadow:0 8px 16px -10px rgba(0,0,0,.75);padding:.3rem 0 .85rem;margin-bottom:.7rem}section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2) div[data-testid="stVerticalBlock"]{gap:.5rem!important}section[data-testid="stMain"] [data-testid="stMainBlockContainer"]{padding-top:3.75rem!important}section[data-testid="stMain"] div[data-testid="stVerticalBlock"]>div[data-testid="stElementContainer"]:has(~ div[data-testid="stVerticalBlockBorderWrapper"] .bmv-banner){display:none}</style><div class="bmv-banner" style="display:flex;align-items:center;justify-content:center;gap:14px;margin:0"><div style="width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#E3C77E,#C9A24B);color:#1a1205;font-weight:700;font-family:Georgia,serif;font-size:1.35rem">&beta;</div><div style="text-align:left"><div style="font-size:.8rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9">Portfolio Optimisation <span style="color:#E3C77E;font-style:italic">with</span> Derivatives &amp; Structured Products</div><div style="font-family:Georgia,serif;font-weight:600;font-size:1.45rem;line-height:1.05;color:#fafafa">Beyond <span style="color:#E3C77E">Mean-Variance</span></div><div style="font-family:Georgia,serif;font-weight:500;font-size:1rem;color:#aeb9c9">Mental Accounting Framework</div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div style="background:#141a23;border:1px solid #C9A24B;border-radius:8px;padding:.12rem 1.2rem;margin:.85rem auto .4rem;max-width:calc(100% - 570px);text-align:center"><h2 style="color:#E3C77E;margin:0;font-family:Georgia,serif;font-size:1.55rem;letter-spacing:.05em">Scalable Optimiser — Monte-Carlo + CVaR</h2></div>', unsafe_allow_html=True)
+    st.markdown('<div style="display:flex;align-items:flex-start;gap:.6rem;background:transparent;border:1px solid rgba(231,236,244,0.2);border-radius:.5rem;padding:.7rem .95rem;margin:.2rem 0 1rem;color:#c0c8d8;font-size:.9rem;line-height:1.55"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:3px"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span>A <strong>scenario-based</strong> engine for <strong>large portfolios</strong> and <strong>several derivatives at once</strong> — the case the exact grid optimiser cannot reach. It samples joint return scenarios and solves <em>maximise expected return subject to an α-CVaR (Expected-Shortfall at level α) floor</em> as a linear program. Cost grows <strong>linearly</strong> in the number of assets, so it scales to many securities; and any number of derivatives just add columns.</span></div>', unsafe_allow_html=True)
     st.warning("**Beta — approximate engine.** Results carry Monte-Carlo sampling error and "
                "depend on scenario quality. It *complements* the exact grid Optimiser (which "
                "remains the thesis-faithful reference for small portfolios), it does not "
@@ -3860,7 +3946,7 @@ elif _view == "scalable":
 <div class="info-box" style="color:#ffffff !important;background:linear-gradient(165deg,#1b2330,#161b22)">
 
 <details>
-<summary style="color:#E3C77E;font-size:1.4rem;font-weight:700;cursor:pointer">📋 How to use this tool: Scalable Portfolio Optimiser</summary>
+<summary style="color:#E3C77E;font-size:1.4rem;font-weight:700;cursor:pointer"><svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:.5rem"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>How to use this tool: Scalable Portfolio Optimiser</summary>
 <div style="margin:.6rem 0">Set up the run in the sections below, then click Run:</div>
 <table style="width:100%;border-collapse:collapse;color:#ffffff">
 <tr>
@@ -3881,6 +3967,10 @@ elif _view == "scalable":
 </tr>
 <tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">5</span></span></td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Validation</strong> (optional) — Run validation checks against closed-form values (Gaussian copula)</td>
+</tr>
+<tr>
+  <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">6</span></span></td>
   <td style="padding:.5rem .5rem .5rem .3rem"><strong>Run</strong> — Click <strong>▶ Run scalable optimiser</strong></td>
 </tr>
 </table>
@@ -3891,7 +3981,7 @@ elif _view == "scalable":
 <div class="info-box" style="color:#ffffff !important;background:linear-gradient(165deg,#1b2330,#161b22)">
 
 <details>
-<summary style="color:#E3C77E;font-size:1.4rem;font-weight:700;cursor:pointer">📈 Output chart</summary>
+<summary style="color:#E3C77E;font-size:1.4rem;font-weight:700;cursor:pointer"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:.45rem"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></svg>Output chart content</summary>
 <div style="margin:.6rem 0">After a run, the results show a details box, colour-coded weight bars, and an interactive return / tail-risk frontier:</div>
 <table style="width:100%;border-collapse:collapse;color:#ffffff;margin-top:.5rem">
 <tr><td colspan="2" style="padding:.3rem .5rem;font-weight:700;color:#1a6bbf;font-size:1.1rem">Frontier chart</td></tr>
@@ -3921,7 +4011,7 @@ elif _view == "scalable":
 </div>
 """, unsafe_allow_html=True)
 
-    with st.expander("ℹ️  How this engine works", expanded=False):
+    with st.expander("How this engine works", expanded=False, icon=":material/settings:"):
         st.markdown(
             "1. **Scenarios.** Draw S joint return scenarios for all securities at once via a "
             "copula — Gaussian (the thesis's multivariate-Normal assumption) or Student-t "
@@ -3939,7 +4029,7 @@ elif _view == "scalable":
             "4. **Frontier.** Sweeping the floor L traces the return / tail-risk frontier.\n\n"
             "Full derivation is in the accompanying addendum to the thesis."
         )
-    with st.expander("⚠️  Assumptions & limitations"):
+    with st.expander("Assumptions & limitations", icon=":material/warning:"):
         st.markdown(
             "- **Approximate.** Scenario estimates carry error of order S^(−1/2); tails need "
             "more scenarios than the body. Raise S for stability.\n"
@@ -3965,142 +4055,162 @@ elif _view == "scalable":
             "barrier notes are available in the exact engine and can be added here later."
         )
 
-    st.markdown("---")
-    st.markdown('<h4 style="text-align:center">Inputs</h4>', unsafe_allow_html=True)
+    st.markdown('<div style="text-align:center;font-size:18px;font-weight:600;margin:1.4rem 0 0;color:#e7ecf4">⚙️ <span style="color:#E3C77E">Optimisation Parameters</span></div><div style="text-align:center;color:#E3C77E;font-size:.85rem;line-height:1;margin:-.15rem 0 1.2rem">▼</div>', unsafe_allow_html=True)
 
     _MC_RULE = "<hr style='border:none;border-top:1px solid #30363d;margin:1.2rem 0 0.55rem'>"
-    def _mc_head(t, rule=True):
-        st.markdown((_MC_RULE if rule else "")
-                    + "<div style='color:#4a9eff;font-weight:700;font-size:1rem;"
-                      "margin-bottom:0.35rem'>" + t + "</div>", unsafe_allow_html=True)
+    def _mc_head(t, n=None, rule=True):
+        badge = ("<span style='display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.35rem;height:1.35rem;line-height:1.35rem;text-align:center;font-size:.82rem;font-weight:700'>" + str(n) + "</span>") if n else ""
+        st.markdown("<div style='text-align:center;margin:-.6rem 0 1rem'><span style='display:inline-block;width:290px;box-sizing:border-box;border:1px solid #30363d;background:#0e1521;padding:.28rem 1rem;border-radius:10px;color:#E3C77E;font-weight:600;font-size:.95rem;letter-spacing:.02em;text-align:center'>" + badge + "<span style='display:block;margin-top:.1rem'>" + t + "</span></span></div>", unsafe_allow_html=True)
+    def _mc_ai(label, body):
+        st.markdown("<div style='display:flex;justify-content:center'><details style='width:290px;box-sizing:border-box;background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;padding:.4rem .7rem;margin:.2rem 0 .8rem;font-size:.78rem'><summary style='cursor:pointer;color:#79b6ff;font-weight:600;list-style:none'>✨ AI-powered: " + label + "</summary><div style='color:#aebccd;margin-top:.4rem;line-height:1.45'>" + body + "</div></details></div>", unsafe_allow_html=True)
 
-    _mc_head("Data & estimation", rule=False)
-    mc_source = st.radio(
-        "Data source",
-        ["Live tickers", "Sample case — 3-asset thesis (Das–Statman)"],
-        horizontal=True, key="mc_source")
-    if mc_source.startswith("Live"):
-        mc_tickers_raw = st.text_input(
-            "Tickers (comma-separated — add as many as you like)",
-            value="AAPL, MSFT, JPM, TLT, XLE, GLD", key="mc_tickers",
-            help="The scalable engine is built for large universes. Means, volatilities and "
-                 "correlations are estimated from this window.")
-        _mc_tk = [t.strip().upper() for t in mc_tickers_raw.split(",") if t.strip()]
-        cme1, cme2, cme3 = st.columns(3)
-        with cme1:
-            mc_start = st.date_input("Estimate from", value=_dt.date(2018, 1, 1), key="mc_start")
-        with cme2:
-            mc_end = st.date_input("Estimate to", value=_dt.date(2023, 12, 31), key="mc_end")
-        with cme3:
-            mc_freq = st.selectbox("Frequency", ["Daily", "Monthly"], index=0, key="mc_freq")
-        _mc_undl_opts = _mc_tk
-    else:
-        st.caption("Thesis 3-asset case — expected returns [5%, 10%, 25%], volatilities "
-                   "[5%, 20%, 50%], correlation(Mid, High) = 0.4. No prices are fetched; this "
-                   "reproduces the **Optimiser tab's default sample**, so you can compare the "
-                   "two engines directly on the same inputs.")
-        _mc_tk, mc_start, mc_end, mc_freq = [], None, None, "Daily"
-        _mc_undl_opts = list(DEFAULT_NAMES)
-
-    _mc_head("Scenarios")
-    cms1, cms2 = st.columns(2)
-    with cms1:
-        mc_S = st.select_slider("Number of scenarios S",
-                                options=[2000, 5000, 8000, 10000, 15000, 20000, 25000],
-                                value=10000, key="mc_S")
-    with cms2:
-        mc_cop = st.selectbox("Copula", ["Gaussian (Normal)", "Student-t (tail dependence)"],
-                              index=0, key="mc_cop")
-    mc_dof = 5
-    if mc_cop.startswith("Student"):
-        mc_dof = st.slider("Student-t degrees of freedom (lower = fatter tails)",
-                           3, 15, 5, 1, key="mc_dof")
-
-    _mc_head("Derivatives  (optional — add multiple)")
-    st.caption("Add one row per derivative — pick a Type and an Underlying. New rows pre-fill "
-               "strike 1.00 (at-the-money), maturity 1 year (settled at intrinsic at the horizon; "
-               "raise it to mark the option to market with its remaining life) and rate 3% — all "
-               "editable. Implied vol stays \"auto\" (the underlying's own volatility, consistent "
-               "with the scenarios); the resolved value per row is listed below the table, where you "
-               "can confirm each derivative's settings.")
-    import pandas as _pd
-    _mc_der_template = _pd.DataFrame(
-        {"Type": _pd.Series(dtype="str"), "Underlying": _pd.Series(dtype="str"),
-         "Strike": _pd.Series(dtype="float"), "Strike2": _pd.Series(dtype="float"),
-         "Maturity": _pd.Series(dtype="float"), "ImplVol": _pd.Series(dtype="float"),
-         "Rate": _pd.Series(dtype="float")})
-    mc_der_table = st.data_editor(
-        _mc_der_template, num_rows="dynamic", hide_index=True, key="mc_der_table",
-        use_container_width=True,
-        column_config={
-            "Type": st.column_config.SelectboxColumn("Type", options=list(MC_DER_TYPES.keys()),
-                                                     width="medium"),
-            "Underlying": st.column_config.SelectboxColumn(
-                "Underlying", options=(_mc_undl_opts if _mc_undl_opts else ["(enter tickers)"]), width="small"),
-            "Strike": st.column_config.NumberColumn("Strike (×)", min_value=0.1, max_value=3.0,
-                                                    step=0.05, format="%.2f", default=1.0),
-            "Strike2": st.column_config.NumberColumn("Strike-2 (×)", min_value=0.1, max_value=3.0,
-                                                     step=0.05, format="%.2f"),
-            "Maturity": st.column_config.NumberColumn(
-                "Maturity (yr)", min_value=1.0, max_value=5.0, step=0.25, format="%.2f", default=1.0,
-                help="Option maturity in years. 1.0 = expires at the 1-year horizon (settled at "
-                     "intrinsic). Above 1, the option is marked to market at the horizon using its "
-                     "remaining life."),
-            "ImplVol": st.column_config.NumberColumn(
-                "Impl. vol % (auto)", min_value=1.0, max_value=200.0, step=1.0, format="%.0f",
-                help="Implied volatility for pricing. Blank uses the underlying's own volatility "
-                     "(arbitrage-consistent with the scenarios)."),
-            "Rate": st.column_config.NumberColumn(
-                "Rate (%)", min_value=0.0, max_value=20.0, step=0.25, format="%.2f", default=3.0,
-                help="Risk-free rate for option pricing. Blank = 3%."),
-        })
-
-    # Read-out of the resolved parameters per row (blank cells use the defaults shown), plus a
-    # clear flag when a Type is chosen with no underlying. No table mutation here, so a selection
-    # shows immediately — no reload/flicker.
-    def _mc_isblank(v):
-        return v is None or (isinstance(v, float) and v != v) or (isinstance(v, str) and v.strip() == "")
-    _mc_preview = []
-    _mc_sig_map = dict(zip(DEFAULT_NAMES, DEFAULT_SIGS))
-    _mc_tbl_ro = mc_der_table.dropna(how="all") if hasattr(mc_der_table, "dropna") else mc_der_table
-    for _, _r in _mc_tbl_ro.iterrows():
-        _ty = _r.get("Type")
-        if _mc_isblank(_ty) or _ty not in MC_DER_TYPES:
-            continue
-        if _mc_isblank(_r.get("Underlying")):
-            _mc_preview.append(f"⚠️ **{_ty}** — pick an underlying (ignored until you do)")
-            continue
-        _un = _r.get("Underlying")
-        _k  = "1.00" if _mc_isblank(_r.get("Strike"))   else f"{float(_r.get('Strike')):.2f}"
-        _t  = "1.00" if _mc_isblank(_r.get("Maturity")) else f"{float(_r.get('Maturity')):.2f}"
-        _rt = "3.00" if _mc_isblank(_r.get("Rate"))     else f"{float(_r.get('Rate')):.2f}"
-        if _mc_isblank(_r.get("ImplVol")):
-            _iv = (f"auto = {_mc_sig_map[_un]*100:.0f}% (underlying \u03c3)" if _un in _mc_sig_map
-                   else "auto (underlying \u03c3, set on run)")
+    st.markdown("<hr style='border:none;border-top:1px solid #E3C77E;margin:.4rem 0 1.4rem'>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+        _mc_head("Data & estimation", 1, rule=False)
+        _mc_ai("How these inputs are built", "From your tickers' prices over the chosen window, the app estimates each security's expected return, volatility and the correlation matrix — the moments that drive every Monte-Carlo scenario. The sample case loads the Das &amp; Statman base case — Means: 5%, 10%, 25% | Std devs: 5%, 20%, 50%.")
+        mc_source = st.radio(
+            "Data source",
+            ["Live tickers", "Default (3-asset sample case)"],
+            horizontal=True, key="mc_source")
+        if mc_source.startswith("Live"):
+            mc_tickers_raw = st.text_input(
+                "Tickers (comma-separated — add as many as you like)",
+                value="AAPL, MSFT, JPM, TLT, XLE, GLD", key="mc_tickers",
+                help="The scalable engine is built for large universes. Means, volatilities and "
+                     "correlations are estimated from this window.")
+            _mc_tk = [t.strip().upper() for t in mc_tickers_raw.split(",") if t.strip()]
+            cme1, cme2, cme3 = st.columns(3)
+            with cme1:
+                mc_start = st.date_input("Estimate from", value=_dt.date(2018, 1, 1), key="mc_start")
+            with cme2:
+                mc_end = st.date_input("Estimate to", value=_dt.date(2023, 12, 31), key="mc_end")
+            with cme3:
+                mc_freq = st.selectbox("Frequency", ["Daily", "Monthly"], index=0, key="mc_freq")
+            _mc_undl_opts = _mc_tk
         else:
-            _iv = f"{float(_r.get('ImplVol')):.0f}%"
-        _k2 = "" if _mc_isblank(_r.get("Strike2")) else f", strike-2 {float(_r.get('Strike2')):.2f}\u00d7"
-        _mc_preview.append(f"\u2022 **{_ty}** on **{_un}** \u2014 strike {_k}\u00d7{_k2}, maturity {_t} y, vol {_iv}, rate {_rt}%")
-    if _mc_preview:
-        st.caption("Resolved settings (blank cells use the defaults shown):")
-        st.markdown("  \n".join(_mc_preview))
+            st.caption("Thesis 3-asset case — expected returns [5%, 10%, 25%], volatilities "
+                       "[5%, 20%, 50%], correlation(Mid, High) = 0.4. No prices are fetched; this "
+                       "reproduces the **Optimiser tab's default sample**, so you can compare the "
+                       "two engines directly on the same inputs.")
+            _mc_tk, mc_start, mc_end, mc_freq = [], None, None, "Daily"
+            _mc_undl_opts = list(DEFAULT_NAMES)
 
-    _mc_head("Constraint")
-    cmc1, cmc2, cmc3 = st.columns(3)
-    with cmc1:
-        mc_alpha = st.slider("Tail probability α", 1, 25, 5, 1, format="%d%%", key="mc_alpha") / 100.0
-    with cmc2:
-        mc_L = st.slider("α-CVaR floor L  (mean of worst α% ≥ L)",
-                         -40, 0, -20, 1, format="%d%%", key="mc_L") / 100.0
-    with cmc3:
-        _wm = st.slider("Max weight per asset", 5, 100, 100, 5, format="%d%%", key="mc_wmax")
-    mc_wmax = None if _wm >= 100 else _wm / 100.0
+    st.markdown("<hr style='border:none;border-top:1px solid #E3C77E;margin:.6rem 0 1.6rem'>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+        _mc_head("Scenarios", 2)
+        _mc_ai("What do S and the copula mean?", "The engine draws <b>S</b> joint return scenarios from those moments. The <b>copula</b> sets how assets move together in the tails: Gaussian for normal dependence, Student-t for fatter joint crashes. More scenarios cut sampling noise but take longer.")
+        cms1, cms2 = st.columns(2)
+        with cms1:
+            mc_S = st.select_slider("Number of scenarios S",
+                                    options=[2000, 5000, 8000, 10000, 15000, 20000, 25000],
+                                    value=10000, key="mc_S")
+        with cms2:
+            mc_cop = st.selectbox("Copula", ["Gaussian (Normal)", "Student-t (tail dependence)"],
+                                  index=0, key="mc_cop")
+        mc_dof = 5
+        if mc_cop.startswith("Student"):
+            mc_dof = st.slider("Student-t degrees of freedom (lower = fatter tails)",
+                               3, 15, 5, 1, key="mc_dof")
 
-    _mc_head("Validation")
-    mc_validate = st.checkbox("Run validation checks against closed-form values "
-                              "(Gaussian copula)", value=True, key="mc_validate")
+    st.markdown("<hr style='border:none;border-top:1px solid #E3C77E;margin:.6rem 0 1.6rem'>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+        _mc_head("Derivatives  (optional — add multiple)", 3)
+        _mc_ai("How derivatives enter the model", "Each row is priced by Black-Scholes on its underlying and added as an extra payoff column evaluated across all S scenarios — so non-normal option payoffs (calls, puts, spreads, straddles) flow straight into the optimisation.")
+        st.caption("Add one row per derivative — pick a Type and an Underlying. New rows pre-fill "
+                   "strike 1.00 (at-the-money), maturity 1 year (settled at intrinsic at the horizon; "
+                   "raise it to mark the option to market with its remaining life) and rate 3% — all "
+                   "editable. Implied vol stays \"auto\" (the underlying's own volatility, consistent "
+                   "with the scenarios); the resolved value per row is listed below the table, where you "
+                   "can confirm each derivative's settings.")
+        import pandas as _pd
+        _mc_der_template = _pd.DataFrame(
+            {"Type": _pd.Series(dtype="str"), "Underlying": _pd.Series(dtype="str"),
+             "Strike": _pd.Series(dtype="float"), "Strike2": _pd.Series(dtype="float"),
+             "Maturity": _pd.Series(dtype="float"), "ImplVol": _pd.Series(dtype="float"),
+             "Rate": _pd.Series(dtype="float")})
+        mc_der_table = st.data_editor(
+            _mc_der_template, num_rows="dynamic", hide_index=True, key="mc_der_table",
+            use_container_width=True,
+            column_config={
+                "Type": st.column_config.SelectboxColumn("Type", options=list(MC_DER_TYPES.keys()),
+                                                         width="medium"),
+                "Underlying": st.column_config.SelectboxColumn(
+                    "Underlying", options=(_mc_undl_opts if _mc_undl_opts else ["(enter tickers)"]), width="small"),
+                "Strike": st.column_config.NumberColumn("Strike (×)", min_value=0.1, max_value=3.0,
+                                                        step=0.05, format="%.2f", default=1.0),
+                "Strike2": st.column_config.NumberColumn("Strike-2 (×)", min_value=0.1, max_value=3.0,
+                                                         step=0.05, format="%.2f"),
+                "Maturity": st.column_config.NumberColumn(
+                    "Maturity (yr)", min_value=1.0, max_value=5.0, step=0.25, format="%.2f", default=1.0,
+                    help="Option maturity in years. 1.0 = expires at the 1-year horizon (settled at "
+                         "intrinsic). Above 1, the option is marked to market at the horizon using its "
+                         "remaining life."),
+                "ImplVol": st.column_config.NumberColumn(
+                    "Impl. vol % (auto)", min_value=1.0, max_value=200.0, step=1.0, format="%.0f",
+                    help="Implied volatility for pricing. Blank uses the underlying's own volatility "
+                         "(arbitrage-consistent with the scenarios)."),
+                "Rate": st.column_config.NumberColumn(
+                    "Rate (%)", min_value=0.0, max_value=20.0, step=0.25, format="%.2f", default=3.0,
+                    help="Risk-free rate for option pricing. Blank = 3%."),
+            })
 
-    st.markdown(_MC_RULE, unsafe_allow_html=True)
+        # Read-out of the resolved parameters per row (blank cells use the defaults shown), plus a
+        # clear flag when a Type is chosen with no underlying. No table mutation here, so a selection
+        # shows immediately — no reload/flicker.
+        def _mc_isblank(v):
+            return v is None or (isinstance(v, float) and v != v) or (isinstance(v, str) and v.strip() == "")
+        _mc_preview = []
+        _mc_sig_map = dict(zip(DEFAULT_NAMES, DEFAULT_SIGS))
+        _mc_tbl_ro = mc_der_table.dropna(how="all") if hasattr(mc_der_table, "dropna") else mc_der_table
+        for _, _r in _mc_tbl_ro.iterrows():
+            _ty = _r.get("Type")
+            if _mc_isblank(_ty) or _ty not in MC_DER_TYPES:
+                continue
+            if _mc_isblank(_r.get("Underlying")):
+                _mc_preview.append(f"⚠️ **{_ty}** — pick an underlying (ignored until you do)")
+                continue
+            _un = _r.get("Underlying")
+            _k  = "1.00" if _mc_isblank(_r.get("Strike"))   else f"{float(_r.get('Strike')):.2f}"
+            _t  = "1.00" if _mc_isblank(_r.get("Maturity")) else f"{float(_r.get('Maturity')):.2f}"
+            _rt = "3.00" if _mc_isblank(_r.get("Rate"))     else f"{float(_r.get('Rate')):.2f}"
+            if _mc_isblank(_r.get("ImplVol")):
+                _iv = (f"auto = {_mc_sig_map[_un]*100:.0f}% (underlying \u03c3)" if _un in _mc_sig_map
+                       else "auto (underlying \u03c3, set on run)")
+            else:
+                _iv = f"{float(_r.get('ImplVol')):.0f}%"
+            _k2 = "" if _mc_isblank(_r.get("Strike2")) else f", strike-2 {float(_r.get('Strike2')):.2f}\u00d7"
+            _mc_preview.append(f"\u2022 **{_ty}** on **{_un}** \u2014 strike {_k}\u00d7{_k2}, maturity {_t} y, vol {_iv}, rate {_rt}%")
+        if _mc_preview:
+            st.caption("Resolved settings (blank cells use the defaults shown):")
+            st.markdown("  \n".join(_mc_preview))
+
+    st.markdown("<hr style='border:none;border-top:1px solid #E3C77E;margin:.6rem 0 1.6rem'>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+        _mc_head("Constraint", 4)
+        _mc_ai("What do α and the CVaR floor mean?", "<b>Tail probability α</b> sets how deep into the downside you look — the worst <b>α%</b> of scenarios (α = 5% means the worst 1-in-20 outcomes).<br><br><b>α-CVaR</b> is the average loss across that tail; the linear program maximises expected return while keeping it at or above the floor <b>L</b>, and within any max weight per asset.")
+        cmc1, cmc2, cmc3 = st.columns(3)
+        with cmc1:
+            mc_alpha = st.slider("Tail probability α", 1, 25, 5, 1, format="%d%%", key="mc_alpha") / 100.0
+        with cmc2:
+            mc_L = st.slider("α-CVaR floor L  (mean of worst α% ≥ L)",
+                             -40, 0, -20, 1, format="%d%%", key="mc_L") / 100.0
+        with cmc3:
+            _wm = st.slider("Max weight per asset", 5, 100, 100, 5, format="%d%%", key="mc_wmax")
+        mc_wmax = None if _wm >= 100 else _wm / 100.0
+
+    st.markdown("<hr style='border:none;border-top:1px solid #E3C77E;margin:.6rem 0 1.6rem'>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+        _mc_head("Validation", 5)
+        _mc_ai("What does validation check?", "When enabled, the scenario-based optimum is cross-checked against the closed-form Gaussian (analytic) values — a quick gauge of Monte-Carlo sampling error. Large gaps suggest raising the number of scenarios <b>S</b> for a steadier result.")
+        mc_validate = st.checkbox("Run validation checks against closed-form values "
+                                  "(Gaussian copula)", value=True, key="mc_validate")
+
+    st.markdown("<hr style='border:none;border-top:1px solid #E3C77E;margin:.6rem 0 2rem'>", unsafe_allow_html=True)
     st.markdown("<style>.st-key-mc_run button{font-size:1.1rem;font-weight:700;"
                 "padding:0.85rem 1rem;border-radius:8px;}</style>", unsafe_allow_html=True)
     _mcb = st.columns([1, 2, 1])
@@ -4181,7 +4291,7 @@ elif _view == "scalable":
                 w, er, es, res = mc_max_return_cvar(R_full, mc_alpha, mc_L, w_max=mc_wmax)
 
             st.markdown("---")
-            st.markdown('<h3 style="color:#4a9eff;text-align:center">Results</h3>',
+            st.markdown('<div style="text-align:center;font-size:18px;font-weight:600;margin:0;color:#E3C77E"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.45rem"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Optimisation results</div><div style="text-align:center;color:#E3C77E;font-size:.85rem;line-height:1;margin:-.15rem 0 1.7rem">▼</div>',
                         unsafe_allow_html=True)
             if der_warn:
                 st.warning("Skipped derivative rows: " + "; ".join(der_warn))
@@ -4232,9 +4342,9 @@ elif _view == "scalable":
                 _univ = (f"{N} securit{'y' if N == 1 else 'ies'}"
                          + (f" + {K} derivative{'s' if K != 1 else ''}" if K else ""))
                 _detbox = (
-                    '<div style="background:#0d1a2e;border:1px solid #4a9eff;border-radius:8px;'
+                    '<div style="background:#1b2330;border:1px solid #30363d;border-radius:8px;'
                     'padding:.8rem 1.1rem;flex:1;min-height:0;box-sizing:border-box;overflow:auto">'
-                    '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.5rem">'
+                    '<div style="color:#E3C77E;font-weight:700;font-size:.98rem;margin-bottom:.5rem;text-align:center">'
                     '<span style="color:#f59e0b;font-size:1.05rem;margin-right:.4rem;vertical-align:middle">★</span>' 
                     'Scalable CVaR optimum — Monte-Carlo</div>'
                     '<div style="color:#c9d1d9;font-size:.86rem;line-height:1.75">'
@@ -4249,16 +4359,16 @@ elif _view == "scalable":
                     '(CVaR linear program) — complements the exact grid engine.</span>'
                     '</div></div>')
                 _metbox = (
-                    '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
+                    '<div style="background:#0d1a2e;border:1px solid #30363d;border-radius:8px;'
                     'padding:.85rem .95rem">'
                     '<div style="display:flex;gap:.5rem;text-align:center">'
-                    f'<div style="flex:1"><div style="color:#4a9eff;font-weight:700;font-size:.95rem;line-height:1.2">'
+                    f'<div style="flex:1"><div style="color:#E3C77E;font-weight:700;font-size:.95rem;line-height:1.2">'
                     f'Expected return</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
                     f'margin-top:.25rem">{er*100:.2f}%</div></div>'
-                    f'<div style="flex:1"><div style="color:#4a9eff;font-weight:700;font-size:.95rem;line-height:1.2">'
+                    f'<div style="flex:1"><div style="color:#E3C77E;font-weight:700;font-size:.95rem;line-height:1.2">'
                     f'Realised α-CVaR</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
                     f'margin-top:.25rem">{es*100:.2f}%</div></div>'
-                    f'<div style="flex:1"><div style="color:#4a9eff;font-weight:700;font-size:.95rem;line-height:1.2">'
+                    f'<div style="flex:1"><div style="color:#E3C77E;font-weight:700;font-size:.95rem;line-height:1.2">'
                     f'Securities / derivatives</div><div style="color:#fafafa;font-size:1.4rem;font-weight:600;'
                     f'margin-top:.25rem">{N} / {K}</div></div>'
                     '</div></div>')
@@ -4301,10 +4411,10 @@ elif _view == "scalable":
                                 hovertemplate="<b>Scalable CVaR optimum</b><br>α-CVaR floor L: %{x:.1f}%"
                                               "<br>E[r]: %{y:.2f}%<br>Realised α-CVaR: %{customdata:.2f}%<extra></extra>"))
                             fig.update_layout(
-                                template="plotly_dark", paper_bgcolor="#0d1117",
-                                plot_bgcolor="#0d1117", height=400,
+                                template="plotly_dark", paper_bgcolor="#1b2330",
+                                plot_bgcolor="#0e1521", height=400,
                                 title=dict(text="Return / Tail-Risk Frontier (Monte-Carlo + CVaR)",
-                                           font=dict(color="white", size=15),
+                                           font=dict(color="#E3C77E", size=15),
                                            x=0.5, xanchor="center", xref="paper"),
                                 margin=dict(l=10, r=10, t=52, b=40), hovermode="closest",
                                 xaxis=dict(title=dict(text="α-CVaR floor L (%)",
@@ -4317,9 +4427,11 @@ elif _view == "scalable":
                                             borderwidth=1, font=dict(color="white", size=9), x=0.01, y=0.99),
                                 hoverlabel=dict(bgcolor="#1a1a2e", bordercolor="#1a6bbf",
                                                 font=dict(color="white", size=11)))
-                            fig.update_xaxes(showgrid=True, gridcolor="#21262d", gridwidth=1,
+                            fig.update_xaxes(showgrid=True, gridcolor="#27344e", gridwidth=1, griddash="dot",
+                                             showline=True, linecolor="#46566f", linewidth=1, mirror=True,
                                              showspikes=True, spikethickness=1)
-                            fig.update_yaxes(showgrid=True, gridcolor="#21262d", gridwidth=1,
+                            fig.update_yaxes(showgrid=True, gridcolor="#27344e", gridwidth=1, griddash="dot",
+                                             showline=True, linecolor="#46566f", linewidth=1, mirror=True,
                                              showspikes=True, spikethickness=1)
                             _dtxt = f"{N} securities" + (f" + {K} deriv." if K else "")
                             fig.add_annotation(
@@ -4371,13 +4483,13 @@ elif _view == "scalable":
 
 
                 # ── P&L distribution of the optimal portfolio (worst-α tail shaded) ──
-                st.markdown("#### Portfolio return distribution")
+                st.markdown('#### <span style="color:#E3C77E">Portfolio return distribution</span>', unsafe_allow_html=True)
                 st.caption("Simulated return of the chosen portfolio across every scenario. "
                            "The shaded tail is the worst α; its average is the realised "
                            "α-CVaR, held at or above the floor L — so the shaded region "
                            "is exactly what the CVaR constraint controls.")
                 st.plotly_chart(_mc_pnl_distribution(_port, mc_alpha, es, mc_L, er),
-                                use_container_width=True)
+                                use_container_width=True, config={'displayModeBar': True})
 
                 # ── Joint return scenarios (copula scatter) — actual MC scenarios used ──
                 _mc_joint_scatter_view(R_sec, names, w, mc_alpha)
@@ -4406,7 +4518,7 @@ elif _view == "scalable":
                 st.markdown(
                     '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
                     'padding:.75rem .95rem;margin-top:14px">'
-                    '<div style="color:#4a9eff;font-weight:700;font-size:.95rem;margin-bottom:.6rem">'
+                    '<div style="color:#ffffff;font-weight:700;font-size:.95rem;margin-bottom:.6rem">'
                     'Portfolio weights</div>'
                     '<div style="display:flex;gap:22px;align-items:center">'
                     '<div style="flex:none">' + _donut + '</div>'
@@ -4483,7 +4595,7 @@ elif _view == "scalable":
                     _mcl, _mcc, _mcr = st.columns([1, 2, 1])
                     with _mcc:
                         st.download_button(
-                            label="📄 Export & Download PDF Report",
+                            label=":material/download: Export & Download PDF Report",
                             data=st.session_state['_mc_pdf_bytes'],
                             file_name=st.session_state.get('_mc_pdf_name', 'scalable_results.pdf'),
                             mime="application/pdf", type="primary",
@@ -4511,16 +4623,16 @@ elif _view == "scalable":
                 else:
                     rows_v.append(["Closed-form ES check", "n/a",
                                    "Gaussian copula only (t-portfolio is non-Normal)"])
-                _vhead = ('<tr style="color:#4a9eff;border-bottom:1px solid #30363d">'
-                          '<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Check</th>'
-                          '<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Result</th>'
-                          '<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Note</th></tr>')
+                _vhead = ('<tr>'
+                          '<th style="background:rgba(16,185,129,.12);color:#86e0b0;font-weight:bold;padding:6px 10px;text-align:center">Check</th>'
+                          '<th style="background:rgba(16,185,129,.12);color:#86e0b0;font-weight:bold;padding:6px 10px;text-align:center">Result</th>'
+                          '<th style="background:rgba(16,185,129,.12);color:#86e0b0;font-weight:bold;padding:6px 10px;text-align:center">Note</th></tr>')
                 _vrows = ""
                 for _c0, _c1, _c2 in rows_v:
                     _vrows += ('<tr style="border-bottom:1px solid #1b2230">'
                                f'<td style="padding:.4rem .5rem">{_c0}</td>'
-                               f'<td style="padding:.4rem .5rem;color:#fafafa;font-weight:600">{_c1}</td>'
-                               f'<td style="padding:.4rem .5rem;color:#8b949e">{_c2}</td></tr>')
+                               f'<td style="padding:.4rem .5rem;color:#fafafa;font-weight:600;text-align:center">{_c1}</td>'
+                               f'<td style="padding:.4rem .5rem;color:#8b949e;text-align:center">{_c2}</td></tr>')
                 _vcap = ('<div style="color:#8b949e;font-size:.78rem;margin-top:.6rem;line-height:1.5">'
                          'The scenario sample reproduces the target means and volatilities, and '
                          '(under the Gaussian copula) its Expected Shortfall matches the closed-form '
@@ -4531,7 +4643,7 @@ elif _view == "scalable":
                 st.markdown(
                     '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
                     'padding:.85rem 1rem">'
-                    '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.6rem">'
+                    '<div style="color:#E3C77E;font-weight:600;font-size:16px;margin-bottom:.6rem">'
                     'Validation against closed-form values</div>'
                     '<table style="width:100%;border-collapse:collapse;font-size:.85rem;color:#c9d1d9">'
                     + _vhead + _vrows + '</table>' + _vcap + '</div>',
@@ -4547,7 +4659,13 @@ elif _view == "scalable":
 
 elif _view == "backtest":
     import datetime as _dt
-    st.markdown('<h2 style="color:#E3C77E;text-align:center">🔬 Out-of-Sample Backtest</h2>', unsafe_allow_html=True)
+    with st.container():
+        _bb_l, _bb_mid, _bb_x = st.columns([1, 4.2, 1], vertical_alignment="center")
+        with _bb_l:
+            st.button(":material/home: Back to Main Screen", key="_nav_back", use_container_width=True, on_click=_go_home)
+        with _bb_mid:
+            st.markdown('<style>section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2){position:sticky;top:60px;z-index:1000;background:#0d1117;border-bottom:1px solid #2a3340;box-shadow:0 8px 16px -10px rgba(0,0,0,.75);padding:.3rem 0 .85rem;margin-bottom:.7rem}section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2) div[data-testid="stVerticalBlock"]{gap:.5rem!important}section[data-testid="stMain"] [data-testid="stMainBlockContainer"]{padding-top:3.75rem!important}section[data-testid="stMain"] div[data-testid="stVerticalBlock"]>div[data-testid="stElementContainer"]:has(~ div[data-testid="stVerticalBlockBorderWrapper"] .bmv-banner){display:none}</style><div class="bmv-banner" style="display:flex;align-items:center;justify-content:center;gap:14px;margin:0"><div style="width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#E3C77E,#C9A24B);color:#1a1205;font-weight:700;font-family:Georgia,serif;font-size:1.35rem">&beta;</div><div style="text-align:left"><div style="font-size:.8rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9">Portfolio Optimisation <span style="color:#E3C77E;font-style:italic">with</span> Derivatives &amp; Structured Products</div><div style="font-family:Georgia,serif;font-weight:600;font-size:1.45rem;line-height:1.05;color:#fafafa">Beyond <span style="color:#E3C77E">Mean-Variance</span></div><div style="font-family:Georgia,serif;font-weight:500;font-size:1rem;color:#aeb9c9">Mental Accounting Framework</div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div style="background:#141a23;border:1px solid #C9A24B;border-radius:8px;padding:.12rem 1.2rem;margin:.85rem auto .4rem;max-width:calc(100% - 570px);text-align:center"><h2 style="color:#E3C77E;margin:0;font-family:Georgia,serif;font-size:1.55rem;letter-spacing:.05em">Out-of-Sample Backtest</h2></div>', unsafe_allow_html=True)
     st.markdown(
         "This tab is **self-contained and independent of the Optimiser tab** — it has its "
         "own inputs. It builds the optimal portfolio on a **construction period**, then "
@@ -4559,7 +4677,7 @@ elif _view == "backtest":
         "(ex-ante) alpha."
     )
 
-    with st.expander("ℹ️  How this backtest works — and why the derivative is marked to market", expanded=False):
+    with st.expander("How this backtest works — and why the derivative is marked to market", expanded=False, icon=":material/settings:"):
         st.markdown(
             "**Which engine does this test?** This back-test builds, holds and marks the "
             "portfolios produced by the exact **grid** optimiser — the thesis-validated reference "
@@ -4610,7 +4728,7 @@ elif _view == "backtest":
             "deliberate next step, so Barrier-M is left out for now."
         )
 
-    with st.expander("⚠️  Assumptions & limitations"):
+    with st.expander("Assumptions & limitations", icon=":material/warning:"):
         st.markdown(
             "- **Model mark, not market quotes.** The derivative leg is valued with "
             "Black-Scholes on the *realised underlying price path* — Yahoo Finance gives the "
@@ -4657,191 +4775,214 @@ elif _view == "backtest":
             "runs at a fixed m=51 and is chosen in the Risk measure section, not as a resolution.)"
         )
 
-    st.markdown("---")
-    st.markdown('<h4 style="text-align:center">Inputs</h4>', unsafe_allow_html=True)
+    st.markdown('<div style="text-align:center;font-size:18px;font-weight:600;margin:1.4rem 0 0;color:#e7ecf4">⚙️ <span style="color:#E3C77E">Optimisation Parameters</span></div><div style="text-align:center;color:#E3C77E;font-size:.85rem;line-height:1;margin:-.15rem 0 1.2rem">▼</div>', unsafe_allow_html=True)
 
-    _BT_RULE = "<hr style='border:none;border-top:1px solid #30363d;margin:1.2rem 0 0.55rem'>"
-    def _bt_head(t, rule=True):
-        st.markdown((_BT_RULE if rule else "")
-                    + "<div style='color:#4a9eff;font-weight:700;font-size:1rem;"
-                      "margin-bottom:0.35rem'>" + t + "</div>", unsafe_allow_html=True)
+    _BT_RULE = "<hr style='border:none;border-top:1px solid #E3C77E;margin:.6rem 0 1.6rem'>"
+    def _bt_head(t, n=None, rule=True):
+        badge = ("<span style='display:inline-block;background:#E3C77E;color:#0d1117;border-radius:50%;width:1.35rem;height:1.35rem;line-height:1.35rem;text-align:center;font-size:.82rem;font-weight:700'>" + str(n) + "</span>") if n else ""
+        st.markdown("<div style='text-align:center;margin:-.6rem 0 1rem'><span style='display:inline-block;width:290px;box-sizing:border-box;border:1px solid #30363d;background:#0e1521;padding:.28rem 1rem;border-radius:10px;color:#E3C77E;font-weight:600;font-size:.95rem;letter-spacing:.02em;text-align:center'>" + badge + "<span style='display:block;margin-top:.1rem'>" + t + "</span></span></div>", unsafe_allow_html=True)
+    def _bt_ai(label, body):
+        st.markdown("<div style='display:flex;justify-content:center'><details style='width:290px;box-sizing:border-box;background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;padding:.4rem .7rem;margin:.2rem 0 .8rem;font-size:.78rem'><summary style='cursor:pointer;color:#79b6ff;font-weight:600;list-style:none'>✨ AI-powered: " + label + "</summary><div style='color:#aebccd;margin-top:.4rem;line-height:1.45'>" + body + "</div></details></div>", unsafe_allow_html=True)
 
-    _bt_head("Securities & settings", rule=False)
-    bt_tickers_raw = st.text_input(
-        "Tickers (comma-separated)", value="AAPL, MSFT, JPM", key="bt_tickers",
-        help="Yahoo Finance symbols. Pick the option's underlying in the Derivative section below.")
-    bt_freq = st.selectbox("Return frequency", ["Daily", "Monthly"], index=0, key="bt_freq")
+    st.markdown("<hr style='border:none;border-top:1px solid #E3C77E;margin:.4rem 0 1.4rem'>", unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+        _bt_head("Securities & settings", 1, rule=False)
+        _bt_ai("What goes here", "Yahoo Finance tickers and the return frequency. Prices over the construction window below feed the optimiser's estimates of means, volatilities and correlations.")
+        bt_tickers_raw = st.text_input(
+            "Tickers (comma-separated)", value="AAPL, MSFT, JPM", key="bt_tickers",
+            help="Yahoo Finance symbols. Pick the option's underlying in the Derivative section below.")
+        bt_freq = st.selectbox("Return frequency", ["Daily", "Monthly"], index=0, key="bt_freq")
 
     st.markdown(_BT_RULE, unsafe_allow_html=True)
     c1, c2 = st.columns(2)
     with c1:
-        _bt_head("Construction period", rule=False)
-        st.caption("the portfolio is built using data from this period")
-        bt_con_start = st.date_input("From", value=_dt.date(2012, 1, 1), key="bt_con_start")
-        bt_con_end   = st.date_input("To",   value=_dt.date(2016, 12, 31), key="bt_con_end")
+        with st.container(border=True):
+            st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+            _bt_head("Construction period", 2, rule=False)
+            _bt_ai("What is this window?", "The optimiser estimates the inputs from this window and solves for the optimal weights — with and without the derivative — under your constraint.")
+            st.caption("the portfolio is built using data from this period")
+            bt_con_start = st.date_input("From", value=_dt.date(2012, 1, 1), key="bt_con_start")
+            bt_con_end   = st.date_input("To",   value=_dt.date(2016, 12, 31), key="bt_con_end")
     with c2:
-        _bt_head("Evaluation period", rule=False)
-        st.caption("the fixed portfolio is then held and measured over this period")
-        bt_eval_start = st.date_input("From", value=_dt.date(2017, 1, 1), key="bt_eval_start")
-        bt_eval_end   = st.date_input("To",   value=_dt.date(2017, 12, 31), key="bt_eval_end")
+        with st.container(border=True):
+            st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+            _bt_head("Evaluation period", 3, rule=False)
+            _bt_ai("What is this window?", "Those fixed weights are bought and held — no rebalancing — across this separate, later window; the derivative is marked to market and realised return, risk and the loss-threshold outcome are measured.")
+            st.caption("the fixed portfolio is then held and measured over this period")
+            bt_eval_start = st.date_input("From", value=_dt.date(2017, 1, 1), key="bt_eval_start")
+            bt_eval_end   = st.date_input("To",   value=_dt.date(2017, 12, 31), key="bt_eval_end")
 
-    _bt_head("Derivative")
-    bt_labels = [lbl for lbl, t in PREDEFINED_DERIVATIVES.items() if t in _BT_SUPPORTED]
-    bt_label = st.selectbox("Instrument", bt_labels, index=bt_labels.index("Put option")
-                            if "Put option" in bt_labels else 0, key="bt_der")
-    bt_dtype = PREDEFINED_DERIVATIVES[bt_label]
+    st.markdown(_BT_RULE, unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+        _bt_head("Derivative", 4)
+        bt_labels = [lbl for lbl, t in PREDEFINED_DERIVATIVES.items() if t in _BT_SUPPORTED]
+        _bt_cur = st.session_state.get("bt_der") or ("Put option" if "Put option" in bt_labels else bt_labels[0])
+        _bt_ai("How the derivative is handled",
+               "Priced by Black-Scholes and marked to market across the evaluation window "
+               "(shrinking maturity), giving the P2 portfolio its own realised return path."
+               "<br><br><b>" + _bt_cur + ".</b> " + get_explanation(_bt_cur))
+        bt_label = st.selectbox("Instrument", bt_labels, index=bt_labels.index("Put option")
+                                if "Put option" in bt_labels else 0, key="bt_der")
+        bt_dtype = PREDEFINED_DERIVATIVES[bt_label]
 
-    def _bt_param_inputs(dtype):
-        p = {}
-        if dtype in ("put", "call", "straddle"):
-            default = 0.9 if dtype == "put" else 1.2
-            p["strike"] = st.slider("Strike (× entry spot)", 0.50, 1.60, default, 0.05, key="bt_k")
-        elif dtype == "strangle":
-            p["strike_kp"] = st.slider("Put strike (×)", 0.50, 1.00, 0.85, 0.05, key="bt_kp")
-            p["strike_kc"] = st.slider("Call strike (×)", 1.00, 1.60, 1.15, 0.05, key="bt_kc")
-        elif dtype in ("safety_collar", "aggressive_collar"):
-            p["strike_p"] = st.slider("Put strike (×)", 0.50, 1.50, 1.20, 0.05, key="bt_clp")
-            p["strike_c"] = st.slider("Call strike (×)", 1.00, 2.00, 1.60, 0.05, key="bt_clc")
-        elif dtype in ("cgn_uncapped", "cgn_capped"):
-            p["floor"]         = st.slider("Floor (%)", 0.0, 10.0, 1.0, 0.5, key="bt_cgf") / 100.0
-            p["participation"] = st.slider("Participation (%)", 50, 150, 100, 10, key="bt_cgp") / 100.0
-            if dtype == "cgn_capped":
-                p["cap"] = st.slider("Cap (%)", 5.0, 50.0, 20.0, 5.0, key="bt_cgc") / 100.0
-            p["premium"] = st.slider("Issuer premium", 0.00, 0.10, 0.00, 0.01, key="bt_cgpr")
-        elif dtype == "bull_call_spread":
-            p["k1"] = st.slider("Long call strike (×)", 0.70, 1.20, 1.00, 0.05, key="bt_b1")
-            p["k2"] = st.slider("Short call strike (×, higher)", 1.00, 1.60, 1.20, 0.05, key="bt_b2")
-        elif dtype == "bear_put_spread":
-            p["k1"] = st.slider("Long put strike (×, higher)", 0.90, 1.30, 1.10, 0.05, key="bt_bp1")
-            p["k2"] = st.slider("Short put strike (×, lower)", 0.60, 1.00, 0.90, 0.05, key="bt_bp2")
-        elif dtype == "butterfly_call":
-            p["center"] = st.slider("Centre strike (×)", 0.80, 1.30, 1.00, 0.05, key="bt_fc")
-            p["width"]  = st.slider("Wing width (×)", 0.10, 0.40, 0.20, 0.05, key="bt_fw")
-        elif dtype == "condor_call":
-            p["center"] = st.slider("Centre (×)", 0.80, 1.30, 1.00, 0.05, key="bt_cc")
-            p["w_in"]   = st.slider("Inner half-width (×)", 0.05, 0.30, 0.10, 0.05, key="bt_ci")
-            p["w_out"]  = st.slider("Outer half-width (×)", 0.20, 0.60, 0.30, 0.05, key="bt_co")
-        elif dtype == "reverse_convertible":
-            p["kp"] = st.slider("Short put strike (×)", 0.60, 1.00, 0.90, 0.05, key="bt_rc")
-        elif dtype == "discount_certificate":
-            p["kc"] = st.slider("Cap strike (×)", 1.00, 1.60, 1.20, 0.05, key="bt_dc")
-            p["premium"] = st.slider("Issuer premium", 0.00, 0.10, 0.00, 0.01, key="bt_dcp")
-        elif dtype == "outperformance_certificate":
-            p["k"] = st.slider("Participation strike (×)", 0.80, 1.30, 1.00, 0.05, key="bt_oc")
-            p["premium"] = st.slider("Issuer premium", 0.00, 0.10, 0.00, 0.01, key="bt_ocp")
-        return p
+        def _bt_param_inputs(dtype):
+            p = {}
+            if dtype in ("put", "call", "straddle"):
+                default = 0.9 if dtype == "put" else 1.2
+                p["strike"] = st.slider("Strike (× entry spot)", 0.50, 1.60, default, 0.05, key="bt_k")
+            elif dtype == "strangle":
+                p["strike_kp"] = st.slider("Put strike (×)", 0.50, 1.00, 0.85, 0.05, key="bt_kp")
+                p["strike_kc"] = st.slider("Call strike (×)", 1.00, 1.60, 1.15, 0.05, key="bt_kc")
+            elif dtype in ("safety_collar", "aggressive_collar"):
+                p["strike_p"] = st.slider("Put strike (×)", 0.50, 1.50, 1.20, 0.05, key="bt_clp")
+                p["strike_c"] = st.slider("Call strike (×)", 1.00, 2.00, 1.60, 0.05, key="bt_clc")
+            elif dtype in ("cgn_uncapped", "cgn_capped"):
+                p["floor"]         = st.slider("Floor (%)", 0.0, 10.0, 1.0, 0.5, key="bt_cgf") / 100.0
+                p["participation"] = st.slider("Participation (%)", 50, 150, 100, 10, key="bt_cgp") / 100.0
+                if dtype == "cgn_capped":
+                    p["cap"] = st.slider("Cap (%)", 5.0, 50.0, 20.0, 5.0, key="bt_cgc") / 100.0
+                p["premium"] = st.slider("Issuer premium", 0.00, 0.10, 0.00, 0.01, key="bt_cgpr")
+            elif dtype == "bull_call_spread":
+                p["k1"] = st.slider("Long call strike (×)", 0.70, 1.20, 1.00, 0.05, key="bt_b1")
+                p["k2"] = st.slider("Short call strike (×, higher)", 1.00, 1.60, 1.20, 0.05, key="bt_b2")
+            elif dtype == "bear_put_spread":
+                p["k1"] = st.slider("Long put strike (×, higher)", 0.90, 1.30, 1.10, 0.05, key="bt_bp1")
+                p["k2"] = st.slider("Short put strike (×, lower)", 0.60, 1.00, 0.90, 0.05, key="bt_bp2")
+            elif dtype == "butterfly_call":
+                p["center"] = st.slider("Centre strike (×)", 0.80, 1.30, 1.00, 0.05, key="bt_fc")
+                p["width"]  = st.slider("Wing width (×)", 0.10, 0.40, 0.20, 0.05, key="bt_fw")
+            elif dtype == "condor_call":
+                p["center"] = st.slider("Centre (×)", 0.80, 1.30, 1.00, 0.05, key="bt_cc")
+                p["w_in"]   = st.slider("Inner half-width (×)", 0.05, 0.30, 0.10, 0.05, key="bt_ci")
+                p["w_out"]  = st.slider("Outer half-width (×)", 0.20, 0.60, 0.30, 0.05, key="bt_co")
+            elif dtype == "reverse_convertible":
+                p["kp"] = st.slider("Short put strike (×)", 0.60, 1.00, 0.90, 0.05, key="bt_rc")
+            elif dtype == "discount_certificate":
+                p["kc"] = st.slider("Cap strike (×)", 1.00, 1.60, 1.20, 0.05, key="bt_dc")
+                p["premium"] = st.slider("Issuer premium", 0.00, 0.10, 0.00, 0.01, key="bt_dcp")
+            elif dtype == "outperformance_certificate":
+                p["k"] = st.slider("Participation strike (×)", 0.80, 1.30, 1.00, 0.05, key="bt_oc")
+                p["premium"] = st.slider("Issuer premium", 0.00, 0.10, 0.00, 0.01, key="bt_ocp")
+            return p
 
-    # Payoff diagram (left); underlying + derivative parameters (right), side by side
-    _bt_tk = [t.strip().upper() for t in bt_tickers_raw.split(",") if t.strip()]
-    _pc = st.columns([1.15, 1])
-    with _pc[1]:
-        bt_undl_choice = st.selectbox(
-            "Underlying security (for the derivative)",
-            ["Auto — highest volatility"] + _bt_tk, index=0, key="bt_undl",
-            help="Which security the option is written on. Auto picks the highest-volatility "
-                 "holding (thesis convention); or pin it to a specific ticker.")
-        st.markdown('<div style="font-weight:600;font-size:.9rem;margin:.45rem 0 .3rem">'
-                    'Parameters</div>', unsafe_allow_html=True)
-        bt_params = _bt_param_inputs(bt_dtype)
-    with _pc[0]:
-        try:
-            _dp = dict(bt_params); _dp["r"] = 0.03; _dp["T"] = 1.0
-            _dcfg = build_der_config(bt_dtype, _dp, [0.25], 0)
-            if _dcfg:
-                _dcfg["r"] = 0.03; _dcfg["T"] = 1.0
-                _fig_bt = plot_named_payoff(_dcfg, "underlying")
-                st.pyplot(_fig_bt, use_container_width=True)
-                plt.close(_fig_bt)
-                st.caption("Illustrative payoff: derivative return vs underlying return "
-                           "(priced at ~25% vol). The backtest prices and marks the option "
-                           "with the construction-period volatility of the chosen underlying.")
-        except Exception:
-            pass
+        # Payoff diagram (left); underlying + derivative parameters (right), side by side
+        _bt_tk = [t.strip().upper() for t in bt_tickers_raw.split(",") if t.strip()]
+        _pc = st.columns([1.15, 1])
+        with _pc[1]:
+            bt_undl_choice = st.selectbox(
+                "Underlying security (for the derivative)",
+                ["Auto — highest volatility"] + _bt_tk, index=0, key="bt_undl",
+                help="Which security the option is written on. Auto picks the highest-volatility "
+                     "holding (thesis convention); or pin it to a specific ticker.")
+            st.markdown('<div style="font-weight:600;font-size:.9rem;margin:.45rem 0 .3rem">'
+                        'Parameters</div>', unsafe_allow_html=True)
+            bt_params = _bt_param_inputs(bt_dtype)
+        with _pc[0]:
+            try:
+                _dp = dict(bt_params); _dp["r"] = 0.03; _dp["T"] = 1.0
+                _dcfg = build_der_config(bt_dtype, _dp, [0.25], 0)
+                if _dcfg:
+                    _dcfg["r"] = 0.03; _dcfg["T"] = 1.0
+                    _fig_bt = plot_named_payoff(_dcfg, "underlying")
+                    st.pyplot(_fig_bt, use_container_width=True)
+                    plt.close(_fig_bt)
+                    st.caption("Illustrative payoff: derivative return vs underlying return "
+                               "(priced at ~25% vol). The backtest prices and marks the option "
+                               "with the construction-period volatility of the chosen underlying.")
+            except Exception:
+                pass
+
+    st.markdown(_BT_RULE, unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+        _bt_head("Risk measure", 5)
+        _bt_ai("What does this control?", "The constraint used to <b>build</b> the weights: VaR caps the probability of finishing below H (P(r&lt;H) ≤ α); Expected-Shortfall caps the average loss in the tail (E[r|r&lt;H] ≥ L).")
+        bt_method = st.selectbox(
+            "Constraint",
+            ["Value-at-Risk (VaR)", "Expected Shortfall — thesis", "Rigorous ES — beyond thesis"],
+            index=0, key="bt_method",
+            help="VaR caps the probability of finishing below H; ES floors the average loss in "
+                 "that tail. Rigorous ES enforces the ES floor in the optimisation itself "
+                 "(runs at high precision, m=51).")
+        bt_ct = {"Value-at-Risk (VaR)": "var",
+                 "Expected Shortfall — thesis": "es",
+                 "Rigorous ES — beyond thesis": "es_rigorous"}[bt_method]
+
+        bt_H = st.slider("Loss threshold H (horizon return)", -40, 0, -10, 1,
+                         format="%d%%", key="bt_H") / 100.0
+        if bt_ct == "var":
+            bt_alpha = st.slider("Target shortfall probability α  (P(r < H) ≤ α)",
+                                 1, 25, 5, 1, format="%d%%", key="bt_alpha") / 100.0
+            bt_L = None
+        else:
+            bt_L = st.slider("Minimum Expected Shortfall L  (E[r | r < H] ≥ L)",
+                             -40, 0, -15, 1, format="%d%%", key="bt_L") / 100.0
+            bt_alpha = 0.05
+
+    st.markdown(_BT_RULE, unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+        _bt_head("Grid resolution", 6)
+        _bt_ai("What does resolution mean?", "A finer state grid gives more accurate (but slower) weights. Fast / Standard / High only — Turbo is disabled here because the backtest always builds a derivative, where Turbo becomes unreliable.")
+        bt_res = st.selectbox(
+            "Grid precision", ["Fast", "Standard", "High"], index=0, key="bt_res",
+            help="Weight-grid precision for the construction optimiser "
+                 "(Fast m=21 / Standard m=35 / High m=51). Turbo is omitted here — it is "
+                 "unreliable when a derivative is in the portfolio, which the backtest always "
+                 "builds — and Rigorous ES is selected in the Risk measure section above.")
+        _bt_grid_key = next((k for k in GRID_EXPLANATIONS
+                             if bt_res in k and "Turbo" not in k and "Rigorous" not in k), bt_res)
         st.markdown(
             f'<details style="background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;'
             f'padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
             f'<summary style="cursor:pointer;color:#79b6ff;font-weight:600;list-style:none">'
-            f'✨ AI-powered: What is this instrument?</summary>'
-            f'<div style="color:#aebccd;margin-top:.4rem">{get_explanation(bt_label)}</div></details>',
+            f'✨ AI-powered: What does this resolution mean?</summary>'
+            f'<div style="color:#aebccd;margin-top:.4rem">'
+            f'{GRID_EXPLANATIONS.get(_bt_grid_key, "No explanation available.")}</div></details>',
             unsafe_allow_html=True)
+        if bt_res == "High":
+            st.markdown('<div class="warn-box">⚠️ The heaviest mode — and a backtest re-optimises at every walk-forward window, so on the free hosted demo it is likely to stall. Use Fast here and keep the universe small, or <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer/blob/main/Run_Locally_Guide.pdf" target="_blank" rel="noopener" style="color:#fde68a;text-decoration:underline;font-weight:600">run High locally</a>.</div>',
+                        unsafe_allow_html=True)
+        elif bt_res == "Standard":
+            st.markdown('<div class="warn-box">⏱️ Heavy on the free hosted demo — a backtest re-optimises at every window, so this may not finish beyond a few assets. Use Fast for a quick run, or <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer/blob/main/Run_Locally_Guide.pdf" target="_blank" rel="noopener" style="color:#fde68a;text-decoration:underline;font-weight:600">run Standard locally</a>.</div>',
+                        unsafe_allow_html=True)
 
-    _bt_head("Risk measure")
-    bt_method = st.selectbox(
-        "Constraint",
-        ["Value-at-Risk (VaR)", "Expected Shortfall — thesis", "Rigorous ES — beyond thesis"],
-        index=0, key="bt_method",
-        help="VaR caps the probability of finishing below H; ES floors the average loss in "
-             "that tail. Rigorous ES enforces the ES floor in the optimisation itself "
-             "(runs at high precision, m=51).")
-    bt_ct = {"Value-at-Risk (VaR)": "var",
-             "Expected Shortfall — thesis": "es",
-             "Rigorous ES — beyond thesis": "es_rigorous"}[bt_method]
-
-    bt_H = st.slider("Loss threshold H (horizon return)", -40, 0, -10, 1,
-                     format="%d%%", key="bt_H") / 100.0
-    if bt_ct == "var":
-        bt_alpha = st.slider("Target shortfall probability α  (P(r < H) ≤ α)",
-                             1, 25, 5, 1, format="%d%%", key="bt_alpha") / 100.0
-        bt_L = None
-    else:
-        bt_L = st.slider("Minimum Expected Shortfall L  (E[r | r < H] ≥ L)",
-                         -40, 0, -15, 1, format="%d%%", key="bt_L") / 100.0
-        bt_alpha = 0.05
-
-    _bt_head("Grid resolution")
-    bt_res = st.selectbox(
-        "Grid precision", ["Fast", "Standard", "High"], index=0, key="bt_res",
-        help="Weight-grid precision for the construction optimiser "
-             "(Fast m=21 / Standard m=35 / High m=51). Turbo is omitted here — it is "
-             "unreliable when a derivative is in the portfolio, which the backtest always "
-             "builds — and Rigorous ES is selected in the Risk measure section above.")
-    _bt_grid_key = next((k for k in GRID_EXPLANATIONS
-                         if bt_res in k and "Turbo" not in k and "Rigorous" not in k), bt_res)
-    st.markdown(
-        f'<details style="background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;'
-        f'padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
-        f'<summary style="cursor:pointer;color:#79b6ff;font-weight:600;list-style:none">'
-        f'✨ AI-powered: What does this resolution mean?</summary>'
-        f'<div style="color:#aebccd;margin-top:.4rem">'
-        f'{GRID_EXPLANATIONS.get(_bt_grid_key, "No explanation available.")}</div></details>',
-        unsafe_allow_html=True)
-    if bt_res == "High":
-        st.markdown('<div class="warn-box">⚠️ The heaviest mode — and a backtest re-optimises at every walk-forward window, so on the free hosted demo it is likely to stall. Use Fast here and keep the universe small, or <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer/blob/main/Run_Locally_Guide.pdf" target="_blank" rel="noopener" style="color:#fde68a;text-decoration:underline;font-weight:600">run High locally</a>.</div>',
-                    unsafe_allow_html=True)
-    elif bt_res == "Standard":
-        st.markdown('<div class="warn-box">⏱️ Heavy on the free hosted demo — a backtest re-optimises at every window, so this may not finish beyond a few assets. Use Fast for a quick run, or <a href="https://github.com/SamiJeddou/behavioral-portfolio-optimizer/blob/main/Run_Locally_Guide.pdf" target="_blank" rel="noopener" style="color:#fde68a;text-decoration:underline;font-weight:600">run Standard locally</a>.</div>',
-                    unsafe_allow_html=True)
-
-    _bt_head("Benchmark (for α / β)")
-    bt_bench_choice = st.selectbox(
-        "Benchmark — the \"market\" for alpha & beta",
-        ["S&P 500 (^GSPC)", "Global ACWI (ACWI)", "60/40 SPY-AGG blend", "Type my own ticker"],
-        index=0, key="bt_bench",
-        help="Alpha and beta are measured against this benchmark over the evaluation window. "
-             "For a multi-asset or crypto portfolio, a broad or blended benchmark is more "
-             "meaningful than a single equity index.")
-    if bt_bench_choice.startswith("Type"):
-        bt_bench_custom = st.text_input("Benchmark ticker (Yahoo symbol)", value="^GSPC",
-                                        key="bt_bench_tk")
-    else:
-        bt_bench_custom = ""
-    _bcol1, _bcol2 = st.columns(2)
-    with _bcol1:
-        bt_rf = st.number_input("Risk-free rate (annual, %)", min_value=0.0, max_value=20.0,
-                                value=3.0, step=0.25, key="bt_rf",
-                                help="Used to form excess returns for the regression.") / 100.0
-    with _bcol2:
-        bt_erm_raw = st.text_input(
-            "Expected market return E[Rₘ] (annual %, optional)", value="", key="bt_erm",
-            help="Leave blank to report only realised α / β. Enter a value to add a CAPM "
-                 "required-return and an ex-ante (expected) alpha column, using the realised beta.")
-    st.markdown(
-        f'<details style="background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;'
-        f'padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
-        f'<summary style="cursor:pointer;color:#79b6ff;font-weight:600;list-style:none">'
-        f'✨ AI-powered: What are alpha &amp; beta, and which benchmark?</summary>'
-        f'<div style="color:#aebccd;margin-top:.4rem">{BENCHMARK_EXPLANATION}</div></details>',
-        unsafe_allow_html=True)
+    st.markdown(_BT_RULE, unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+        _bt_head("Benchmark (for α / β)", 7)
+        _bt_ai("What is the benchmark for?", "The market index used to compute realised <b>alpha</b> and <b>beta</b> (and R²) for each security and for both portfolios. Optionally add an expected market return for a CAPM ex-ante alpha.")
+        bt_bench_choice = st.selectbox(
+            "Benchmark — the \"market\" for alpha & beta",
+            ["S&P 500 (^GSPC)", "Global ACWI (ACWI)", "60/40 SPY-AGG blend", "Type my own ticker"],
+            index=0, key="bt_bench",
+            help="Alpha and beta are measured against this benchmark over the evaluation window. "
+                 "For a multi-asset or crypto portfolio, a broad or blended benchmark is more "
+                 "meaningful than a single equity index.")
+        if bt_bench_choice.startswith("Type"):
+            bt_bench_custom = st.text_input("Benchmark ticker (Yahoo symbol)", value="^GSPC",
+                                            key="bt_bench_tk")
+        else:
+            bt_bench_custom = ""
+        _bcol1, _bcol2 = st.columns(2)
+        with _bcol1:
+            bt_rf = st.number_input("Risk-free rate (annual, %)", min_value=0.0, max_value=20.0,
+                                    value=3.0, step=0.25, key="bt_rf",
+                                    help="Used to form excess returns for the regression.") / 100.0
+        with _bcol2:
+            bt_erm_raw = st.text_input(
+                "Expected market return E[Rₘ] (annual %, optional)", value="", key="bt_erm",
+                help="Leave blank to report only realised α / β. Enter a value to add a CAPM "
+                     "required-return and an ex-ante (expected) alpha column, using the realised beta.")
+        st.markdown(
+            f'<details style="background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;'
+            f'padding:.4rem .8rem;margin:.3rem 0;font-size:.82rem">'
+            f'<summary style="cursor:pointer;color:#79b6ff;font-weight:600;list-style:none">'
+            f'✨ AI-powered: What are alpha &amp; beta, and which benchmark?</summary>'
+            f'<div style="color:#aebccd;margin-top:.4rem">{BENCHMARK_EXPLANATION}</div></details>',
+            unsafe_allow_html=True)
 
     st.markdown(_BT_RULE, unsafe_allow_html=True)
     st.markdown(
@@ -4919,7 +5060,7 @@ elif _view == "backtest":
                 cum2, ann2, vol2, br2 = _bt_metrics(pv2, factor_eval, bt_H, T_years)
 
             st.markdown("---")
-            st.markdown("#### Results")
+            st.markdown('<div style="text-align:center;font-size:18px;font-weight:600;margin:0;color:#E3C77E"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.45rem"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Optimisation results</div><div style="text-align:center;color:#E3C77E;font-size:.85rem;line-height:1;margin:-.15rem 0 1.7rem">▼</div>', unsafe_allow_html=True)
             _con_txt = (f"P(r < {bt_H:.0%}) ≤ {bt_alpha:.0%}" if bt_ct == "var"
                         else f"E[r | r < {bt_H:.0%}] ≥ {bt_L:.0%}  ({bt_method})")
             _undl_note = "highest volatility" if bt_undl_choice.startswith("Auto") else "selected"
@@ -4939,20 +5080,20 @@ elif _view == "backtest":
                                                f"{cum1:.2%}  {'\u26a0 below H' if br1 else '\u2713'}",
                                                f"{cum2:.2%}  {'\u26a0 below H' if br2 else '\u2713'}"),
             ]
-            _bt_thead = ('<tr style="color:#9fb3d1">'
-                         '<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Metric</th>'
-                         '<th style="text-align:right;padding:.4rem .5rem;font-weight:600">No derivative (P1)</th>'
-                         '<th style="text-align:right;padding:.4rem .5rem;font-weight:600">With derivative (P2)</th></tr>')
+            _bt_thead = ('<tr style="color:#9fb3d1;border-bottom:1px solid #30363d">'
+                         '<td style="text-align:left;padding:.4rem .5rem;font-weight:700">Metric</td>'
+                         '<td style="text-align:center;padding:.4rem .5rem;font-weight:700;color:#4a9eff">No derivative (P1)</td>'
+                         '<td style="text-align:center;padding:.4rem .5rem;font-weight:700;color:#f5b942">With derivative (P2)</td></tr>')
             _bt_trows = ""
             for _m, _v1, _v2 in _rows_bt:
                 _bt_trows += ('<tr style="border-bottom:1px solid #1b2230">'
                               f'<td style="padding:.4rem .5rem;color:#c9d1d9">{_m}</td>'
-                              f'<td style="padding:.4rem .5rem;color:#fafafa;font-weight:600;text-align:right">{_v1}</td>'
-                              f'<td style="padding:.4rem .5rem;color:#fafafa;font-weight:600;text-align:right">{_v2}</td></tr>')
+                              f'<td style="padding:.4rem .5rem;color:#fafafa;font-weight:600;text-align:center">{_v1}</td>'
+                              f'<td style="padding:.4rem .5rem;color:#fafafa;font-weight:600;text-align:center">{_v2}</td></tr>')
             _bt_table_html = (
                 '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
                 'padding:.85rem 1rem;height:440px;display:flex;flex-direction:column;box-sizing:border-box">'
-                '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.6rem">'
+                '<div style="color:#E3C77E;font-weight:700;font-size:.98rem;margin-bottom:.6rem">'
                 'Expected vs realised \u2014 out-of-sample</div>'
                 '<div style="flex:1;overflow:auto">'
                 '<table style="width:100%;height:100%;border-collapse:collapse;font-size:.85rem;color:#c9d1d9">'
@@ -4960,7 +5101,7 @@ elif _view == "backtest":
 
             _bt_left, _bt_right = st.columns([1, 1.2])
             with _bt_left:
-                st.markdown(_bt_table_html, unsafe_allow_html=True)
+                st.html(_bt_table_html)
             with _bt_right:
                 try:
                     _fig_bt_p = plot_backtest_paths_plotly(
@@ -5069,7 +5210,7 @@ elif _view == "backtest":
                 _ab_html = (
                     '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
                     'padding:.85rem 1rem;margin-top:1rem">'
-                    '<div style="color:#4a9eff;font-weight:700;font-size:.98rem;margin-bottom:.2rem">'
+                    '<div style="color:#E3C77E;font-weight:700;font-size:.98rem;margin-bottom:.2rem">'
                     f'Alpha / Beta \u2014 vs {_bench_label}</div>'
                     '<div style="color:#8b949e;font-size:.78rem;margin-bottom:.6rem">' + _ab_note + '</div>'
                     '<table style="width:100%;border-collapse:collapse;font-size:.85rem;color:#c9d1d9">'
@@ -5182,7 +5323,7 @@ elif _view == "backtest":
                 _btl, _btc, _btr = st.columns([1, 2, 1])
                 with _btc:
                     st.download_button(
-                        label="📄 Export & Download PDF Report",
+                        label=":material/download: Export & Download PDF Report",
                         data=st.session_state['_bt_pdf_bytes'],
                         file_name=st.session_state.get('_bt_pdf_name', 'backtest_results.pdf'),
                         mime="application/pdf", type="primary",
@@ -5198,6 +5339,13 @@ elif _view == "backtest":
 
 elif _view == "about":
     import os as _os
+    with st.container():
+        _ab_l, _ab_mid, _ab_x = st.columns([1, 4.2, 1], vertical_alignment="center")
+        with _ab_l:
+            st.button(":material/home: Back to Main Screen", key="_nav_back", use_container_width=True, on_click=_go_home)
+        with _ab_mid:
+            st.markdown('<style>section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2){position:sticky;top:60px;z-index:1000;background:#0d1117;border-bottom:1px solid #2a3340;box-shadow:0 8px 16px -10px rgba(0,0,0,.75);padding:.3rem 0 .85rem;margin-bottom:.7rem}section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2) div[data-testid="stVerticalBlock"]{gap:.5rem!important}section[data-testid="stMain"] [data-testid="stMainBlockContainer"]{padding-top:3.75rem!important}section[data-testid="stMain"] div[data-testid="stVerticalBlock"]>div[data-testid="stElementContainer"]:has(~ div[data-testid="stVerticalBlockBorderWrapper"] .bmv-banner){display:none}</style><div class="bmv-banner" style="display:flex;align-items:center;justify-content:center;gap:14px;margin:0"><div style="width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#E3C77E,#C9A24B);color:#1a1205;font-weight:700;font-family:Georgia,serif;font-size:1.35rem">&beta;</div><div style="text-align:left"><div style="font-size:.8rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9">Portfolio Optimisation <span style="color:#E3C77E;font-style:italic">with</span> Derivatives &amp; Structured Products</div><div style="font-family:Georgia,serif;font-weight:600;font-size:1.45rem;line-height:1.05;color:#fafafa">Beyond <span style="color:#E3C77E">Mean-Variance</span></div><div style="font-family:Georgia,serif;font-weight:500;font-size:1rem;color:#aeb9c9">Mental Accounting Framework</div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div style="background:#141a23;border:1px solid #C9A24B;border-radius:8px;padding:.12rem 1.2rem;margin:.85rem auto .4rem;max-width:calc(100% - 570px);text-align:center"><h2 style="color:#E3C77E;margin:0;font-family:Georgia,serif;font-size:1.55rem;letter-spacing:.05em">About</h2></div>', unsafe_allow_html=True)
     col_a, col_b = st.columns([1, 3])
     with col_a:
         if _os.path.exists("profile.jpeg"):
@@ -5212,7 +5360,7 @@ elif _view == "about":
          style="width:160px;border-radius:8px;display:block;cursor:pointer"/>
     <div style="position:absolute;bottom:0;left:0;right:0;background:rgba(0,91,181,0.75);
                 color:#ffffff;font-size:.72rem;text-align:center;padding:4px 0;
-                border-radius:0 0 8px 8px">🔗 LinkedIn</div>
+                border-radius:0 0 8px 8px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-1px;margin-right:3px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>LinkedIn</div>
   </div>
 </a>''',
                 unsafe_allow_html=True)
@@ -5220,12 +5368,12 @@ elif _view == "about":
         st.markdown("## Sami Jeddou")
         st.markdown("**Senior Financial Services Executive — Transformation, Risk & Capital Markets**")
         st.markdown("Risk · Capital Markets · Post-Trade & Clearing · High-Value Payments · Quantitative Finance · Front-to-Back Delivery · Regulatory Programs")
-        st.markdown("📍 Paris, France", unsafe_allow_html=True)
-        st.markdown("🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;|&nbsp; 🐙 [GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer) &nbsp;|&nbsp; 📧 sami.jeddou@protonmail.com", unsafe_allow_html=True)
+        st.markdown('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>Paris, France', unsafe_allow_html=True)
+        st.markdown('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>[LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;|&nbsp; <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>[GitHub](https://github.com/SamiJeddou/behavioral-portfolio-optimizer) &nbsp;|&nbsp; <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>sami.jeddou@protonmail.com', unsafe_allow_html=True)
 
     st.markdown("---")
 
-    st.markdown('<h3 style="color:#4a9eff">About this app</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color:#E3C77E">About this app</h3>', unsafe_allow_html=True)
     _guide_file = "Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf"
     _guide_url = ("https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/"
                   "main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf")
@@ -5238,7 +5386,7 @@ elif _view == "about":
             _gcol_l, _gcol_c, _gcol_r = st.columns([1, 2, 1])
             with _gcol_c:
                 st.download_button(
-                    "📄 Download the User Guide (PDF)",
+                    "Download the User Guide (PDF)", icon=":material/picture_as_pdf:",
                     data=_guide_bytes, file_name=_guide_file,
                     mime="application/pdf", type="primary",
                     key="guide_dl", use_container_width=True)
@@ -5255,7 +5403,7 @@ elif _view == "about":
             _pcol_l, _pcol_c, _pcol_r = st.columns([1, 2, 1])
             with _pcol_c:
                 st.download_button(
-                    "📄 Download the technical paper (PDF)",
+                    "Download the technical paper (PDF)", icon=":material/picture_as_pdf:",
                     data=_paper_bytes, file_name=_paper_file,
                     mime="application/pdf", type="primary",
                     key="paper_dl", use_container_width=True)
@@ -5299,7 +5447,7 @@ elif _view == "about":
         "against the thesis, and extended with live market data and a wider library of structured "
         "products.")
 
-    st.markdown('<h3 style="color:#4a9eff">Summary</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color:#E3C77E">Summary</h3>', unsafe_allow_html=True)
     st.markdown("**In plain terms, this tool lets you:**")
     st.markdown("""
 - **Set a goal, not a risk-aversion number** — tell it how much downside you will accept (e.g. "no more than a 5% chance of losing 10%") and it builds the best portfolio for that goal.
@@ -5310,13 +5458,13 @@ elif _view == "about":
 - **Understand every result** — built-in AI explanations and an interactive glossary turn the maths into plain language, and a one-click PDF captures the run.
 """)
     st.markdown("**The three building blocks at a glance:**")
-    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Grid optimiser</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Monte-Carlo optimiser</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Back-test</th></tr></thead><tbody><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Exhaustive grid search over portfolios — exact for small portfolios. Reproduces the thesis method and prices all 16 instruments, under a VaR or Expected-Shortfall limit.</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Simulates thousands of joint scenarios and solves a CVaR linear program; cost grows with the number of scenarios, not the number of assets.</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Freezes the chosen weights and holds them on later, unseen data, marking the derivative to market along the way.</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Best for:</strong> small portfolios needing thesis-grade precision; any of the 16 instruments.</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Best for:</strong> large, institutional-size portfolios with many assets and derivatives; α-CVaR tail control.</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Best for:</strong> out-of-sample validation — realised return, alpha, beta and R² versus a benchmark.</td></tr></tbody></table>''', unsafe_allow_html=True)
+    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">Grid optimiser</th><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">Monte-Carlo optimiser</th><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">Back-test</th></tr></thead><tbody><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Exhaustive grid search over portfolios — exact for small portfolios. Reproduces the thesis method and prices all 16 instruments, under a VaR or Expected-Shortfall limit.</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Simulates thousands of joint scenarios and solves a CVaR linear program; cost grows with the number of scenarios, not the number of assets.</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Freezes the chosen weights and holds them on later, unseen data, marking the derivative to market along the way.</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center"><strong>Best for:</strong> small portfolios needing thesis-grade precision; any of the 16 instruments.</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center"><strong>Best for:</strong> large, institutional-size portfolios with many assets and derivatives; α-CVaR tail control.</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center"><strong>Best for:</strong> out-of-sample validation — realised return, alpha, beta and R² versus a benchmark.</td></tr></tbody></table>''', unsafe_allow_html=True)
 
     st.markdown("*The sections below explain how it works, what you can configure, and the theory behind it.*")
 
     st.markdown("---")
 
-    st.markdown('<h3 style="color:#4a9eff">How it works — the grid optimisation algorithm</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color:#E3C77E">How it works — the grid optimisation algorithm</h3>', unsafe_allow_html=True)
     st.markdown(
         "The full algorithm is described in Das & Statman (2009) — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*. "
         "The original R implementation is provided in the appendix of the thesis (Jeddou, 2012). "
@@ -5345,16 +5493,16 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
         "quantities — the portfolio is assumed to be set today and held for the year. This lines "
         "up cleanly with an annual mandate, annual risk budget, or roughly yearly rebalancing.")
 
-    st.markdown('<h3 style="color:#4a9eff">Constraint methods &amp; resolutions</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color:#E3C77E">Constraint methods &amp; resolutions</h3>', unsafe_allow_html=True)
     st.markdown("There are two independent choices — the **constraint method** "
                 "(what downside rule is enforced) and the **resolution / solver** "
                 "(how the optimiser searches). Two routing conditions can override "
                 "the resolution choice: the number of securities, and whether a "
                 "derivative is present.")
     st.markdown("**The three constraint / objective methods**")
-    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Method</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">What it optimises</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Best / recommended for</th></tr></thead><tbody><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>VaR</strong> (Method I)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">max E[r] s.t. P(r &lt; H) ≤ α — a probability-of-shortfall threshold</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">The thesis's primary method; most cases</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>ES — thesis-faithful</strong> (default Method II)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">ES-eligible grid seed, but the COBYLA refinement still targets the <strong>VaR</strong> penalty — faithfully reproduces the original R thesis</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Reproducing the thesis tables exactly</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Rigorous ES</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">max E[r] s.t. ES ≥ L, with a genuinely <strong>ES-aware</strong> COBYLA penalty</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Real decision-making — recovers up to ~2.4pp of E[r] the thesis method leaves unused (e.g. L = −15%: 15.5% vs 13.2%)</td></tr></tbody></table>''', unsafe_allow_html=True)
+    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">Method</th><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">What it optimises</th><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">Best / recommended for</th></tr></thead><tbody><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center"><strong>VaR</strong> (Method I)</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">max E[r] s.t. P(r &lt; H) ≤ α — a probability-of-shortfall threshold</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">The thesis's primary method; most cases</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center"><strong>ES — thesis-faithful</strong> (default Method II)</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">ES-eligible grid seed, but the COBYLA refinement still targets the <strong>VaR</strong> penalty — faithfully reproduces the original R thesis</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Reproducing the thesis tables exactly</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center"><strong>Rigorous ES</strong></td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">max E[r] s.t. ES ≥ L, with a genuinely <strong>ES-aware</strong> COBYLA penalty</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Real decision-making — recovers up to ~2.4pp of E[r] the thesis method leaves unused (e.g. L = −15%: 15.5% vs 13.2%)</td></tr></tbody></table>''', unsafe_allow_html=True)
     st.markdown("**The four resolutions / solvers — and where each applies**")
-    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Resolution</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">VaR</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">ES (thesis)</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Rigorous ES</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Grid (m / m')</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Speed / reliability</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Best for</th></tr></thead><tbody><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Fast</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">21 / 15</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">fastest; coarse, visible discretisation error</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">quick previews</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Standard</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">35 / 50</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">moderate; safe with derivatives</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">daily work, derivative cases</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>High precision</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">51 / 99</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">slow (~15–30 min full frontier); thesis-grade</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">publication numbers, validation, derivative cases</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Turbo</strong></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓ <em>(n ≤ 4, no-derivative)</em></td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✗</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">51, coarse-to-fine</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">~seconds (~60× faster than High); <strong>unreliable with a derivative</strong> (up to 32% disagreement)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">fast no-derivative VaR frontier exploration</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top"><strong>Rigorous-ES</strong> (own mode, resolution fixed)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">—</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">✓</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">51 (fixed)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">~seconds; ES-aware</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">ES decision-making</td></tr></tbody></table>''', unsafe_allow_html=True)
+    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">Resolution</th><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">VaR</th><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">ES (thesis)</th><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">Rigorous ES</th><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">Grid (m / m')</th><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">Speed / reliability</th><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">Best for</th></tr></thead><tbody><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center"><strong>Fast</strong></td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">✓</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">✓</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">—</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">21 / 15</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">fastest; coarse, visible discretisation error</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">quick previews</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center"><strong>Standard</strong></td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">✓</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">✓</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">—</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">35 / 50</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">moderate; safe with derivatives</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">daily work, derivative cases</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center"><strong>High precision</strong></td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">✓</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">✓</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">—</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">51 / 99</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">slow (~15–30 min full frontier); thesis-grade</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">publication numbers, validation, derivative cases</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center"><strong>Turbo</strong></td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">✓ <em>(n ≤ 4, no-derivative)</em></td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">✗</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">—</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">51, coarse-to-fine</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">~seconds (~60× faster than High); <strong>unreliable with a derivative</strong> (up to 32% disagreement)</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">fast no-derivative VaR frontier exploration</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center"><strong>Rigorous-ES</strong> (own mode, resolution fixed)</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">—</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">—</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">✓</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">51 (fixed)</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">~seconds; ES-aware</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">ES decision-making</td></tr></tbody></table>''', unsafe_allow_html=True)
     st.markdown("*Legend: ✓ available · ✗ deliberately disabled · — not applicable (separate fixed-resolution mode).*")
     st.markdown("**Routing rules that override the resolution choice.** "
                 "Fast / Standard / High serve both **VaR** and **thesis-ES**; "
@@ -5370,7 +5518,7 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
     st.markdown('<div style="text-align:center;margin:.4rem 0 .1rem"><img src="data:image/png;base64,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" style="width:600px;max-width:100%;border-radius:10px"/></div>', unsafe_allow_html=True)
     st.markdown('<div style="text-align:center;color:#8a97ad;font-size:.85rem;margin:0 0 .8rem">Grid Optimiser — how the constraint, resolution and engine are chosen (blue = you choose · gold = the tool decides automatically).</div>', unsafe_allow_html=True)
 
-    st.markdown('<h3 style="color:#4a9eff">The theory — MVT / MAT equivalence</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color:#E3C77E">The theory — MVT / MAT equivalence</h3>', unsafe_allow_html=True)
     st.markdown(
         "When no derivatives are present, the mean-variance and behavioral frontiers converge exactly. "
         "For any choice of H and α, there exists a unique implied risk-aversion coefficient λ such that "
@@ -5397,7 +5545,7 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
         unsafe_allow_html=True)
 
     st.markdown("<div style='height:1rem'></div>", unsafe_allow_html=True)
-    st.markdown('<h3 style="color:#4a9eff">Data input &amp; cleaning</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color:#E3C77E">Data input &amp; cleaning</h3>', unsafe_allow_html=True)
     st.markdown(
         "The grid optimiser supports four data input modes. For live market data and CSV uploads, "
         "returns are automatically cleaned before being passed to the optimizer:")
@@ -5413,7 +5561,7 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
 
     st.markdown("---")
 
-    st.markdown('<h3 style="color:#4a9eff">Scaling to large portfolios — Monte-Carlo + CVaR</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color:#E3C77E">Scaling to large portfolios — Monte-Carlo + CVaR</h3>', unsafe_allow_html=True)
     st.markdown(
         "The exact grid above is precise, but its state space grows as *m^n′* and becomes "
         "impractical beyond a handful of assets. A second, **scalable engine** is included for "
@@ -5429,7 +5577,7 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
 
     st.markdown("---")
 
-    st.markdown('<h3 style="color:#4a9eff">Out-of-sample back-test</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color:#E3C77E">Out-of-sample back-test</h3>', unsafe_allow_html=True)
     st.markdown(
         "To test the *efficiency* of each optimisation method — not just its in-sample fit — the app "
         "can build portfolio weights on a construction window and then **buy-and-hold** those weights "
@@ -5455,12 +5603,12 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
 
     st.markdown("---")
 
-    st.markdown('<h3 style="color:#4a9eff">Supported derivatives &amp; structured products</h3>', unsafe_allow_html=True)
-    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Type</th><th style="background:#1a6bbf;color:#ffffff;font-weight:700;text-align:left;padding:.5rem .6rem;border:1px solid #15579c">Description</th></tr></thead><tbody><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Put / Call</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Standard European options</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Safety collar</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long put + short call</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Aggressive collar</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + short put</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Straddle / Strangle</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + long put (same or different strikes)</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Capital-guaranteed note</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Uncapped or capped, with floor and participation rate</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Barrier-M note</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Corridor note with digital components</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Bull call spread</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long call + short higher call — bullish, capped, lower cost than a call</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Bear put spread</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long put + short lower put — cheaper bearish hedge, capped</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long butterfly (calls)</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Long–short²–long calls — low-volatility &#8220;pin&#8221; bet, very cheap</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Call condor</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Four-strike range bet with a flat maximum payoff between the inner strikes</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Reverse convertible</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Zero-coupon bond − short put — high coupon, capped upside, principal at risk</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Discount certificate</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Synthetic underlying − short call — bought at a discount, upside capped</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Outperformance certificate</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Synthetic underlying + extra call — full downside, geared (&gt;100%) upside</td></tr><tr><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Custom composer</td><td style="background:#ffffff;color:#111111;padding:.45rem .6rem;border:1px solid #d3dae6;vertical-align:top">Build any payoff from calls, puts, digitals, and zero-coupon bonds</td></tr></tbody></table>''', unsafe_allow_html=True)
+    st.markdown('<h3 style="color:#E3C77E">Supported derivatives &amp; structured products</h3>', unsafe_allow_html=True)
+    st.markdown('''<table style="width:100%;border-collapse:collapse;font-size:.86rem;margin:.4rem 0 .8rem 0"><thead><tr><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">Type</th><th style="background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.5rem .6rem;border:1px solid #C9A24B">Description</th></tr></thead><tbody><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Put / Call</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Standard European options</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Safety collar</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Long put + short call</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Aggressive collar</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Long call + short put</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Straddle / Strangle</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Long call + long put (same or different strikes)</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Capital-guaranteed note</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Uncapped or capped, with floor and participation rate</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Barrier-M note</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Corridor note with digital components</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Bull call spread</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Long call + short higher call — bullish, capped, lower cost than a call</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Bear put spread</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Long put + short lower put — cheaper bearish hedge, capped</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Long butterfly (calls)</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Long–short²–long calls — low-volatility &#8220;pin&#8221; bet, very cheap</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Call condor</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Four-strike range bet with a flat maximum payoff between the inner strikes</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Reverse convertible</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Zero-coupon bond − short put — high coupon, capped upside, principal at risk</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Discount certificate</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Synthetic underlying − short call — bought at a discount, upside capped</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Outperformance certificate</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Synthetic underlying + extra call — full downside, geared (&gt;100%) upside</td></tr><tr><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Custom composer</td><td style="background:#0d1117;color:#c9d1d9;padding:.45rem .6rem;border:1px solid #30363d;vertical-align:top;text-align:center">Build any payoff from calls, puts, digitals, and zero-coupon bonds</td></tr></tbody></table>''', unsafe_allow_html=True)
 
     st.markdown("---")
 
-    st.markdown('<h3 style="color:#4a9eff">Academic references</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color:#E3C77E">Academic references</h3>', unsafe_allow_html=True)
     st.markdown("""
 - **Das, Sanjiv and Meir Statman (2009)** — *Beyond Mean-Variance: Portfolios with Derivatives and Non-Normal Returns in Mental Accounts*
 - **Das, Sanjiv, Harry Markowitz, Jonathan Scheid and Meir Statman (2010)** — *Portfolio Optimization with Mental Accounts*, Journal of Financial and Quantitative Analysis, Vol. 45, No. 2, pp. 311–334
@@ -5472,7 +5620,7 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
     st.markdown("""
 <div style="background:#0d1a2e;border:1px solid #f59e0b;border-radius:8px;padding:1rem 1.4rem;color:#c0c8d8;font-size:.85rem">
 
-⚠️ <b style="color:#f59e0b">Legal Disclaimer</b><br><br>
+<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><b style="color:#f59e0b">Legal Disclaimer</b><br><br>
 This application is based on the mental accounts portfolio optimisation framework of Das &amp; Statman (2009) and Das, Markowitz, Scheid &amp; Statman (2010), as extended in Jeddou (2012) through additional derivative simulations and parameter analysis. The app further develops this work with live market data connectivity, an expanded derivative library, and an interactive optimisation interface.<br><br>
 It is provided for <b>educational and research purposes only</b> and does not constitute financial advice, investment recommendations, or a solicitation to buy or sell any financial instrument. Results are purely illustrative and should not be used as the basis for any investment decision. Past performance and modelled outputs are not indicative of future results.<br><br>
 The framework is designed to be extensible — future versions may incorporate additional derivative structures, alternative risk measures, and API connectivity for institutional workflows.
@@ -5482,7 +5630,7 @@ The framework is designed to be extensible — future versions may incorporate a
 
     st.markdown("---")
 
-    st.markdown('<h3 style="color:#4a9eff">About the author</h3>', unsafe_allow_html=True)
+    st.markdown('<h3 style="color:#E3C77E">About the author</h3>', unsafe_allow_html=True)
     st.markdown(
         "With over 20 years of experience in financial services transformation, I have delivered "
         "large-scale risk, regulatory, and front-to-back programs at and for tier-1 institutions — "
@@ -5505,12 +5653,12 @@ Open to senior leadership engagements — freelance, contract, or permanent — 
     st.markdown("""
 <div style="background:#0f1923;border:1px solid #1a6bbf;border-radius:8px;padding:1rem 1.4rem;color:#ffffff">
 
-**📬 Get in touch**
+<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:6px"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>**Get in touch**
 
 Interested in collaborating, discussing an opportunity, or learning more about this work?
 Connect directly, or send me a message below:
 
-🔗 [LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;&nbsp;|&nbsp;&nbsp; 📧 sami.jeddou@protonmail.com
+<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>[LinkedIn](https://www.linkedin.com/in/sami-jeddou-25787a404) &nbsp;&nbsp;|&nbsp;&nbsp; <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-10 5L2 7"/></svg>sami.jeddou@protonmail.com
 
 </div>
 """, unsafe_allow_html=True)
@@ -5540,11 +5688,17 @@ Connect directly, or send me a message below:
                 st.warning("Please fill in all fields before sending.")
 
 elif _view == "glossary":
-    st.markdown('<h3 style="color:#4a9eff">📚 AI Glossary &amp; Reference</h3>', unsafe_allow_html=True)
+    with st.container():
+        _gl_l, _gl_mid, _gl_x = st.columns([1, 4.2, 1], vertical_alignment="center")
+        with _gl_l:
+            st.button(":material/home: Back to Main Screen", key="_nav_back", use_container_width=True, on_click=_go_home)
+        with _gl_mid:
+            st.markdown('<style>section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2){position:sticky;top:60px;z-index:1000;background:#0d1117;border-bottom:1px solid #2a3340;box-shadow:0 8px 16px -10px rgba(0,0,0,.75);padding:.3rem 0 .85rem;margin-bottom:.7rem}section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2) div[data-testid="stVerticalBlock"]{gap:.5rem!important}section[data-testid="stMain"] [data-testid="stMainBlockContainer"]{padding-top:3.75rem!important}section[data-testid="stMain"] div[data-testid="stVerticalBlock"]>div[data-testid="stElementContainer"]:has(~ div[data-testid="stVerticalBlockBorderWrapper"] .bmv-banner){display:none}</style><div class="bmv-banner" style="display:flex;align-items:center;justify-content:center;gap:14px;margin:0"><div style="width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#E3C77E,#C9A24B);color:#1a1205;font-weight:700;font-family:Georgia,serif;font-size:1.35rem">&beta;</div><div style="text-align:left"><div style="font-size:.8rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9">Portfolio Optimisation <span style="color:#E3C77E;font-style:italic">with</span> Derivatives &amp; Structured Products</div><div style="font-family:Georgia,serif;font-weight:600;font-size:1.45rem;line-height:1.05;color:#fafafa">Beyond <span style="color:#E3C77E">Mean-Variance</span></div><div style="font-family:Georgia,serif;font-weight:500;font-size:1rem;color:#aeb9c9">Mental Accounting Framework</div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div style="background:#141a23;border:1px solid #C9A24B;border-radius:8px;padding:.12rem 1.2rem;margin:.85rem auto .4rem;max-width:calc(100% - 570px);text-align:center"><h2 style="color:#E3C77E;margin:0;font-family:Georgia,serif;font-size:1.55rem;letter-spacing:.05em"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:.5rem"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>AI Glossary &amp; Reference</h2></div>', unsafe_allow_html=True)
     st.markdown(
         "Click any term below for an AI-generated explanation, or type your own question. "
         "Answers are tailored to the context of behavioural portfolio optimisation.")
-    st.info("💡 After clicking a term or submitting a question, **scroll down** to see the answer at the bottom of this page.", icon="👇")
+    st.info(":material/lightbulb: After clicking a term or submitting a question, **scroll down** to see the answer at the bottom of this page.", icon=":material/keyboard_double_arrow_down:")
 
     GLOSSARY_TERMS = {
         "Derivatives & structured products": [
@@ -5595,6 +5749,278 @@ elif _view == "glossary":
         ]
     }
 
+    # Map glossary derivative terms to a payoff config so we can draw an
+    # illustrative payoff diagram next to the AI explanation.
+    _GLOSSARY_DERIV = {
+        "Put option": ("put", {"strike": 0.9}),
+        "Call option": ("call", {"strike": 1.2}),
+        "Safety collar (long put + short call)": ("safety_collar", {"strike_p": 1.2, "strike_c": 1.6}),
+        "Aggressive collar (long call + short put)": ("aggressive_collar", {"strike_p": 1.2, "strike_c": 1.6}),
+        "Straddle (long call + long put)": ("straddle", {"strike": 1.0}),
+        "Strangle (long call + long put, diff strikes)": ("strangle", {"strike_kp": 0.85, "strike_kc": 1.15}),
+        "Capital-guaranteed note (CGN)": ("cgn_capped", {"floor": 0.01, "participation": 1.0, "cap": 0.20, "premium": 0.0}),
+        "Barrier-M note": ("barrier_m", {}),
+        "Bull call spread (long call + short higher call)": ("bull_call_spread", {"k1": 1.0, "k2": 1.2}),
+        "Bear put spread (long put + short lower put)": ("bear_put_spread", {"k1": 1.1, "k2": 0.9}),
+        "Long butterfly (calls)": ("butterfly_call", {"center": 1.0, "width": 0.2}),
+        "Call condor": ("condor_call", {"center": 1.0, "w_in": 0.1, "w_out": 0.3}),
+        "Reverse convertible (bond − short put)": ("reverse_convertible", {"kp": 0.9}),
+        "Discount certificate (capped underlying)": ("discount_certificate", {"kc": 1.2, "premium": 0.0}),
+        "Outperformance certificate (geared upside)": ("outperformance_certificate", {"k": 1.0, "premium": 0.0}),
+    }
+
+    # At-a-glance facts: (market view, max loss, max gain, payoff formula)
+    _GLOSSARY_FACTS = {
+        "Put option": ("Bearish / downside hedge", "Premium paid", "Large (strike → 0)", "max(K − S, 0)"),
+        "Call option": ("Bullish", "Premium paid", "Unlimited", "max(S − K, 0)"),
+        "Safety collar (long put + short call)": ("Protective / hedged", "Limited by put floor", "Capped at call strike", "long put + short call"),
+        "Aggressive collar (long call + short put)": ("Bullish / geared", "Large (short put)", "Uncapped above call", "long call + short put"),
+        "Straddle (long call + long put)": ("High volatility (direction-neutral)", "Both premiums", "Unlimited", "max(S−K,0) + max(K−S,0)"),
+        "Strangle (long call + long put, diff strikes)": ("High volatility (cheaper)", "Both premiums", "Unlimited", "long OTM call + long OTM put"),
+        "Capital-guaranteed note (CGN)": ("Cautious bullish", "Protected to floor", "Capped (if capped)", "floor + participation × positive return"),
+        "Barrier-M note": ("Range-bound / corridor", "Varies with structure", "Digital coupons in corridor", "corridor digital payoff"),
+        "Bull call spread (long call + short higher call)": ("Moderately bullish", "Net premium paid", "Capped (upper − lower strike)", "long lower-strike call − short higher-strike call"),
+        "Bear put spread (long put + short lower put)": ("Moderately bearish", "Net premium paid", "Capped (upper − lower strike)", "long higher-strike put − short lower-strike put"),
+        "Long butterfly (calls)": ("Low volatility / pin", "Net premium paid", "Max at centre strike", "long − 2·short − long calls"),
+        "Call condor": ("Range-bound", "Net premium paid", "Flat between inner strikes", "4-strike call combination"),
+        "Reverse convertible (bond − short put)": ("Neutral / mildly bullish", "Principal at risk", "Coupon (capped)", "zero-coupon bond − short put"),
+        "Discount certificate (capped underlying)": ("Mildly bullish", "Full underlying downside", "Capped at cap strike", "underlying − short call (cap)"),
+        "Outperformance certificate (geared upside)": ("Bullish", "Full underlying downside", "Geared above strike", "underlying return + geared upside above strike"),
+    }
+
+    def _glossary_payoff_fig(term):
+        info = _GLOSSARY_DERIV.get(term)
+        if not info:
+            return None
+        dtype, params = info
+        try:
+            p = dict(params); p["r"] = 0.03; p["T"] = 1.0
+            cfg = build_der_config(dtype, p, [0.25], 0)
+            if not cfg:
+                return None
+            cfg["r"] = 0.03; cfg["T"] = 1.0
+            return plot_named_payoff(cfg, "underlying")
+        except Exception:
+            return None
+
+    # ── Conceptual diagrams for the non-derivative terms ──────────────────────
+    def _gfx_axes(title, xlabel, ylabel):
+        fig, ax = plt.subplots(figsize=(8, 3.5))
+        fig.patch.set_facecolor("#0d1117"); ax.set_facecolor("#0d1117")
+        for s in ax.spines.values():
+            s.set_color("#30363d")
+        ax.tick_params(colors="#9fb3d1", labelsize=8)
+        ax.grid(True, color="#1e2130", linewidth=0.6)
+        ax.set_title(title, color="#E3C77E", fontsize=12, fontweight="bold")
+        ax.set_xlabel(xlabel, color="#c0c8d8", fontsize=9)
+        ax.set_ylabel(ylabel, color="#c0c8d8", fontsize=9)
+        return fig, ax
+
+    def _fig_var_cvar():
+        rng = np.random.RandomState(7)
+        r = rng.normal(6, 18, 150000)
+        fig, ax = _gfx_axes("Value-at-Risk & CVaR — worst-5% tail", "Portfolio return (%)", "Frequency")
+        counts, edges, patches = ax.hist(r, bins=70, color="#4a9eff", alpha=0.7, edgecolor="none")
+        var = float(np.percentile(r, 5)); cvar = float(r[r <= var].mean())
+        for p, e in zip(patches, edges[:-1]):
+            if e <= var:
+                p.set_facecolor("#d15866")
+        ymax = float(counts.max())
+        ax.axvline(var, color="#f5b342", ls="--", lw=1.6)
+        ax.axvline(cvar, color="#fb6a78", ls="--", lw=1.6)
+        ax.text(var, ymax * 1.02, "VaR (5% quantile)", color="#f5b342", fontsize=8, ha="left")
+        ax.text(cvar, ymax * 0.55, "CVaR\n(avg loss in tail)", color="#fb6a78", fontsize=8, ha="right")
+        ax.set_yticks([]); fig.tight_layout()
+        return fig
+
+    def _fig_alpha_beta():
+        rng = np.random.RandomState(3)
+        xb = rng.normal(0, 1.2, 110); alpha, beta = 0.5, 0.75
+        yb = alpha + beta * xb + rng.normal(0, 0.5, 110)
+        fig, ax = _gfx_axes("Alpha & Beta — portfolio vs benchmark",
+                            "Benchmark excess return (%)", "Portfolio excess return (%)")
+        ax.scatter(xb, yb, s=14, color="#4a9eff", alpha=0.55, edgecolor="none")
+        xs = np.linspace(xb.min(), xb.max(), 50)
+        ax.plot(xs, alpha + beta * xs, color="#f59e0b", lw=2.2)
+        ax.axhline(0, color="#3a3a5a", lw=0.8); ax.axvline(0, color="#3a3a5a", lw=0.8)
+        ax.text(xb.max() * 0.45, alpha + beta * xb.max() * 0.45 + 0.4,
+                "slope = β = %.2f" % beta, color="#f59e0b", fontsize=8)
+        ax.text(0.15, alpha + 1.0, "intercept = α = %.2f%%" % alpha, color="#86e0b0", fontsize=8)
+        fig.tight_layout()
+        return fig
+
+    def _fig_frontier():
+        rng = np.random.RandomState(11)
+        vol = np.linspace(4, 42, 120); ret = 3 + 3.4 * np.sqrt(np.clip(vol - 3, 0, None))
+        fig, ax = _gfx_axes("Mean-variance efficient frontier",
+                            "Risk — volatility (%)", "Expected return (%)")
+        sv = rng.uniform(8, 41, 150)
+        sr = 3 + 3.4 * np.sqrt(np.clip(sv - 3, 0, None)) - rng.uniform(1.0, 9.0, 150)
+        ax.scatter(sv, sr, s=10, color="#4a9eff", alpha=0.35, edgecolor="none", label="feasible portfolios")
+        ax.plot(vol, ret, color="#f59e0b", lw=2.4, label="efficient frontier")
+        ax.legend(facecolor="#0d1117", edgecolor="#30363d", labelcolor="#c0c8d8", fontsize=8, loc="lower right")
+        fig.tight_layout()
+        return fig
+
+    def _fig_skew():
+        rng = np.random.RandomState(5)
+        fig, ax = _gfx_axes("Skewness — asymmetry of returns", "Return", "Density")
+        for data, color, lab in [
+                (rng.normal(0, 1, 200000), "#9fb3d1", "Symmetric (skew 0)"),
+                (rng.gamma(2.0, 1.0, 200000) - 2.0, "#86e0b0", "Positive skew"),
+                (-(rng.gamma(2.0, 1.0, 200000) - 2.0), "#d15866", "Negative skew")]:
+            h, edges = np.histogram(np.clip(data, -6, 6), bins=120, density=True)
+            ax.plot(0.5 * (edges[:-1] + edges[1:]), h, color=color, lw=2, label=lab)
+        ax.set_xlim(-6, 6); ax.set_yticks([])
+        ax.legend(facecolor="#0d1117", edgecolor="#30363d", labelcolor="#c0c8d8", fontsize=8)
+        fig.tight_layout()
+        return fig
+
+    def _fig_kurtosis():
+        rng = np.random.RandomState(9)
+        norm = rng.normal(0, 1, 300000)
+        df = 3; t = rng.normal(0, 1, 300000) / np.sqrt(rng.chisquare(df, 300000) / df)
+        fig, ax = _gfx_axes("Excess kurtosis — fat tails vs normal", "Return", "Density")
+        for data, color, lab in [(norm, "#9fb3d1", "Normal (excess kurtosis 0)"),
+                                 (t, "#f59e0b", "Fat-tailed (excess kurtosis > 0)")]:
+            h, edges = np.histogram(np.clip(data, -6, 6), bins=160, density=True)
+            ax.plot(0.5 * (edges[:-1] + edges[1:]), h, color=color, lw=2, label=lab)
+        ax.set_xlim(-6, 6); ax.set_yticks([])
+        ax.legend(facecolor="#0d1117", edgecolor="#30363d", labelcolor="#c0c8d8", fontsize=8)
+        fig.tight_layout()
+        return fig
+
+    def _fig_copula():
+        rng = np.random.RandomState(2); n = 4000
+        z1 = rng.normal(0, 1, n); z2 = 0.5 * z1 + np.sqrt(1 - 0.25) * rng.normal(0, 1, n)
+        fig, ax = _gfx_axes("Joint scenarios & tail dependence (copula)",
+                            "Asset A return", "Asset B return")
+        qa = float(np.percentile(z1, 8)); qb = float(np.percentile(z2, 8))
+        crash = (z1 <= qa) & (z2 <= qb)
+        ax.scatter(z1[~crash], z2[~crash], s=4, color="#4a9eff", alpha=0.25, edgecolor="none")
+        ax.scatter(z1[crash], z2[crash], s=8, color="#d15866", alpha=0.8, edgecolor="none",
+                   label="joint-crash tail")
+        ax.legend(facecolor="#0d1117", edgecolor="#30363d", labelcolor="#c0c8d8", fontsize=8, loc="upper left")
+        fig.tight_layout()
+        return fig
+
+    def _fig_mental_accounts():
+        import matplotlib.patches as _mp
+        fig, ax = plt.subplots(figsize=(8, 3.5))
+        fig.patch.set_facecolor("#0d1117"); ax.set_facecolor("#0d1117")
+        ax.set_axis_off(); ax.set_xlim(0, 1); ax.set_ylim(0, 1.16)
+        ax.set_title("Mental accounts — the behavioural portfolio pyramid",
+                     color="#E3C77E", fontsize=12, fontweight="bold")
+
+        def _edges(y):
+            hw = 0.46 * (1 - y)
+            return 0.5 - hw, 0.5 + hw
+        bands = [
+            (0.00, 0.34, "#86e0b0", "Safety layer", "cash, bonds, protective puts — do not breach H"),
+            (0.34, 0.68, "#4a9eff", "Income / stability", "balanced, dividend assets — ordinary goals"),
+            (0.68, 1.00, "#E3C77E", "Aspiration / upside", "growth, calls, structured notes — reach for gains"),
+        ]
+        for y0, y1, c, title, desc in bands:
+            l0, r0 = _edges(y0); l1, r1 = _edges(y1)
+            ax.add_patch(_mp.Polygon([(l0, y0), (r0, y0), (r1, y1), (l1, y1)], closed=True,
+                                     facecolor=c, alpha=0.30, edgecolor=c, linewidth=1.6))
+            ym = (y0 + y1) / 2.0
+            ax.text(0.5, ym + 0.03, title, ha="center", va="center", color=c, fontsize=10, fontweight="bold")
+            ax.text(0.5, ym - 0.055, desc, ha="center", va="center", color="#c0c8d8", fontsize=7.0)
+        ax.annotate("", xy=(0.04, 1.02), xytext=(0.04, 0.05),
+                    arrowprops=dict(arrowstyle="->", color="#9fb3d1", lw=1.2))
+        ax.text(0.065, 0.55, "higher goals · more risk", rotation=90, ha="center", va="center",
+                color="#9fb3d1", fontsize=7.5)
+        fig.tight_layout()
+        return fig
+
+    def _fig_black_scholes():
+        from math import erf
+        K, T, r, sig = 100.0, 1.0, 0.03, 0.25
+        S = np.linspace(50, 150, 200)
+        Ncdf = np.vectorize(lambda x: 0.5 * (1.0 + erf(x / np.sqrt(2.0))))
+        d1 = (np.log(S / K) + (r + 0.5 * sig ** 2) * T) / (sig * np.sqrt(T))
+        d2 = d1 - sig * np.sqrt(T)
+        call = S * Ncdf(d1) - K * np.exp(-r * T) * Ncdf(d2)
+        intrinsic = np.maximum(S - K, 0.0)
+        fig, ax = _gfx_axes("Black-Scholes — call value vs underlying", "Underlying price S", "Call value")
+        ax.fill_between(S, intrinsic, call, color="#4a9eff", alpha=0.18, label="time value")
+        ax.plot(S, intrinsic, color="#9fb3d1", lw=1.6, ls="--", label="intrinsic value (at expiry)")
+        ax.plot(S, call, color="#f59e0b", lw=2.2, label="Black-Scholes value (T = 1y)")
+        ax.axvline(K, color="#3a3a5a", lw=0.9, ls=":")
+        ax.text(K, ax.get_ylim()[1] * 0.05, " strike K", color="#9fb3d1", fontsize=7.5)
+        ax.legend(facecolor="#0d1117", edgecolor="#30363d", labelcolor="#c0c8d8", fontsize=8, loc="upper left")
+        fig.tight_layout()
+        return fig
+
+    _GLOSSARY_CONCEPT_FIG = {
+        "Value at Risk (VaR)": _fig_var_cvar,
+        "Expected Shortfall (ES)": _fig_var_cvar,
+        "Shortfall probability": _fig_var_cvar,
+        "α-CVaR (Conditional VaR)": _fig_var_cvar,
+        "Rigorous Expected Shortfall (beyond thesis)": _fig_var_cvar,
+        "Rockafellar–Uryasev CVaR linear program": _fig_var_cvar,
+        "Alpha (Jensen's alpha)": _fig_alpha_beta,
+        "Beta": _fig_alpha_beta,
+        "R-squared (R²)": _fig_alpha_beta,
+        "CAPM (Capital Asset Pricing Model)": _fig_alpha_beta,
+        "Excess return": _fig_alpha_beta,
+        "Benchmark": _fig_alpha_beta,
+        "Mean-variance efficient frontier": _fig_frontier,
+        "Markowitz optimization": _fig_frontier,
+        "Skewness": _fig_skew,
+        "Excess kurtosis": _fig_kurtosis,
+        "Monte-Carlo scenario generation": _fig_copula,
+        "Student-t copula": _fig_copula,
+        "Gaussian copula": _fig_copula,
+        "Mental accounting": _fig_mental_accounts,
+        "Behavioral portfolio theory": _fig_mental_accounts,
+        "Black-Scholes pricing": _fig_black_scholes,
+    }
+
+    _GLOSSARY_CONCEPT_FACTS = {
+        "Value at Risk (VaR)": [("Measures", "Loss not exceeded at conf. 1−α"), ("Captures", "A quantile / threshold"), ("Blind spot", "Severity beyond the quantile")],
+        "Expected Shortfall (ES)": [("Measures", "Avg loss beyond threshold H"), ("vs VaR", "Tail-severity aware"), ("Coherent", "Yes")],
+        "α-CVaR (Conditional VaR)": [("Measures", "Avg loss in worst α%"), ("vs VaR", "Tail depth, not just frequency"), ("Optimisation", "Convex — linear program"), ("Engine", "Scalable Monte-Carlo")],
+        "Shortfall probability": [("Measures", "Probability return falls below H"), ("Used in", "VaR-style constraint"), ("Ignores", "How bad the breach is")],
+        "Rigorous Expected Shortfall (beyond thesis)": [("Enforces", "ES floor in the optimiser itself"), ("vs thesis", "ES-aware penalty"), ("Benefit", "Recovers unused expected return")],
+        "Rockafellar–Uryasev CVaR linear program": [("Result", "CVaR minimisation is convex"), ("Form", "Linear program over scenarios"), ("Why", "Powers the scalable engine")],
+        "Alpha (Jensen's alpha)": [("Meaning", "Return above CAPM-expected"), ("From", "Regression intercept"), ("Sign", "plus = outperformance")],
+        "Beta": [("Meaning", "Sensitivity to benchmark"), ("β = 1", "Moves with market"), ("β under 1", "Defensive"), ("β over 1", "Aggressive")],
+        "R-squared (R²)": [("Meaning", "Variance explained by benchmark"), ("Range", "0 to 1"), ("High R²", "Return tracked by market")],
+        "CAPM (Capital Asset Pricing Model)": [("Formula", "rf + β·(market − rf)"), ("Gives", "Required return for risk"), ("Alpha", "Excess over this line")],
+        "Excess return": [("Meaning", "Return minus risk-free rate"), ("Used in", "Alpha / beta regression")],
+        "Benchmark": [("Role", "Reference index for α / β"), ("Examples", "S&P 500, ACWI, 60/40")],
+        "Mean-variance efficient frontier": [("Trade-off", "Max return per unit variance"), ("Author", "Markowitz (1952)"), ("Limit", "Assumes normal returns")],
+        "Markowitz optimization": [("Objective", "Mean-variance trade-off"), ("Inputs", "Means, vols, correlations"), ("Blind spot", "Skew and fat tails")],
+        "Skewness": [("Measures", "Asymmetry of returns"), ("Positive", "Big gains, small losses"), ("Negative", "Big losses"), ("Added by", "Calls, CGNs")],
+        "Excess kurtosis": [("Measures", "Fat-tailedness vs normal"), ("Positive", "Extreme moves more likely"), ("Normal", "Excess = 0")],
+        "Monte-Carlo scenario generation": [("Method", "Sample joint return scenarios"), ("Scales with", "Scenario count, not asset count"), ("Enables", "Large multi-derivative portfolios")],
+        "Student-t copula": [("Captures", "Joint-crash tail dependence"), ("vs Gaussian", "Fatter joint tails"), ("Param", "Degrees of freedom")],
+        "Gaussian copula": [("Captures", "Linear correlation"), ("Joint tails", "Thin (no tail dependence)"), ("Use", "Baseline dependence model")],
+        "Mental accounting": [("Coined by", "Richard Thaler"), ("Idea", "Wealth split into goal-based accounts"), ("In this app", "Each account = threshold H + shortfall prob α"), ("Enables", "Targeted protection via derivatives")],
+        "Behavioral portfolio theory": [("Authors", "Shefrin & Statman (2000)"), ("Structure", "Layered pyramid of goal portfolios"), ("vs Markowitz", "Goal-based, not one mean-variance mix")],
+        "Black-Scholes pricing": [("Prices", "European options"), ("Inputs", "Spot, strike, vol, rate, maturity"), ("Output", "Fair value = intrinsic + time value"), ("Assumes", "Lognormal prices, constant vol")],
+    }
+
+    # Glossary terms illustrated by an image file (e.g. figures from the thesis)
+    _GLOSSARY_IMAGE = {
+        "MVT/MAT equivalence": "risk aversion curve.png",
+        "Implied risk aversion lambda": "risk aversion curve.png",
+        "Gaussian copula": "gaussian copula.png",
+    }
+
+    def _glossary_fig(term):
+        if term in _GLOSSARY_DERIV:
+            return _glossary_payoff_fig(term)
+        fn = _GLOSSARY_CONCEPT_FIG.get(term)
+        if fn:
+            try:
+                return fn()
+            except Exception:
+                return None
+        return None
+
     if "glossary_response" not in st.session_state:
         st.session_state["glossary_response"] = ""
     if "glossary_term" not in st.session_state:
@@ -5604,7 +6030,7 @@ elif _view == "glossary":
 
     for category, terms in GLOSSARY_TERMS.items():
         st.markdown(
-            f'<h4 style="color:#4a9eff;margin:0.4rem 0 0.25rem">{category.replace("&", "&amp;")}</h4>',
+            f'<h4 style="color:#E3C77E;margin:0.4rem 0 0.25rem">{category.replace("&", "&amp;")}</h4>',
             unsafe_allow_html=True)
         cols = st.columns(3)
         for i, term in enumerate(terms):
@@ -5620,7 +6046,7 @@ elif _view == "glossary":
     custom_q = st.text_input(
         "Type a term or question",
         placeholder="e.g. What is the difference between VaR and ES?")
-    if st.button("🤖 Ask AI", type="primary"):
+    if st.button("ASK AI", type="primary", icon=":material/smart_toy:", key="gloss_ask"):
         if custom_q.strip():
             st.session_state["glossary_term"] = custom_q
             st.session_state["glossary_notice"] = ""
@@ -5633,13 +6059,65 @@ elif _view == "glossary":
 
     if st.session_state["glossary_response"]:
         st.markdown("---")
-        st.markdown(f"**{st.session_state['glossary_term']}**")
+        _gterm = st.session_state['glossary_term']
         st.markdown(
-            f'<div style="background:#0f1923;border:1px solid #1a6bbf;border-radius:8px;'
-            f'padding:1rem 1.2rem;color:#c0c8d8;font-size:.9rem;line-height:1.6">'
-            f'{st.session_state["glossary_response"]}</div>',
+            '<div style="display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin:.2rem 0 .7rem">'
+            '<span style="font-family:Georgia,serif;font-size:1.4rem;font-weight:600;color:#E3C77E">'
+            + _gterm +
+            '</span><span style="font-size:.58rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;'
+            'padding:3px 9px;border-radius:999px;color:#1a1205;background:linear-gradient(135deg,#E3C77E,#caa14a)">'
+            '✨ AI explained</span></div>',
             unsafe_allow_html=True)
-        if st.button("Clear response"):
+        if _gterm in _GLOSSARY_FACTS:
+            _pairs = list(zip(["Market view", "Max loss", "Max gain", "Payoff"], _GLOSSARY_FACTS[_gterm]))
+        else:
+            _pairs = _GLOSSARY_CONCEPT_FACTS.get(_gterm)
+        if _pairs:
+            _chip = ("background:#0e1521;border:1px solid #30363d;border-radius:999px;"
+                     "padding:.28rem .85rem;font-size:.78rem;color:#9fb3d1")
+            _chips = "".join(
+                f'<span style="{_chip}">{lab}: <b style="color:#E3C77E">{val}</b></span>'
+                for lab, val in _pairs)
+            st.markdown(
+                f'<div style="display:flex;flex-wrap:wrap;gap:.5rem;margin:0 0 1rem">{_chips}</div>',
+                unsafe_allow_html=True)
+        _notation = (
+            '<div style="margin-top:.75rem;padding-top:.55rem;border-top:1px solid #1b2230;'
+            'color:#8b949e;font-size:.78rem"><b style="color:#9fb3d1">Notation:</b> '
+            'S = price of the underlying at maturity · K = strike price '
+            '(as a multiple of the entry spot)</div>'
+        ) if _gterm in _GLOSSARY_DERIV else ''
+        _expl_html = (
+            '<div style="background:#0f1923;border:1px solid #30363d;border-radius:8px;'
+            'padding:1rem 1.2rem;color:#c0c8d8;font-size:.92rem;line-height:1.65">'
+            + st.session_state["glossary_response"] + _notation + '</div>')
+        _img_path = None
+        if _gterm in _GLOSSARY_IMAGE:
+            _p = _os.path.join(_HOME_DIR, _GLOSSARY_IMAGE[_gterm])
+            if _os.path.exists(_p):
+                _img_path = _p
+        _gfig = None if _img_path else _glossary_fig(_gterm)
+        if _img_path is not None:
+            _gcol1, _gcol2 = st.columns([1.05, 1], vertical_alignment="center")
+            with _gcol1:
+                st.image(_img_path, width=405)
+                st.caption("Figure from the author's MSc thesis (Jeddou, 2012, USI Lugano).")
+            with _gcol2:
+                st.markdown(_expl_html, unsafe_allow_html=True)
+        elif _gfig is not None:
+            _is_deriv = _gterm in _GLOSSARY_DERIV
+            _gcol1, _gcol2 = st.columns([1.05, 1], vertical_alignment="center")
+            with _gcol1:
+                st.pyplot(_gfig, use_container_width=True)
+                plt.close(_gfig)
+                st.caption("Illustrative payoff — derivative return vs underlying return "
+                           "(priced at ~25% vol, 1-year maturity)." if _is_deriv else
+                           "Illustrative concept diagram — schematic, not computed from your portfolio.")
+            with _gcol2:
+                st.markdown(_expl_html, unsafe_allow_html=True)
+        else:
+            st.markdown(_expl_html, unsafe_allow_html=True)
+        if st.button("CLEAR RESPONSE", type="primary", key="gloss_clear"):
             st.session_state["glossary_response"] = ""
             st.session_state["glossary_term"] = ""
             st.session_state["glossary_notice"] = ""
