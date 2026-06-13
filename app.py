@@ -3332,7 +3332,7 @@ The chart shows the efficient frontiers and up to four portfolio markers:
 
 
             with col_chart:
-                st.plotly_chart(fig_plotly, use_container_width=True, config={'edits': {'annotationPosition': True, 'annotationTail': True, 'legendPosition': True}, 'displayModeBar': True})
+                st.plotly_chart(fig_plotly, use_container_width=True, config={'responsive': True, 'edits': {'annotationPosition': True, 'annotationTail': True, 'legendPosition': True}, 'displayModeBar': True})
 
         # ── Reading the chart — full width below columns ──────────────────────
         with st.expander("📐 Reading the chart", expanded=False):
@@ -3390,7 +3390,7 @@ The chart shows the efficient frontiers and up to four portfolio markers:
             if st.session_state.get('_fig_plotly'):
                 st.plotly_chart(st.session_state['_fig_plotly'],
                                use_container_width=True,
-                               config={'edits': {'annotationPosition': True, 'annotationTail': True, 'legendPosition': True}, 'displayModeBar': True})
+                               config={'responsive': True, 'edits': {'annotationPosition': True, 'annotationTail': True, 'legendPosition': True}, 'displayModeBar': True})
 
     if _run_active and (_needs_compute or _render_from_cache):
         # ── Results ───────────────────────────────────────────────────────────────
