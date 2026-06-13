@@ -665,7 +665,7 @@ section[data-testid="stSidebar"] .st-key-_nav_back div.stButton > button:hover{b
 .st-key-gloss_ask div.stButton{display:flex !important;justify-content:center !important}
 .st-key-gloss_clear{margin-top:1.1rem !important}
 /* Dark text on gold primary buttons in main area (PDF export, run buttons) */
-section[data-testid="stMain"] button[kind="primary"],section[data-testid="stMain"] button[kind="primary"] *{color:#0d1117 !important}
+section[data-testid="stMain"] button[kind="primary"],section[data-testid="stMain"] button[kind="primary"] *,section[data-testid="stMain"] button[kind="primaryFormSubmit"],section[data-testid="stMain"] button[kind="primaryFormSubmit"] *{color:#0d1117 !important}
 /* Frameless Summary table (the #0d1a2e box) */
 section[data-testid="stMain"] [style*="background: rgb(13, 26, 46)"] table,section[data-testid="stMain"] [style*="background: rgb(13, 26, 46)"] table td,section[data-testid="stMain"] [style*="background: rgb(13, 26, 46)"] table th,section[data-testid="stMain"] [style*="background: rgb(13, 26, 46)"] table tr{border:none !important}
 /* Half-width, centered PDF export button */
@@ -5485,6 +5485,28 @@ elif _view == "about":
                 st.markdown(_guide_link_md, unsafe_allow_html=False)
         else:
             st.markdown(_guide_link_md, unsafe_allow_html=False)
+        _examples_file = "Beyond_Mean_Variance_Worked_Examples.pdf"
+        _examples_url = ("https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/"
+                         "main/Beyond_Mean_Variance_Worked_Examples.pdf")
+        _examples_link_md = ("📄 **[Download the worked examples (PDF)]"
+                             f"({_examples_url})** — step-by-step examples with real inputs, outputs and charts")
+        if _os.path.exists(_examples_file):
+            try:
+                with open(_examples_file, "rb") as _exf:
+                    _examples_bytes = _exf.read()
+                _ecol_l, _ecol_c, _ecol_r = st.columns([3, 2, 3])
+                with _ecol_c:
+                    st.download_button(
+                        "Download the worked examples (PDF)", icon=":material/picture_as_pdf:",
+                        data=_examples_bytes, file_name=_examples_file,
+                        mime="application/pdf", type="primary",
+                        key="examples_dl", use_container_width=True)
+                st.caption("Step-by-step worked examples with real inputs, outputs and charts.")
+            except Exception:
+                st.markdown(_examples_link_md, unsafe_allow_html=False)
+        else:
+            st.markdown(_examples_link_md, unsafe_allow_html=False)
+        st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
         _paper_file = "Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf"
         if _os.path.exists(_paper_file):
             try:
@@ -5839,7 +5861,7 @@ elif _view == "glossary":
         "Straddle (long call + long put)": ("straddle", {"strike": 1.0}),
         "Strangle (long call + long put, diff strikes)": ("strangle", {"strike_kp": 0.85, "strike_kc": 1.15}),
         "Capital-guaranteed note (CGN)": ("cgn_capped", {"floor": 0.01, "participation": 1.0, "cap": 0.20, "premium": 0.0}),
-        "Barrier-M note": ("barrier_m", {}),
+        "Barrier-M note": ("barrier_m", {"M": 0.40, "premium_bm": 0.10}),
         "Bull call spread (long call + short higher call)": ("bull_call_spread", {"k1": 1.0, "k2": 1.2}),
         "Bear put spread (long put + short lower put)": ("bear_put_spread", {"k1": 1.1, "k2": 0.9}),
         "Long butterfly (calls)": ("butterfly_call", {"center": 1.0, "width": 0.2}),
@@ -6149,11 +6171,22 @@ elif _view == "glossary":
             '✨ AI explained</span></div>',
             unsafe_allow_html=True)
         import streamlit.components.v1 as _components
+        st.session_state["_gloss_scroll_n"] = st.session_state.get("_gloss_scroll_n", 0) + 1
         _components.html(
-            "<script>setTimeout(function(){var d=window.parent.document;"
-            "var s=Array.prototype.slice.call(d.querySelectorAll('span'))"
-            ".find(function(e){return e.children.length===0 && e.textContent.indexOf('AI explained')>-1;});"
-            "if(s){s.scrollIntoView({behavior:'smooth',block:'center'});}},300);</script>",
+            "<script>/* " + str(st.session_state["_gloss_scroll_n"]) + " */"
+            "setTimeout(function(){var w=window.parent,d=w.document;"
+            "var ns=d.querySelectorAll('span'),s=null,i;"
+            "for(i=0;i<ns.length;i++){if(ns[i].children.length===0 && ns[i].textContent.indexOf('AI explained')>-1){s=ns[i];break;}}"
+            "if(!s)return;"
+            "var a=s.parentElement||s;"
+            "var c=a;"
+            "while(c){var o=w.getComputedStyle(c).overflowY;if((o==='auto'||o==='scroll')&&c.scrollHeight>c.clientHeight)break;c=c.parentElement;}"
+            "if(!c)return;"
+            "var er=a.getBoundingClientRect(),cr=c.getBoundingClientRect();"
+            "var t=c.scrollTop+(er.top-cr.top)-225;"
+            "try{c.scrollTo({top:t,behavior:'smooth'});}catch(e){c.scrollTop=t;}"
+            "setTimeout(function(){if(Math.abs(c.scrollTop-t)>4)c.scrollTop=t;},450);"
+            "},350);</script>",
             height=0)
         if _gterm in _GLOSSARY_FACTS:
             _pairs = list(zip(["Market view", "Max loss", "Max gain", "Payoff"], _GLOSSARY_FACTS[_gterm]))
