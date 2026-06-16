@@ -9,6 +9,7 @@ payoffs. Re-exports bs_call, bs_put, compute_structured_payoff so callers have o
 for everything pricing-related. No Streamlit.
 """
 import numpy as np
+import pandas as pd
 from scipy.stats import norm as _norm
 from behavioral_portfolio_optimizer import bs_call, bs_put, compute_structured_payoff
 
@@ -17,7 +18,86 @@ __all__ = [
     "preset_components", "build_der_config", "_bt_legs", "_leg_value",
     "mtm_gross_path", "_mc_leg_intrinsic", "_mc_leg_value_vec", "mc_der_returns",
     "_SYN_UNDERLYING", "_COMPONENT_PRESETS",
+    "LIVE_DER_TYPES", "live_der_params", "live_derivative_series",
 ]
+
+# Strike-defined instruments the Live Portfolio can mark to market from a 2-strike table
+# (plus an uncapped CGN at 100% participation, as in the Scalable engine). Path-dependent
+# barrier-M is excluded (grid-only). label -> internal der_type.
+LIVE_DER_TYPES = {
+    "Long put":                       "put",
+    "Long call":                      "call",
+    "Straddle (long call + long put)": "straddle",
+    "Strangle (put K1, call K2)":     "strangle",
+    "Safety collar (long put K1, short call K2)": "safety_collar",
+    "Aggressive collar (long call K1, short put K2)": "aggressive_collar",
+    "Bull call spread (long K1, short K2)": "bull_call_spread",
+    "Bear put spread (long K1, short K2)":  "bear_put_spread",
+    "Capital-guaranteed note (floor K1, 100% participation)": "cgn_uncapped",
+}
+
+
+def live_der_params(der_type, s1, s2):
+    """Map a Live-Portfolio (type, Strike 1, Strike 2) row to the der_params dict `_bt_legs`
+    expects. Strikes are fractions of the entry spot (S0 = 1, e.g. 0.90 = 90%)."""
+    s1 = float(s1)
+    s2 = None if (s2 is None or (isinstance(s2, float) and s2 != s2)) else float(s2)
+    if der_type in ("put", "call", "straddle"):
+        return {"strike": s1}
+    if der_type == "strangle":
+        return {"strike_kp": s1, "strike_kc": s2}
+    if der_type == "safety_collar":
+        return {"strike_p": s1, "strike_c": s2}
+    if der_type == "aggressive_collar":
+        return {"strike_c": s1, "strike_p": s2}
+    if der_type in ("bull_call_spread", "bear_put_spread"):
+        return {"k1": s1, "k2": s2}
+    if der_type == "cgn_uncapped":
+        return {"floor": s1, "participation": 1.0, "premium": 0.0}
+    return None
+
+
+def live_derivative_series(under_px, der_type, s1, s2, tenor, r=0.03, vol=None):
+    """Synthetic 'price' series (growth of 1 from entry) for a derivative position held on a
+    realised underlying price path, marked to market with REAL remaining maturity.
+
+    `under_px`: pd.Series of the underlying's close prices from the position's entry date onward.
+    `tenor`: option life in years. Each date is valued with remaining maturity = max(tenor −
+    elapsed, 0); at/after expiry the value freezes at the expiry intrinsic (held as cash).
+    Returns a pd.Series indexed like `under_px`, or None if the spec can't be priced."""
+    params = live_der_params(der_type, s1, s2)
+    legs, norm_mode, prem = _bt_legs(der_type, params) if params is not None else (None, None, None)
+    if legs is None:
+        return None
+    px = pd.Series(under_px).dropna()
+    if len(px) < 3:
+        return None
+    if vol is None or not (vol > 0):
+        _rr = px.pct_change().dropna()
+        vol = float(_rr.std() * np.sqrt(252)) if len(_rr) > 5 else 0.25
+        if not (vol > 0):
+            vol = 0.25
+    idx = px.index
+    spot = px.values.astype(float)
+    s_rel = spot / spot[0]
+    elapsed = np.array([(idx[i] - idx[0]).days / 365.25 for i in range(len(idx))], float)
+    T = float(tenor)
+    leg_v0 = [_leg_value(lg, 1.0, T, vol, r) for lg in legs]
+    V0 = float(np.sum(leg_v0)); gross = float(np.sum(np.abs(leg_v0)))
+    paid = V0 * (1.0 + prem)
+    normalizer = gross if norm_mode == "gross" else paid
+    if abs(normalizer) < 1e-9:
+        return None
+    remT = np.maximum(T - elapsed, 0.0)
+    V = np.empty(len(idx)); _expv = None
+    for i in range(len(idx)):
+        if remT[i] > 1e-9:
+            V[i] = float(sum(_leg_value(lg, s_rel[i], remT[i], vol, r) for lg in legs))
+        else:
+            if _expv is None:
+                _expv = float(sum(float(_mc_leg_intrinsic(lg, np.array([s_rel[i]]))[0]) for lg in legs))
+            V[i] = _expv
+    return pd.Series(1.0 + (V - paid) / normalizer, index=idx)
 
 
 _SYN_UNDERLYING = [

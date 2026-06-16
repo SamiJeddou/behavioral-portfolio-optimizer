@@ -94,9 +94,29 @@ def _mc_cvar_rows(R, alpha):
     rows += list(sidx); cols += list(range(n + 1, n + 1 + S)); vals += [-1.0] * S  # -z_s
     return rows, cols, vals, S, n
 
-def mc_max_return_cvar(R, alpha, L, w_max=None, long_only=True):
+def _mc_expand_bound(b, n, default):
+    """Expand a per-asset bound argument into a length-n list of floats.
+
+    Accepts a scalar (applied to every column), None (every column -> `default`),
+    or an iterable of length n (per-column; any None element -> `default`). This is
+    what lets w_max / w_min stay fully back-compatible: a scalar or None reproduces
+    the old uniform-cap behaviour, while a vector gives per-security bounds."""
+    if b is None:
+        return [float(default)] * n
+    if np.isscalar(b):
+        return [float(b)] * n
+    out = [float(default) if x is None else float(x) for x in b]
+    if len(out) != n:
+        raise ValueError(f"bound vector length {len(out)} does not match {n} columns")
+    return out
+
+def mc_max_return_cvar(R, alpha, L, w_max=None, w_min=None, long_only=True):
     """max E[r] s.t. CVaR_alpha(-r) <= -L (tail-average return >= L), sum w = 1,
-    0 <= w <= w_max. Linear program in (w, zeta, z). Returns (w, E[r], realised ES, res)."""
+    w_min <= w <= w_max. Linear program in (w, zeta, z). Returns (w, E[r], realised ES, res).
+
+    w_max / w_min may each be a scalar (uniform), None (defaults: max=1, min=0), or a
+    per-column iterable of length n (per-security box bounds; None elements fall back to
+    the default). long_only=False ignores both and frees the weights."""
     R = np.asarray(R, float); S, n = R.shape; nv = n + 1 + S
     mu = R.mean(axis=0)
     c = np.concatenate([-mu, [0.0], np.zeros(S)])
@@ -110,8 +130,13 @@ def mc_max_return_cvar(R, alpha, L, w_max=None, long_only=True):
     b_ub = np.concatenate([[-L], np.zeros(S)])
     A_eq = _coo((np.ones(n), (np.zeros(n), np.arange(n))), shape=(1, nv)).tocsr()
     b_eq = np.array([1.0])
-    wb = (0.0, w_max if w_max is not None else 1.0) if long_only else (None, None)
-    bounds = [wb] * n + [(None, None)] + [(0.0, None)] * S
+    if long_only:
+        hi = _mc_expand_bound(w_max, n, 1.0)
+        lo = _mc_expand_bound(w_min, n, 0.0)
+        wbounds = list(zip(lo, hi))
+    else:
+        wbounds = [(None, None)] * n
+    bounds = wbounds + [(None, None)] + [(0.0, None)] * S
     res = _linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method="highs")
     if not res.success:
         return None, None, None, res
@@ -133,9 +158,9 @@ def mc_min_cvar(R, alpha, long_only=False):
     res = _linprog(c, A_ub=A_ub, b_ub=b_ub, A_eq=A_eq, b_eq=b_eq, bounds=bounds, method="highs")
     return (res.x[:n] if res.success else None), res
 
-def mc_frontier(R, alpha, floors, w_max=None):
+def mc_frontier(R, alpha, floors, w_max=None, w_min=None):
     out = []
     for L in floors:
-        w, er, es, res = mc_max_return_cvar(R, alpha, L, w_max=w_max)
+        w, er, es, res = mc_max_return_cvar(R, alpha, L, w_max=w_max, w_min=w_min)
         out.append({"L": L, "ok": bool(res.success), "er": er, "es": es})
     return out

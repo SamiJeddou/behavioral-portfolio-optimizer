@@ -168,6 +168,183 @@ def fetch_close_prices(tickers, start, end):
     except Exception as e:
         return None, str(e)
 
+def fetch_ticker_info(symbol):
+    """Return (info dict, error_or_None) for a single ticker via yfinance.
+    `info` is the raw fundamentals/profile dict; used by the ticker-analytics view."""
+    symbol = (symbol or "").strip().upper()
+    if not symbol:
+        return None, "Enter a ticker symbol."
+    try:
+        import yfinance as yf
+        info = yf.Ticker(symbol).info or {}
+        # yfinance returns a near-empty dict for an unknown symbol
+        if not info or (info.get("quoteType") is None and info.get("marketCap") is None
+                        and info.get("regularMarketPrice") is None and info.get("currentPrice") is None):
+            return None, f"No data found for '{symbol}'. Check the symbol (e.g. AAPL, MSFT, MC.PA, BTC-USD)."
+        return info, None
+    except Exception as e:
+        return None, str(e)
+
+def fetch_ticker_history(symbol, period="1y"):
+    """Return (Close-price DataFrame, error_or_None) for one ticker over a period
+    ('6mo' / '1y' / '5y' / 'max'). Used by the ticker-analytics price chart."""
+    symbol = (symbol or "").strip().upper()
+    if not symbol:
+        return None, "Enter a ticker symbol."
+    try:
+        import yfinance as yf
+        h = yf.Ticker(symbol).history(period=period, auto_adjust=True)
+        if h is None or h.empty or "Close" not in h.columns:
+            return None, "No price history available."
+        _cols = [c for c in ["Open", "High", "Low", "Close"] if c in h.columns]
+        return h[_cols].dropna(), None
+    except Exception as e:
+        return None, str(e)
+
+
+def fetch_ticker_financials(symbol):
+    """Return (rows, error) where rows is a list of {year, revenue, net_income}
+    (ascending by year) from the annual income statement. Empty list when a ticker
+    has no statements (ETFs, indices, crypto) — never raises for that."""
+    symbol = (symbol or "").strip().upper()
+    if not symbol:
+        return [], None
+    try:
+        import yfinance as yf
+        t = yf.Ticker(symbol)
+        df = None
+        for attr in ("income_stmt", "financials"):
+            try:
+                cand = getattr(t, attr)
+            except Exception:
+                cand = None
+            if cand is not None and not cand.empty:
+                df = cand
+                break
+        if df is None or df.empty:
+            return [], None
+
+        def _row(*names):
+            for n in names:
+                if n in df.index:
+                    return df.loc[n]
+            return None
+
+        rev = _row("Total Revenue", "TotalRevenue", "Revenue", "Operating Revenue")
+        ni = _row("Net Income", "NetIncome", "Net Income Common Stockholders",
+                  "Net Income Continuous Operations")
+        gp = _row("Gross Profit")
+        oi = _row("Operating Income", "Operating Income Or Loss", "Total Operating Income As Reported")
+        rows = []
+        for col in df.columns:
+            yr = str(getattr(col, "year", "") or str(col)[:4])
+            r, n = _stmt_val(rev, col), _stmt_val(ni, col)
+            if r is not None or n is not None:
+                rows.append({"year": yr, "revenue": r, "net_income": n,
+                             "gross_profit": _stmt_val(gp, col),
+                             "operating_income": _stmt_val(oi, col)})
+        rows.sort(key=lambda d: d["year"])
+        return rows, None
+    except Exception as e:
+        return [], str(e)
+
+
+def _stmt_val(series, col):
+    """Safely read a financial-statement cell as float, or None (drops NaN/missing)."""
+    if series is None:
+        return None
+    try:
+        x = float(series[col])
+        return x if x == x else None
+    except Exception:
+        return None
+
+
+def _stmt_df(t, *attrs):
+    """Return the first non-empty statement DataFrame among the given Ticker attrs."""
+    for attr in attrs:
+        try:
+            cand = getattr(t, attr)
+        except Exception:
+            cand = None
+        if cand is not None and not cand.empty:
+            return cand
+    return None
+
+
+def fetch_ticker_cashflow(symbol):
+    """Return (rows, error) — rows = [{year, ocf, fcf}] ascending (operating &
+    free cash flow). Free CF falls back to OCF + CapEx when not reported directly.
+    Empty list for instruments without a cash-flow statement."""
+    symbol = (symbol or "").strip().upper()
+    if not symbol:
+        return [], None
+    try:
+        import yfinance as yf
+        df = _stmt_df(yf.Ticker(symbol), "cashflow", "cash_flow")
+        if df is None:
+            return [], None
+
+        def _row(*names):
+            for n in names:
+                if n in df.index:
+                    return df.loc[n]
+            return None
+
+        ocf = _row("Operating Cash Flow", "Total Cash From Operating Activities",
+                   "Cash Flow From Continuing Operating Activities")
+        fcf = _row("Free Cash Flow")
+        capex = _row("Capital Expenditure", "Capital Expenditures")
+        rows = []
+        for col in df.columns:
+            yr = str(getattr(col, "year", "") or str(col)[:4])
+            o, f = _stmt_val(ocf, col), _stmt_val(fcf, col)
+            if f is None and o is not None:
+                c = _stmt_val(capex, col)
+                if c is not None:
+                    f = o + c                 # CapEx is reported negative
+            if o is not None or f is not None:
+                rows.append({"year": yr, "ocf": o, "fcf": f})
+        rows.sort(key=lambda d: d["year"])
+        return rows, None
+    except Exception as e:
+        return [], str(e)
+
+
+def fetch_ticker_balance(symbol):
+    """Return (dict, error) — latest balance-sheet snapshot
+    {year, total_assets, total_debt, cash, equity}. Empty dict when unavailable."""
+    symbol = (symbol or "").strip().upper()
+    if not symbol:
+        return {}, None
+    try:
+        import yfinance as yf
+        df = _stmt_df(yf.Ticker(symbol), "balance_sheet", "balancesheet")
+        if df is None:
+            return {}, None
+        col = df.columns[0]                    # most recent period
+
+        def _g(*names):
+            for n in names:
+                if n in df.index:
+                    v = _stmt_val(df.loc[n], col)
+                    if v is not None:
+                        return v
+            return None
+
+        return {
+            "year": str(getattr(col, "year", "") or str(col)[:4]),
+            "total_assets": _g("Total Assets"),
+            "total_debt": _g("Total Debt", "Total Debt And Capital Lease Obligation"),
+            "cash": _g("Cash And Cash Equivalents", "Cash Cash Equivalents And Short Term Investments",
+                       "Cash And Short Term Investments"),
+            "equity": _g("Stockholders Equity", "Total Equity Gross Minority Interest",
+                         "Common Stock Equity"),
+        }, None
+    except Exception as e:
+        return {}, str(e)
+
+
 def stats_from_prices(prices, freq):
     """Annualised means, sigs, corr, names, factor from a Close-price DataFrame."""
     raw = prices.copy()
