@@ -9225,7 +9225,7 @@ elif _view == "portfolio":
             st.markdown("<hr style='border-color:#26303f;margin:.7rem 0 .5rem'>", unsafe_allow_html=True)
         else:
             st.caption("☁ Google Drive sync isn't configured on this deployment — use the file "
-                       "download/upload below. (Admin: add a `[google_oauth]` block to Streamlit secrets.)")
+                       "download/upload below. (Admin: add a `[google_oauth]` block to Streamlit secrets — see GOOGLE_DRIVE_SETUP.md in the repo for the full procedure.)")
 
         # ── Manual JSON (offline fallback) ──
         if _obj_now is not None:

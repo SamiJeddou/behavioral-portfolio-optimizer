@@ -258,6 +258,8 @@ The Streamlit dashboard is a suite of tools:
 
 📄 **[Technical paper (PDF)](https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf)** — the work, the approaches and the mathematical framework
 
+🔐 **[Enable Google Drive sign-in](GOOGLE_DRIVE_SETUP.md)** — optional ~10-minute OAuth setup so users can save portfolios to their **own** Google Drive (least-privilege `drive.file` scope). Without it, the Live Portfolio falls back to JSON download/upload.
+
 ### API & MCP
 
 The engines are callable outside the app through two thin adapters over `core/` (neither contains any optimisation logic):
