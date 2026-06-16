@@ -34,10 +34,12 @@ via **APIs & Services → OAuth consent screen** (it redirects there). Do these 
   email** and **Developer contact** email → **Save**.
 
 **3b · Audience** (`/auth/audience`)
-- User type **External** (set here if you weren't asked at creation).
-- **Test users → Add users** → add **your own Google address** (plus any recruiter/colleague emails
-  you want to let in while the app is unverified, up to 100).
-- Publishing status stays **Testing** for now (fine for a demo; see the note below).
+- **User type → External.**
+- **Publishing status → click "Publish app" to move it to "In production."** This lets *anyone* sign
+  in with their own Google account. Because the app uses only the non-sensitive `drive.file` scope
+  (see 3c), Google does **not** require a verification review — production goes live immediately.
+  (Prefer to keep it private? Leave it in **Testing** and add specific Google addresses under
+  **Test users** — only those can sign in, up to 100.)
 
 **3c · Data access** (`/auth/scopes`) — this is where **Scopes** now live.
 - Click **Add or remove scopes** → in the panel, use **"Manually add scopes"** and paste these three
@@ -45,15 +47,15 @@ via **APIs & Services → OAuth consent screen** (it redirects there). Do these 
   - `openid`
   - `https://www.googleapis.com/auth/userinfo.email`
   - `https://www.googleapis.com/auth/drive.file`  ← the only Drive scope; app-created files only.
-- Click **Save**. `drive.file` appears under **"Your sensitive scopes"** — expected and correct.
-  (If it won't add, the Drive API from step 2 isn't enabled yet — enable it and retry.)
+- Click **Save**. (If a scope won't add, the Drive API from step 2 isn't enabled yet — enable it and
+  retry.) `drive.file` is **non-sensitive** — it reaches only files the app itself creates — so it
+  does **not** trigger Google's verification review, even in production.
 
-> **Testing vs published.** While the app is in **Testing**, only the test users you add can sign in
-> (up to 100), and they'll see a "Google hasn't verified this app" screen they bypass via
-> **Advanced → Continue**. That's fine for a demo. To let *anyone* sign in without that screen, set
-> publishing status to **In production** on the Audience page and complete Google's verification
-> (more involved; `drive.file` is a sensitive scope). You can ship now in Testing mode and verify
-> later.
+> **Testing vs In production.** In **Testing**, only the Google accounts you list as test users can
+> sign in (up to 100). Setting publishing status to **In production** lets anyone sign in. Because
+> this app requests only the non-sensitive `drive.file` scope, **no verification review is required**
+> to publish — it goes live straight away. (Verification is only needed for the *sensitive* or
+> *restricted* Drive scopes, which this app deliberately avoids.)
 
 ## 4 · Create the OAuth client ID
 1. Left menu → **Clients** (under Google Auth Platform), or **APIs & Services → Credentials** →
