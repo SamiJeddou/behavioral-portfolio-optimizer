@@ -109,16 +109,26 @@ A complete, annotated walkthrough of a single optimiser run — inputs through t
 
 ## Supported Derivatives
 
-| Type | Description |
-| --- | --- |
-| `put` | Long put option |
-| `call` | Long call option |
-| `safety_collar` | Long put + short call |
-| `aggressive_collar` | Long call + short put |
-| `straddle` | Long call + long put (same strike) |
-| `strangle` | Long call + long put (different strikes) |
-| `cgn` | Capital-guaranteed note (capped or uncapped) |
-| `barrier_m` | Barrier-M note |
+| Type | Description | Engines |
+| --- | --- | --- |
+| `put` | Long put option | Grid · Scalable |
+| `call` | Long call option | Grid · Scalable |
+| `safety_collar` | Long put + short call | Grid · Scalable |
+| `aggressive_collar` | Long call + short put | Grid · Scalable |
+| `straddle` | Long call + long put (same strike) | Grid · Scalable |
+| `strangle` | Long call + long put (different strikes) | Grid · Scalable |
+| `bull_call_spread` | Long call + short higher call | Grid · Scalable |
+| `bear_put_spread` | Long put + short lower put | Grid · Scalable |
+| `butterfly_call` | Long–short²–long calls (low-vol "pin") | Grid · Scalable |
+| `condor_call` | Four-strike range bet (flat max between inner strikes) | Grid · Scalable |
+| `reverse_convertible` | Zero-coupon bond − short put | Grid · Scalable |
+| `discount_certificate` | Synthetic underlying − short call (capped) | Grid · Scalable |
+| `outperformance_certificate` | Synthetic underlying + geared upside call | Grid · Scalable |
+| `cgn` | Capital-guaranteed note (capped or uncapped) | Grid · Scalable¹ |
+| `barrier_m` | Barrier-M note (path-dependent) | **Grid only** |
+| `custom` | Compose any payoff from calls / puts / digitals / zero-coupon bonds | Grid |
+
+Both engines price every **terminal-payoff** instrument. The path-dependent **barrier-M note** is exact-grid-only, because the scalable Monte-Carlo engine evaluates the optimisation-horizon return rather than the full price path. ¹In the Scalable tab, capital-guaranteed notes use 100% participation (the Grid engine exposes the full floor / participation / cap controls).
 
 ## Backtest Engine
 
@@ -229,12 +239,18 @@ streamlit run app.py
 
 ### Interactive dashboard
 
-The Streamlit dashboard allows you to:
+The Streamlit dashboard is a suite of tools:
 
-- Select derivative type from a dropdown
-- Adjust the mental-account threshold H and shortfall probability α via sliders
-- Visualise the three-curve efficient frontier (MV / Behavioral / Behavioral + derivative) in real time
-- Read optimal portfolio weights and statistics for the selected parameters
+- **Grid Portfolio Optimiser** — the exact grid engine on the Das–Statman state space (VaR, thesis-faithful ES, rigorous ES) with the full derivative library: pick a derivative, set the threshold H and shortfall α via sliders, and read the three-curve efficient frontier (MV / behavioural / behavioural + derivative), per-portfolio weights & statistics, and the implied risk-aversion λ — all live.
+- **Scalable Portfolio Optimiser** — Monte-Carlo scenarios + α-CVaR linear program for large, multi-derivative universes, with per-security weight bounds.
+- **Backtest** — out-of-sample walk-forward of the optimiser's portfolios (derivatives marked to market), reporting realised return, alpha, beta and R² versus a benchmark.
+- **Risk Profile** — a 13-question Grable–Lytton risk-tolerance questionnaire that maps your score to a tolerance band and concrete simulation parameters (threshold H, shortfall α, CVaR floor L) feeding either optimiser, with a plain-language mental-accounting explainer and a dated assessment history.
+- **Ticker Analytics** — key figures and CFA-style ratios for any stock/ETF/index, each with a plain-language explanation.
+- **Live Portfolio** — build and track a real portfolio of **securities *and* derivatives / structured products** over time. Positions are held from their entry dates and marked to market (derivatives priced with real expiry on their underlying via the same engine as the Backtest), and the app reports realised return, volatility, Sharpe, drawdown, VaR/CVaR and CAPM alpha/beta vs a benchmark. It adds:
+  - a **risk-vs-tolerance monitor** (VaR or ES) with an optional **time-varying** mode that judges each period against the limits in force at the time, driven by an editable, dated **tolerance timeline**;
+  - a **stress-testing** module — historical scenario replay (2008, 2011, 2015, 2018, COVID-2020, 2022) *projected forward from today*, a custom β-driven shock (instantaneous or a multi-leg path), and a parametric stress (volatilities ×, correlations → 1) — each shown as drawdown / horizon-return charts versus your limit;
+  - **save / load** to your **own Google Drive** (one-click sign-in, least-privilege `drive.file` scope) or a portable JSON file.
+- **Glossary** — VaR, ES, α-CVaR, copulas, drawdown, horizon-return, stress testing and more, with natural-language Q&A.
 
 🔗 **Live app**: [sami-jeddou-behavioral-portfolio-optimizer.streamlit.app](https://sami-jeddou-behavioral-portfolio-optimizer.streamlit.app)
 
@@ -299,7 +315,13 @@ The baseline result (10.21%) matches the thesis mean-variance result (10.23%) to
 | MCP server — optimiser callable as tools by AI agents | ✅ Shipped |
 | Out-of-sample backtesting callable via API & MCP (`/backtest`, `backtest_tool`) | ✅ Shipped |
 | Async job handling for long-running optimisations | 🔜 Planned |
-| Additional derivative types and structured-product templates | 🔜 Planned |
+| Expanded derivative & structured-product library (spreads, butterfly, condor, certificates, reverse convertible) — across both the Grid and Scalable engines | ✅ Shipped |
+| Risk-tolerance profiling (Grable–Lytton) mapping a score → simulation parameters (H, α, L) for both engines | ✅ Shipped |
+| Ticker Analytics — key figures and CFA-style ratios with plain-language explanations | ✅ Shipped |
+| Live Portfolio tracker — hold **securities + derivatives**, marked to market, with realised return / risk / drawdown / VaR-CVaR / CAPM alpha & beta | ✅ Shipped |
+| Risk-vs-tolerance monitoring (VaR or ES) with a time-varying tolerance timeline | ✅ Shipped |
+| Stress testing — historical-scenario replay (projected forward), custom β-shock paths, and parametric (vol × / correlation → 1) stress, with drawdown / horizon-return charts | ✅ Shipped |
+| Save portfolios to the user's own Google Drive (OAuth, least-privilege `drive.file`) + portable JSON | ✅ Shipped |
 | Multi-period optimisation | 🔜 Planned |
 
 ---

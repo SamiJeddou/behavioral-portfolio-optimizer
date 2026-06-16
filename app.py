@@ -581,10 +581,17 @@ from core.grid import (
     run_opt, build_frontier, mv_frontier_at_return, implied_lambda,
 )
 from core.backtest import _bt_portfolio_path, _bt_metrics, _capm_alpha_beta
+from core import risk_profile as _rp
+from core import ratios as _rt
+from core import gdrive as _gd
 from core.markets import (
     corr_to_cov, clean_returns, parse_csv, fetch_tickers, fetch_close_prices,
-    stats_from_prices,
+    stats_from_prices, fetch_ticker_info, fetch_ticker_history, fetch_ticker_financials,
 )
+try:                                    # newer statement fetchers; tolerate a not-yet-reloaded module
+    from core.markets import fetch_ticker_cashflow, fetch_ticker_balance
+except Exception:
+    fetch_ticker_cashflow = fetch_ticker_balance = None
 from scipy.stats import norm as _norm
 from scipy.optimize import brentq as _brentq
 
@@ -683,6 +690,58 @@ section[data-testid="stMain"] [data-testid="stVerticalBlockBorderWrapper"]:has(.
 # ── Constants ─────────────────────────────────────────────────────────────────
 # ── Static explanations dictionary (no API cost) ─────────────────────────────
 EXPLANATIONS = {
+    # ── Objectives & feasibility (Grid 3D landscape) ─────────────────────────
+    "Downside-aware utility (mean − κ·CVaR)": (
+        "A downside-aware utility scores a portfolio as its expected return minus a penalty on tail "
+        "risk: U = E[r] − κ·CVaR, where CVaR (the α-conditional VaR) is the average return in the worst "
+        "α-tail and κ ≥ 0 sets how strongly a deep tail is penalised. Unlike mean-variance — which "
+        "penalises symmetric variance and so taxes upside and downside alike — it charges only for the "
+        "downside, so it rewards the asymmetric, insured payoffs that derivatives add. In this app it is "
+        "one of the objectives you can plot on the Grid optimiser's 3D landscape; κ is calibrated so the "
+        "behavioural optimum sits near the peak. It is a lens for ranking portfolios by return-versus-tail, "
+        "not the engine's hard rule — the optimiser still enforces the explicit downside limit "
+        "(P(r<H) ≤ α for VaR, or the ES floor E[r|r<H] ≥ L)."
+    ),
+    "Constrained optimum (downside-feasible region)": (
+        "The optimiser maximises expected return subject to a downside limit — P(r<H) ≤ α (VaR) or "
+        "E[r|r<H] ≥ L (Expected Shortfall). Portfolios that satisfy the limit form the feasible region; "
+        "those that breach it are infeasible. The optimum is the best portfolio inside that region, so it "
+        "typically sits on the constraint boundary — the riskiest allocation still allowed — rather than at "
+        "the unconstrained peak of a smooth objective surface. On the Grid optimiser's 3D landscape the "
+        "infeasible region is greyed out and the feasible region is coloured, so the marked optimum sits at "
+        "the top edge of the coloured zone: the greyed peak beyond it scores higher but breaks the limit, "
+        "which is exactly what optimising under a downside constraint means."
+    ),
+    "Drawdown": (
+        "Drawdown is how far a portfolio has fallen from its own running peak (its high-water mark) — a "
+        "cumulative, path-dependent measure of the loss you are currently sitting in. A <i>drawdown breach</i> "
+        "is when that decline passes a chosen loss limit <b>H</b>. Because it accumulates many small losses, it "
+        "catches a slow grind lower that a single-period return test would miss, which makes it the most "
+        "intuitive &ldquo;am I down more than I can stomach?&rdquo; reading. In the Live Portfolio tool the "
+        "drawdown is plotted over time against your H limit, and the share of days spent beyond H is compared "
+        "to your shortfall tolerance &alpha;."
+    ),
+    "Horizon-return": (
+        "A horizon-return is the portfolio's return measured over a rolling window of a chosen length (the "
+        "horizon — e.g. 1, 3, 6 or 12 months). A <i>horizon-return breach</i> is a window whose return falls "
+        "below your loss limit <b>H</b>; keeping the breach frequency at or under <b>&alpha;</b> is exactly the "
+        "mental-accounting constraint <b>P(r &lt; H) &le; &alpha;</b> that the Grid and Scalable optimisers "
+        "enforce. Unlike drawdown it is measured from a fixed window start rather than the running peak, so a "
+        "slow grind can stay within limit on the horizon view while still showing as a drawdown. Short horizons "
+        "react to single shocks; long horizons need more history. The Live Portfolio tool plots it against H "
+        "with the same green-to-red shading."
+    ),
+    "Stress testing": (
+        "Stress testing asks how a portfolio would behave under <i>adverse</i> conditions, rather than how it has "
+        "behaved on average — the forward-looking complement to realised risk metrics. Three common forms: "
+        "<b>historical scenario replay</b> applies the actual returns from a past crisis (e.g. the 2008 financial "
+        "crisis, the 2020 COVID crash, the 2022 selloff) to today's weights; an <b>instantaneous shock</b> moves "
+        "the market by a set amount — propagated through the portfolio's <b>&beta;</b> — or shocks individual "
+        "holdings; and a <b>parametric stress</b> scales volatilities and pushes correlations toward 1 (capturing "
+        "how diversification tends to break down in a crash), then re-derives Value at Risk. In the Live Portfolio "
+        "tool each result is judged against your loss limit <b>H</b>, so you can see which scenarios would breach "
+        "the protection your risk profile set."
+    ),
     # ── Derivatives ───────────────────────────────────────────────────────────
     "Put option": (
         "A put option gives the holder the right to sell the underlying asset at a fixed strike price. "
@@ -875,6 +934,23 @@ EXPLANATIONS = {
         "threshold, while calls and structured notes add asymmetric upside to the aspirational layer. "
         "This is precisely why a behavioural portfolio that embraces mental accounts can dominate a "
         "single mean-variance portfolio that ignores them."
+    ),
+    "Optimum mental-accounting portfolio": (
+        "The optimum mental-accounting portfolio is the best portfolio under a behavioural "
+        "(mental-account) constraint: it maximises expected return subject to a downside limit — "
+        "the probability of finishing below a threshold H must stay within α (VaR form), or the "
+        "average shortfall must stay above a floor L (ES / CVaR form). "
+        "<br><br>"
+        "The Grid optimiser's 3D landscape makes it visual: each point is a candidate portfolio "
+        "(the two axes are asset weights), and its height is the objective. The <b>grey region is "
+        "infeasible</b> — those weights breach the downside limit — while the <b>coloured surface is "
+        "the feasible region</b>. The optimum is the highest feasible point: it sits at the top edge "
+        "of the coloured surface, right against the feasibility boundary. "
+        "<br><br>"
+        "Without derivatives it coincides with the Markowitz mean-variance optimum (the MVT ≡ MAT "
+        "equivalence). Add a derivative — a protective put, a straddle — and the feasible region "
+        "reshapes, letting the optimum climb to a higher expected return at the very same downside "
+        "limit. That uplift, bought with skewness rather than free return, is the core idea of the framework."
     ),
     "Behavioral portfolio theory": (
         "Behavioral portfolio theory (BPT), developed by Shefrin & Statman (2000) and extended "
@@ -1141,8 +1217,11 @@ def get_explanation(term):
 def get_ai_chat_response(question, portfolio_context=""):
     """Get AI response for custom questions via Anthropic API."""
     try:
+        _key = _anthropic_key()
+        if not _key:
+            return None
         import anthropic
-        client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
+        client = anthropic.Anthropic(api_key=_key)
         system = (
             "You are a financial expert assistant embedded in a behavioral portfolio optimization app. "
             "Give clear, concise answers in 3-5 sentences. Focus on portfolio optimization context.")
@@ -1160,6 +1239,259 @@ def get_ai_chat_response(question, portfolio_context=""):
         return message.content[0].text
     except Exception:
         return None
+
+
+def _anthropic_key():
+    """Return the Anthropic key from env or a secrets.toml, WITHOUT triggering
+    Streamlit's 'No secrets found' UI error when no secrets file exists locally.
+    (Streamlit Cloud writes a secrets.toml when secrets are configured, so the
+    file check stays cloud-safe.)"""
+    import os
+    key = os.environ.get("ANTHROPIC_API_KEY")
+    if key:
+        return key
+    _paths = [os.path.join(os.getcwd(), ".streamlit", "secrets.toml"),
+              os.path.expanduser("~/.streamlit/secrets.toml")]
+    if any(os.path.exists(p) for p in _paths):
+        try:
+            return st.secrets["ANTHROPIC_API_KEY"]
+        except Exception:
+            return None
+    return None
+
+
+def get_ratio_explanation_ai(ticker, label, value):
+    """Neutral, educational AI explanation of ONE financial ratio for a ticker.
+    Strictly no advice / no valuation verdict. Returns None if unavailable."""
+    try:
+        _key = _anthropic_key()
+        if not _key:
+            return None
+        import anthropic
+        client = anthropic.Anthropic(api_key=_key)
+        system = (
+            "You explain a single financial metric (a ratio or a reported figure) in plain language for a "
+            "non-expert, neutrally and educationally. Say what the metric measures, how to read it, and add "
+            "one caveat or peer/industry-context note. STRICT RULES — you must never: give investment advice; "
+            "express a buy, sell or hold view; give a price target; call the company or the number cheap, "
+            "expensive, good, bad, attractive or a concern; or make a suitability judgement. Stay purely "
+            "descriptive. 3–5 sentences, no preamble.")
+        _vtxt = f", whose current value is {value}" if value and str(value) != "—" else ""
+        prompt = (f"Explain the financial metric '{label}' for {str(ticker).upper()}{_vtxt}. "
+                  f"Describe it neutrally — do not judge whether the value is good or bad.")
+        message = client.messages.create(
+            model="claude-haiku-4-5-20251001",
+            max_tokens=320,
+            system=system,
+            messages=[{"role": "user", "content": prompt}])
+        return message.content[0].text
+    except Exception:
+        return None
+
+
+@st.cache_data(show_spinner=False, ttl=900)
+def _cached_ticker_info(symbol):
+    """Cached yfinance fundamentals fetch (15-min TTL) for the ticker-analytics view."""
+    return fetch_ticker_info(symbol)
+
+
+@st.cache_data(show_spinner=False, ttl=900)
+def _cached_ticker_history(symbol, period):
+    return fetch_ticker_history(symbol, period)
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def _cached_ticker_financials(symbol):
+    return fetch_ticker_financials(symbol)
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def _cached_ticker_cashflow(symbol):
+    return fetch_ticker_cashflow(symbol) if fetch_ticker_cashflow else ([], None)
+
+
+@st.cache_data(show_spinner=False, ttl=3600)
+def _cached_ticker_balance(symbol):
+    return fetch_ticker_balance(symbol) if fetch_ticker_balance else ({}, None)
+
+
+def _tk_margins_fig(rows):
+    """Gross / operating / net margin (%) over time. Descriptive."""
+    import plotly.graph_objects as _go
+    yrs = [r["year"] for r in rows]
+
+    def _pct(key):
+        out = []
+        for r in rows:
+            rev, v = r.get("revenue"), r.get(key)
+            out.append((v / rev * 100.0) if (rev and v is not None and rev != 0) else None)
+        return out
+
+    fig = _go.Figure()
+    for nm, key, col in (("Gross", "gross_profit", "#4a9eff"),
+                         ("Operating", "operating_income", "#f5b942"),
+                         ("Net", "net_income", "#26a641")):
+        fig.add_trace(_go.Scatter(x=yrs, y=_pct(key), mode="lines+markers", name=nm,
+                                  line=dict(color=col, width=2), marker=dict(size=6),
+                                  hovertemplate="%{x}<br>" + nm + " margin %{y:.1f}%<extra></extra>"))
+    fig.update_layout(
+        template="plotly_dark", paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+        height=300, margin=dict(l=10, r=10, t=34, b=10),
+        xaxis=dict(type="category", gridcolor="#1e2130"),
+        yaxis=dict(gridcolor="#1e2130", title="Margin", ticksuffix="%"),
+        legend=dict(orientation="h", y=1.09, x=0.5, xanchor="center", font=dict(color="#c9d1d9")))
+    return fig
+
+
+def _tk_cashflow_fig(rows, cur):
+    """Operating & free cash-flow bars (billions), labelled."""
+    import plotly.graph_objects as _go
+    yrs = [r["year"] for r in rows]
+    o = [(r["ocf"] / 1e9 if r["ocf"] is not None else None) for r in rows]
+    f = [(r["fcf"] / 1e9 if r["fcf"] is not None else None) for r in rows]
+
+    def _lbl(vals):
+        return ["" if v is None else (f"{v:.0f}" if abs(v) >= 10 else f"{v:.1f}") for v in vals]
+
+    fig = _go.Figure()
+    fig.add_trace(_go.Bar(x=yrs, y=o, name="Operating CF", marker_color="#4a9eff",
+                          text=_lbl(o), textposition="outside", cliponaxis=False,
+                          textfont=dict(color="#9ec5ff", size=10)))
+    fig.add_trace(_go.Bar(x=yrs, y=f, name="Free CF", marker_color="#26a641",
+                          text=_lbl(f), textposition="outside", cliponaxis=False,
+                          textfont=dict(color="#86e0b0", size=10)))
+    fig.update_layout(
+        barmode="group", bargap=0.42, bargroupgap=0.12, template="plotly_dark", paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+        height=300, margin=dict(l=10, r=10, t=34, b=10),
+        xaxis=dict(type="category", gridcolor="#1e2130"),
+        yaxis=dict(gridcolor="#1e2130", title=f"Billions{(' ' + cur) if cur else ''}"),
+        legend=dict(orientation="h", y=1.09, x=0.5, xanchor="center", font=dict(color="#c9d1d9")),
+        uniformtext=dict(mode="hide", minsize=8))
+    return fig
+
+
+def _tk_balance_fig(bal, cur):
+    """Balance-sheet identity as two equal-length stacked bars (Assets = Liabilities + Equity):
+    Assets = Cash + Other assets; Liab. & equity = Debt + Other liabilities + Equity. Both sum
+    to total assets. Falls back to simple per-item bars when assets/equity are unavailable."""
+    import plotly.graph_objects as _go
+    _B = 1e9
+    ta = bal.get("total_assets")
+    eq = bal.get("equity")
+    debt = bal.get("total_debt")
+    cash = bal.get("cash")
+    _axis = f"Billions{(' ' + cur) if cur else ''}"
+
+    if ta is not None and eq is not None and ta > 0:
+        _debt = debt or 0.0
+        _cash = cash or 0.0
+        other_assets = max(ta - _cash, 0.0)
+        other_liab = max(ta - eq - _debt, 0.0)
+
+        def _seg(row, val, name, color):
+            x = val / _B
+            return _go.Bar(y=[row], x=[x], name=name, orientation="h", marker_color=color,
+                           text=[(f"{x:.0f}" if x >= 10 else f"{x:.1f}") if x >= 0.05 else ""],
+                           textposition="inside", insidetextanchor="middle",
+                           textfont=dict(color="#0d1117", size=10),
+                           hovertemplate="%{fullData.name}: %{x:.1f}B<extra></extra>")
+
+        fig = _go.Figure()
+        fig.add_trace(_seg("Assets", _cash, "Cash", "#26a641"))
+        fig.add_trace(_seg("Assets", other_assets, "Other assets", "#4a9eff"))
+        fig.add_trace(_seg("Liab. &amp; equity", _debt, "Debt", "#d15866"))
+        fig.add_trace(_seg("Liab. &amp; equity", other_liab, "Other liabilities", "#7d8aa0"))
+        fig.add_trace(_seg("Liab. &amp; equity", eq, "Equity", "#f5b942"))
+        fig.update_layout(
+            barmode="stack", bargap=0.78, template="plotly_dark", paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+            height=300, margin=dict(l=10, r=20, t=20, b=10),
+            xaxis=dict(gridcolor="#1e2130", title=_axis),
+            yaxis=dict(autorange="reversed"),
+            legend=dict(orientation="h", y=1.16, x=0.5, xanchor="center",
+                        font=dict(color="#c9d1d9", size=10)),
+            uniformtext=dict(mode="hide", minsize=8))
+        return fig
+
+    # Fallback — simple per-item bars
+    items = [("Total assets", ta, "#4a9eff"), ("Total debt", debt, "#d15866"),
+             ("Cash", cash, "#26a641"), ("Equity", eq, "#f5b942")]
+    items = [(n, v, c) for n, v, c in items if v is not None]
+    fig = _go.Figure(_go.Bar(
+        y=[n for n, _, _ in items], x=[v / _B for _, v, _ in items], orientation="h",
+        marker_color=[c for _, _, c in items],
+        text=[f"{v / _B:.0f}" if abs(v / _B) >= 10 else f"{v / _B:.1f}" for _, v, _ in items],
+        textposition="outside", cliponaxis=False, textfont=dict(color="#c9d1d9", size=10),
+        hovertemplate="%{y}: %{x:.1f}B<extra></extra>"))
+    fig.update_layout(
+        template="plotly_dark", paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+        height=300, margin=dict(l=10, r=20, t=20, b=10), showlegend=False,
+        xaxis=dict(gridcolor="#1e2130", title=_axis), yaxis=dict(autorange="reversed"))
+    return fig
+
+
+def _tk_price_fig(df, name):
+    """Descriptive price-history line chart (dark theme). No signals/annotations."""
+    import plotly.graph_objects as _go
+    fig = _go.Figure()
+    fig.add_trace(_go.Scatter(
+        x=df.index, y=df["Close"], mode="lines", line=dict(color="#4a9eff", width=1.8),
+        fill="tozeroy", fillcolor="rgba(74,158,255,0.08)", name="Close",
+        hovertemplate="%{x|%d %b %Y}<br>%{y:.2f}<extra></extra>"))
+    _lo = float(df["Close"].min()); _hi = float(df["Close"].max())
+    _pad = (_hi - _lo) * 0.08 or 1.0
+    fig.update_layout(
+        template="plotly_dark", paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+        height=300, margin=dict(l=10, r=10, t=40, b=10), showlegend=False,
+        title=dict(text=f"{name} — price history", x=0.5, font=dict(color="#E3C77E", size=14)),
+        xaxis=dict(gridcolor="#1e2130", showspikes=True, spikethickness=1, spikecolor="#3a3a5a"),
+        yaxis=dict(gridcolor="#1e2130", title="Price", range=[max(0, _lo - _pad), _hi + _pad]))
+    return fig
+
+
+def _tk_candle_fig(df, name):
+    """Descriptive OHLC candlestick chart (dark theme). No signals/annotations."""
+    import plotly.graph_objects as _go
+    fig = _go.Figure(_go.Candlestick(
+        x=df.index, open=df["Open"], high=df["High"], low=df["Low"], close=df["Close"],
+        increasing_line_color="#26a641", decreasing_line_color="#d15866",
+        increasing_fillcolor="#26a641", decreasing_fillcolor="#d15866", name="OHLC",
+        whiskerwidth=0.4))
+    fig.update_layout(
+        template="plotly_dark", paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+        height=320, margin=dict(l=10, r=10, t=40, b=10), showlegend=False,
+        title=dict(text=f"{name} — candlestick", x=0.5, font=dict(color="#E3C77E", size=14)),
+        xaxis=dict(gridcolor="#1e2130", rangeslider=dict(visible=False)),
+        yaxis=dict(gridcolor="#1e2130", title="Price"))
+    return fig
+
+
+def _tk_revenue_fig(rows, cur):
+    """Annual revenue & net-income bars (descriptive). Values in billions, labelled on the bars."""
+    import plotly.graph_objects as _go
+    yrs = [r["year"] for r in rows]
+    rev = [(r["revenue"] / 1e9 if r["revenue"] is not None else None) for r in rows]
+    ni = [(r["net_income"] / 1e9 if r["net_income"] is not None else None) for r in rows]
+
+    def _lbl(vals):
+        return ["" if v is None else (f"{v:.0f}" if abs(v) >= 10 else f"{v:.1f}") for v in vals]
+
+    fig = _go.Figure()
+    fig.add_trace(_go.Bar(x=yrs, y=rev, name="Revenue", marker_color="#4a9eff",
+                          text=_lbl(rev), textposition="outside", cliponaxis=False,
+                          textfont=dict(color="#9ec5ff", size=10),
+                          hovertemplate="%{x}<br>Revenue %{y:.2f}B<extra></extra>"))
+    fig.add_trace(_go.Bar(x=yrs, y=ni, name="Net income", marker_color="#26a641",
+                          text=_lbl(ni), textposition="outside", cliponaxis=False,
+                          textfont=dict(color="#86e0b0", size=10),
+                          hovertemplate="%{x}<br>Net income %{y:.2f}B<extra></extra>"))
+    fig.update_layout(
+        barmode="group", bargap=0.42, bargroupgap=0.12, template="plotly_dark", paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+        height=300, margin=dict(l=10, r=10, t=34, b=10),
+        xaxis=dict(type="category", gridcolor="#1e2130"),
+        yaxis=dict(gridcolor="#1e2130", title=f"Billions{(' ' + cur) if cur else ''}"),
+        legend=dict(orientation="h", y=1.09, x=0.5, xanchor="center", font=dict(color="#c9d1d9")),
+        uniformtext=dict(mode="hide", minsize=8))
+    return fig
 
 
 DEFAULT_MEANS = [0.05, 0.10, 0.25]
@@ -1332,7 +1664,8 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
                          der_x, der_y, der_lbls,
                          der_label, H_sel, alpha,
                          p3_x=None, p3_y=None,
-                         nd_res_actual=None, lam_actual=None, L=None, mv_eq_lam_str=''):
+                         nd_res_actual=None, lam_actual=None, L=None, mv_eq_lam_str='',
+                         benchmarks=None):
     """Interactive Plotly version of the frontier chart with hover tooltips."""
     fig = go.Figure()
 
@@ -1508,6 +1841,18 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
             align='left', xanchor='left'
         )
 
+    # ── Naive benchmarks (securities only): equal-weight / min-variance / max-Sharpe ──
+    if benchmarks:
+        fig.add_trace(go.Scatter(
+            x=[b[1] for b in benchmarks], y=[b[2] for b in benchmarks],
+            mode='markers+text', name='Benchmarks (securities only)', legendrank=7,
+            marker=dict(size=10, color='#9aa7bd', symbol='diamond',
+                        line=dict(color='#0d1117', width=1)),
+            text=[b[0] for b in benchmarks], textposition='bottom center',
+            textfont=dict(color='#9aa7bd', size=9),
+            hovertemplate='<b>%{text}</b><br>Std Dev: %{x:.2f}%<br>Expected Return: %{y:.2f}%<extra></extra>'
+        ))
+
     if not nd_res_actual:
         fig.add_annotation(
             xref='paper', yref='paper', x=0.5, y=0.5,
@@ -1621,6 +1966,62 @@ def plot_frontier_plotly(mv_x, mv_y, mv_eq,
     )
 
     return fig
+
+
+def _render_frontier_synced(fig, height=620):
+    """Render the 2D frontier so each 'Portfolio (N)' annotation box hides/shows together
+    with its marker when that series is toggled in the legend. Plotly annotations are not
+    natively bound to traces, so a tiny JS listener mirrors each annotation's visibility to
+    the matching trace's visibility on legend clicks. Falls back to a normal Streamlit chart
+    if anything goes wrong, so the chart always renders."""
+    try:
+        import streamlit.components.v1 as _components
+        import uuid as _uuid
+        _div = "frontsync_" + _uuid.uuid4().hex[:8]
+        _inner = fig.to_html(include_plotlyjs="cdn", full_html=False, div_id=_div,
+                             config={"responsive": True, "displayModeBar": True,
+                                     "edits": {"legendPosition": True,
+                                               "annotationPosition": True,
+                                               "annotationTail": True}})
+        _js = """
+<script>
+(function(){
+  var DIV = "__DIV__";
+  function attach(){
+    var gd = document.getElementById(DIV);
+    if(!gd || !gd.on || !window.Plotly){ return setTimeout(attach, 120); }
+    function sync(){
+      var anns = (gd.layout && gd.layout.annotations) || [];
+      var upd = {};
+      anns.forEach(function(a, i){
+        var m = (a.text || "").match(/Portfolio \\((\\d)\\)/);
+        if(!m) return;
+        var pf = "Portfolio (" + m[1] + ")";
+        var found = false, vis = true;
+        (gd.data || []).forEach(function(tr){
+          if((tr.name || "").indexOf(pf) === 0){
+            found = true;
+            vis = !(tr.visible === "legendonly" || tr.visible === false);
+          }
+        });
+        if(found) upd["annotations[" + i + "].visible"] = vis;
+      });
+      if(Object.keys(upd).length) window.Plotly.relayout(gd, upd);
+    }
+    gd.on("plotly_restyle", function(){ setTimeout(sync, 0); });
+    gd.on("plotly_legendclick", function(){ setTimeout(sync, 0); return true; });
+    gd.on("plotly_legenddoubleclick", function(){ setTimeout(sync, 0); return true; });
+  }
+  attach();
+})();
+</script>
+""".replace("__DIV__", _div)
+        _components.html(_inner + _js, height=height, scrolling=False)
+        return True
+    except Exception:
+        st.plotly_chart(fig, use_container_width=True,
+                        config={'responsive': True, 'edits': {'annotationPosition': True, 'annotationTail': True, 'legendPosition': True}, 'displayModeBar': True})
+        return False
 
 
 def plot_payoff(components, vol, S0, r, T, asset_name):
@@ -1742,19 +2143,19 @@ def plot_frontier(mv_x,mv_y,mv_eq,nd_x,nd_y,nd_lbls,
 # ═══════════════════════════════════════════════════════════════════════════════════
 import os as _os, base64 as _b64
 _HOME_DIR = _os.path.dirname(_os.path.abspath(__file__))
-_VIEWS = ("home", "optimiser", "scalable", "backtest", "about", "glossary")
+_VIEWS = ("home", "optimiser", "scalable", "backtest", "riskprofile", "ticker", "about", "glossary", "portfolio")
 
 @st.cache_data(show_spinner=False)
 def _home_assets(mtimes=None):
     out = {}
-    for k, fn in (("OPT", "home_optimiser_grid2.png"), ("MC", "home_optimiser_mcvar4.png"), ("BT", "home_optimiser_backtest.png")):
+    for k, fn in (("OPT", "home_optimiser_grid3d.png"), ("MC", "home_optimiser_mcvar6.png"), ("BT", "home_backtest2.png"), ("RP", "home_riskprofile.png"), ("TKR", "home_ticker3.png"), ("LP", "home_liveportfolio.png")):
         fp = _os.path.join(_HOME_DIR, fn)
         out[k] = ("data:image/png;base64," + _b64.b64encode(open(fp, "rb").read()).decode()) if _os.path.exists(fp) else ""
     return out
 
 def _home_assets_key():
     ms = []
-    for fn in ("home_optimiser_grid2.png", "home_optimiser_mcvar4.png", "home_optimiser_backtest.png"):
+    for fn in ("home_optimiser_grid3d.png", "home_optimiser_mcvar6.png", "home_backtest2.png", "home_riskprofile.png", "home_ticker3.png", "home_liveportfolio.png"):
         fp = _os.path.join(_HOME_DIR, fn)
         ms.append(_os.path.getmtime(fp) if _os.path.exists(fp) else 0)
     return tuple(ms)
@@ -1829,26 +2230,237 @@ def _mc_joint_scatter_view(R_sec, names, weights, alpha):
         use_container_width=True, config={'edits': {'legendPosition': True}, 'displayModeBar': True})
 
 
-def _mc_pnl_distribution(port, alpha, es, floor, er):
+_G3D_METHOD_NOTE_HTML = (
+    "<div style='line-height:1.55;color:#aebccd;font-size:.85rem'>"
+    "<b>What it shows.</b> The chosen objective over the two selected instruments' weights; the "
+    "other instruments are held at the optimum's proportions, and the remaining weight fills the "
+    "long-only simplex.<br>"
+    "<b>It is a Monte-Carlo illustration, not the exact grid solve.</b> Securities are drawn from a "
+    "Gaussian copula on the estimated means/covariances, and the derivative is priced by "
+    "Black-Scholes on its underlying (the <i>scalable</i> engine's model). The exact grid engine "
+    "evaluates a discrete state space, so the surface can differ slightly from it.<br>"
+    "<b>The marked optimum uses the exact grid weights</b> (Portfolio 1 / 2) from the results table, "
+    "so the marker's coordinates match the summary above.<br>"
+    "<b>Grey = infeasible portfolios</b> that breach the downside limit (P(r&lt;H) &le; &alpha;, or the ES "
+    "floor); the coloured surface is the feasible region. <b>The optimum sits at the top edge of the "
+    "coloured region</b> — it's the best portfolio the engine is allowed to pick. The greyed peak "
+    "beyond it scores higher but breaks the limit, which is exactly what optimising under a downside "
+    "constraint means.<br>"
+    "The one case that lands <i>exactly</i> on a peak is <i>Mean-variance</i> with <b>Portfolio (1)</b> "
+    "(no derivative) — a genuine unconstrained hill-top. <i>Expected return</i> is linear (optimum on "
+    "the boundary edge). <i>Downside-utility</i> is offered <b>only when the derivative is on an axis</b> "
+    "(the lens for the protective instrument; &kappa; &asymp; __KAP__), where the optimum is closest to the "
+    "peak — but still just inside the boundary.<br>"
+    "<b>Coordinates are always exact</b> (they match the summary). &kappa; is a heuristic scale match, not the "
+    "engine's exact shadow price."
+    "</div>"
+)
+
+
+@st.fragment
+def _grid_obj_surface_view():
+    """Unified interactive 3D landscape for the grid optimiser. Two selectboxes pick any
+    two instruments (securities OR the derivative) for the axes; a third picks the objective
+    (expected return / mean-variance / downside-utility). The surface is computed from a joint
+    Monte-Carlo scenario set; the marked optimum uses the EXACT grid weights (Portfolio 1/2)."""
+    import numpy as _np
+    d = st.session_state.get('_grid3d_data')
+    if not d or d.get('R') is None:
+        return
+    # Gild the enclosing expander's title (the "Objective landscape in 3D…" summary).
+    st.markdown(
+        "<style>details:has(.bmv-g3d-mk) summary,details:has(.bmv-g3d-mk) summary *"
+        "{color:#E3C77E !important}</style><span class='bmv-g3d-mk'></span>",
+        unsafe_allow_html=True)
+    labels = list(d['labels']); R = _np.asarray(d['R'], dtype=float)
+    M = R.shape[1]; lam = d.get('lam') or 3.795
+    w1 = d.get('w1'); w2 = d.get('w2')
+    if w2 is not None and len(w2) == M:
+        w_opt = _np.asarray(w2, float); opt_name = 'Portfolio (2)'
+        opt_legend = 'Portfolio (2) — Behavioural optimum (with derivative)'
+    elif w1 is not None:
+        w_opt = _np.zeros(M); w_opt[:len(w1)] = _np.asarray(w1, float); opt_name = 'Portfolio (1)'
+        opt_legend = 'Portfolio (1) — Behavioural optimum'
+    else:
+        return
+    if M < 3:
+        st.caption("The 3D landscape needs at least three instruments (two free axes + a remainder).")
+        return
+
+    st.caption("Pick any two instruments for the axes and an objective. The surface is a "
+               "**Monte-Carlo illustration** (see the method note below). **Grey = portfolios that breach "
+               "the downside limit** (infeasible); the coloured part is the feasible region, and the marked "
+               "optimum (exact grid weights) sits at its top edge — the best of what's allowed.")
+    _ord = list(_np.argsort(-_np.abs(w_opt)))
+    n_sec = int(d.get('n_sec', len(labels)))
+    _c1, _c2, _c3 = st.columns(3)
+    _ia = _c1.selectbox("Instrument — X axis", labels, index=int(_ord[0]), key="g3d_x")
+    _ib = _c2.selectbox("Instrument — Y axis", labels, index=int(_ord[1]), key="g3d_y")
+    i, j = labels.index(_ia), labels.index(_ib)
+    # Downside-utility is offered ONLY when the derivative is on an axis — it's the lens for the
+    # instrument the optimum holds for downside protection, and only there does the optimum sit
+    # near the peak. On a securities-only slice it would mislead, so it's hidden.
+    _has_der_axis = (i >= n_sec) or (j >= n_sec)
+    _obj_opts = (["Mean-variance  (E[r] − ½λ·var)", "Downside-utility  (E[r] − κ·CVaR)", "Expected return"]
+                 if _has_der_axis else ["Mean-variance  (E[r] − ½λ·var)", "Expected return"])
+    if st.session_state.get("g3d_obj") not in _obj_opts:
+        st.session_state["g3d_obj"] = _obj_opts[0]
+    _obj = _c3.selectbox("Objective", _obj_opts, key="g3d_obj")
+    if i == j:
+        st.info("Pick two different instruments for the two axes.")
+        return
+    others = [k for k in range(M) if k not in (i, j)]
+    w_oth = w_opt[others]; s_oth = float(w_oth.sum())
+    base = (w_oth / s_oth) if abs(s_oth) > 1e-9 else _np.ones(len(others)) / max(len(others), 1)
+
+    _is_ret = _obj.startswith("Expected"); _is_dn = _obj.startswith("Downside")
+    _ac = 0.05
+    _Hc = d.get('H'); _alpha_c = d.get('alpha'); _use_es = bool(d.get('use_es')); _Lc = d.get('L')
+    def _eval(w):
+        port = R @ w
+        mean = float(port.mean())
+        var = 0.0 if _is_ret else float(port.var())
+        cvar = 0.0
+        if _is_dn:
+            kk = max(1, int(_ac * len(port)))
+            cvar = float(_np.partition(port, kk)[:kk].mean())
+        # feasibility under the run's downside constraint
+        feas = True
+        if _Hc is not None:
+            below = port < _Hc
+            if _use_es and _Lc is not None:
+                feas = True if int(below.sum()) == 0 else (float(port[below].mean()) >= _Lc)
+            else:
+                feas = (float(below.mean()) <= (_alpha_c if _alpha_c is not None else 0.05))
+        return mean, var, cvar, feas
+    _m0, _v0, _cv0, _ = _eval(w_opt)
+    kappa = (0.5 * lam * _v0 / abs(_cv0)) if (_is_dn and abs(_cv0) > 1e-9) else 1.0
+    st.session_state['_g3d_kappa'] = float(kappa)   # method note renders full-width below the columns
+    def _objf(mean, var, cvar):
+        if _is_ret:
+            return mean * 100
+        if _is_dn:
+            return (mean + kappa * cvar) * 100      # cvar < 0; + rewards a less-negative tail
+        return (mean - 0.5 * lam * var) * 100
+
+    Ms = 42
+    g = _np.linspace(0, 1, Ms); X, Y = _np.meshgrid(g, g); Rem = 1 - X - Y
+    Zf = _np.full_like(X, _np.nan)   # feasible (coloured by objective)
+    Zi = _np.full_like(X, _np.nan)   # infeasible — breaches the downside limit (greyed)
+    for a in range(Ms):
+        for b in range(Ms):
+            rr = Rem[a, b]
+            if rr >= -1e-9:
+                w = _np.zeros(M); w[i] = X[a, b]; w[j] = Y[a, b]
+                for t, k in enumerate(others):
+                    w[k] = max(rr, 0.0) * base[t]
+                _mn, _vr, _cv, _fe = _eval(w)
+                _zv = _objf(_mn, _vr, _cv)
+                if _fe:
+                    Zf[a, b] = _zv
+                else:
+                    Zi[a, b] = _zv
+    ox, oy = float(w_opt[i] * 100), float(w_opt[j] * 100)
+    oz = _objf(_m0, _v0, _cv0)
+    _mc = '#f59e0b' if opt_name == 'Portfolio (2)' else '#10b981'
+    _tc = '#fcd34d' if opt_name == 'Portfolio (2)' else '#6ee7b7'
+    try:
+        import plotly.graph_objects as _go
+        fig = _go.Figure()
+        # infeasible portfolios (breach the downside limit) — greyed out
+        fig.add_trace(_go.Surface(
+            x=X * 100, y=Y * 100, z=Zi, showscale=False, opacity=0.5,
+            colorscale=[[0, '#39404e'], [1, '#39404e']],
+            hovertemplate=f'{_ia}: %{{x:.0f}}%<br>{_ib}: %{{y:.0f}}%'
+                          '<br><b>infeasible</b> — breaches the downside limit<extra></extra>'))
+        # feasible region — coloured by objective; the optimum sits at its top edge
+        fig.add_trace(_go.Surface(
+            x=X * 100, y=Y * 100, z=Zf, colorscale='RdYlGn', showscale=True,
+            colorbar=dict(title=dict(text='Objective'), len=0.7, thickness=14),
+            hovertemplate=f'{_ia}: %{{x:.0f}}%<br>{_ib}: %{{y:.0f}}%<br>Objective: %{{z:.2f}}<extra></extra>'))
+        fig.add_trace(_go.Scatter3d(
+            x=[ox], y=[oy], z=[oz], mode='markers+text', name=opt_legend,
+            marker=dict(size=10, color=_mc, symbol='diamond', line=dict(color='#0d1117', width=2)),
+            text=[opt_name], textposition='top center', textfont=dict(color=_tc, size=15),
+            hovertemplate=f'<b>{opt_name}</b> — grid optimum (exact weights)<extra></extra>'))
+        # legend-only swatches (Surface traces don't appear in the legend), so the
+        # grey zone is labelled as the non-feasible region right on the chart.
+        fig.add_trace(_go.Scatter3d(
+            x=[None], y=[None], z=[None], mode='markers',
+            marker=dict(size=11, color='#39404e', symbol='square'),
+            name='Infeasible region — breaches the downside limit', showlegend=True,
+            hoverinfo='skip'))
+        fig.add_trace(_go.Scatter3d(
+            x=[None], y=[None], z=[None], mode='markers',
+            marker=dict(size=11, color='#5fb56a', symbol='square'),
+            name='Feasible region — coloured by objective', showlegend=True,
+            hoverinfo='skip'))
+        fig.update_layout(
+            template='plotly_dark', paper_bgcolor='#0d1117', height=560,
+            margin=dict(l=0, r=0, t=42, b=0), showlegend=True,
+            legend=dict(x=0.0, y=0.0, xanchor='left', yanchor='bottom',
+                        bgcolor='rgba(13,17,23,0.62)', bordercolor='#27344e', borderwidth=1,
+                        font=dict(color='#c9d1d9', size=11)),
+            title=dict(text=f'{opt_name} landscape — {_obj.split("  ")[0]}  ·  Monte-Carlo illustration',
+                       x=0.5, xanchor='center', y=0.97, font=dict(color='#E3C77E', size=13)),
+            scene=dict(bgcolor='#0d1117',
+                       xaxis=dict(title=f'{_ia} weight (%)', backgroundcolor='#0d1117', gridcolor='#27344e'),
+                       yaxis=dict(title=f'{_ib} weight (%)', backgroundcolor='#0d1117', gridcolor='#27344e'),
+                       zaxis=dict(title='Objective', backgroundcolor='#0d1117', gridcolor='#27344e'),
+                       camera=dict(eye=dict(x=1.5, y=-1.6, z=0.9))))
+        st.plotly_chart(fig, use_container_width=True, config={'displayModeBar': True})
+        # The "Method & approximations" note is rendered full-width *below* the columns
+        # (see the Results section) so expanding it never disturbs the side-by-side alignment.
+    except Exception as _e3:
+        st.caption(f"(3D landscape unavailable: {_e3})")
+
+
+def _mc_pnl_distribution(port, alpha, es, floor, er, overlays=None):
     """Histogram of the optimal portfolio's scenario returns with the worst-alpha tail
     shaded; VaR (alpha-quantile), realised alpha-CVaR (= es) and the floor L marked.
     Uses the SAME scenario returns the CVaR program optimised, so the shaded tail's
-    average equals the reported realised alpha-CVaR by construction."""
+    average equals the reported realised alpha-CVaR by construction.
+
+    `overlays` (optional): list of (label, returns_array, color) drawn as smoothed
+    density-outline curves on the *same* bins \u2014 e.g. same-return benchmark portfolios,
+    to compare the shape of the left tail."""
     import numpy as _np, plotly.graph_objects as _go
     r = _np.asarray(port, dtype=float) * 100.0
     if r.size == 0:
         return _go.Figure()
     var = float(_np.quantile(r, alpha)); cvar = float(es) * 100.0
     L = float(floor) * 100.0; mean = float(er) * 100.0
+    # span the bins over the optimum AND any overlays so the curves are comparable
+    _lo, _hi = float(r.min()), float(r.max())
+    _ovs = []
+    if overlays:
+        for _lbl, _ov, _c in overlays:
+            _o = _np.asarray(_ov, dtype=float) * 100.0
+            if _o.size:
+                _ovs.append((_lbl, _o, _c))
+                _lo = min(_lo, float(_o.min())); _hi = max(_hi, float(_o.max()))
     nb = 60
-    edges = _np.linspace(float(r.min()), float(r.max()), nb + 1)
+    edges = _np.linspace(_lo, _hi, nb + 1)
     counts, _ = _np.histogram(r, bins=edges)
     centers = 0.5 * (edges[:-1] + edges[1:]); bw = float(edges[1] - edges[0])
     colors = ["#d15866" if c <= var else "#4a9eff" for c in centers]
     fig = _go.Figure()
-    fig.add_trace(_go.Bar(x=centers, y=counts, width=bw * 0.96,
+    fig.add_trace(_go.Bar(x=centers, y=counts, width=bw * 0.96, showlegend=False,
                           marker=dict(color=colors, line=dict(width=0)), hovertemplate="Return: %{x:.1f}%<br>Scenarios: %{y:.0f}<extra></extra>"))
-    ymax = float(counts.max()) * 1.12 if counts.size else 1.0
+    # legend proxies (the bar uses per-bin colours, so it can't carry one clear swatch)
+    fig.add_trace(_go.Scatter(x=[None], y=[None], mode="markers", name="Portfolio (1) \u2014 CVaR optimum",
+                              marker=dict(size=11, symbol="square", color="#4a9eff"), hoverinfo="skip"))
+    fig.add_trace(_go.Scatter(x=[None], y=[None], mode="markers", name="Portfolio (1) \u2014 worst-\u03b1 tail (shaded)",
+                              marker=dict(size=11, symbol="square", color="#d15866"), hoverinfo="skip"))
+    _ymax = float(counts.max()) if counts.size else 1.0
+    for _lbl, _o, _c in _ovs:
+        _oc, _ = _np.histogram(_o, bins=edges)
+        _ymax = max(_ymax, float(_oc.max()))
+        fig.add_trace(_go.Scatter(x=centers, y=_oc, mode="lines", name=_lbl,
+                                  line=dict(color=_c, width=2.2, shape="spline", dash="dash"),
+                                  opacity=0.85,
+                                  hovertemplate=_lbl + "<br>Return: %{x:.1f}%<br>Scenarios: %{y:.0f}<extra></extra>"))
+    ymax = _ymax * 1.12
     def _vline(xv, color, dash, text, ylab):
         fig.add_shape(type="line", x0=xv, x1=xv, y0=0, y1=ymax * 0.99,
                       line=dict(color=color, width=1.7, dash=dash))
@@ -1860,17 +2472,20 @@ def _mc_pnl_distribution(port, alpha, es, floor, er):
     _vline(cvar, "#fb6a78", "dash", "CVaR %.1f%%" % cvar, ymax * 0.80)
     _vline(L,    "#9aa7bd", "dot",  "floor L %.0f%%" % L, ymax * 0.66)
     fig.update_layout(template="plotly_dark", paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
-                      height=420, bargap=0.02, showlegend=False, margin=dict(l=10, r=10, t=46, b=10),
+                      height=420, bargap=0.02, showlegend=True, margin=dict(l=10, r=10, t=46, b=10),
                       title=dict(text="Portfolio return distribution \u00b7 worst-\u03b1 tail shaded",
                                  x=0.5, font=dict(color="#E3C77E", size=15)),
+                      legend=dict(bgcolor="rgba(13,17,23,0.72)", bordercolor="#3a3a5a", borderwidth=1,
+                                  font=dict(color="#e7ecf4", size=9), x=0.99, y=0.99,
+                                  xanchor="right", yanchor="top"),
                       xaxis=dict(title="Portfolio return (%)", gridcolor="#1e2130",
                                  zeroline=True, zerolinecolor="#3a3a5a"),
                       yaxis=dict(title="Scenarios", gridcolor="#1e2130"))
     return fig
 
 
-_HOME_CSS = "<style>[data-testid='stAppViewContainer']{background:radial-gradient(1000px 560px at 78% -12%,rgba(74,158,255,.12),transparent 60%),radial-gradient(760px 420px at -5% 112%,rgba(245,185,66,.07),transparent 55%),#0d1117 !important}[data-testid='stHeader']{background:transparent !important}[data-testid='stMain'],section.main{background:transparent !important}section[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl']{display:none!important}.bmv-home{--blue:#4a9eff;--gold:#f5b942;--gold2:#caa14a;--green:#16a34a;--border:#30363d;--surface:#161b22;--surface2:#1b2330;--text:#fafafa;--muted:#8b949e;--text2:#c9d1d9;font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--text)}.bmv-home *{box-sizing:border-box}.bmv-hero{display:flex;flex-direction:row;gap:14px;align-items:center;justify-content:center;text-align:left;margin:.2rem 0 1.5rem}.bmv-mark{width:46px;height:46px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1205;font-weight:700;font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.5rem}.bmv-eyebrow{font-size:.84rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9;margin-bottom:9px}.bmv-eyebrow .w{color:var(--gold);font-style:italic}.bmv-h1{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-weight:600;font-size:1.95rem;line-height:1.08;margin-bottom:8px}.bmv-h1 .em{color:#E3C77E}.bmv-lede{color:var(--text2);font-size:.92rem;max-width:62ch}.bmv-sub{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.2rem;font-weight:500;color:#aeb9c9;margin-top:5px}.bmv-label{font-size:.64rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}.bmv-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}.bmv-tile{position:relative;display:flex;flex-direction:column;text-decoration:none;color:var(--text);overflow:hidden;background:linear-gradient(165deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:16px;transition:.22s cubic-bezier(.2,.7,.3,1)}.bmv-tile:hover{transform:translateY(-4px);border-color:var(--accent,var(--blue));box-shadow:0 22px 46px -24px var(--glow,rgba(74,158,255,.5))}.bmv-thumb{height:150px;background:#0a0e15;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden}.bmv-thumb img{width:100%;height:100%;object-fit:contain;display:block;transition:.3s}.bmv-tile:hover .bmv-thumb img{transform:scale(1.03)}.bmv-body{padding:15px 16px;display:flex;flex-direction:column;flex:1}.bmv-thead{display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:7px}.bmv-ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:1.05rem;flex:none;background:var(--icobg,rgba(74,158,255,.12));border:1px solid var(--icobd,rgba(74,158,255,.3))}.bmv-tt{font-weight:600;font-size:1.05rem;letter-spacing:.05em}.bmv-tile.blue .bmv-tt,.bmv-tile.gold .bmv-tt,.bmv-tile.green .bmv-tt,.bmv-tile.slate .bmv-tt{color:#E3C77E}.bmv-home a.bmv-tile,.bmv-home a.bmv-tile:hover,.bmv-home a.bmv-tile:focus{text-decoration:none!important}.bmv-tile.blue .bmv-td,.bmv-tile.gold .bmv-td,.bmv-tile.green .bmv-td{text-align:center}.bmv-tile.green .bmv-badge{align-self:center;text-align:center}.bmv-tile.blue .bmv-foot,.bmv-tile.gold .bmv-foot,.bmv-tile.green .bmv-foot{justify-content:center}.bmv-td{font-size:.8rem;color:var(--muted);line-height:1.5}.bmv-td b{color:var(--text2);font-weight:600}.bmv-foot{margin-top:auto;padding-top:13px;display:flex;align-items:center;justify-content:space-between}.bmv-tag{font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.66rem;color:var(--text2);background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:3px 8px}.bmv-arw{font-size:1.05rem;color:var(--accent,var(--blue));opacity:0;transform:translateX(-4px);transition:.22s}.bmv-tile:hover .bmv-arw{opacity:1;transform:translateX(0)}.bmv-badge{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.63rem;color:var(--blue);background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.32);border-radius:6px;padding:4px 8px;margin-top:11px;line-height:1.3;width:fit-content}.bmv-tile.blue{--accent:#4a9eff;--glow:rgba(74,158,255,.5);--icobg:rgba(74,158,255,.12);--icobd:rgba(74,158,255,.32)}.bmv-tile.gold{--accent:#f5b942;--glow:rgba(245,185,66,.45);--icobg:rgba(245,185,66,.12);--icobd:rgba(245,185,66,.32)}.bmv-tile.green{--accent:#16a34a;--glow:rgba(22,163,74,.45);--icobg:rgba(22,163,74,.14);--icobd:rgba(22,163,74,.34)}.bmv-tile.slate{--accent:#7d8aa0;--glow:rgba(125,138,160,.4);--icobg:rgba(125,138,160,.12);--icobd:rgba(125,138,160,.3)}.bmv-tiles.ref{grid-template-columns:repeat(3,1fr)}.bmv-tiles.ref .bmv-tile{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:7px 9px;padding:15px 16px}.bmv-tiles.ref .bmv-tile>div{display:contents}.bmv-tiles.ref .bmv-td{flex-basis:100%}.bmv-tiles.ref .bmv-tt,.bmv-tiles.ref .bmv-td{text-align:center}.bmv-tiles.ref .bmv-ico{width:38px;height:38px;font-size:1.15rem}.bmv-tiles.ref .bmv-tt{font-size:.95rem}.bmv-tiles.ref .bmv-td{font-size:.74rem;margin-top:2px}.bmv-aipill{display:inline-block;font-size:.55rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;vertical-align:middle;margin-left:7px;padding:2px 7px;border-radius:999px;color:#1a1205;background:linear-gradient(135deg,var(--gold),var(--gold2))}@media(max-width:640px){.bmv-tiles{grid-template-columns:1fr 1fr}.bmv-tiles.ref{grid-template-columns:1fr}}</style>"
-_HOME_HTML = '<div class="bmv-home">\n  <div class="bmv-hero">\n    <div class="bmv-mark">&beta;</div>\n    <div>\n      <div class="bmv-eyebrow">Portfolio Optimisation <span class="w">with</span> Derivatives &amp; Structured Products</div>\n      <div class="bmv-h1">Beyond <span class="em">Mean-Variance</span></div>\n      <div class="bmv-sub">Mental Accounting Framework</div>\n    </div>\n  </div>\n  <div class="bmv-label">Tools</div>\n  <div class="bmv-tiles">\n    <a class="bmv-tile blue" href="?view=optimiser" target="_self">\n      <div class="bmv-thumb"><img src="__OPT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></span><span class="bmv-tt">Grid Portfolio Optimiser</span></div>\n        <div class="bmv-td">Exact grid engine on the Das&ndash;Statman states — VaR, thesis-faithful ES and rigorous-ES, with derivatives.</div>\n        <div class="bmv-foot"><span class="bmv-tag">grid · exact</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile gold" href="?view=scalable" target="_self">\n      <div class="bmv-thumb"><img src="__MC__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f5b942" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span><span class="bmv-tt">Scalable Portfolio Optimiser</span></div>\n        <div class="bmv-td">Monte-Carlo scenarios + &alpha;-CVaR linear program — scales to large, multi-derivative portfolios.</div>\n        <div class="bmv-foot"><span class="bmv-tag">scenario · LP · beta</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile green" href="?view=backtest" target="_self">\n      <div class="bmv-thumb"><img src="__BT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#26a641" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span class="bmv-tt">Backtest</span></div>\n        <div class="bmv-td">Out-of-sample walk-forward of the <b>Optimiser\'s</b> portfolios, derivative marked to market.</div>\n        <div class="bmv-badge">&#8627; realised alpha &amp; beta vs a benchmark</div>\n        <div class="bmv-foot"><span class="bmv-tag">out-of-sample</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n  </div>\n  <div class="bmv-label">Reference</div>\n  <div class="bmv-tiles ref">\n    <a class="bmv-tile slate" href="?view=about" target="_self">\n      <span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa7bd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>\n      <div><div class="bmv-tt">About</div><div class="bmv-td">Methods, framework and research.</div></div>\n    </a>\n    <a class="bmv-tile slate" href="?view=glossary" target="_self">\n      <span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa7bd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>\n      <div><div class="bmv-tt">Glossary <span class="bmv-aipill">AI-powered</span></div><div class="bmv-td">VaR, ES, &alpha;-CVaR, copulas — plus natural-language Q&amp;A.</div></div>\n    </a>\n    <a class=\"bmv-tile slate\" href=\"https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf\">\n      <span class=\"bmv-ico\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#9aa7bd\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/><polyline points=\"10 9 9 9 8 9\"/></svg></span>\n      <div><div class=\"bmv-tt\">User Guide</div><div class=\"bmv-td\">Step-by-step tour of the app (PDF download).</div></div>\n    </a>\n  </div>\n</div>'
+_HOME_CSS = "<style>[data-testid='stAppViewContainer']{background:radial-gradient(1000px 560px at 78% -12%,rgba(74,158,255,.12),transparent 60%),radial-gradient(760px 420px at -5% 112%,rgba(245,185,66,.07),transparent 55%),#0d1117 !important}[data-testid='stHeader']{background:transparent !important}[data-testid='stMain'],section.main{background:transparent !important}section[data-testid='stSidebar'],[data-testid='stSidebarCollapsedControl']{display:none!important}.bmv-home{--blue:#4a9eff;--gold:#f5b942;--gold2:#caa14a;--green:#16a34a;--border:#30363d;--surface:#161b22;--surface2:#1b2330;--text:#fafafa;--muted:#8b949e;--text2:#c9d1d9;font-family:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:var(--text)}.bmv-home *{box-sizing:border-box}.bmv-hero{display:flex;flex-direction:row;gap:14px;align-items:center;justify-content:center;text-align:left;margin:.2rem 0 1.5rem}.bmv-mark{width:46px;height:46px;border-radius:11px;flex:none;display:grid;place-items:center;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#1a1205;font-weight:700;font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.5rem}.bmv-eyebrow{font-size:.84rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9;margin-bottom:9px}.bmv-eyebrow .w{color:var(--gold);font-style:italic}.bmv-h1{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-weight:600;font-size:1.95rem;line-height:1.08;margin-bottom:8px}.bmv-h1 .em{color:#E3C77E}.bmv-lede{color:var(--text2);font-size:.92rem;max-width:62ch}.bmv-sub{font-family:'IBM Plex Serif',Georgia,'Times New Roman',serif;font-size:1.2rem;font-weight:500;color:#aeb9c9;margin-top:5px}.bmv-label{font-size:.64rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}.bmv-rule{height:1px;border:0;width:min(560px,78%);margin:6px auto 20px;background:linear-gradient(90deg,transparent,rgba(227,199,126,.55),transparent)}.bmv-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:44px;margin-bottom:18px}.bmv-tile{position:relative;display:flex;flex-direction:column;text-decoration:none;color:var(--text);overflow:hidden;background:linear-gradient(165deg,var(--surface2),var(--surface));border:1px solid var(--border);border-radius:16px;transition:.22s cubic-bezier(.2,.7,.3,1)}.bmv-tile:hover{transform:translateY(-4px);border-color:var(--accent,var(--blue));box-shadow:0 22px 46px -24px var(--glow,rgba(74,158,255,.5))}.bmv-thumb{height:104px;background:#0a0e15;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:center;overflow:hidden}.bmv-thumb img{width:100%;height:100%;object-fit:contain;display:block;transition:.3s}.bmv-tile:hover .bmv-thumb img{transform:scale(1.03)}.bmv-body{padding:11px 14px;display:flex;flex-direction:column;flex:1}.bmv-thead{display:flex;align-items:center;justify-content:center;gap:9px;margin-bottom:7px}.bmv-ico{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:1.05rem;flex:none;background:var(--icobg,rgba(74,158,255,.12));border:1px solid var(--icobd,rgba(74,158,255,.3))}.bmv-tt{font-weight:600;font-size:0.97rem;letter-spacing:.05em}.bmv-tile.blue .bmv-tt,.bmv-tile.gold .bmv-tt,.bmv-tile.green .bmv-tt,.bmv-tile.slate .bmv-tt,.bmv-tile.red .bmv-tt,.bmv-tile.purple .bmv-tt,.bmv-tile.teal .bmv-tt{color:#E3C77E}.bmv-home a.bmv-tile,.bmv-home a.bmv-tile:hover,.bmv-home a.bmv-tile:focus{text-decoration:none!important}.bmv-tile.blue .bmv-td,.bmv-tile.gold .bmv-td,.bmv-tile.green .bmv-td,.bmv-tile.red .bmv-td,.bmv-tile.purple .bmv-td,.bmv-tile.teal .bmv-td,.bmv-tiles:not(.ref) .bmv-tile.slate .bmv-td{text-align:center}.bmv-tile.purple .bmv-badge,.bmv-tile.teal .bmv-badge{align-self:center;text-align:center}.bmv-tile.blue .bmv-foot,.bmv-tile.gold .bmv-foot,.bmv-tile.green .bmv-foot,.bmv-tile.red .bmv-foot,.bmv-tile.purple .bmv-foot,.bmv-tile.teal .bmv-foot,.bmv-tiles:not(.ref) .bmv-tile.slate .bmv-foot{justify-content:center}.bmv-td{font-size:.76rem;color:var(--muted);line-height:1.42}.bmv-td b{color:var(--text2);font-weight:600}.bmv-foot{margin-top:auto;padding-top:9px;display:flex;align-items:center;justify-content:space-between}.bmv-tag{font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.66rem;color:var(--text2);background:#0d1117;border:1px solid var(--border);border-radius:6px;padding:3px 8px}.bmv-arw{font-size:1.05rem;color:var(--accent,var(--blue));opacity:0;transform:translateX(-4px);transition:.22s}.bmv-tile:hover .bmv-arw{opacity:1;transform:translateX(0)}.bmv-badge{display:inline-flex;align-items:center;gap:5px;font-family:'IBM Plex Mono','SF Mono',Menlo,Consolas,monospace;font-size:.63rem;color:var(--blue);background:rgba(74,158,255,.1);border:1px solid rgba(74,158,255,.32);border-radius:6px;padding:4px 8px;margin-top:11px;line-height:1.3;width:fit-content}.bmv-tile.blue{--accent:#4a9eff;--glow:rgba(74,158,255,.5);--icobg:rgba(74,158,255,.12);--icobd:rgba(74,158,255,.32)}.bmv-tile.gold{--accent:#f5b942;--glow:rgba(245,185,66,.45);--icobg:rgba(245,185,66,.12);--icobd:rgba(245,185,66,.32)}.bmv-tile.green{--accent:#16a34a;--glow:rgba(22,163,74,.45);--icobg:rgba(22,163,74,.14);--icobd:rgba(22,163,74,.34)}.bmv-tile.slate{--accent:#7d8aa0;--glow:rgba(125,138,160,.4);--icobg:rgba(125,138,160,.12);--icobd:rgba(125,138,160,.3)}.bmv-tile.red{--accent:#f87171;--glow:rgba(248,113,113,.42);--icobg:rgba(248,113,113,.12);--icobd:rgba(248,113,113,.32)}.bmv-tile.purple{--accent:#a855f7;--glow:rgba(168,85,247,.45);--icobg:rgba(168,85,247,.12);--icobd:rgba(168,85,247,.34)}.bmv-tile.teal{--accent:#2dd4bf;--glow:rgba(45,212,191,.4);--icobg:rgba(45,212,191,.12);--icobd:rgba(45,212,191,.32)}.bmv-soon{color:#5b6675;font-size:.92rem;font-weight:600;letter-spacing:.04em;border:1px dashed #30363d;border-radius:10px;padding:.45rem 1.1rem}.bmv-tiles.ref{grid-template-columns:repeat(3,1fr)}.bmv-tiles.ref .bmv-tile{flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:7px 9px;padding:15px 16px}.bmv-tiles.ref .bmv-tile>div{display:contents}.bmv-tiles.ref .bmv-td{flex-basis:100%}.bmv-tiles.ref .bmv-tt,.bmv-tiles.ref .bmv-td{text-align:center}.bmv-tiles.ref .bmv-ico{width:38px;height:38px;font-size:1.15rem}.bmv-tiles.ref .bmv-tt{font-size:.95rem}.bmv-tiles.ref .bmv-td{font-size:.74rem;margin-top:2px}.bmv-aipill{display:inline-block;font-size:.55rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;vertical-align:middle;margin-left:7px;padding:2px 7px;border-radius:999px;color:#1a1205;background:linear-gradient(135deg,var(--gold),var(--gold2))}@media(max-width:640px){.bmv-tiles{grid-template-columns:1fr 1fr}.bmv-tiles.ref{grid-template-columns:1fr}}</style>"
+_HOME_HTML = '<div class="bmv-home">\n  <div class="bmv-hero">\n    <div class="bmv-mark">&beta;</div>\n    <div>\n      <div class="bmv-eyebrow">Portfolio Optimisation <span class="w">with</span> Derivatives &amp; Structured Products</div>\n      <div class="bmv-h1">Beyond <span class="em">Mean-Variance</span></div>\n      <div class="bmv-sub">Mental Accounting Framework</div>\n    </div>\n  </div>\n  <div class="bmv-rule"></div><div class="bmv-label">Tools</div>\n  <div class="bmv-tiles">\n    <a class="bmv-tile red" href="?view=riskprofile" target="_self">\n      <div class="bmv-thumb"><img src="__RP__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span><span class="bmv-tt">Risk Profile</span></div>\n        <div class="bmv-td">13-question Grable&ndash;Lytton scale that sets your simulation&rsquo;s risk parameters (H, &alpha;, L).</div>\n        <div class="bmv-foot"><span class="bmv-tag">find your risk level</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile green" href="?view=ticker" target="_self">\n      <div class="bmv-thumb"><img src="__TKR__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#26a641" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span class="bmv-tt">Ticker Analytics</span></div>\n        <div class="bmv-td">Enter a ticker for its price, return, risk level and key ratios, each with a plain-language explanation.</div>\n        <div class="bmv-foot"><span class="bmv-tag">stocks · ETFs · indices</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile gold" href="?view=optimiser" target="_self">\n      <div class="bmv-thumb"><img src="__OPT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#f5b942" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg></span><span class="bmv-tt">Grid Portfolio Optimiser</span></div>\n        <div class="bmv-td">Exact grid engine on the Das&ndash;Statman states — VaR, thesis-faithful ES and rigorous-ES, with derivatives.</div>\n        <div class="bmv-foot"><span class="bmv-tag">best for small portfolios</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile blue" href="?view=scalable" target="_self">\n      <div class="bmv-thumb"><img src="__MC__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#4a9eff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg></span><span class="bmv-tt">Scalable Portfolio Optimiser</span></div>\n        <div class="bmv-td">Monte-Carlo scenarios + &alpha;-CVaR linear program — scales to large, multi-derivative portfolios.</div>\n        <div class="bmv-foot"><span class="bmv-tag">best for many assets · beta</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile purple" href="?view=backtest" target="_self">\n      <div class="bmv-thumb"><img src="__BT__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a855f7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span><span class="bmv-tt">Backtest</span></div>\n        <div class="bmv-td">Out-of-sample walk-forward of the <b>Optimiser\'s</b> portfolios, derivative marked to market.</div>\n        <div class="bmv-badge">&#8627; realised alpha &amp; beta vs a benchmark</div>\n        <div class="bmv-foot"><span class="bmv-tag">performance check</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n    <a class="bmv-tile teal" href="?view=portfolio" target="_self">\n      <div class="bmv-thumb"><img src="__LP__"></div>\n      <div class="bmv-body">\n        <div class="bmv-thead"><span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2dd4bf" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="4" width="3" height="13"/></svg></span><span class="bmv-tt">Live Portfolio</span></div>\n        <div class="bmv-td">Build a portfolio, save it, and track its return, risk level, alpha and beta over time.</div>\n        <div class="bmv-badge">&#8627; stress-test against historical crises</div>\n        <div class="bmv-foot"><span class="bmv-tag">build · save · track</span><span class="bmv-arw">&rarr;</span></div>\n      </div>\n    </a>\n  </div>\n  <div class="bmv-label">Reference</div>\n  <div class="bmv-tiles ref">\n    <a class="bmv-tile slate" href="?view=about" target="_self">\n      <span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa7bd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg></span>\n      <div><div class="bmv-tt">About</div><div class="bmv-td">Methods, framework and research.</div></div>\n    </a>\n    <a class="bmv-tile slate" href="?view=glossary" target="_self">\n      <span class="bmv-ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#9aa7bd" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></span>\n      <div><div class="bmv-tt">Glossary <span class="bmv-aipill">AI-powered</span></div><div class="bmv-td">VaR, ES, &alpha;-CVaR, copulas — plus natural-language Q&amp;A.</div></div>\n    </a>\n    <a class=\"bmv-tile slate\" href=\"app/static/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf\" target=\"_blank\">\n      <span class=\"bmv-ico\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"#9aa7bd\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/><polyline points=\"10 9 9 9 8 9\"/></svg></span>\n      <div><div class=\"bmv-tt\">User Guide</div><div class=\"bmv-td\">Step-by-step tour of the app (PDF download).</div></div>\n    </a>\n  </div>\n</div>'
 
 _NAV_FOOTER = (
     '<div style="text-align:center;color:#556a8a;font-size:.78rem;margin-top:2.2rem;padding:.6rem 0 1rem">'
@@ -1883,7 +2498,12 @@ _NAV_FOOTER = (
 
 def _render_home():
     a = _home_assets(_home_assets_key())
-    html = _HOME_HTML.replace("__OPT__", a["OPT"]).replace("__MC__", a["MC"]).replace("__BT__", a["BT"])
+    html = _HOME_HTML.replace("__OPT__", a["OPT"]).replace("__MC__", a["MC"]).replace("__BT__", a["BT"]).replace("__RP__", a["RP"]).replace("__TKR__", a["TKR"]).replace("__LP__", a["LP"])
+    try:   # cache-bust the static User Guide link by file mtime so updates aren't served from browser cache
+        _ugv = int(_os.path.getmtime("static/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf"))
+    except Exception:
+        _ugv = 0
+    html = html.replace('User_Guide.pdf"', f'User_Guide.pdf?v={_ugv}"')
     st.markdown(_HOME_CSS, unsafe_allow_html=True)   # styles only (own call)
     st.markdown(html, unsafe_allow_html=True)        # cards only (own call)
     st.markdown(_NAV_FOOTER, unsafe_allow_html=True)
@@ -1891,13 +2511,176 @@ def _render_home():
 def _go_home():
     st.query_params["view"] = "home"
 
+def _apply_risk_profile(engine, h_pct, a_pct, l_pct):
+    """Push the questionnaire's mapped parameters into the chosen engine's sliders and
+    jump to that engine. Runs as a button on_click callback (before the next rerun), so
+    writing the widget-keyed session_state is safe.
+      engine='grid'     -> grid optimiser uses (H, alpha)
+      engine='scalable' -> scalable CVaR engine uses (alpha, L)"""
+    if engine == "scalable":
+        st.session_state["mc_alpha"] = int(a_pct)
+        st.session_state["mc_L"] = int(l_pct)
+        st.query_params["view"] = "scalable"
+    else:
+        st.session_state["grid_H_pct"] = int(h_pct)
+        st.session_state["grid_alpha_pct"] = int(a_pct)
+        st.query_params["view"] = "optimiser"
+
+def _rp_gauge_svg(score, band):
+    """Semicircular risk-tolerance speedometer: five equal colour bands (green→red)
+    for Low / Below-average / Average / Above-average / High, with a needle pointing
+    to the user's band (nudged by score within the band) and a centred read-out."""
+    import math as _math
+    bands = ["Low", "Below-average", "Average / moderate", "Above-average", "High"]
+    short = ["Low", "Below-avg", "Average", "Above-avg", "High"]
+    colors = ["#16a34a", "#84cc16", "#f5b942", "#f97316", "#dc2626"]
+    ranges = [(13, 18), (19, 22), (23, 28), (29, 32), (33, 47)]
+    cx, cy, R, w = 170.0, 150.0, 120.0, 26.0
+
+    def pt(ang, r):
+        a = _math.radians(ang)
+        return (cx + r * _math.cos(a), cy - r * _math.sin(a))
+
+    # Smooth green->red gradient along the arc: many thin slices with interpolated
+    # colours. Anchors sit at the band centres so each band still reads as its colour
+    # while the boundaries blend seamlessly.
+    def _hx(c):
+        return (int(c[1:3], 16), int(c[3:5], 16), int(c[5:7], 16))
+
+    def _ramp(t):
+        stops = [(0.1, colors[0]), (0.3, colors[1]), (0.5, colors[2]),
+                 (0.7, colors[3]), (0.9, colors[4])]
+        if t <= stops[0][0]:
+            return colors[0]
+        if t >= stops[-1][0]:
+            return colors[4]
+        for j in range(len(stops) - 1):
+            t0, c0 = stops[j]
+            t1, c1 = stops[j + 1]
+            if t0 <= t <= t1:
+                f = (t - t0) / (t1 - t0)
+                r0, g0, b0 = _hx(c0)
+                r1, g1, b1 = _hx(c1)
+                return f'#{round(r0+(r1-r0)*f):02x}{round(g0+(g1-g0)*f):02x}{round(b0+(b1-b0)*f):02x}'
+        return colors[4]
+
+    NSEG = 80
+    segs = []
+    for i in range(NSEG):
+        a0 = 180.0 - 180.0 * i / NSEG
+        a1 = max(0.0, 180.0 - 180.0 * (i + 1.6) / NSEG)   # slight overlap avoids seams
+        x0, y0 = pt(a0, R)
+        x1, y1 = pt(a1, R)
+        cseg = _ramp((i + 0.5) / NSEG)
+        segs.append(f'<path d="M {x0:.2f} {y0:.2f} A {R:.0f} {R:.0f} 0 0 1 {x1:.2f} {y1:.2f}" '
+                    f'fill="none" stroke="{cseg}" stroke-width="{w:.0f}"/>')
+    ranges_txt = ["13–18", "19–22", "23–28", "29–32", "33–47"]
+    labels = []
+    for i, lab in enumerate(short):
+        lx, ly = pt(162 - 36 * i, R + 34)   # well outside the arc for legibility
+        labels.append(f'<text x="{lx:.1f}" y="{ly:.1f}" fill="#aeb9c9" font-size="11" font-weight="600" '
+                      f'text-anchor="middle">{lab}'
+                      f'<tspan x="{lx:.1f}" dy="12.5" fill="#8b97a8" font-size="9" font-weight="400">{ranges_txt[i]}</tspan>'
+                      f'</text>')
+    try:
+        b = bands.index(band)
+    except ValueError:
+        b = 0
+    lo, hi = ranges[b]
+    frac = 0.0 if hi == lo else max(0.0, min(1.0, (score - lo) / (hi - lo)))
+    needle_ang = (180 - 36 * b) - (4 + frac * 28)
+    nx, ny = pt(needle_ang, R)                            # value-marker centred ON the coloured band
+    _a = _math.radians(needle_ang)
+    _ux, _uy = _math.cos(_a), -_math.sin(_a)              # unit vector hub -> badge
+    _px, _py = -_uy, _ux                                  # perpendicular
+    _rtip = R - 12.5                                      # arrow tip just touches the badge edge
+    _L, _W = 11.0, 6.0                                    # arrowhead length / half-width
+    _tx, _ty = cx + _rtip * _ux, cy + _rtip * _uy
+    _bx, _by = cx + (_rtip - _L) * _ux, cy + (_rtip - _L) * _uy
+    _ncol = "#d8dee9"   # neutral silver needle/arrow (distinct from the gradient colours)
+    needle = (f'<line x1="{cx:.0f}" y1="{cy:.0f}" x2="{_bx:.1f}" y2="{_by:.1f}" stroke="{_ncol}" '
+              f'stroke-width="3.2" stroke-linecap="round"/>'
+              f'<polygon points="{_tx:.1f},{_ty:.1f} {_bx + _W * _px:.1f},{_by + _W * _py:.1f} '
+              f'{_bx - _W * _px:.1f},{_by - _W * _py:.1f}" fill="{_ncol}"/>'
+              f'<circle cx="{cx:.0f}" cy="{cy:.0f}" r="7" fill="{_ncol}"/>')
+    # value marker at the needle tip showing the assessment score
+    _bcol = colors[b]                                    # band colour for the badge + label
+    tip = (f'<circle cx="{nx:.1f}" cy="{ny:.1f}" r="12.5" fill="{_bcol}" stroke="#0d1117" stroke-width="2.4"/>'
+           f'<text x="{nx:.1f}" y="{ny:.1f}" fill="#111111" font-size="11.5" font-weight="700" '
+           f'text-anchor="middle" dominant-baseline="central">{int(score)}</text>')
+    readout = (f'<text x="{cx:.0f}" y="{cy + 34:.0f}" fill="{_bcol}" font-size="16" font-weight="700" '
+               f'text-anchor="middle">{short[b]}</text>'
+               f'<text x="{cx:.0f}" y="{cy + 51:.0f}" fill="#9aa7bd" font-size="10.5" '
+               f'text-anchor="middle">assessment score {int(score)} of 47</text>')
+    return ('<svg viewBox="-12 -22 364 236" width="100%" style="max-width:400px;display:block;margin:.2rem auto .4rem">'
+            + "".join(segs) + "".join(labels) + needle + tip + readout + '</svg>')
+
+import time as _time
+def _gauth_cfg():
+    """Google OAuth config from secrets, or {} if not configured."""
+    try:
+        c = dict(st.secrets.get("google_oauth", {}))
+    except Exception:
+        c = {}
+    return c if (c.get("client_id") and c.get("client_secret") and c.get("redirect_uri")) else {}
+
+# ── Google OAuth callback (runs before view routing, on any page) ──
+_gcfg = _gauth_cfg()
+if _gcfg and ("code" in st.query_params) and ("state" in st.query_params):
+    _pend = _gd.pending_pop(st.query_params.get("state"))
+    _ret = "portfolio"
+    if _pend:
+        try:
+            _tok = _gd.exchange_code(_gcfg["client_id"], _gcfg["client_secret"],
+                                     st.query_params.get("code"), _gcfg["redirect_uri"],
+                                     _pend.get("verifier"))
+            st.session_state["gd_tokens"] = _tok
+            st.session_state["gd_user"] = _gd.userinfo(_tok.get("access_token", ""))
+            st.session_state.pop("gd_error", None)
+            st.session_state.pop("gd_authurl", None)
+            _ret = _pend.get("return_view", "portfolio")
+        except Exception as _e:
+            st.session_state["gd_error"] = "Sign-in failed: %s" % _e
+    else:
+        st.session_state["gd_error"] = "Sign-in session expired — please try again."
+    st.query_params.clear()
+    st.query_params["view"] = _ret
+    st.rerun()
+
+def _gd_token():
+    """Current valid Drive access token (refreshing if near expiry), or None."""
+    tok = st.session_state.get("gd_tokens")
+    if not tok or not _gcfg:
+        return None
+    if _time.time() - tok.get("obtained_at", 0) > (tok.get("expires_in", 3600) - 120):
+        if tok.get("refresh_token"):
+            try:
+                new = _gd.refresh_token(_gcfg["client_id"], _gcfg["client_secret"], tok["refresh_token"])
+                new.setdefault("refresh_token", tok["refresh_token"])
+                st.session_state["gd_tokens"] = new
+                tok = new
+            except Exception:
+                pass
+    return tok.get("access_token")
+
+def _gd_friendly(_e):
+    """Turn a raw Drive/OAuth exception into a short, human-readable hint."""
+    _s = str(_e)
+    if "401" in _s or "Unauthorized" in _s or "invalid_grant" in _s or "invalid_token" in _s:
+        return "your Google session has expired — click Sign out, then sign in again."
+    if "403" in _s or "insufficient" in _s.lower():
+        return "Google denied access — re-check the app's Drive permission on sign-in."
+    if "429" in _s:
+        return "Google is rate-limiting requests — wait a moment and try again."
+    return "Google Drive is unavailable right now — please try again in a moment."
+
 _view = st.query_params.get("view", "home")
 if _view not in _VIEWS:
     _view = "home"
 
 # Uppercase all button labels + centre all AI-powered boxes on the three tool
 # pages (Grid, Scalable, Backtest)
-if _view in ("optimiser", "scalable", "backtest", "about"):
+if _view in ("optimiser", "scalable", "backtest", "about", "riskprofile", "ticker", "portfolio"):
     st.markdown(
         "<style>section[data-testid='stMain'] .stButton button,"
         "section[data-testid='stMain'] .stDownloadButton button,"
@@ -1907,6 +2690,9 @@ if _view in ("optimiser", "scalable", "backtest", "about"):
         "section[data-testid='stSidebar'] .stDownloadButton button,"
         "section[data-testid='stSidebar'] [data-testid='stFileUploaderDropzone'] button"
         "{text-transform:uppercase}"
+        "section[data-testid='stMain'] [data-testid='stBaseLinkButton-primary'],"
+        "section[data-testid='stMain'] [data-testid='stBaseLinkButton-primary'] *"
+        "{text-transform:uppercase !important;color:#0d1117 !important}"
         "section[data-testid='stMain'] details[style*='rgba(74, 158, 255, 0.1)'],"
         "section[data-testid='stSidebar'] details[style*='rgba(74, 158, 255, 0.1)']"
         "{margin-left:auto !important;margin-right:auto !important;max-width:290px;box-sizing:border-box}"
@@ -1946,7 +2732,7 @@ if _view != "optimiser":
         "<style>section[data-testid='stSidebar'],"
         "[data-testid='stSidebarCollapsedControl']{display:none!important;}</style>",
         unsafe_allow_html=True)
-    if _view not in ("scalable", "backtest", "about", "glossary"):
+    if _view not in ("scalable", "backtest", "about", "glossary", "riskprofile", "ticker", "portfolio"):
         _bk, _bk_rest = st.columns([1, 6])
         with _bk:
             st.button(":material/home: Back to Main Screen", key="_nav_back", use_container_width=True, on_click=_go_home)
@@ -2267,7 +3053,10 @@ with st.sidebar:
                 f'<div style="color:#aebccd;margin-top:.4rem">{CONSTRAINT_EXPLANATIONS[_ckey]}</div></details>',
                 unsafe_allow_html=True)
 
-        H_val = st.slider("Threshold H (%)", -40, -1, -10, 1) / 100
+        # Keys + session-state defaults so the Risk-profile questionnaire can pre-fill
+        # these (via _apply_risk_profile); the user can still move the sliders freely.
+        st.session_state.setdefault("grid_H_pct", -10)
+        H_val = st.slider("Threshold H (%)", -40, -1, step=1, key="grid_H_pct") / 100
         st.markdown(
             '<div style="background:rgba(255,255,255,.05);border:1px solid #3a3a5a;border-radius:6px;'
             'padding:.3rem .8rem;color:#9aa7bd;font-size:.76rem;margin-top:.2rem">'
@@ -2276,7 +3065,8 @@ with st.sidebar:
             unsafe_allow_html=True)
 
         if not use_es:
-            alpha_val = st.slider("Max shortfall probability α (%)", 1, 15, 5, 1) / 100
+            st.session_state.setdefault("grid_alpha_pct", 5)
+            alpha_val = st.slider("Max shortfall probability α (%)", 1, 15, step=1, key="grid_alpha_pct") / 100
             L_val     = None
             # Formula box — white background
             st.markdown(
@@ -2767,13 +3557,94 @@ from scipy.stats import norm as _norm, t as _student_t, chi2 as _chi2
 
 # instruments the MC tab exposes (single/double-strike; collars/CGN/barrier deferred)
 MC_DER_TYPES = {
-    "Call":               "call",
-    "Put":                "put",
-    "Straddle":           "straddle",
-    "Strangle":           "strangle",
-    "Bull call spread":   "bull_call_spread",
-    "Bear put spread":    "bear_put_spread",
+    "Call":                       "call",
+    "Put":                        "put",
+    "Straddle":                   "straddle",
+    "Strangle":                   "strangle",
+    "Bull call spread":           "bull_call_spread",
+    "Bear put spread":            "bear_put_spread",
+    "Safety collar":              "safety_collar",
+    "Aggressive collar":          "aggressive_collar",
+    "Long butterfly (calls)":     "butterfly_call",
+    "Call condor":                "condor_call",
+    "Reverse convertible":        "reverse_convertible",
+    "Discount certificate":       "discount_certificate",
+    "Outperformance certificate": "outperformance_certificate",
+    "Capital-guaranteed note":            "cgn_uncapped",
+    "Capital-guaranteed note (capped)":   "cgn_capped",
 }
+
+# Barrier-M notes are intentionally absent: they are path-dependent (the payoff depends on
+# whether the underlying touched a level *during* the option's life), but the scalable engine
+# simulates only the horizon return, so they can't be priced here — use the Grid optimiser.
+
+
+def _mc_der_struct(dt, k1, k2, k3):
+    """Map a scalable derivative type + up to three numeric inputs (all ×-of-spot, S0=1) to the
+    params dict the MC pricer expects, plus a short human description. Returns
+    (params, desc, None) on success, or (None, None, warning) when a required input is missing.
+    `dt` is a value from MC_DER_TYPES; the same helper feeds both the live parser and the
+    resolved-settings preview so they never drift apart."""
+    def _atm(x):
+        return 1.0 if x is None else float(x)
+    if dt in ("call", "put", "straddle"):
+        k = _atm(k1)
+        return {"strike": k}, f"strike {k:.2f}×", None
+    if dt == "strangle":
+        if k1 is None or k2 is None:
+            return None, None, "needs both strikes (Strike, Strike-2)"
+        return ({"strike_kp": min(k1, k2), "strike_kc": max(k1, k2)},
+                f"put {min(k1, k2):.2f}× / call {max(k1, k2):.2f}×", None)
+    if dt == "bull_call_spread":
+        if k1 is None or k2 is None:
+            return None, None, "needs both strikes (Strike, Strike-2)"
+        return ({"k1": min(k1, k2), "k2": max(k1, k2)},
+                f"long {min(k1, k2):.2f}× / short {max(k1, k2):.2f}× call", None)
+    if dt == "bear_put_spread":
+        if k1 is None or k2 is None:
+            return None, None, "needs both strikes (Strike, Strike-2)"
+        return ({"k1": max(k1, k2), "k2": min(k1, k2)},
+                f"long {max(k1, k2):.2f}× / short {min(k1, k2):.2f}× put", None)
+    if dt in ("safety_collar", "aggressive_collar"):
+        if k1 is None or k2 is None:
+            return None, None, "needs put & call strikes (Strike, Strike-2)"
+        kp, kc = min(k1, k2), max(k1, k2)
+        legs = ("long put / short call" if dt == "safety_collar" else "short put / long call")
+        return ({"strike_p": kp, "strike_c": kc},
+                f"{legs} — put {kp:.2f}× / call {kc:.2f}×", None)
+    if dt == "butterfly_call":
+        c = _atm(k1)
+        if k2 is None or k2 <= 0:
+            return None, None, "needs a width (Strike-2)"
+        return ({"center": c, "width": float(k2)},
+                f"center {c:.2f}×, width ±{float(k2):.2f}", None)
+    if dt == "condor_call":
+        c = _atm(k1)
+        if k2 is None or k3 is None or k2 <= 0 or k3 <= 0:
+            return None, None, "needs inner & outer widths (Strike-2, Strike-3)"
+        wi, wo = min(k2, k3), max(k2, k3)
+        return ({"center": c, "w_in": wi, "w_out": wo},
+                f"center {c:.2f}×, inner ±{wi:.2f}, outer ±{wo:.2f}", None)
+    if dt == "reverse_convertible":
+        kp = _atm(k1)
+        return {"kp": kp}, f"bond − short put @ {kp:.2f}×", None
+    if dt == "discount_certificate":
+        kc = _atm(k1)
+        return {"kc": kc}, f"underlying capped at short call {kc:.2f}×", None
+    if dt == "outperformance_certificate":
+        k = _atm(k1)
+        return {"k": k}, f"geared upside above {k:.2f}×", None
+    if dt == "cgn_uncapped":
+        g = _atm(k1)
+        return ({"floor": g - 1.0, "participation": 1.0},
+                f"guarantee {g*100:.0f}% of spot · 100% participation · uncapped", None)
+    if dt == "cgn_capped":
+        g = _atm(k1)
+        if k2 is None:
+            return None, None, "needs a cap level (Strike-2, e.g. 1.30 = +30%)"
+        return ({"floor": g - 1.0, "participation": 1.0, "cap": float(k2) - 1.0},
+                f"guarantee {g*100:.0f}% · cap at {float(k2)*100:.0f}% of spot · 100% participation", None)
+    return None, None, "unsupported in the scalable engine"
 
 # _mc_psd_cholesky -> moved to core/scenario.py
 
@@ -2937,13 +3808,17 @@ The chart shows the efficient frontiers and up to four portfolio markers:
 
 </div>
 """, unsafe_allow_html=True)
-        with st.expander("**Up to four portfolios can be generated as output of the optimisation**", expanded=False, icon=":material/insights:"):
+        with st.expander("**Up to four optimised portfolios — plus benchmark references**", expanded=False, icon=":material/insights:"):
             st.markdown('''
 <div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#111111;font-size:.82rem">
 <b style="color:#a855f7">Portfolio (0)</b> — Markowitz mean-variance optimum (no derivative): the minimum-variance portfolio at Portfolio (1)'s expected return. It coincides with Portfolio (1) when Portfolio (1) is mean-variance efficient — directly demonstrating the MVT/MAT equivalence (shown whenever Portfolio (1) exists)<br>
 <b style="color:#10b981">Portfolio (1)</b> — Behavioural optimum without derivatives at the chosen constraint (H, α): mean-variance efficient via the mental-accounting framework, and coincides with Portfolio (0) when the implied λ equals 3.795 (the MVT/MAT equivalence)<br>
 <b style="color:#f59e0b">Portfolio (2)</b> — Behavioural optimum with derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
-<b style="color:#e76f51">Portfolio (3)</b> — Portfolio with derivative and with the same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (indicative only)
+<b style="color:#e76f51">Portfolio (3)</b> — Portfolio with derivative and with the same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (indicative only)<br>
+<b style="color:#556a8a">Equal-weight (1/N)</b> — naive diversification: every security weighted equally; an assumption-free reference that uses no estimates (sits inside the Markowitz frontier — mean-variance-dominated)<br>
+<b style="color:#556a8a">Minimum-variance</b> — the long-only securities portfolio with the lowest variance: the left tip of the Markowitz frontier<br>
+<b style="color:#556a8a">Max-Sharpe (tangency)</b> — the highest Sharpe-ratio securities portfolio: the classical mean-variance optimum, sitting on the Markowitz frontier
+<div style="margin-top:.5rem;color:#555">Portfolios (0)–(3) are the optimisation's own outputs. The last three are <b>benchmark references</b> (securities only, long-only), plotted as slate diamonds on the chart for context — they are not optimisation results.</div>
 </div>
 ''', unsafe_allow_html=True)
         st.markdown("""
@@ -3118,13 +3993,17 @@ The chart shows the efficient frontiers and up to four portfolio markers:
         ]
 
         # Three portfolio perspectives note
-        with st.expander("**Up to four portfolios can be generated as output of the optimisation**", expanded=False, icon=":material/insights:"):
+        with st.expander("**Up to four optimised portfolios — plus benchmark references**", expanded=False, icon=":material/insights:"):
             st.markdown('''
 <div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#111111;font-size:.82rem">
 <b style="color:#a855f7">Portfolio (0)</b> — Markowitz mean-variance optimum (no derivative): the minimum-variance portfolio at Portfolio (1)'s expected return. It coincides with Portfolio (1) when Portfolio (1) is mean-variance efficient — directly demonstrating the MVT/MAT equivalence (shown whenever Portfolio (1) exists)<br>
 <b style="color:#10b981">Portfolio (1)</b> — Behavioural optimum without derivatives at the chosen constraint (H, α): mean-variance efficient via the mental-accounting framework, and coincides with Portfolio (0) when the implied λ equals 3.795 (the MVT/MAT equivalence)<br>
 <b style="color:#f59e0b">Portfolio (2)</b> — Behavioural optimum with derivative, same mental-accounting &amp; risk-aversion constraint (H, α ↔ λ): may reach higher expected returns by exploiting asymmetric derivative payoffs<br>
-<b style="color:#e76f51">Portfolio (3)</b> — Portfolio with derivative and with the same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (indicative only)
+<b style="color:#e76f51">Portfolio (3)</b> — Portfolio with derivative and with the same variance as Portfolio (1): interpolated from the derivative frontier at equivalent risk level (indicative only)<br>
+<b style="color:#556a8a">Equal-weight (1/N)</b> — naive diversification: every security weighted equally; an assumption-free reference that uses no estimates (sits inside the Markowitz frontier — mean-variance-dominated)<br>
+<b style="color:#556a8a">Minimum-variance</b> — the long-only securities portfolio with the lowest variance: the left tip of the Markowitz frontier<br>
+<b style="color:#556a8a">Max-Sharpe (tangency)</b> — the highest Sharpe-ratio securities portfolio: the classical mean-variance optimum, sitting on the Markowitz frontier
+<div style="margin-top:.5rem;color:#555">Portfolios (0)–(3) are the optimisation's own outputs. The last three are <b>benchmark references</b> (securities only, long-only), plotted as slate diamonds on the chart for context — they are not optimisation results.</div>
 </div>
 ''', unsafe_allow_html=True)
 
@@ -3235,12 +4114,23 @@ The chart shows the efficient frontiers and up to four portfolio markers:
                 else:
                     _p0_lam_str = "matched to Portfolio (1)'s expected return"
 
+            # Naive benchmark points (securities only) for the frontier chart
+            _grid_benchmarks = []
+            try:
+                from core import benchmarks as _bm
+                for _blbl, _bw in _bm.benchmark_set(means_arr, cov_mat):
+                    _bs = _bm.stats_from_moments(_bw, means_arr, cov_mat)
+                    _grid_benchmarks.append((_blbl.split(" (")[0], _bs["vol"] * 100, _bs["er"] * 100))
+            except Exception:
+                _grid_benchmarks = []
+
             fig_plotly=plot_frontier_plotly(mv_x,mv_y,_p0,nd_xs,nd_ys,nd_lbls,
                                             der_xs,der_ys,der_lbls,der_label_sel,H_val,alpha_val,
                                             p3_x=_p3_x, p3_y=_p3_y,
                                             nd_res_actual=_nd_res_pre,
                                             lam_actual=_lam_actual, L=L_val,
-                                            mv_eq_lam_str=_p0_lam_str)
+                                            mv_eq_lam_str=_p0_lam_str,
+                                            benchmarks=_grid_benchmarks)
             st.session_state['_fig_plotly'] = fig_plotly
             # Record times for chart + results steps
             _chart_t = _time.time() - _step_start
@@ -3262,6 +4152,51 @@ The chart shows the efficient frontiers and up to four portfolio markers:
                 'lam_actual': _lam_actual,
                 'p3_x': _p3_x, 'p3_y': _p3_y,
             }
+            # ── Data for the unified interactive 3D landscape (Monte-Carlo) ──
+            # A joint scenario set of every instrument (securities + the derivative) lets the
+            # fragment compute ANY objective for ANY instrument pair. This is a scalable-style
+            # MC *illustration* of the grid problem, not the exact state-space solve — see the
+            # in-plot method note. The optima are the exact grid weights (Portfolio 1 / 2).
+            try:
+                from core.scenario import mc_generate_scenarios as _mcg, mc_build_matrix as _mcb
+                _S3 = 12000
+                _sig3 = np.asarray(sigs_arr, float)
+                _corr3 = np.asarray(cov_mat, float) / np.outer(_sig3, _sig3)
+                _Rsec = _mcg(np.asarray(means_arr, float), _sig3, _corr3, S=_S3, seed=0)
+                _labels3 = list(names_in); _Rfull = _Rsec; _w2 = None
+                if der_config:
+                    _ui3 = int(der_params.get("underlying_idx", der_config.get("underlying_index", 0)))
+                    _dspec = [{"der_type": der_type, "params": dict(der_params), "underlying_idx": _ui3,
+                               "T": float(der_params.get("T", 1.0)), "vol_override": der_params.get("vol"),
+                               "r": float(der_params.get("r", 0.03)), "label": der_label_sel}]
+                    try:
+                        _Rf, _lb, _errs = _mcb(_Rsec, _dspec, _sig3, list(names_in),
+                                               r=float(der_params.get("r", 0.03)),
+                                               T=float(der_params.get("T", 1.0)))
+                        if not _errs:
+                            _Rfull, _labels3 = _Rf, _lb
+                    except Exception:
+                        pass
+                    try:
+                        _dr2, _ = run_opt(means_arr, sigs_arr, cov_mat, der_config, H_val, _alpha,
+                                          m_val, mp_val, constraint_type=_ctype, L=_L)
+                        if _dr2 is not None and _dr2.get('weights') is not None:
+                            _w2 = [float(x) for x in _dr2['weights']]
+                    except Exception:
+                        _w2 = None
+                _w1 = [float(x) for x in _nd_res_pre['weights']] if (_nd_res_pre and 'weights' in _nd_res_pre) else None
+                st.session_state['_grid3d_data'] = {
+                    'labels': _labels3,
+                    'R': np.asarray(_Rfull, dtype='float32'),
+                    'n_sec': len(names_in),
+                    'w1': _w1, 'w2': (_w2 if (_w2 and len(_w2) == len(_labels3)) else None),
+                    'lam': float(_lam_actual) if _lam_actual else None,
+                    'H': float(H_val), 'alpha': (float(_alpha) if _alpha is not None else None),
+                    'use_es': bool(use_es), 'L': (float(_L) if _L is not None else None),
+                    'der_label': (der_label_sel if der_config else None),
+                }
+            except Exception:
+                st.session_state['_grid3d_data'] = None
             st.session_state['_fig_png'] = None  # will be built at PDF time
 
             # ── Simulation summary + chart side by side ───────────────────────
@@ -3313,7 +4248,7 @@ The chart shows the efficient frontiers and up to four portfolio markers:
                 def _lbl(t): return f'<div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">{t}</div>'
                 def _val(v): return f'<div style="margin-bottom:.6rem">{v}</div>'
                 _html = (
-                    '<div style="background:#1b2330;border:1px solid #1a3a5c;border-radius:8px;min-height:560px;'
+                    '<div class="g3d-sumcard" style="background:#1b2330;border:1px solid #1a3a5c;border-radius:8px;min-height:560px;height:100%;box-sizing:border-box;'
                     'padding:.8rem 1rem;color:#c0c8d8;font-size:.8rem">'
                     '<div style="color:#E3C77E;font-weight:700;font-size:.85rem;'
                     'margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">'
@@ -3332,24 +4267,15 @@ The chart shows the efficient frontiers and up to four portfolio markers:
 
 
             with col_chart:
-                st.plotly_chart(fig_plotly, use_container_width=True, config={'responsive': True, 'edits': {'annotationPosition': True, 'annotationTail': True, 'legendPosition': True}, 'displayModeBar': True})
+                _g3d_u = st.session_state.get('_grid3d_data')
+                if _g3d_u and (_g3d_u.get('R') is not None) and (_g3d_u.get('w1') or _g3d_u.get('w2')):
+                    with st.expander("Objective landscape in 3D — pick instruments & objective", expanded=True, icon=":material/view_in_ar:"):
+                        _grid_obj_surface_view()
+                else:
+                    _render_frontier_synced(fig_plotly)
 
-        # ── Reading the chart — full width below columns ──────────────────────
-        with st.expander("📐 Reading the chart", expanded=False):
-            st.markdown(
-                '<div style="background:#ffffff;border:none;border-radius:8px;'
-                'padding:.8rem 1rem;margin-top:.5rem;color:#111111;font-size:.82rem">'
-                'Without derivatives, the blue behavioural frontier should closely track the purple MV frontier, '
-                'confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010). '
-                'With derivatives, the frontiers may diverge — this is expected and is the core contribution of the framework: '
-                'derivatives allow the behavioural approach to reach portfolios that mean-variance optimisation cannot. '
-                'Small gaps below the MV frontier are grid discretisation. A blue point sitting <i>well</i> below it, however, '
-                'means the optimiser missed the true optimum for that H — in the no-derivative case the behavioural optimum is '
-                'mean-variance efficient and should lie on the purple frontier. This happens most often with '
-                '<b style="color:#d97706">Turbo</b>, whose coarse grid can be unreliable near the feasibility boundary; switch to '
-                'Standard or High precision for a clean frontier. (With derivatives, genuine divergence from the MV frontier is '
-                'expected and is the point of the framework.)</div>',
-                unsafe_allow_html=True)
+        # ── "Reading the chart" note now renders next to the 2D frontier, which has
+        #    moved down into the Results section (below the 3D landscape). ──────────
 
 
     # ── For cache render path: show params + chart from session state ───────
@@ -3366,7 +4292,7 @@ The chart shows the efficient frontiers and up to four portfolio markers:
         )
         def _lbl_c(t): return f'<div style="color:#7fb3e8;font-size:.72rem;margin-bottom:.2rem">{t}</div>'
         def _val_c(v): return f'<div style="margin-bottom:.6rem">{v}</div>'
-        _html_c = ('<div style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;min-height:560px;'
+        _html_c = ('<div class="g3d-sumcard" style="background:#0d1a2e;border:1px solid #1a3a5c;border-radius:8px;min-height:560px;height:100%;box-sizing:border-box;'
                    'padding:.8rem 1rem;color:#c0c8d8;font-size:.8rem">'
                    '<div style="color:#4a9eff;font-weight:700;font-size:.85rem;'
                    'margin-bottom:.6rem;border-bottom:1px solid #1a3a5c;padding-bottom:.4rem">'
@@ -3387,16 +4313,57 @@ The chart shows the efficient frontiers and up to four portfolio markers:
         with _col_s_c:
             st.markdown(_html_c, unsafe_allow_html=True)
         with _col_ch_c:
-            if st.session_state.get('_fig_plotly'):
-                st.plotly_chart(st.session_state['_fig_plotly'],
-                               use_container_width=True,
-                               config={'responsive': True, 'edits': {'annotationPosition': True, 'annotationTail': True, 'legendPosition': True}, 'displayModeBar': True})
+            _g3d_c = st.session_state.get('_grid3d_data')
+            if _g3d_c and (_g3d_c.get('R') is not None) and (_g3d_c.get('w1') or _g3d_c.get('w2')):
+                with st.expander("Objective landscape in 3D — pick instruments & objective", expanded=True, icon=":material/view_in_ar:"):
+                    _grid_obj_surface_view()
+            elif st.session_state.get('_fig_plotly'):
+                _render_frontier_synced(st.session_state['_fig_plotly'])
 
     if _run_active and (_needs_compute or _render_from_cache):
         # ── Results ───────────────────────────────────────────────────────────────
+        _g3d = st.session_state.get('_grid3d_data')
+        _g3d_shown = bool(_g3d and (_g3d.get('R') is not None) and (_g3d.get('w1') or _g3d.get('w2')))
+        # Equal-height frames: stretch the parameters card to the 3D panel's height so the two
+        # frames in the results-header row stay aligned (scoped to the .g3d-sumcard card only).
+        st.markdown(
+            "<style>"
+            "div[data-testid='stHorizontalBlock']:has(.g3d-sumcard){align-items:stretch}"
+            "div[data-testid='stHorizontalBlock']:has(.g3d-sumcard) > div:first-child{height:auto}"
+            "div[data-testid='stHorizontalBlock']:has(.g3d-sumcard) > div:first-child *:has(.g3d-sumcard){height:100%}"
+            ".g3d-sumcard{height:100%;box-sizing:border-box}"
+            "</style>", unsafe_allow_html=True)
+        # ── 3D landscape method note — full width, directly below the params + 3D columns ──
+        # Rendered here (outside the columns) so expanding it never breaks the alignment above.
+        if _g3d_shown:
+            _kap = float(st.session_state.get('_g3d_kappa', 1.0))
+            with st.expander("Method & approximations — 3D objective landscape", expanded=False, icon=":material/functions:"):
+                st.markdown(_G3D_METHOD_NOTE_HTML.replace('__KAP__', f'{_kap:.2f}'),
+                            unsafe_allow_html=True)
         st.markdown("---")
         constraint_label = f"H={H_val:.0%}, α={_alpha:.0%}" if not use_es else f"H={H_val:.0%}, L={_L:.0%}"
         _lam_suffix = f" — implied λ = {lam_summary}" if lam_summary and lam_summary != "—" else ""
+        # ── 2D return / tail-risk frontier (swapped down below the 3D landscape) ──
+        # The 3D landscape now occupies the results-header slot above; the classical
+        # 2D frontier renders here in full width, with its reading note alongside.
+        if _g3d_shown and st.session_state.get('_fig_plotly'):
+            _render_frontier_synced(st.session_state['_fig_plotly'])
+            with st.expander("📐 Reading the chart", expanded=False):
+                st.markdown(
+                    '<div style="background:#ffffff;border:none;border-radius:8px;'
+                    'padding:.8rem 1rem;margin-top:.5rem;color:#111111;font-size:.82rem">'
+                    'Without derivatives, the blue behavioural frontier should closely track the purple MV frontier, '
+                    'confirming the MVT/MAT equivalence (Das, Markowitz, Scheid &amp; Statman, 2010). '
+                    'With derivatives, the frontiers may diverge — this is expected and is the core contribution of the framework: '
+                    'derivatives allow the behavioural approach to reach portfolios that mean-variance optimisation cannot. '
+                    'Small gaps below the MV frontier are grid discretisation. A blue point sitting <i>well</i> below it, however, '
+                    'means the optimiser missed the true optimum for that H — in the no-derivative case the behavioural optimum is '
+                    'mean-variance efficient and should lie on the purple frontier. This happens most often with '
+                    '<b style="color:#d97706">Turbo</b>, whose coarse grid can be unreliable near the feasibility boundary; switch to '
+                    'Standard or High precision for a clean frontier. (With derivatives, genuine divergence from the MV frontier is '
+                    'expected and is the point of the framework.)</div>',
+                    unsafe_allow_html=True)
+
         st.markdown(
             f'<h3 style="color:#E3C77E;text-align:center">'
             f'Optimal portfolios with {constraint_label}{_lam_suffix}</h3>',
@@ -3556,6 +4523,18 @@ The chart shows the efficient frontiers and up to four portfolio markers:
         if der_config and (p3_return is not None) and (p3_std is not None):
             _sum_rows.append(("#e76f51", f"Portfolio (3) — Same variance as Portfolio (1), with {der_label_sel}",
                               p3_return, p3_std, "—", _delta_pp(p3_return)))
+        # Naive / classical benchmarks (long-only, same securities) — for context
+        _has_benchmarks = False
+        try:
+            from core import benchmarks as _bm
+            for _blbl, _bw in _bm.benchmark_set(means_arr, cov_mat, rf=getattr(_bm, "RF_ANNUAL", 0.03)):
+                _bs = _bm.stats_from_moments(_bw, means_arr, cov_mat)
+                _sum_rows.append(("#7d8aa0", f"Benchmark — {_blbl}",
+                                  _bs["er"] * 100, _bs["vol"] * 100, "0.000",
+                                  _delta_pp(_bs["er"] * 100)))
+                _has_benchmarks = True
+        except Exception:
+            pass
         if _sum_rows:
             _trs = ""
             for _clr, _name, _ret, _std, _skew, _dlt in _sum_rows:
@@ -3584,7 +4563,11 @@ The chart shows the efficient frontiers and up to four portfolio markers:
                 '<div style="color:#6b7f99;font-size:.7rem;margin-top:.4rem">'
                 '&Delta; vs (1) = expected-return gap relative to Portfolio (1). '
                 'Portfolio (0) is a Gaussian mean-variance construct (skewness 0). '
-                'Portfolio (3) is interpolated from the derivative frontier (indicative only).</div>'
+                'Portfolio (3) is interpolated from the derivative frontier (indicative only).'
+                + (' Benchmarks are long-only, fully-invested portfolios of the same securities '
+                   '(equal-weight, minimum-variance, max-Sharpe) shown for context, not ranking.'
+                   if _has_benchmarks else '')
+                + '</div>'
                 '</div>')
             st.markdown(_summary_html, unsafe_allow_html=True)
 
@@ -3979,7 +4962,7 @@ elif _view == "scalable":
 </tr>
 <tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">4</span></span></td>
-  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Constraint</strong> — Set the tail probability α, the α-CVaR floor L (mean of the worst α% of outcomes ≥ L), and an optional max weight per asset</td>
+  <td style="padding:.5rem .5rem .5rem .3rem"><strong>Constraint</strong> — Set the tail probability α, the α-CVaR floor L (mean of the worst α% of outcomes ≥ L), and optional min/max weight bounds per security</td>
 </tr>
 <tr>
   <td style="padding:.5rem .4rem .5rem .8rem;white-space:nowrap"><span style="display:flex;align-items:center;gap:.4rem">Step <span style="display:inline-block;background:#ffffff;color:#0d1117;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.9rem;font-weight:700">5</span></span></td>
@@ -4066,9 +5049,13 @@ elif _view == "scalable":
             "- **Complements the grid.** The grid optimiser is exact for small N and remains "
             "the reference; this engine is the route for large, multi-derivative portfolios. "
             "The validation panel below cross-checks the engine against closed-form values.\n"
-            "- **Derivatives in this tab:** vanilla call/put, straddle, strangle and the two "
-            "vertical spreads (single/double strike). Collars, capital-guaranteed and "
-            "barrier notes are available in the exact engine and can be added here later."
+            "- **Derivatives in this tab:** the full terminal-payoff library — calls, puts, "
+            "straddles, strangles, vertical spreads, safety & aggressive collars, long butterfly, "
+            "call condor, reverse convertible, discount & outperformance certificates, and "
+            "capital-guaranteed notes (capped/uncapped). The only instrument reserved for the exact "
+            "grid engine is the **barrier-M note**: it is path-dependent, and this engine simulates "
+            "the horizon return only, not the full price path. (Capital-guaranteed notes here use "
+            "100% participation; for a custom participation rate, use the grid engine.)"
         )
 
     st.markdown('<div style="text-align:center;font-size:18px;font-weight:600;margin:1.4rem 0 0;color:#e7ecf4">⚙️ <span style="color:#E3C77E">Optimisation Parameters</span></div><div style="text-align:center;color:#E3C77E;font-size:.85rem;line-height:1;margin:-.15rem 0 1.2rem">▼</div>', unsafe_allow_html=True)
@@ -4134,17 +5121,32 @@ elif _view == "scalable":
     with st.container(border=True):
         st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
         _mc_head("Derivatives  (optional — add multiple)", 3)
-        _mc_ai("How derivatives enter the model", "Each row is priced by Black-Scholes on its underlying and added as an extra payoff column evaluated across all S scenarios — so non-normal option payoffs (calls, puts, spreads, straddles) flow straight into the optimisation.")
+        _mc_ai("How derivatives enter the model", "Each row is priced by Black-Scholes on its underlying and added as an extra payoff column evaluated across all S scenarios — so non-normal payoffs (options, spreads, collars, structured notes and certificates) flow straight into the optimisation. Add as many as you like; the only type not available here is the path-dependent barrier-M note (use the Grid optimiser).")
         st.caption("Add one row per derivative — pick a Type and an Underlying. New rows pre-fill "
                    "strike 1.00 (at-the-money), maturity 1 year (settled at intrinsic at the horizon; "
                    "raise it to mark the option to market with its remaining life) and rate 3% — all "
                    "editable. Implied vol stays \"auto\" (the underlying's own volatility, consistent "
                    "with the scenarios); the resolved value per row is listed below the table, where you "
-                   "can confirm each derivative's settings.")
+                   "can confirm each derivative's settings. All strikes/levels are × of spot (S₀=1).")
+        st.markdown(
+            "<details style='background:rgba(74,158,255,.08);border:1px solid #34527a;border-radius:6px;"
+            "padding:.4rem .8rem;margin:.1rem 0 .7rem;font-size:.82rem'>"
+            "<summary style='cursor:pointer;color:#79b6ff;font-weight:600;list-style:none'>"
+            "ℹ️ Which columns each type uses</summary>"
+            "<div style='color:#aebccd;margin-top:.45rem;line-height:1.6'>"
+            "<b>Strike</b> only: Call, Put, Straddle, Reverse convertible (put), Discount certificate (cap call), "
+            "Outperformance certificate, Capital-guaranteed note (guarantee level, e.g. 1.00 = 100%).<br>"
+            "<b>Strike + Strike-2</b>: Strangle / spreads / collars (the two strikes), "
+            "Long butterfly (center, width), CGN-capped (guarantee level, cap level — e.g. 1.30 = +30%).<br>"
+            "<b>Strike + Strike-2 + Strike-3</b>: Call condor (center, inner width, outer width).<br>"
+            "Capital-guaranteed notes use 100% participation here; for a custom participation rate or a "
+            "<b>Barrier-M note</b> (path-dependent, not priceable from horizon-only scenarios) use the "
+            "<b>Grid optimiser</b>.</div></details>", unsafe_allow_html=True)
         import pandas as _pd
         _mc_der_template = _pd.DataFrame(
             {"Type": _pd.Series(dtype="str"), "Underlying": _pd.Series(dtype="str"),
              "Strike": _pd.Series(dtype="float"), "Strike2": _pd.Series(dtype="float"),
+             "Strike3": _pd.Series(dtype="float"),
              "Maturity": _pd.Series(dtype="float"), "ImplVol": _pd.Series(dtype="float"),
              "Rate": _pd.Series(dtype="float")})
         mc_der_table = st.data_editor(
@@ -4158,7 +5160,14 @@ elif _view == "scalable":
                 "Strike": st.column_config.NumberColumn("Strike (×)", min_value=0.1, max_value=3.0,
                                                         step=0.05, format="%.2f", default=1.0),
                 "Strike2": st.column_config.NumberColumn("Strike-2 (×)", min_value=0.1, max_value=3.0,
-                                                         step=0.05, format="%.2f"),
+                                                         step=0.05, format="%.2f",
+                                                         help="Second strike / level for multi-leg products "
+                                                              "(spread, collar, strangle, butterfly width, "
+                                                              "condor inner width, CGN cap level)."),
+                "Strike3": st.column_config.NumberColumn("Strike-3 (×)", min_value=0.1, max_value=3.0,
+                                                         step=0.05, format="%.2f",
+                                                         help="Third input — only the Call condor uses it "
+                                                              "(outer width)."),
                 "Maturity": st.column_config.NumberColumn(
                     "Maturity (yr)", min_value=1.0, max_value=5.0, step=0.25, format="%.2f", default=1.0,
                     help="Option maturity in years. 1.0 = expires at the 1-year horizon (settled at "
@@ -4189,7 +5198,6 @@ elif _view == "scalable":
                 _mc_preview.append(f"⚠️ **{_ty}** — pick an underlying (ignored until you do)")
                 continue
             _un = _r.get("Underlying")
-            _k  = "1.00" if _mc_isblank(_r.get("Strike"))   else f"{float(_r.get('Strike')):.2f}"
             _t  = "1.00" if _mc_isblank(_r.get("Maturity")) else f"{float(_r.get('Maturity')):.2f}"
             _rt = "3.00" if _mc_isblank(_r.get("Rate"))     else f"{float(_r.get('Rate')):.2f}"
             if _mc_isblank(_r.get("ImplVol")):
@@ -4197,8 +5205,14 @@ elif _view == "scalable":
                        else "auto (underlying \u03c3, set on run)")
             else:
                 _iv = f"{float(_r.get('ImplVol')):.0f}%"
-            _k2 = "" if _mc_isblank(_r.get("Strike2")) else f", strike-2 {float(_r.get('Strike2')):.2f}\u00d7"
-            _mc_preview.append(f"\u2022 **{_ty}** on **{_un}** \u2014 strike {_k}\u00d7{_k2}, maturity {_t} y, vol {_iv}, rate {_rt}%")
+            _pk1 = None if _mc_isblank(_r.get("Strike"))  else float(_r.get("Strike"))
+            _pk2 = None if _mc_isblank(_r.get("Strike2")) else float(_r.get("Strike2"))
+            _pk3 = None if _mc_isblank(_r.get("Strike3")) else float(_r.get("Strike3"))
+            _pparams, _pdesc, _pwarn = _mc_der_struct(MC_DER_TYPES[_ty], _pk1, _pk2, _pk3)
+            if _pparams is None:
+                _mc_preview.append(f"\u26a0\ufe0f **{_ty}** on **{_un}** \u2014 {_pwarn}")
+            else:
+                _mc_preview.append(f"\u2022 **{_ty}** on **{_un}** \u2014 {_pdesc}, maturity {_t} y, vol {_iv}, rate {_rt}%")
         if _mc_preview:
             st.caption("Resolved settings (blank cells use the defaults shown):")
             st.markdown("  \n".join(_mc_preview))
@@ -4207,16 +5221,70 @@ elif _view == "scalable":
     with st.container(border=True):
         st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
         _mc_head("Constraint", 4)
-        _mc_ai("What do α and the CVaR floor mean?", "<b>Tail probability α</b> sets how deep into the downside you look — the worst <b>α%</b> of scenarios (α = 5% means the worst 1-in-20 outcomes).<br><br><b>α-CVaR</b> is the average loss across that tail; the linear program maximises expected return while keeping it at or above the floor <b>L</b>, and within any max weight per asset.")
-        cmc1, cmc2, cmc3 = st.columns(3)
+        _mc_ai("What do α and the CVaR floor mean?", "<b>Tail probability α</b> sets how deep into the downside you look — the worst <b>α%</b> of scenarios (α = 5% means the worst 1-in-20 outcomes).<br><br><b>α-CVaR</b> is the average loss across that tail; the linear program maximises expected return while keeping it at or above the floor <b>L</b>, and within each security's min/max weight bounds.")
+        cmc1, cmc2 = st.columns(2)
         with cmc1:
-            mc_alpha = st.slider("Tail probability α", 1, 25, 5, 1, format="%d%%", key="mc_alpha") / 100.0
+            st.session_state.setdefault("mc_alpha", 5)
+            mc_alpha = st.slider("Tail probability α", 1, 25, step=1, format="%d%%", key="mc_alpha") / 100.0
         with cmc2:
+            st.session_state.setdefault("mc_L", -20)
             mc_L = st.slider("α-CVaR floor L  (mean of worst α% ≥ L)",
-                             -40, 0, -20, 1, format="%d%%", key="mc_L") / 100.0
-        with cmc3:
-            _wm = st.slider("Max weight per asset", 5, 100, 100, 5, format="%d%%", key="mc_wmax")
-        mc_wmax = None if _wm >= 100 else _wm / 100.0
+                             -40, 0, step=1, format="%d%%", key="mc_L") / 100.0
+
+        # --- Per-security weight bounds (replaces the old single global max-weight slider) ---
+        st.markdown("<div style='margin:1rem 0 .15rem;font-weight:600;color:#E3C77E'>"
+                    "Per-security weight bounds</div>", unsafe_allow_html=True)
+        st.caption("Set a minimum and maximum % for each security. The optimum is always fully "
+                   "invested (weights sum to 100%), so each security is held between its floor and "
+                   "its cap. Leave a row at 0–100% to leave it unconstrained. Derivative legs are "
+                   "not bounded here — the α and L conditions already govern them.")
+        _mc_secs = (list(dict.fromkeys(_mc_tk)) if mc_source.startswith("Live")
+                    else list(DEFAULT_NAMES))
+        mc_bounds_table = None
+        if _mc_secs:
+            _mc_bounds_template = pd.DataFrame({
+                "Security": _mc_secs,
+                "Min %": [0] * len(_mc_secs),
+                "Max %": [100] * len(_mc_secs),
+            })
+            mc_bounds_table = st.data_editor(
+                _mc_bounds_template, hide_index=True, use_container_width=True,
+                disabled=["Security"],
+                key="mc_bounds::" + "|".join(_mc_secs),   # fresh editor when the universe changes
+                column_config={
+                    "Security": st.column_config.TextColumn("Security", width="medium"),
+                    "Min %": st.column_config.NumberColumn(
+                        "Min %", min_value=0, max_value=100, step=1, format="%d%%"),
+                    "Max %": st.column_config.NumberColumn(
+                        "Max %", min_value=0, max_value=100, step=1, format="%d%%"),
+                })
+        else:
+            st.caption("Enter at least one ticker above to set per-security bounds.")
+
+        # Resolve bounds (fractions, keyed by security) and run a live feasibility check.
+        mc_sec_max, mc_sec_min, mc_bounds_ok = {}, {}, True
+        if mc_bounds_table is not None and len(mc_bounds_table):
+            _bt = mc_bounds_table.fillna({"Min %": 0, "Max %": 100})
+            _secn = _bt["Security"].tolist()
+            _mins = [float(x) for x in _bt["Min %"].tolist()]
+            _maxs = [float(x) for x in _bt["Max %"].tolist()]
+            for _s, _lo, _hi in zip(_secn, _mins, _maxs):
+                mc_sec_min[_s] = _lo / 100.0
+                mc_sec_max[_s] = _hi / 100.0
+            _row_bad = [_secn[i] for i in range(len(_secn)) if _mins[i] > _maxs[i]]
+            _sum_max, _sum_min = sum(_maxs), sum(_mins)
+            _msgs = []
+            if _row_bad:
+                _msgs.append("Min exceeds Max for: " + ", ".join(_row_bad) + ".")
+            if _sum_max < 100:
+                _msgs.append(f"Max weights add up to {_sum_max:.0f}% — below 100%, so no "
+                             f"fully-invested portfolio fits. Raise some caps.")
+            if _sum_min > 100:
+                _msgs.append(f"Min weights add up to {_sum_min:.0f}% — above 100%, which "
+                             f"over-invests the portfolio. Lower some floors.")
+            if _msgs:
+                mc_bounds_ok = False
+                st.error("  \n".join("• " + m for m in _msgs))
 
     st.markdown("<hr style='border:none;border-top:1px solid #E3C77E;margin:.6rem 0 1.6rem'>", unsafe_allow_html=True)
     with st.container(border=True):
@@ -4232,7 +5300,9 @@ elif _view == "scalable":
     _mcb = st.columns([1, 2, 1])
     with _mcb[1]:
         mc_run = st.button("▶  Run scalable optimiser", type="primary", key="mc_run",
-                           use_container_width=True)
+                           use_container_width=True, disabled=not mc_bounds_ok)
+    if not mc_bounds_ok:
+        st.caption("Adjust the per-security weight bounds above to enable the run.")
 
     if mc_run:
         try:
@@ -4272,28 +5342,18 @@ elif _view == "scalable":
                     if undl not in names:
                         der_warn.append(f"{typ_lbl} on {undl} (ticker unavailable)"); continue
                     dt = MC_DER_TYPES[typ_lbl]
-                    k1 = row.get("Strike"); k2 = row.get("Strike2")
+                    k1 = row.get("Strike"); k2 = row.get("Strike2"); k3 = row.get("Strike3")
                     k1 = float(k1) if k1 == k1 and k1 is not None else None
                     k2 = float(k2) if k2 == k2 and k2 is not None else None
-                    if dt in ("call", "put", "straddle"):
-                        if k1 is None: k1 = 1.0  # blank strike -> at-the-money default
-                        params = {"strike": k1}
-                    elif dt == "strangle":
-                        if k1 is None or k2 is None: der_warn.append(f"{typ_lbl}: needs both strikes"); continue
-                        params = {"strike_kp": min(k1, k2), "strike_kc": max(k1, k2)}
-                    elif dt == "bull_call_spread":
-                        if k1 is None or k2 is None: der_warn.append(f"{typ_lbl}: needs both strikes"); continue
-                        params = {"k1": min(k1, k2), "k2": max(k1, k2)}
-                    elif dt == "bear_put_spread":
-                        if k1 is None or k2 is None: der_warn.append(f"{typ_lbl}: needs both strikes"); continue
-                        params = {"k1": max(k1, k2), "k2": min(k1, k2)}
-                    else:
-                        continue
+                    k3 = float(k3) if k3 == k3 and k3 is not None else None
+                    params, _pdesc, _pwarn = _mc_der_struct(dt, k1, k2, k3)
+                    if params is None:
+                        der_warn.append(f"{typ_lbl}: {_pwarn}"); continue
                     _mat = row.get("Maturity"); _iv = row.get("ImplVol"); _rr = row.get("Rate")
                     _mat = float(_mat) if _mat == _mat and _mat is not None else 1.0
                     _iv  = float(_iv)  if _iv  == _iv  and _iv  is not None else None
                     _rr  = float(_rr)  if _rr  == _rr  and _rr  is not None else None
-                    der_specs.append({"der_type": dt, "params": params,
+                    der_specs.append({"der_type": dt, "params": params, "desc": _pdesc,
                                       "underlying_idx": names.index(undl),
                                       "label": f"{typ_lbl}·{undl}",
                                       "T": _mat,
@@ -4304,7 +5364,15 @@ elif _view == "scalable":
                 der_warn += [f"{e} (pricing failed)" for e in errs]
 
             with st.spinner("Solving the CVaR linear program…"):
-                w, er, es, res = mc_max_return_cvar(R_full, mc_alpha, mc_L, w_max=mc_wmax)
+                # Map per-security bounds onto the full column vector (securities first,
+                # then derivative columns which stay unconstrained at [0, 1]).
+                _ncols = R_full.shape[1]
+                w_max_vec = [mc_sec_max.get(nm, 1.0) for nm in names] + [1.0] * (_ncols - len(names))
+                w_min_vec = [mc_sec_min.get(nm, 0.0) for nm in names] + [0.0] * (_ncols - len(names))
+                _has_bounds = (any(v < 1.0 for v in w_max_vec[:len(names)])
+                               or any(v > 0.0 for v in w_min_vec[:len(names)]))
+                w, er, es, res = mc_max_return_cvar(R_full, mc_alpha, mc_L,
+                                                    w_max=w_max_vec, w_min=w_min_vec)
 
             st.markdown("---")
             st.markdown('<div style="text-align:center;font-size:18px;font-weight:600;margin:0;color:#E3C77E"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:.45rem"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>Optimisation results</div><div style="text-align:center;color:#E3C77E;font-size:.85rem;line-height:1;margin:-.15rem 0 1.7rem">▼</div>',
@@ -4319,22 +5387,15 @@ elif _view == "scalable":
                     _vol = _ov if _ov is not None else float(_sig_arr[_ui])
                     _voltxt = (f"{_vol*100:.1f}%" if _ov is not None
                                else f"{_vol*100:.1f}% (auto \u2014 {names[_ui]} \u03c3)")
-                    _p = d["params"]
-                    if "strike" in _p:
-                        _ks = f"strike {_p['strike']:.2f}\u00d7"
-                    elif "strike_kp" in _p:
-                        _ks = f"strikes {_p['strike_kp']:.2f}\u00d7 / {_p['strike_kc']:.2f}\u00d7"
-                    elif "k1" in _p:
-                        _ks = f"strikes {_p['k1']:.2f}\u00d7 / {_p['k2']:.2f}\u00d7"
-                    else:
-                        _ks = "\u2014"
+                    _ks = d.get("desc") or "\u2014"
                     _dp.append(f"\u2022 **{d['label']}** \u2014 {_ks}, maturity {d['T']:.2f} y, "
                                f"vol {_voltxt}, rate {d['r']*100:.1f}%")
                 with st.expander(f"Derivative pricing used ({len(der_specs)})", expanded=True):
                     st.markdown("  \n".join(_dp))
             if w is None:
                 st.error(f"No feasible portfolio reaches an ES of {mc_L:.0%} for this universe. "
-                         f"Loosen the floor (more negative L) or change the inputs.")
+                         f"Loosen the floor (more negative L), widen the per-security weight "
+                         f"bounds, or change the inputs.")
             else:
                 K = len(labels) - N
                 # portfolio stats for the details box
@@ -4354,7 +5415,7 @@ elif _view == "scalable":
                 _badge = (f'<span style="color:#16a34a">✓ feasible — α-CVaR {_es2:.2f}% ≥ L {_L2:.2f}%</span>'
                           if _feas else
                           f'<span style="color:#dc2626">✗ α-CVaR {_es2:.2f}% &lt; L {_L2:.2f}%</span>')
-                _wmax_txt = (f" · max weight/asset {int(round((mc_wmax or 1)*100))}%" if mc_wmax else "")
+                _wmax_txt = " · per-asset weight bounds applied" if _has_bounds else ""
                 _univ = (f"{N} securit{'y' if N == 1 else 'ies'}"
                          + (f" + {K} derivative{'s' if K != 1 else ''}" if K else ""))
                 _detbox = (
@@ -4393,8 +5454,38 @@ elif _view == "scalable":
                 with st.spinner("Tracing the return / tail-risk frontier…"):
                     _floors = sorted(set([-0.30, -0.25, -0.20, -0.15, -0.10, -0.05]
                                          + [round(float(mc_L), 4)]))
-                    fr = mc_frontier(R_full, mc_alpha, _floors, w_max=mc_wmax)
+                    fr = mc_frontier(R_full, mc_alpha, _floors, w_max=w_max_vec, w_min=w_min_vec)
                 _okfr = [r for r in fr if r["ok"]]
+
+                # Benchmark portfolios (computed once — used by both the frontier chart and the table)
+                _bm_points = []
+                _rf_bm = 0.03
+                try:
+                    from core import benchmarks as _bm
+                    _rf_bm = getattr(_bm, "RF_ANNUAL", 0.03)
+                    _mu_sec = R_sec.mean(axis=0)
+                    _cov_sec = np.cov(R_sec, rowvar=False)
+                    for _blbl, _bw in _bm.benchmark_set(_mu_sec, _cov_sec, rf=_rf_bm):
+                        _bs = _bm.stats_from_scenarios(R_sec, _bw, alpha=mc_alpha, rf=_rf_bm)
+                        _bm_points.append((_blbl, _bs["er"], _bs["vol"], _bs["sharpe"], _bs["es"]))
+                    # Markowitz mean-variance portfolio matched to the optimum's expected return
+                    _mvw = _bm.return_matched_mv_weights(_mu_sec, _cov_sec, er)
+                    if _mvw is not None:
+                        _bs = _bm.stats_from_scenarios(R_sec, _mvw, alpha=mc_alpha, rf=_rf_bm)
+                        _bm_points.append(("Mean-variance (Markowitz)", _bs["er"], _bs["vol"],
+                                           _bs["sharpe"], _bs["es"]))
+                except Exception:
+                    _bm_points = []
+
+                # Markowitz MV efficient frontier in (volatility, return) space
+                _mv_curve = []
+                try:
+                    for _tr, _w in _bm.mv_frontier_weights(_mu_sec, _cov_sec, n_points=18):
+                        _s = _bm.stats_from_scenarios(R_sec, _w, alpha=mc_alpha, rf=_rf_bm)
+                        _mv_curve.append((_s["vol"], _s["er"]))
+                    _mv_curve.sort(key=lambda p: p[0])
+                except Exception:
+                    _mv_curve = []
 
                 # Row: left = metrics box on top of details box (height matched to chart);
                 #      right = frontier chart
@@ -4420,12 +5511,27 @@ elif _view == "scalable":
                                 hovertemplate="α-CVaR floor L: %{x:.1f}%<br>Max E[r]: %{y:.2f}%"
                                               "<br>Realised α-CVaR: %{customdata:.2f}%<extra></extra>"))
                             fig.add_trace(_go.Scatter(
-                                x=[mc_L * 100], y=[er * 100], mode="markers", name="Scalable CVaR optimum",
+                                x=[mc_L * 100], y=[er * 100], mode="markers",
+                                name="Portfolio (1) — Scalable CVaR optimum",
                                 marker=dict(size=18, color="#f59e0b", symbol="star",
                                             line=dict(color="#ffffff", width=1.2)),
                                 customdata=[es * 100],
-                                hovertemplate="<b>Scalable CVaR optimum</b><br>α-CVaR floor L: %{x:.1f}%"
+                                hovertemplate="<b>Portfolio (1) — Scalable CVaR optimum</b><br>α-CVaR floor L: %{x:.1f}%"
                                               "<br>E[r]: %{y:.2f}%<br>Realised α-CVaR: %{customdata:.2f}%<extra></extra>"))
+                            if _bm_points:
+                                fig.add_trace(_go.Scatter(
+                                    x=[p[4] * 100 for p in _bm_points],
+                                    y=[p[1] * 100 for p in _bm_points],
+                                    mode="markers+text", name="Benchmarks (securities only)",
+                                    marker=dict(size=11, color="#9aa7bd", symbol="diamond",
+                                                line=dict(color="#0d1117", width=1)),
+                                    text=[("(0) Markowitz" if p[0].startswith("Mean-variance")
+                                           else p[0].split(" (")[0]) for p in _bm_points],
+                                    textposition="top center", textfont=dict(color="#9aa7bd", size=9),
+                                    customdata=[[p[2] * 100, p[3]] for p in _bm_points],
+                                    hovertemplate="<b>%{text}</b><br>E[r]: %{y:.2f}%<br>"
+                                                  "Realised α-CVaR: %{x:.2f}%<br>Vol: %{customdata[0]:.2f}%"
+                                                  "<br>Sharpe: %{customdata[1]:.2f}<extra></extra>"))
                             fig.update_layout(
                                 template="plotly_dark", paper_bgcolor="#1b2330",
                                 plot_bgcolor="#0e1521", height=400,
@@ -4454,7 +5560,7 @@ elif _view == "scalable":
                                 x=mc_L * 100, y=er * 100, ax=46, ay=-58,
                                 xref="x", yref="y", axref="pixel", ayref="pixel",
                                 showarrow=True, arrowhead=2, arrowwidth=1.5, arrowcolor="#f59e0b",
-                                text=("<b>Scalable CVaR optimum</b><br>"
+                                text=("<b>Portfolio (1)</b><br><b>Scalable CVaR optimum</b><br>"
                                       f"E[r] = {er*100:.1f}%&nbsp; | &nbsp;Vol = {_sig*100:.1f}%<br>"
                                       f"Skew = {_skew:.2f}<br>"
                                       f"Realised α-CVaR = {es*100:.1f}%&nbsp; (L = {mc_L*100:.0f}%)<br>"
@@ -4464,8 +5570,10 @@ elif _view == "scalable":
                                 align="left", xanchor="left")
                             st.plotly_chart(fig, use_container_width=True,
                                             config={'edits': {'annotationPosition': True, 'annotationTail': True, 'legendPosition': True}, 'displayModeBar': True})
-                            st.caption("⭐ marks the Scalable CVaR optimum (your resulting portfolio). "
-                                       "Hover any point for its coordinates; drag to zoom.")
+                            st.caption("⭐ marks the Scalable CVaR optimum (your resulting portfolio); "
+                                       "◆ grey diamonds are the securities-only benchmarks (plotted at their "
+                                       "expected return vs realised α-CVaR) — they sit below/right of the "
+                                       "frontier, which dominates them. Hover any point for its coordinates; drag to zoom.")
                             _drawn = True
                         except Exception:
                             pass
@@ -4497,14 +5605,186 @@ elif _view == "scalable":
                     else:
                         st.caption("No feasible frontier points for these settings.")
 
+                # ── Classical Markowitz frontier (return vs volatility) ──
+                try:
+                    if _mv_curve and _bm_points:
+                        import plotly.graph_objects as _go2
+                        _mvf = _go2.Figure()
+                        _mvf.add_trace(_go2.Scatter(
+                            x=[p[0] * 100 for p in _mv_curve], y=[p[1] * 100 for p in _mv_curve],
+                            mode="lines", name="Mean-variance frontier",
+                            line=dict(color="#a855f7", width=2.5, dash="dash"),
+                            hovertemplate="Markowitz MV frontier<br>Vol: %{x:.2f}%<br>E[r]: %{y:.2f}%<extra></extra>"))
+                        _mvf.add_trace(_go2.Scatter(
+                            x=[p[2] * 100 for p in _bm_points], y=[p[1] * 100 for p in _bm_points],
+                            mode="markers+text", name="Benchmarks (securities only)",
+                            marker=dict(size=11, color="#9aa7bd", symbol="diamond",
+                                        line=dict(color="#0d1117", width=1)),
+                            text=[("(0) Markowitz" if p[0].startswith("Mean-variance")
+                                   else p[0].split(" (")[0]) for p in _bm_points],
+                            textposition="top center", textfont=dict(color="#9aa7bd", size=9),
+                            customdata=[[p[3], p[4] * 100] for p in _bm_points],
+                            hovertemplate="<b>%{text}</b><br>Vol: %{x:.2f}%<br>E[r]: %{y:.2f}%"
+                                          "<br>Sharpe: %{customdata[0]:.2f}<br>α-CVaR: %{customdata[1]:.2f}%<extra></extra>"))
+                        _mvf.add_trace(_go2.Scatter(
+                            x=[_sig * 100], y=[er * 100], mode="markers",
+                            name="Portfolio (1) — Scalable CVaR optimum",
+                            marker=dict(size=18, color="#f59e0b", symbol="star",
+                                        line=dict(color="#ffffff", width=1.2)),
+                            customdata=[es * 100],
+                            hovertemplate="<b>Portfolio (1) — Scalable CVaR optimum</b><br>Vol: %{x:.2f}%"
+                                          "<br>E[r]: %{y:.2f}%<br>α-CVaR: %{customdata:.2f}%<extra></extra>"))
+                        _mvf.update_layout(
+                            template="plotly_dark", paper_bgcolor="#1b2330", plot_bgcolor="#0e1521",
+                            height=380, hovermode="closest", margin=dict(l=10, r=10, t=52, b=44),
+                            title=dict(text="Markowitz Mean-Variance Frontier (return vs volatility)",
+                                       font=dict(color="#E3C77E", size=15), x=0.5, xanchor="center", xref="paper"),
+                            xaxis=dict(title=dict(text="Volatility (annualised, %)",
+                                                  font=dict(color="#c0c8d8", size=12)),
+                                       color="#c0c8d8", gridcolor="#1e2130", zerolinecolor="#2a2a3a"),
+                            yaxis=dict(title=dict(text="Expected return (%)",
+                                                  font=dict(color="#c0c8d8", size=12)),
+                                       color="#c0c8d8", gridcolor="#1e2130", zerolinecolor="#2a2a3a"),
+                            legend=dict(bgcolor="rgba(26,26,46,0.9)", bordercolor="#3a3a5a", borderwidth=1,
+                                        font=dict(color="white", size=9), x=0.01, y=0.99))
+                        _mvf.update_xaxes(showgrid=True, gridcolor="#27344e", gridwidth=1, griddash="dot",
+                                          showline=True, linecolor="#46566f", linewidth=1, mirror=True)
+                        _mvf.update_yaxes(showgrid=True, gridcolor="#27344e", gridwidth=1, griddash="dot",
+                                          showline=True, linecolor="#46566f", linewidth=1, mirror=True)
+                        _dtxt2 = f"{N} securities" + (f" + {K} deriv." if K else "")
+                        _mvf.add_annotation(
+                            x=_sig * 100, y=er * 100, ax=58, ay=52,
+                            xref="x", yref="y", axref="pixel", ayref="pixel",
+                            showarrow=True, arrowhead=2, arrowwidth=1.5, arrowcolor="#f59e0b",
+                            text=("<b>Portfolio (1)</b><br><b>Scalable CVaR optimum</b><br>"
+                                  f"E[r] = {er*100:.1f}%&nbsp; | &nbsp;Vol = {_sig*100:.1f}%<br>"
+                                  f"Skew = {_skew:.2f}<br>"
+                                  f"Realised α-CVaR = {es*100:.1f}%<br>"
+                                  f"{_dtxt2}"),
+                            font=dict(color="#f59e0b", size=9),
+                            bgcolor="rgba(13,17,23,0.92)", bordercolor="#f59e0b", borderwidth=1,
+                            align="left", xanchor="left")
+                        st.plotly_chart(_mvf, use_container_width=True,
+                                        config={'edits': {'annotationPosition': True, 'annotationTail': True,
+                                                          'legendPosition': True}, 'displayModeBar': True})
+                        st.caption("Classical Markowitz bullet (return vs volatility): the dashed frontier is the "
+                                   "highest return for each volatility using the securities only (long-only). "
+                                   "Minimum-variance sits at the left tip; minimum-variance and max-Sharpe lie on "
+                                   "the frontier, while equal-weight sits inside it (mean-variance-dominated). "
+                                   "Portfolio (1) — the ⭐ — is optimised for tail risk (α-CVaR), not variance, so "
+                                   "it need not lie on this frontier: a return-shaping derivative can push it "
+                                   "above the frontier, while a tail-hedging derivative (e.g. a strangle) pushes "
+                                   "it below — the hedge adds variance to buy a better tail, which a variance-only "
+                                   "view counts as 'worse'. That trade-off is best judged on the tail-risk chart "
+                                   "above, not here. Securities-only benchmarks; not investment advice.")
+                except Exception:
+                    pass
+
+                # ── Benchmark comparison (naive / classical reference portfolios) ──
+                try:
+                    if not _bm_points:
+                        raise RuntimeError("benchmark points unavailable")
+                    _opt_sharpe = (er - _rf_bm) / _sig if _sig > 1e-12 else float("nan")
+
+                    def _bp(_lbl):
+                        for _p in _bm_points:
+                            if _p[0] == _lbl:
+                                return _p  # (label, er, vol, sharpe, es)
+                        return None
+                    # Order: Portfolio (0) Markowitz, Portfolio (1) optimum, then named references
+                    _spec = [
+                        ("Portfolio (0) — Mean-variance (Markowitz)", _bp("Mean-variance (Markowitz)"), False, "#c9a6f5"),
+                        ("Portfolio (1) — Scalable CVaR optimum", ("opt", er, _sig, _opt_sharpe, es), True, "#f5b942"),
+                        ("Equal-weight (1/N)", _bp("Equal-weight (1/N)"), False, "#dbe7ff"),
+                        ("Minimum-variance", _bp("Minimum-variance"), False, "#dbe7ff"),
+                        ("Max-Sharpe (tangency)", _bp("Max-Sharpe (tangency)"), False, "#dbe7ff"),
+                    ]
+                    _bm_rows = []
+                    for _nm, _tp, _hot, _col in _spec:
+                        if _tp is None:
+                            continue
+                        _bm_rows.append((_nm, _tp[1], _tp[2], _tp[3], _tp[4], _hot, _col))
+
+                    def _bmf(x, pct=True):
+                        if x is None or not np.isfinite(x):
+                            return "—"
+                        return f"{x*100:.2f}%" if pct else f"{x:.2f}"
+                    _btr = ""
+                    for _lbl, _r, _v, _sh, _e, _hot, _col in _bm_rows:
+                        _bg = "background:#13233b;" if _hot else ""
+                        _nmc = _col
+                        _fw = "700" if _hot else "500"
+                        _btr += (f'<tr style="border-top:1px solid #1a2a3a;{_bg}">'
+                                 f'<td style="padding:.4rem .7rem;color:{_nmc};font-weight:{_fw}">{_lbl}</td>'
+                                 f'<td style="padding:.4rem .7rem;text-align:center;color:#dbe7ff">{_bmf(_r)}</td>'
+                                 f'<td style="padding:.4rem .7rem;text-align:center;color:#dbe7ff">{_bmf(_v)}</td>'
+                                 f'<td style="padding:.4rem .7rem;text-align:center;color:#dbe7ff">{_bmf(_sh, pct=False)}</td>'
+                                 f'<td style="padding:.4rem .7rem;text-align:center;color:#dbe7ff">{_bmf(_e)}</td></tr>')
+                    st.markdown(
+                        '<div style="background:#0d1a2e;border:none;border-radius:8px;'
+                        'padding:.6rem .8rem;margin:1.1rem 0 1rem 0;overflow-x:auto">'
+                        '<div style="color:#4a9eff;font-weight:700;font-size:.95rem;margin-bottom:.4rem;text-align:center">'
+                        'Benchmark comparison — same securities</div>'
+                        '<table style="width:100%;border-collapse:collapse;font-size:.82rem">'
+                        '<thead><tr style="color:#9fb3d1">'
+                        '<th style="padding:.3rem .7rem;text-align:left">Portfolio</th>'
+                        '<th style="padding:.3rem .7rem;text-align:center">Expected return</th>'
+                        '<th style="padding:.3rem .7rem;text-align:center">Volatility</th>'
+                        '<th style="padding:.3rem .7rem;text-align:center">Sharpe</th>'
+                        '<th style="padding:.3rem .7rem;text-align:center">&alpha;-CVaR</th>'
+                        '</tr></thead><tbody>' + _btr + '</tbody></table>'
+                        '<div style="color:#6b7f99;font-size:.7rem;margin-top:.4rem">'
+                        'Benchmarks are long-only, fully-invested portfolios of the same securities '
+                        '(no derivatives): equal-weight, minimum-variance and max-Sharpe (tangency), '
+                        'evaluated on the same Monte-Carlo scenarios. Sharpe uses r<sub>f</sub> = '
+                        f'{_rf_bm*100:.0f}% p.a. The CVaR optimum may include derivatives, so it is not '
+                        'directly comparable on every metric — this table is for context, not ranking. '
+                        'Not investment advice.</div>'
+                        '</div>', unsafe_allow_html=True)
+
+                    st.markdown("<div style='height:.8rem'></div>", unsafe_allow_html=True)
+                    with st.expander("**What each of these portfolios is**", expanded=False,
+                                     icon=":material/insights:"):
+                        st.markdown('''
+<div style="background:#ffffff;border:1px solid #1a3a5c;border-radius:8px;padding:.8rem 1rem;margin-bottom:.8rem;color:#111111;font-size:.82rem">
+<b style="color:#a855f7">Portfolio (0) — Mean-variance (Markowitz)</b> — the Markowitz frontier point <i>matched to Portfolio (1)'s expected return</i>: the lowest-variance securities portfolio earning the same expected return as the CVaR optimum. The cleanest like-for-like — same return, compare the tail risk (the grid optimiser's Portfolio (0))<br>
+<b style="color:#f59e0b">Portfolio (1) — Scalable CVaR optimum</b> — your resulting portfolio (the ⭐): it maximises expected return subject to the α-CVaR floor L. It may include derivatives, so it is not directly comparable to the securities-only benchmarks on every metric<br>
+<b style="color:#7d8aa0">Equal-weight (1/N)</b> — naive diversification: every security receives the same weight. An assumption-free reference that needs no estimated inputs<br>
+<b style="color:#7d8aa0">Minimum-variance</b> — the long-only, fully-invested portfolio with the lowest variance (no return target): the lowest-volatility benchmark of the set<br>
+<b style="color:#7d8aa0">Max-Sharpe (tangency)</b> — the classical mean-variance optimum: the long-only portfolio with the highest Sharpe ratio (excess return per unit of volatility) at the risk-free rate shown
+<div style="margin-top:.55rem;color:#555">The <b style="color:#a855f7">purple Markowitz frontier</b> (the return-vs-volatility chart above) has minimum-variance at its left tip; minimum-variance and max-Sharpe sit on it, while equal-weight sits inside it (dominated). Equal-weight, minimum-variance and max-Sharpe are kept as named references rather than numbered, since the grid optimiser reserves Portfolio (2)/(3) for its with-derivative portfolios. All are long-only and fully invested (weights sum to 100%, no shorting), built from the same securities on the same Monte-Carlo scenarios. Shown for context, not as recommendations.</div>
+</div>
+''', unsafe_allow_html=True)
+                except Exception as _bme:
+                    st.caption(f"(benchmark comparison unavailable: {_bme})")
 
                 # ── P&L distribution of the optimal portfolio (worst-α tail shaded) ──
                 st.markdown('#### <span style="color:#E3C77E">Portfolio return distribution</span>', unsafe_allow_html=True)
                 st.caption("Simulated return of the chosen portfolio across every scenario. "
                            "The shaded tail is the worst α; its average is the realised "
                            "α-CVaR, held at or above the floor L — so the shaded region "
-                           "is exactly what the CVaR constraint controls.")
-                st.plotly_chart(_mc_pnl_distribution(_port, mc_alpha, es, mc_L, er),
+                           "is exactly what the CVaR constraint controls. The dashed lines overlay the "
+                           "same-return Markowitz portfolio (0) and equal-weight (securities only) on the "
+                           "same scenarios. Note: a taller, narrower curve just means returns are more "
+                           "*concentrated* (lower variance) — not better. Portfolio (1) is deliberately more "
+                           "spread out (the hedge widens the body and stretches the right tail), so its bars "
+                           "sit lower; judge it by the **left tail** and the CVaR floor, not by peak height — "
+                           "there, the hedged optimum pulls in its worst outcomes versus the same-return "
+                           "mean-variance portfolio.")
+                # Overlay same-return Markowitz (0) + equal-weight distributions for tail-shape comparison
+                _pnl_overlays = []
+                try:
+                    from core import benchmarks as _bm2
+                    _mu_s = R_sec.mean(axis=0); _cov_s = np.cov(R_sec, rowvar=False)
+                    _mk_w = _bm2.return_matched_mv_weights(_mu_s, _cov_s, er)
+                    if _mk_w is not None:
+                        _pnl_overlays.append(("Portfolio (0) — Markowitz (same return)",
+                                              R_sec @ _mk_w, "#fb923c"))
+                    _ew_w = _bm2.equal_weight(R_sec.shape[1])
+                    _pnl_overlays.append(("Equal-weight (1/N)", R_sec @ _ew_w, "#34d399"))
+                except Exception:
+                    _pnl_overlays = []
+                st.plotly_chart(_mc_pnl_distribution(_port, mc_alpha, es, mc_L, er, overlays=_pnl_overlays),
                                 use_container_width=True, config={'displayModeBar': True})
 
                 # ── Joint return scenarios (copula scatter) — actual MC scenarios used ──
@@ -4574,8 +5854,7 @@ elif _view == "scalable":
                             _pltmc.close(_fm); _mc_fig_png = _bmc.getvalue()
                     except Exception:
                         _mc_fig_png = None
-                    _wmax_ascii = (f" | max weight/asset {int(round((mc_wmax or 1) * 100))}%"
-                                   if mc_wmax else "")
+                    _wmax_ascii = " | per-asset weight bounds" if _has_bounds else ""
                     _mc_meta = {
                         "subtitle": "Monte-Carlo scenarios + alpha-CVaR linear program",
                         "er": f"{er * 100:.2f}%", "es": f"{es * 100:.2f}%",
@@ -4828,6 +6107,24 @@ elif _view == "backtest":
             st.caption("the fixed portfolio is then held and measured over this period")
             bt_eval_start = st.date_input("From", value=_dt.date(2017, 1, 1), key="bt_eval_start")
             bt_eval_end   = st.date_input("To",   value=_dt.date(2017, 12, 31), key="bt_eval_end")
+
+    st.markdown(_BT_RULE, unsafe_allow_html=True)
+    with st.container(border=True):
+        st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+        _bt_head("Walk-forward (optional)", None, rule=False)
+        _bt_ai("What is walk-forward?",
+               "Instead of a single window, repeat the build-and-hold across several consecutive, "
+               "non-overlapping windows that roll forward in time — re-estimating and re-optimising "
+               "each time. The construction and evaluation windows keep their current lengths and "
+               "step forward together. This turns the single loss-threshold outcome into a "
+               "<b>realised P(r&lt;H) across many windows</b> and average realised return/volatility — "
+               "the multi-window check the single-window test can only approximate.")
+        bt_walk = st.checkbox("Run a rolling multi-window walk-forward (in addition to the single window)",
+                              value=False, key="bt_walk")
+        bt_n_windows = st.slider("Number of windows", 2, 6, 4, 1, key="bt_nwin",
+                                 help="Consecutive evaluation windows, each the same length as the "
+                                      "evaluation period above, rolling forward from its start date. "
+                                      "Windows that would run past today are skipped.")
 
     st.markdown(_BT_RULE, unsafe_allow_html=True)
     with st.container(border=True):
@@ -5093,8 +6390,8 @@ elif _view == "backtest":
                 ("Realised annual volatility", f"{vol1:.2%}",                      f"{vol2:.2%}"),
                 (_tail_label,                  f"{nd_res['shortfall_stat']:.2%}",  f"{dr_res['shortfall_stat']:.2%}"),
                 (f"Window return (vs H = {bt_H:.0%})",
-                                               f"{cum1:.2%}  {'\u26a0 below H' if br1 else '\u2713'}",
-                                               f"{cum2:.2%}  {'\u26a0 below H' if br2 else '\u2713'}"),
+                                               f"{cum1:.2%}  {(chr(0x26a0)+' below H') if br1 else chr(0x2713)}",
+                                               f"{cum2:.2%}  {(chr(0x26a0)+' below H') if br2 else chr(0x2713)}"),
             ]
             _bt_thead = ('<tr style="color:#9fb3d1;border-bottom:1px solid #30363d">'
                          '<td style="text-align:left;padding:.4rem .5rem;font-weight:700">Metric</td>'
@@ -5115,6 +6412,18 @@ elif _view == "backtest":
                 '<table style="width:100%;height:100%;border-collapse:collapse;font-size:.85rem;color:#c9d1d9">'
                 + _bt_thead + _bt_trows + '</table></div></div>')
 
+            # Benchmark paths (same tickers, built on construction window) \u2014 for chart + table
+            _bt_bench_paths = []
+            try:
+                from core import benchmarks as _bm
+                _btb_colors = {"Equal-weight (1/N)": "#34d399", "Minimum-variance": "#9aa7bd",
+                               "Max-Sharpe (tangency)": "#c084fc"}
+                for _blbl, _bw in _bm.benchmark_set(means, cov, rf=bt_rf):
+                    _pvb = _bt_portfolio_path(sec_gross, np.asarray(_bw, float))
+                    _bt_bench_paths.append((_blbl, _pvb, _btb_colors.get(_blbl, "#9aa7bd")))
+            except Exception:
+                _bt_bench_paths = []
+
             _bt_left, _bt_right = st.columns([1, 1.2])
             with _bt_left:
                 st.html(_bt_table_html)
@@ -5122,10 +6431,54 @@ elif _view == "backtest":
                 try:
                     _fig_bt_p = plot_backtest_paths_plotly(
                         ev_px.index, pv1, pv2, f"With derivative (P2) \u2014 {bt_label}")
+                    for _blbl, _pvb, _bcol in _bt_bench_paths:
+                        _fig_bt_p.add_trace(go.Scatter(
+                            x=list(ev_px.index), y=(100.0 * np.asarray(_pvb, float)),
+                            mode="lines", name=_blbl,
+                            line=dict(color=_bcol, width=1.4, dash="dot"),
+                            hovertemplate='<b>%{fullData.name}</b><br>%{x|%d %b %Y}<br>Value: %{y:.2f}<extra></extra>'))
                     st.plotly_chart(_fig_bt_p, use_container_width=True,
                                     config={'edits': {'legendPosition': True}, 'displayModeBar': True})
                 except Exception as _ce:
                     st.warning(f"Chart unavailable: {_ce}")
+
+            # ── Naive benchmark portfolios (same tickers, built on construction window) ──
+            try:
+                _bt_bm_rows = [
+                    ("Portfolio P1 (no derivative)",   ann1, vol1, cum1, br1, "#4a9eff", True),
+                    ("Portfolio P2 (with derivative)", ann2, vol2, cum2, br2, "#f5b942", True),
+                ]
+                for _blbl, _pvb, _bcol in _bt_bench_paths:
+                    _cb, _ab2, _vb, _brb = _bt_metrics(_pvb, factor_eval, bt_H, T_years)
+                    _bt_bm_rows.append((f"Benchmark — {_blbl}", _ab2, _vb, _cb, _brb, "#9aa7bd", False))
+                _bmtr = ""
+                for _lbl, _ar, _vr, _cr, _brk, _clr, _hot in _bt_bm_rows:
+                    _fw = "700" if _hot else "500"
+                    _wr = f"{_cr:.2%}  " + ("⚠ below H" if _brk else "✓")
+                    _bmtr += (f'<tr style="border-bottom:1px solid #1b2230">'
+                              f'<td style="padding:.4rem .5rem;color:{_clr};font-weight:{_fw}">{_lbl}</td>'
+                              f'<td style="padding:.4rem .5rem;text-align:center;color:#fafafa">{_ar:.2%}</td>'
+                              f'<td style="padding:.4rem .5rem;text-align:center;color:#fafafa">{_vr:.2%}</td>'
+                              f'<td style="padding:.4rem .5rem;text-align:center;color:#fafafa">{_wr}</td></tr>')
+                st.markdown(
+                    '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
+                    'padding:.85rem 1rem;margin-top:1rem">'
+                    '<div style="color:#E3C77E;font-weight:700;font-size:.98rem;margin-bottom:.2rem">'
+                    'Benchmark comparison — realised out-of-sample</div>'
+                    '<div style="color:#8b949e;font-size:.78rem;margin-bottom:.6rem">'
+                    'Long-only, fully-invested portfolios of the same tickers, built on the construction '
+                    'window and held over the evaluation window (no rebalancing). Equal-weight, '
+                    'minimum-variance and max-Sharpe are securities only (no derivative). '
+                    'For context, not ranking.</div>'
+                    '<table style="width:100%;border-collapse:collapse;font-size:.85rem;color:#c9d1d9">'
+                    '<tr style="color:#9fb3d1">'
+                    '<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Portfolio</th>'
+                    '<th style="text-align:center;padding:.4rem .5rem;font-weight:600">Realised annual return</th>'
+                    '<th style="text-align:center;padding:.4rem .5rem;font-weight:600">Realised annual volatility</th>'
+                    f'<th style="text-align:center;padding:.4rem .5rem;font-weight:600">Window return (vs H = {bt_H:.0%})</th>'
+                    '</tr>' + _bmtr + '</table></div>', unsafe_allow_html=True)
+            except Exception as _btbme:
+                st.caption(f"(benchmark comparison unavailable: {_btbme})")
 
             # ── Alpha / beta of securities and portfolios vs a benchmark ────────
             _bench_label = ""
@@ -5345,6 +6698,228 @@ elif _view == "backtest":
                         mime="application/pdf", type="primary",
                         key="bt_pdf_download", use_container_width=True)
 
+            # ── Walk-forward: rolling multi-window out-of-sample ──────────────────
+            if bt_walk:
+                st.markdown("---")
+                st.markdown('<div style="text-align:center;font-size:18px;font-weight:600;'
+                            'margin:0;color:#E3C77E">Walk-forward — rolling windows</div>'
+                            '<div style="text-align:center;color:#E3C77E;font-size:.85rem;'
+                            'line-height:1;margin:-.15rem 0 1.2rem">▼</div>', unsafe_allow_html=True)
+                try:
+                    from core import benchmarks as _bm
+
+                    def _wf_one_window(_cs, _ce, _es2, _ee):
+                        """Build on (_cs,_ce), hold over (_es2,_ee). Returns a dict
+                        {'metrics':{strategy:(cum,ann,vol,breach)}, 'paths':{strategy:pv}, 'dates':[...]}
+                        or None if the window is unusable."""
+                        _cpx, _e1 = fetch_close_prices(tickers, _cs, _ce)
+                        if _e1 or _cpx is None or getattr(_cpx, "empty", True):
+                            return None
+                        _mu, _sg, _cr, _nm, _ = stats_from_prices(_cpx, bt_freq)
+                        if len(_nm) < 2:
+                            return None
+                        _cv = corr_to_cov(_sg, _cr)
+                        if bt_undl_choice.startswith("Auto"):
+                            _ui = int(np.argmax(_sg))
+                        elif bt_undl_choice in _nm:
+                            _ui = _nm.index(bt_undl_choice)
+                        else:
+                            _ui = int(np.argmax(_sg))
+                        _Ty = max((_ee - _es2).days / 365.25, 1e-6)
+                        _vu = float(_sg[_ui])
+                        _p = dict(bt_params); _p["vol"] = _vu; _p["r"] = 0.03; _p["T"] = _Ty
+                        _dc = build_der_config(bt_dtype, _p, _sg, _ui)
+                        _nd, _ = run_opt(_mu, _sg, _cv, None, bt_H, bt_alpha, m_bt, mp_bt, bt_ct, L=bt_L)
+                        _dr, _ = run_opt(_mu, _sg, _cv, _dc, bt_H, bt_alpha, m_bt, mp_bt, bt_ct, L=bt_L)
+                        if not _nd or not _dr:
+                            return None
+                        _epx, _e2 = fetch_close_prices(tickers, _es2, _ee)
+                        if _e2 or _epx is None:
+                            return None
+                        if any(x not in _epx.columns for x in _nm):
+                            return None
+                        _epx = _epx[_nm].ffill().dropna()
+                        if bt_freq == "Monthly":
+                            _epx = _epx.resample('ME').last().dropna()
+                        if len(_epx) < 3:
+                            return None
+                        _sg2 = _epx.values / _epx.values[0]
+                        _spot = _epx[_nm[_ui]].values
+                        _legs, _nmode, _prem = _bt_legs(bt_dtype, _p)
+                        _gp = mtm_gross_path(_legs, _nmode, _prem, _spot, _Ty, _vu, 0.03)
+                        _factor = 252 if bt_freq == "Daily" else 12
+                        _w1 = np.asarray(_nd["weights"], float)
+                        _w2 = np.asarray(_dr["weights"], float); _w2s, _w2d = _w2[:-1], float(_w2[-1])
+                        _pv1 = _bt_portfolio_path(_sg2, _w1)
+                        _pv2 = _bt_portfolio_path(_sg2, _w2s, der_gross=_gp, w_der=_w2d)
+                        _out = {}; _paths = {}
+                        _out["P1 (no derivative)"] = _bt_metrics(_pv1, _factor, bt_H, _Ty)
+                        _paths["P1 (no derivative)"] = _pv1
+                        _out["P2 (with derivative)"] = _bt_metrics(_pv2, _factor, bt_H, _Ty)
+                        _paths["P2 (with derivative)"] = _pv2
+                        for _bl, _bw in _bm.benchmark_set(_mu, _cv, rf=bt_rf):
+                            _pvb = _bt_portfolio_path(_sg2, np.asarray(_bw, float))
+                            _out["Benchmark — " + _bl] = _bt_metrics(_pvb, _factor, bt_H, _Ty)
+                            _paths["Benchmark — " + _bl] = _pvb
+                        return {"metrics": _out, "paths": _paths, "dates": list(_epx.index)}
+
+                    _eval_len = max((bt_eval_end - bt_eval_start).days, 1)
+                    _con_len = max((bt_con_end - bt_con_start).days, 1)
+                    _today = _dt.date.today()
+                    _wins = []
+                    for _i in range(int(bt_n_windows)):
+                        _es2 = bt_eval_start + _dt.timedelta(days=_i * _eval_len)
+                        _ee = _es2 + _dt.timedelta(days=_eval_len)
+                        if _ee > _today:
+                            break
+                        _ce = _es2 - _dt.timedelta(days=1)
+                        _cs = _ce - _dt.timedelta(days=_con_len)
+                        _wins.append((_cs, _ce, _es2, _ee))
+
+                    _per_win = []
+                    with st.spinner(f"Running {len(_wins)} walk-forward window(s)…"):
+                        for _w in _wins:
+                            try:
+                                _r = _wf_one_window(*_w)
+                            except Exception:
+                                _r = None
+                            _per_win.append((_w, _r))
+                    _ok = [(w, r) for (w, r) in _per_win if r]
+
+                    if not _ok:
+                        st.warning("Walk-forward produced no usable windows — the tickers may lack "
+                                   "data over the rolled-forward dates. Try fewer windows or an earlier start.")
+                    else:
+                        _strats = list(_ok[0][1]["metrics"].keys())
+                        _accent = {"P1 (no derivative)": "#4a9eff", "P2 (with derivative)": "#f5b942"}
+                        _wfcolors = {"P1 (no derivative)": "#4a9eff", "P2 (with derivative)": "#f5b942",
+                                     "Benchmark — Equal-weight (1/N)": "#34d399",
+                                     "Benchmark — Minimum-variance": "#9aa7bd",
+                                     "Benchmark — Max-Sharpe (tangency)": "#c084fc"}
+                        _wfc = lambda _s: _wfcolors.get(_s, "#9aa7bd")
+                        _wfname = lambda _s: _s.replace("Benchmark — ", "")
+                        # Aggregate per strategy
+                        _agg_tr = ""
+                        for _s in _strats:
+                            _arr = np.array([r["metrics"][_s] for (_, r) in _ok], float)  # cols: (cum, ann, vol, breach)
+                            _mr = float(np.nanmean(_arr[:, 1])); _mv = float(np.nanmean(_arr[:, 2]))
+                            _br = float(np.nanmean(_arr[:, 3]))  # breach rate = realised P(r<H)
+                            _clr = _accent.get(_s, "#9aa7bd"); _fw = "700" if _s in _accent else "500"
+                            _agg_tr += (f'<tr style="border-bottom:1px solid #1b2230">'
+                                        f'<td style="padding:.4rem .5rem;color:{_clr};font-weight:{_fw}">{_s}</td>'
+                                        f'<td style="padding:.4rem .5rem;text-align:center;color:#fafafa">{_mr:.2%}</td>'
+                                        f'<td style="padding:.4rem .5rem;text-align:center;color:#fafafa">{_mv:.2%}</td>'
+                                        f'<td style="padding:.4rem .5rem;text-align:center;color:#fafafa">{_br:.0%}</td>'
+                                        f'<td style="padding:.4rem .5rem;text-align:center;color:#9fb3d1">{len(_ok)}</td></tr>')
+                        st.markdown(
+                            '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
+                            'padding:.85rem 1rem;margin-top:.4rem">'
+                            '<div style="color:#E3C77E;font-weight:700;font-size:.98rem;margin-bottom:.2rem">'
+                            'Walk-forward summary — averaged across windows</div>'
+                            '<div style="color:#8b949e;font-size:.78rem;margin-bottom:.6rem">'
+                            f'{len(_ok)} of {len(_wins)} rolling windows produced usable data. Each window '
+                            're-estimates inputs, re-optimises, and holds out-of-sample. <b>Realised P(r&lt;H)</b> '
+                            f'is the share of windows finishing below H = {bt_H:.0%} — the multi-window tail '
+                            'check (compare with your target α). Benchmarks are securities-only. Not advice.</div>'
+                            '<table style="width:100%;border-collapse:collapse;font-size:.85rem;color:#c9d1d9">'
+                            '<tr style="color:#9fb3d1">'
+                            '<th style="text-align:left;padding:.4rem .5rem;font-weight:600">Strategy</th>'
+                            '<th style="text-align:center;padding:.4rem .5rem;font-weight:600">Mean realised ann. return</th>'
+                            '<th style="text-align:center;padding:.4rem .5rem;font-weight:600">Mean realised ann. volatility</th>'
+                            f'<th style="text-align:center;padding:.4rem .5rem;font-weight:600">Realised P(r&lt;H)</th>'
+                            '<th style="text-align:center;padding:.4rem .5rem;font-weight:600">Windows</th>'
+                            '</tr>' + _agg_tr + '</table></div>', unsafe_allow_html=True)
+
+                        # ── Walk-forward equity curve (stitched growth of $1) ──
+                        try:
+                            import plotly.graph_objects as _gowf
+                            _eqfig = _gowf.Figure()
+                            for _s in _strats:
+                                _xs = []; _ys = []; _run = 1.0
+                                for (_w, _r) in _ok:
+                                    _p = _r["paths"].get(_s); _d = _r.get("dates")
+                                    if _p is None or not _d or len(_p) == 0:
+                                        continue
+                                    _seg = (_run * np.asarray(_p, float)).tolist()
+                                    _xs += list(_d); _ys += _seg
+                                    _run = _seg[-1]
+                                if _xs:
+                                    _strong = _s in _accent
+                                    _eqfig.add_trace(_gowf.Scatter(
+                                        x=_xs, y=_ys, mode="lines", name=_wfname(_s),
+                                        line=dict(color=_wfc(_s), width=2.4 if _strong else 1.6,
+                                                  dash=None if _strong else "dot")))
+                            _eqfig.add_hline(y=1.0, line=dict(color="#46566f", width=1, dash="dash"))
+                            _eqfig.update_layout(
+                                template="plotly_dark", paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+                                height=420, margin=dict(l=10, r=10, t=52, b=40), hovermode="x unified",
+                                title=dict(text="Walk-forward equity curve — growth of $1 (stitched out-of-sample)",
+                                           x=0.5, font=dict(color="#E3C77E", size=15)),
+                                xaxis=dict(title="Date", gridcolor="#1e2130"),
+                                yaxis=dict(title="Growth of $1 (×)", gridcolor="#1e2130"),
+                                legend=dict(bgcolor="rgba(13,17,23,0.7)", bordercolor="#3a3a5a", borderwidth=1,
+                                            font=dict(color="#e7ecf4", size=9), x=0.01, y=0.99,
+                                            xanchor="left", yanchor="top"))
+                            st.markdown('<div style="height:.6rem"></div>', unsafe_allow_html=True)
+                            st.plotly_chart(_eqfig, use_container_width=True, config={'displayModeBar': True})
+                            st.caption("Each window's out-of-sample path stitched end-to-end into one growth-of-$1 "
+                                       "curve. P1/P2 are solid; the securities-only benchmarks are dotted. "
+                                       "Re-optimised at the start of every window; no rebalancing within a window.")
+
+                            # ── Per-window grouped bar chart of realised annual return ──
+                            _barfig = _gowf.Figure()
+                            _wlabels = [f"{_w[2]:%Y-%m}" for (_w, _r) in _ok]
+                            for _s in _strats:
+                                _vals = [r["metrics"][_s][1] * 100 for (_, r) in _ok]  # ann return %
+                                _barfig.add_trace(_gowf.Bar(name=_wfname(_s), x=_wlabels, y=_vals,
+                                                            marker_color=_wfc(_s),
+                                                            text=[f"{_v:.0f}%" for _v in _vals],
+                                                            textposition="outside", textangle=0,
+                                                            textfont=dict(size=8, color="#c9d1d9"),
+                                                            cliponaxis=False))
+                            _barfig.update_layout(
+                                template="plotly_dark", paper_bgcolor="#0d1117", plot_bgcolor="#0d1117",
+                                height=400, barmode="group", margin=dict(l=10, r=10, t=52, b=40),
+                                title=dict(text="Realised annual return by window",
+                                           x=0.5, font=dict(color="#E3C77E", size=15)),
+                                xaxis=dict(title="Evaluation window (start)", gridcolor="#1e2130"),
+                                yaxis=dict(title="Realised annual return (%)", gridcolor="#1e2130"),
+                                legend=dict(bgcolor="rgba(13,17,23,0.7)", bordercolor="#3a3a5a", borderwidth=1,
+                                            font=dict(color="#e7ecf4", size=9), x=0.01, y=0.99,
+                                            xanchor="left", yanchor="top"))
+                            st.plotly_chart(_barfig, use_container_width=True, config={'displayModeBar': True})
+                            st.caption("Realised annualised return of each strategy in each evaluation window — "
+                                       "shows how consistent (or not) each strategy is across regimes.")
+                        except Exception as _wfce:
+                            st.caption(f"(walk-forward charts unavailable: {_wfce})")
+
+                        # Per-window window returns (P1 vs P2)
+                        _pw_tr = ""
+                        for (_w, _r) in _ok:
+                            _lbl = f"{_w[2]:%Y-%m-%d} → {_w[3]:%Y-%m-%d}"
+                            _p1 = _r["metrics"]["P1 (no derivative)"]; _p2 = _r["metrics"]["P2 (with derivative)"]
+                            _m1 = f"{_p1[0]:.2%} " + ("⚠" if _p1[3] else "✓")
+                            _m2 = f"{_p2[0]:.2%} " + ("⚠" if _p2[3] else "✓")
+                            _pw_tr += (f'<tr style="border-bottom:1px solid #1b2230">'
+                                       f'<td style="padding:.35rem .5rem;color:#c9d1d9">{_lbl}</td>'
+                                       f'<td style="padding:.35rem .5rem;text-align:center;color:#4a9eff">{_m1}</td>'
+                                       f'<td style="padding:.35rem .5rem;text-align:center;color:#f5b942">{_m2}</td></tr>')
+                        st.markdown(
+                            '<div style="background:#0d1117;border:1px solid #30363d;border-radius:8px;'
+                            'padding:.85rem 1rem;margin-top:1rem">'
+                            '<div style="color:#E3C77E;font-weight:700;font-size:.98rem;margin-bottom:.6rem">'
+                            'Per-window outcomes — window return vs H</div>'
+                            '<table style="width:100%;border-collapse:collapse;font-size:.85rem;color:#c9d1d9">'
+                            '<tr style="color:#9fb3d1">'
+                            '<th style="text-align:left;padding:.35rem .5rem;font-weight:600">Evaluation window</th>'
+                            '<th style="text-align:center;padding:.35rem .5rem;font-weight:600">P1 window return</th>'
+                            '<th style="text-align:center;padding:.35rem .5rem;font-weight:600">P2 window return</th>'
+                            '</tr>' + _pw_tr + '</table>'
+                            '<div style="color:#6b7f99;font-size:.7rem;margin-top:.4rem">'
+                            '✓ finished at/above H · ⚠ finished below H.</div></div>', unsafe_allow_html=True)
+                except Exception as _wfe:
+                    st.caption(f"(walk-forward unavailable: {_wfe})")
+
         except Exception as _e:
             st.error(str(_e))
             import traceback as _tb
@@ -5410,6 +6985,7 @@ elif _view == "about":
         "Constraint methods & resolutions",
         "Scaling up — Monte-Carlo + CVaR",
         "Out-of-sample back-test",
+        "Profiling, tracking & stress-testing your portfolio",
         "The theory — MVT / MAT equivalence",
         "Supported derivatives & structured products",
         "Academic references",
@@ -5544,6 +7120,8 @@ elif _view == "about":
 - **Use real, live data** — pull 10,000+ tickers (equities, ETFs, crypto) from the market, or enter your own figures.
 - **Choose how hard it works** — four precision modes including a Turbo solver ~60× faster, plus a scalable Monte-Carlo + CVaR engine for institutional-size portfolios.
 - **Check it out-of-sample** — back-test the chosen portfolio on later data and read its realised alpha, beta and R² versus a benchmark.
+- **Size your risk first** — a Grable–Lytton questionnaire profiles your tolerance and sets the constraint (H, α, L) for you.
+- **Hold and track a live portfolio** — keep a real book of **securities *and* derivatives**, marked to market, with realised return, risk, drawdown, VaR/CVaR and CAPM alpha/beta; monitor it against your limit (VaR or ES), **stress-test** it (historical, custom-path and parametric), and **save it to your own Google Drive**.
 - **Understand every result** — built-in AI explanations and an interactive glossary turn the maths into plain language, and a one-click PDF captures the run.
 """)
         st.markdown("**The three building blocks at a glance:**")
@@ -5673,6 +7251,33 @@ The best eligible portfolio (highest expected return satisfying the constraint) 
                     "Re-optimising at every window makes the back-test the heaviest path, so **Fast** is "
                     "recommended on the hosted demo, with Standard / High better run locally.")
         _about_fig("about_fig_backtest.png", "Back-test — same constraint choice, resolutions without Turbo, re-optimised at every walk-forward window (blue = you choose · gold = the tool decides automatically).")
+
+    # ═══ 4b · PROFILING, TRACKING & STRESS ══════════════════════════════════
+    with st.container(border=True):
+        _about_head("Profiling, tracking & stress-testing your portfolio")
+        st.markdown(
+            "Beyond constructing and back-testing portfolios, the app helps you **size your risk, hold a "
+            "real book, and pressure-test it** — the three tools below complete the picture from *how risk-"
+            "tolerant am I?* to *how would my actual holdings behave in a crisis?*")
+        st.markdown("**Risk Profile.** A 13-question Grable–Lytton risk-tolerance questionnaire scores you into "
+                    "a band and maps that to the *same* simulation parameters the optimisers use — loss "
+                    "threshold **H**, shortfall probability **α**, and CVaR floor **L** — with a plain-language "
+                    "mental-accounting explanation and a dated history so a re-take never overwrites the old "
+                    "result. One click seeds those values into the Grid or Scalable optimiser.")
+        st.markdown("**Ticker Analytics.** Type any stock, ETF or index and get its key figures and CFA-style "
+                    "ratios, each with a short plain-language explanation.")
+        st.markdown("**Live Portfolio.** Build and track a *real* portfolio over time — and, unlike a "
+                    "securities-only tracker, it holds **derivatives and structured products too** (puts, "
+                    "calls, straddles, strangles, collars, spreads, capital-guaranteed notes). Each position "
+                    "is held from its entry date and **marked to market** — derivatives priced with real "
+                    "expiry on their underlying via the same engine as the back-test — and the app reports "
+                    "realised **return, volatility, Sharpe, max drawdown, daily VaR/CVaR** and **CAPM alpha, "
+                    "beta and R²** versus a benchmark. It then layers on:")
+        st.markdown("""
+- **Risk vs your tolerance** — monitors the book against your limit using **VaR** (breach frequency ≤ α) or **Expected Shortfall** (tail-average ≥ L), shows the implied risk-aversion λ, and offers a **time-varying** mode that judges each period against the limits that were in force then — driven by an editable, dated **tolerance timeline**.
+- **Stress testing** — three complementary lenses, each judged against your H limit: **historical scenario replay** (2008, 2011, 2015, 2018, COVID-2020, 2022) applied to your *current* holdings and **projected forward from today**; a **custom shock** (an instantaneous market move via your β, a per-asset shock, or a multi-leg β-driven **path over time**); and a **parametric stress** that scales volatilities and pushes correlations toward 1 (the "diversification breaks in a crash" effect) and re-derives VaR. Drawdown- and horizon-return-vs-limit charts visualise each.
+- **Save / load** — sign in with Google to store each portfolio in **your own Drive** (one-click, least-privilege `drive.file` scope — the app only ever touches files it created), or export a portable **JSON** file. Holdings, benchmark, risk settings, your Risk Profile history and tolerance timeline all travel together.
+""")
 
     # ═══ 5 · THE THEORY ═════════════════════════════════════════════════════
     with st.container(border=True):
@@ -5820,7 +7425,8 @@ elif _view == "glossary":
         ],
         "Risk measures": [
             "Value at Risk (VaR)", "Expected Shortfall (ES)",
-            "Shortfall probability", "Skewness", "Excess kurtosis"
+            "Shortfall probability", "Drawdown", "Horizon-return",
+            "Stress testing", "Skewness", "Excess kurtosis"
         ],
         "Performance & benchmarking": [
             "Alpha (Jensen's alpha)", "Beta", "R-squared (R²)", "Benchmark",
@@ -5839,8 +7445,9 @@ elif _view == "glossary":
         ],
         "Portfolio theory": [
             "Mean-variance efficient frontier", "Markowitz optimization",
-            "Mental accounting", "Behavioral portfolio theory",
+            "Mental accounting", "Optimum mental-accounting portfolio", "Behavioral portfolio theory",
             "MVT/MAT equivalence", "Implied risk aversion lambda",
+            "Downside-aware utility (mean − κ·CVaR)", "Constrained optimum (downside-feasible region)",
             "Gaussian copula", "Black-Scholes pricing"
         ],
         "Academic references": [
@@ -6055,8 +7662,50 @@ elif _view == "glossary":
         fig.tight_layout()
         return fig
 
+    def _gradient_under(_ax, _x, _y, _baseline=0.0):
+        import matplotlib.colors as _mcl
+        from matplotlib.patches import Polygon as _Poly
+        _cmap = _mcl.LinearSegmentedColormap.from_list("rg", ["#f85149", "#e3c77e", "#2ea043"])
+        _ylo = min(float(np.min(_y)), _baseline); _yhi = max(float(np.max(_y)), _baseline)
+        _g = np.linspace(0, 1, 256).reshape(-1, 1)
+        _im = _ax.imshow(_g, extent=[float(_x[0]), float(_x[-1]), _ylo, _yhi], origin="lower",
+                         aspect="auto", cmap=_cmap, alpha=0.92, zorder=1)
+        _verts = [(float(_x[0]), _baseline)] + list(zip(_x.astype(float), _y)) + [(float(_x[-1]), _baseline)]
+        _poly = _Poly(_verts, closed=True, facecolor="none", edgecolor="none")
+        _ax.add_patch(_poly); _im.set_clip_path(_poly)
+
+    def _fig_drawdown():
+        _r = np.random.RandomState(5)
+        _eq = np.cumprod(1 + _r.normal(0.0004, 0.011, 252))
+        _dd = (_eq / np.maximum.accumulate(_eq) - 1) * 100
+        _x = np.arange(len(_dd))
+        fig, ax = _gfx_axes("Drawdown vs limit — loss from the running peak", "Time", "Drawdown (%)")
+        _gradient_under(ax, _x, _dd, 0.0)
+        ax.plot(_x, _dd, color="#cfd8e3", lw=1.1, zorder=3)
+        ax.axhline(-10, color="#f85149", ls="--", lw=1.8, zorder=4)
+        ax.text(_x[-1], -10, " loss limit H", color="#f85149", fontsize=8, va="bottom", ha="right")
+        ax.set_xticks([]); ax.set_ylim(min(float(_dd.min()) * 1.15, -12), 1.5)
+        fig.tight_layout()
+        return fig
+
+    def _fig_horizon_return():
+        _r = np.random.RandomState(9)
+        _y = 7 + 11 * np.sin(np.linspace(0.2, 3.3, 252)) + _r.normal(0, 2.4, 252) - 5.0
+        _x = np.arange(len(_y))
+        fig, ax = _gfx_axes("Horizon-return vs limit — rolling-window return", "Time", "Horizon return (%)")
+        _gradient_under(ax, _x, _y, 0.0)
+        ax.plot(_x, _y, color="#cfd8e3", lw=1.1, zorder=3)
+        ax.axhline(0, color="#3a4762", lw=0.8, zorder=2)
+        ax.axhline(-10, color="#f85149", ls="--", lw=1.8, zorder=4)
+        ax.text(_x[-1], -10, " loss limit H", color="#f85149", fontsize=8, va="bottom", ha="right")
+        ax.set_xticks([])
+        fig.tight_layout()
+        return fig
+
     _GLOSSARY_CONCEPT_FIG = {
         "Value at Risk (VaR)": _fig_var_cvar,
+        "Drawdown": _fig_drawdown,
+        "Horizon-return": _fig_horizon_return,
         "Expected Shortfall (ES)": _fig_var_cvar,
         "Shortfall probability": _fig_var_cvar,
         "α-CVaR (Conditional VaR)": _fig_var_cvar,
@@ -6101,6 +7750,7 @@ elif _view == "glossary":
         "Student-t copula": [("Captures", "Joint-crash tail dependence"), ("vs Gaussian", "Fatter joint tails"), ("Param", "Degrees of freedom")],
         "Gaussian copula": [("Captures", "Linear correlation"), ("Joint tails", "Thin (no tail dependence)"), ("Use", "Baseline dependence model")],
         "Mental accounting": [("Coined by", "Richard Thaler"), ("Idea", "Wealth split into goal-based accounts"), ("In this app", "Each account = threshold H + shortfall prob α"), ("Enables", "Targeted protection via derivatives")],
+        "Optimum mental-accounting portfolio": [("Maximises", "Expected return"), ("Subject to", "Downside limit (H, α or CVaR floor L)"), ("On the chart", "Top edge of the feasible (coloured) region"), ("Grey zone", "Infeasible — breaches the limit"), ("With derivatives", "Higher return at the same limit")],
         "Behavioral portfolio theory": [("Authors", "Shefrin & Statman (2000)"), ("Structure", "Layered pyramid of goal portfolios"), ("vs Markowitz", "Goal-based, not one mean-variance mix")],
         "Black-Scholes pricing": [("Prices", "European options"), ("Inputs", "Spot, strike, vol, rate, maturity"), ("Output", "Fair value = intrinsic + time value"), ("Assumes", "Lognormal prices, constant vol")],
     }
@@ -6110,6 +7760,7 @@ elif _view == "glossary":
         "MVT/MAT equivalence": "risk aversion curve.png",
         "Implied risk aversion lambda": "risk aversion curve.png",
         "Gaussian copula": "gaussian copula.png",
+        "Optimum mental-accounting portfolio": "home_optimiser_grid3d.png",
     }
 
     def _glossary_fig(term):
@@ -6148,14 +7799,21 @@ elif _view == "glossary":
     custom_q = st.text_input(
         "Type a term or question",
         placeholder="e.g. What is the difference between VaR and ES?")
+    st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
     if st.button("ASK AI", type="primary", icon=":material/smart_toy:", key="gloss_ask"):
         if custom_q.strip():
             st.session_state["glossary_term"] = custom_q
             st.session_state["glossary_notice"] = ""
             with st.spinner("Thinking..."):
-                st.session_state["glossary_response"] = get_ai_chat_response(
+                _gresp = get_ai_chat_response(
                     custom_q,
                     portfolio_context=f"Portfolio has {len(means_in)} securities with means {[f'{m*100:.1f}%' for m in means_in]}")
+            if _gresp:
+                st.session_state["glossary_response"] = _gresp
+            else:
+                st.session_state["glossary_response"] = ""
+                st.warning("AI answers aren't available right now (the API key isn't configured in this "
+                           "environment). Click any term above for its built-in explanation.")
         else:
             st.warning("Please enter a question first.")
 
@@ -6221,7 +7879,11 @@ elif _view == "glossary":
             _gcol1, _gcol2 = st.columns([1.05, 1], vertical_alignment="center")
             with _gcol1:
                 st.image(_img_path, width=405)
-                st.caption("Figure from the author's MSc thesis (Jeddou, 2012, USI Lugano).")
+                st.caption(
+                    "The Grid optimiser's 3D objective landscape — grey = infeasible (breaches the "
+                    "downside limit), coloured = feasible; the optimum sits at the top edge."
+                    if _gterm == "Optimum mental-accounting portfolio" else
+                    "Figure from the author's MSc thesis (Jeddou, 2012, USI Lugano).")
             with _gcol2:
                 st.markdown(_expl_html, unsafe_allow_html=True)
         elif _gfig is not None:
@@ -6243,6 +7905,1879 @@ elif _view == "glossary":
             st.session_state["glossary_notice"] = ""
             st.rerun()
 
-# Shared footer on every view except About (which hosts the contact form)
-if _view != "about":
-    st.markdown(_NAV_FOOTER, unsafe_allow_html=True)
+elif _view == "portfolio":
+    from core import portfolio as _pf
+    from core import stress as _ss
+    from core.pricing import live_derivative_series as _lds, LIVE_DER_TYPES as _LDT
+    import plotly.graph_objects as _go
+    import pandas as _pd
+    import datetime as _dt
+    import json as _json
+
+    with st.container():
+        _pf_l, _pf_mid, _pf_x = st.columns([1, 4.2, 1], vertical_alignment="center")
+        with _pf_l:
+            st.button(":material/home: Back to Main Screen", key="_nav_back", use_container_width=True, on_click=_go_home)
+        with _pf_mid:
+            st.markdown('<style>section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2){position:sticky;top:60px;z-index:1000;background:#0d1117;border-bottom:1px solid #2a3340;box-shadow:0 8px 16px -10px rgba(0,0,0,.75);padding:.3rem 0 .85rem;margin-bottom:.7rem}section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2) div[data-testid="stVerticalBlock"]{gap:.5rem!important}section[data-testid="stMain"] [data-testid="stMainBlockContainer"]{padding-top:3.75rem!important}section[data-testid="stMain"] div[data-testid="stVerticalBlock"]>div[data-testid="stElementContainer"]:has(~ div[data-testid="stVerticalBlockBorderWrapper"] .bmv-banner){display:none}</style><div class="bmv-banner" style="display:flex;align-items:center;justify-content:center;gap:14px;margin:0"><div style="width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#E3C77E,#C9A24B);color:#1a1205;font-weight:700;font-family:Georgia,serif;font-size:1.35rem">&beta;</div><div style="text-align:left"><div style="font-size:.8rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9">Portfolio Optimisation <span style="color:#E3C77E;font-style:italic">with</span> Derivatives &amp; Structured Products</div><div style="font-family:Georgia,serif;font-weight:600;font-size:1.45rem;line-height:1.05;color:#fafafa">Beyond <span style="color:#E3C77E">Mean-Variance</span></div><div style="font-family:Georgia,serif;font-weight:500;font-size:1rem;color:#aeb9c9">Mental Accounting Framework</div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div style="background:#141a23;border:1px solid #C9A24B;border-radius:8px;padding:.12rem 1.2rem;margin:.85rem auto .4rem;max-width:calc(100% - 570px);text-align:center"><h2 style="color:#E3C77E;margin:0;font-family:Georgia,serif;font-size:1.55rem;letter-spacing:.05em"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E3C77E" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px;margin-right:.5rem"><path d="M3 3v18h18"/><path d="M7 14l3.5-3.5 2.5 2.5L18 8"/></svg>Live Portfolio</h2></div>', unsafe_allow_html=True)
+    st.caption("Build a portfolio, then track its performance against a benchmark — return since inception, "
+               "risk, realised alpha &amp; beta, and whether it stays within your risk tolerance. Use one date for "
+               "the initial mix; add rows with a later date to record a rebalance. (One-click sign-in to save to "
+               "your Google Drive — coming next.)")
+
+    _BENCH_PRESETS = {"S&P 500 — SPY": "SPY", "MSCI ACWI (world) — ACWI": "ACWI",
+                      "Nasdaq-100 — QQQ": "QQQ", "Russell 2000 — IWM": "IWM",
+                      "Euro Stoxx 50 — EZU": "EZU", "US bonds — AGG": "AGG",
+                      "Gold — GLD": "GLD", "Custom ticker…": "__custom__"}
+    st.session_state.setdefault('pf_name_inp', 'My portfolio')
+    st.session_state.setdefault('pf_bench_custom', 'SPY')
+    st.session_state.setdefault('pf_capital_inp', 10000.0)
+    _GTITLE = "<span style='font-size:20px;font-weight:600;color:#E3C77E'>%s</span>"
+    _pc1, _pc2, _pc3 = st.columns([2, 1, 1])
+    with _pc1:
+        st.markdown(_GTITLE % "Portfolio name", unsafe_allow_html=True)
+        pf_name = st.text_input("Portfolio name", key='pf_name_inp', label_visibility="collapsed")
+    with _pc2:
+        st.markdown(_GTITLE % "Benchmark", unsafe_allow_html=True)
+        _bsel = st.selectbox("Benchmark", list(_BENCH_PRESETS.keys()), key='pf_bench_sel',
+                             label_visibility="collapsed")
+        if _BENCH_PRESETS[_bsel] == "__custom__":
+            pf_bench = (st.text_input("Custom benchmark ticker", key='pf_bench_custom') or "").strip().upper()
+        else:
+            pf_bench = _BENCH_PRESETS[_bsel]
+    with _pc3:
+        st.markdown(_GTITLE % "Starting capital (€)", unsafe_allow_html=True)
+        pf_capital = st.number_input("Starting capital", key='pf_capital_inp', min_value=0.0,
+                                     step=1000.0, format="%.0f", label_visibility="collapsed",
+                                     help="Amount invested at inception. Scales the growth-of-€1 "
+                                          "curve into a euro portfolio value (right axis of the "
+                                          "Total-return chart).")
+
+    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+    st.markdown(_GTITLE % "Holdings", unsafe_allow_html=True)
+    st.caption("Each row is a position you hold, kept from its **Entry date** onward — positions "
+               "**accumulate** (a later row adds to the book, it doesn't replace earlier ones). "
+               "Securities and derivatives together must **total 100%**. The earliest entry date is "
+               "the portfolio's inception; a position added later sits in cash until its entry date.")
+    if 'pf_table_data' not in st.session_state:
+        _inc = _dt.date.today().replace(year=_dt.date.today().year - 1)
+        st.session_state['pf_table_data'] = _pd.DataFrame([
+            {"Date": _inc, "Ticker": "AAPL", "Weight %": 40.0},
+            {"Date": _inc, "Ticker": "MSFT", "Weight %": 35.0},
+            {"Date": _inc, "Ticker": "GLD",  "Weight %": 25.0},
+        ])
+    pf_table = st.data_editor(
+        st.session_state['pf_table_data'], num_rows="dynamic", hide_index=True,
+        use_container_width=True, key="pf_table_ed",
+        column_config={
+            "Date": st.column_config.DateColumn("Entry date", format="YYYY-MM-DD",
+                help="When you started holding this position. The earliest entry date is the "
+                     "portfolio's inception; the position is held from this date onward."),
+            "Ticker": st.column_config.TextColumn("Ticker", help="e.g. AAPL, MSFT, GLD, MC.PA, BTC-USD"),
+            "Weight %": st.column_config.NumberColumn("Weight %", min_value=0.0, max_value=100.0,
+                                                      step=1.0, format="%.1f"),
+        })
+
+    # ── Derivatives & structured products (optional) ──
+    st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+    st.markdown(_GTITLE % ("Derivatives &amp; structured products "
+                "<span style='font-size:.8rem;color:#8b97a8;font-weight:400'>(optional)</span>"),
+                unsafe_allow_html=True)
+    st.caption("Each position is marked to market on the underlying you name — same pricing engine as the "
+               "Backtest, with real expiry. Strikes are fractions of the entry spot (0.90 = 90%); Tenor is the "
+               "option life in years. These weights count toward the same 100% total as your securities.")
+    def _empty_der_df():
+        return _pd.DataFrame({
+            "Date": _pd.Series([], dtype="datetime64[ns]"),
+            "Underlying": _pd.Series([], dtype="object"),
+            "Type": _pd.Series([], dtype="object"),
+            "Strike 1": _pd.Series([], dtype="float64"),
+            "Strike 2": _pd.Series([], dtype="float64"),
+            "Tenor (y)": _pd.Series([], dtype="float64"),
+            "Weight %": _pd.Series([], dtype="float64")})
+    if 'pf_der_data' not in st.session_state:
+        st.session_state['pf_der_data'] = _empty_der_df()
+    pf_der = st.data_editor(
+        st.session_state['pf_der_data'], num_rows="dynamic", hide_index=True,
+        use_container_width=True, key="pf_der_ed",
+        column_config={
+            "Date": st.column_config.DateColumn("Entry date", format="YYYY-MM-DD",
+                help="When you entered the position (the option's contract start)."),
+            "Underlying": st.column_config.TextColumn("Underlying", help="Ticker the derivative is written on, e.g. AAPL, SPY."),
+            "Type": st.column_config.SelectboxColumn("Type", options=list(_LDT.keys()), width="medium"),
+            "Strike 1": st.column_config.NumberColumn("Strike 1", min_value=0.0, max_value=3.0, step=0.05,
+                format="%.2f", help="Fraction of entry spot (0.90 = 90%). Main strike / collar put / spread long / CGN floor."),
+            "Strike 2": st.column_config.NumberColumn("Strike 2", min_value=0.0, max_value=3.0, step=0.05,
+                format="%.2f", help="Second strike where the type needs one (collar call, strangle call, spread short)."),
+            "Tenor (y)": st.column_config.NumberColumn("Tenor (y)", min_value=0.1, max_value=10.0, step=0.25,
+                format="%.2f", help="Option life in years."),
+            "Weight %": st.column_config.NumberColumn("Weight %", min_value=0.0, max_value=100.0, step=1.0, format="%.1f"),
+        })
+
+    # ── Live weight check: all positions (securities + derivatives) must total 100% ──
+    _wtot = 0.0; _der_inc = False; _any_pos = False
+    try:
+        _tblw = pf_table.dropna(how="all") if hasattr(pf_table, "dropna") else pf_table
+        for _, _rw in _tblw.iterrows():
+            _tw = _rw.get("Ticker"); _ww = _rw.get("Weight %")
+            if not isinstance(_tw, str) or not _tw.strip():
+                continue
+            if not _pd.isna(_ww):
+                _wtot += float(_ww); _any_pos = True
+        _derw = pf_der.dropna(how="all") if hasattr(pf_der, "dropna") else pf_der
+        for _, _rd in _derw.iterrows():
+            _dd2 = _rd.get("Date"); _td2 = _rd.get("Type"); _ud2 = _rd.get("Underlying"); _wd2 = _rd.get("Weight %")
+            _hd2 = not _pd.isna(_dd2)
+            _ht2 = isinstance(_td2, str) and _td2.strip() != "" and _td2 in _LDT
+            _hu2 = isinstance(_ud2, str) and _ud2.strip() != ""
+            _hw2 = (not _pd.isna(_wd2)) and float(_wd2) != 0.0
+            if not (_hd2 or _ht2 or _hu2 or _hw2):
+                continue  # blank row
+            if not (_hd2 and _ht2 and _hu2 and _hw2):
+                _der_inc = True; continue  # incomplete — flag it
+            _wtot += float(_wd2); _any_pos = True
+    except Exception:
+        _wtot = 0.0; _der_inc = False; _any_pos = False
+    _weights_ok = _any_pos and abs(_wtot - 100.0) <= 0.1
+    if _der_inc:
+        st.markdown("<div style='color:#ffb4ae;font-size:.83rem;margin:.1rem 0 .2rem'>"
+                    "⚠ A derivative row is incomplete — each needs a <b>date, type, underlying and "
+                    "weight</b>. Fill or remove it before computing (it isn't counted until complete)."
+                    "</div>", unsafe_allow_html=True)
+    if _any_pos and not _weights_ok:
+        st.markdown("<div style='color:#ffb4ae;font-size:.83rem;margin:.1rem 0 .2rem'>"
+                    f"⚠ Your positions (securities + derivatives) total <b>{_wtot:.1f}%</b> — they must "
+                    "total <b>100%</b> before computing.</div>", unsafe_allow_html=True)
+    elif _weights_ok and not _der_inc:
+        st.markdown("<div style='color:#9be9a8;font-size:.83rem;margin:.1rem 0 .2rem'>"
+                    "✓ Positions total 100% (securities + derivatives).</div>", unsafe_allow_html=True)
+
+    # ── View range (above Compute) — bounds derived from the holdings dates ──
+    _today2 = _dt.date.today()
+    _hdates = []
+    try:
+        _tbl0 = pf_table.dropna(how="all") if hasattr(pf_table, "dropna") else pf_table
+        for _, _r0 in _tbl0.iterrows():
+            _d0 = _r0.get("Date")
+            if _d0 is not None and not (isinstance(_d0, float) and _d0 != _d0):
+                _hdates.append(_pd.Timestamp(_d0).date())
+    except Exception:
+        pass
+    _rng_lo = min(_hdates) if _hdates else _today2.replace(year=_today2.year - 1)
+    _rng_hi = _today2
+    if _rng_lo >= _rng_hi:
+        _rng_lo = _rng_hi - _dt.timedelta(days=1)
+    _cf = st.session_state.get('pf_view_from')
+    if _cf is None or _cf < _rng_lo or _cf > _rng_hi:
+        st.session_state['pf_view_from'] = _rng_lo
+    _ct = st.session_state.get('pf_view_to')
+    if _ct is None or _ct < _rng_lo or _ct > _rng_hi:
+        st.session_state['pf_view_to'] = _rng_hi
+    _vrc0, _vrc1, _vrc2 = st.columns([2, 1, 1], vertical_alignment="bottom")
+    with _vrc1:
+        st.date_input("View from", min_value=_rng_lo, max_value=_rng_hi,
+                      key="pf_view_from", format="YYYY-MM-DD")
+    with _vrc2:
+        st.date_input("View to", min_value=_rng_lo, max_value=_rng_hi,
+                      key="pf_view_to", format="YYYY-MM-DD")
+    with _vrc0:
+        st.caption("Optional — narrow the analytics to a date range (default: full history). "
+                   "Applies to the results below after you compute.")
+
+    st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+    _pcrun = st.columns([2, 1, 2])
+    with _pcrun[1]:
+        pf_run = st.button(":material/query_stats: Compute analytics", type="primary",
+                           use_container_width=True, key="pf_run")
+    st.markdown("<div style='height:20px'></div>", unsafe_allow_html=True)
+
+    if pf_run:
+        try:
+            # ── positions (each row = a held position, kept from its own entry date) ──
+            _short = {"put": "Put", "call": "Call", "straddle": "Straddle", "strangle": "Strangle",
+                      "safety_collar": "Collar-S", "aggressive_collar": "Collar-A",
+                      "bull_call_spread": "BullSpr", "bear_put_spread": "BearSpr", "cgn_uncapped": "CGN"}
+            _positions = []; _secseen = {}; _idseen = {}; _der_rows = []; _der_bad = []
+            # securities
+            _rows = pf_table.dropna(how="all") if hasattr(pf_table, "dropna") else pf_table
+            for _, _r in _rows.iterrows():
+                _d = _r.get("Date"); _t = _r.get("Ticker"); _w = _r.get("Weight %")
+                if not (isinstance(_t, str) and _t.strip()):
+                    continue
+                if _pd.isna(_w) or float(_w) == 0.0:
+                    continue
+                _tk = _t.strip().upper()
+                _ent = _pd.Timestamp(_d).normalize() if not _pd.isna(_d) else None
+                _secseen[_tk] = _secseen.get(_tk, 0) + 1
+                _sid = _tk if _secseen[_tk] == 1 else f"{_tk} #{_secseen[_tk]}"
+                _positions.append({"id": _sid, "kind": "sec", "ticker": _tk, "entry": _ent, "w": float(_w)})
+            # derivatives
+            _derrows = pf_der.dropna(how="all") if hasattr(pf_der, "dropna") else pf_der
+            for _ri, (_, _rd) in enumerate(_derrows.iterrows(), start=1):
+                _d = _rd.get("Date"); _lab = _rd.get("Type"); _u = _rd.get("Underlying"); _w = _rd.get("Weight %")
+                _s1 = _rd.get("Strike 1"); _s2 = _rd.get("Strike 2"); _ten = _rd.get("Tenor (y)")
+                _has_date = not _pd.isna(_d)
+                _has_type = isinstance(_lab, str) and _lab.strip() != ""
+                _has_und = isinstance(_u, str) and _u.strip() != ""
+                _has_w = (not _pd.isna(_w)) and float(_w) != 0.0
+                if not (_has_date or _has_type or _has_und or _has_w):
+                    continue  # blank row
+                _miss = []
+                if not _has_date: _miss.append("date")
+                if not _has_type or _lab not in _LDT: _miss.append("type")
+                if not _has_und: _miss.append("underlying")
+                if not _has_w: _miss.append("weight")
+                if _miss:
+                    _der_bad.append((_ri, _miss)); continue
+                _dtype = _LDT[_lab]; _u = _u.strip().upper(); _key = _pd.Timestamp(_d).normalize()
+                try: _s1f = float(_s1)
+                except Exception: _s1f = 1.0
+                try: _s2f = float(_s2)
+                except Exception: _s2f = float("nan")
+                try: _tenf = float(_ten)
+                except Exception: _tenf = 1.0
+                if not (_tenf > 0): _tenf = 1.0
+                _base = f"{_short.get(_dtype, _dtype)} {_u} K{_s1f:.2f}" + (f"/{_s2f:.2f}" if _s2f == _s2f else "")
+                _idseen[_base] = _idseen.get(_base, 0) + 1
+                _did = _base if _idseen[_base] == 1 else f"{_base} #{_idseen[_base]}"
+                _positions.append({"id": _did, "kind": "der", "und": _u, "entry": _key, "dtype": _dtype,
+                                   "s1": _s1f, "s2": _s2f, "tenor": _tenf, "w": float(_w)})
+                _der_rows.append({"Date": _key.strftime("%Y-%m-%d"), "Underlying": _u, "Type": _lab,
+                                  "Strike 1": _s1f, "Strike 2": (None if _s2f != _s2f else _s2f),
+                                  "Tenor (y)": _tenf, "Weight %": float(_w)})
+            _wtotal = sum(_p["w"] for _p in _positions)
+            if _der_bad:
+                st.error("Some derivative rows are incomplete — fill every field before computing: "
+                         + "; ".join(f"row {_ri} missing {', '.join(_m)}" for _ri, _m in _der_bad)
+                         + ". (Each derivative needs a date, type, underlying and weight.)")
+            elif not _positions:
+                st.warning("Add at least one position (security or derivative) with a weight.")
+            elif abs(_wtotal - 100.0) > 0.1:
+                st.error(f"Your positions total **{_wtotal:.1f}%** — securities + derivatives must "
+                         "total **100%** before computing.")
+            else:
+                _bench = (pf_bench or "").strip().upper()
+                _sectk = sorted({_p["ticker"] for _p in _positions if _p["kind"] == "sec"})
+                _undtk = sorted({_p["und"] for _p in _positions if _p["kind"] == "der"})
+                _fetch = list(dict.fromkeys(_sectk + _undtk + ([_bench] if _bench else [])))
+                _entd = [_p["entry"] for _p in _positions if _p["entry"] is not None]
+                _incept = (min(_entd).date() if _entd
+                           else _dt.date.today().replace(year=_dt.date.today().year - 1))
+                for _p in _positions:
+                    if _p["entry"] is None:
+                        _p["entry"] = _pd.Timestamp(_incept)
+                _end = _dt.date.today() + _dt.timedelta(days=1)
+                with st.spinner("Fetching prices and marking positions to market…"):
+                    _px, _err = fetch_close_prices(_fetch, _incept, _end)
+                if _err or _px is None:
+                    st.error(f"Price data: {_err or 'no data returned'}")
+                else:
+                    # one growth-of-1 column per position, starting at its own entry date (cash before)
+                    _pxc = _pd.DataFrame(index=_px.index); _miss = []
+                    for _p in _positions:
+                        if _p["kind"] == "sec":
+                            if _p["ticker"] not in _px.columns:
+                                _miss.append(_p["id"]); continue
+                            _s = _px[_p["ticker"]].loc[_p["entry"]:].dropna()
+                            _g = (_s / float(_s.iloc[0])) if len(_s) >= 2 else None
+                        else:
+                            if _p["und"] not in _px.columns:
+                                _miss.append(_p["id"]); continue
+                            try:
+                                _g = _lds(_px[_p["und"]].loc[_p["entry"]:], _p["dtype"],
+                                          _p["s1"], _p["s2"], _p["tenor"])
+                            except Exception:
+                                _g = None
+                        if _g is None or getattr(_g, "empty", True):
+                            _miss.append(_p["id"]); continue
+                        _pxc[_p["id"]] = _g
+                    if _bench and _bench in _px.columns:
+                        _pxc[_bench] = _px[_bench]
+                    if _miss:
+                        st.warning("Couldn't price these positions (no data): " + ", ".join(_miss) + ".")
+                    _w_by_id = {}
+                    for _p in _positions:
+                        if _p["id"] in _pxc.columns:
+                            _w_by_id[_p["id"]] = _w_by_id.get(_p["id"], 0.0) + _p["w"] / 100.0
+                    if not _w_by_id:
+                        st.error("None of your positions could be priced — check the tickers/underlyings.")
+                    else:
+                        _log = [{"date": _pd.Timestamp(_incept).strftime("%Y-%m-%d"), "weights": _w_by_id}]
+                        # securities grouped by entry date (for save/load round-trips)
+                        _sec_by_date = {}
+                        for _p in _positions:
+                            if _p["kind"] == "sec" and _p["id"] in _pxc.columns:
+                                _dk = _pd.Timestamp(_p["entry"]).strftime("%Y-%m-%d")
+                                _sec_by_date.setdefault(_dk, {})
+                                _sec_by_date[_dk][_p["ticker"]] = _sec_by_date[_dk].get(_p["ticker"], 0.0) + _p["w"] / 100.0
+                        _sec_log = [{"date": _dk, "weights": _wd} for _dk, _wd in sorted(_sec_by_date.items())]
+                        _res = _pf.analyze(_pxc, _log, benchmark=(_bench if _bench in _pxc.columns else None))
+                        _holdtk = list(_w_by_id.keys())
+                        _moments = None
+                        try:
+                            _rh = _pxc[_holdtk].pct_change().dropna()
+                            if len(_rh) > 5 and len(_holdtk) >= 1:
+                                _moments = ((_rh.mean() * 252).values, (_rh.cov() * 252).values)
+                        except Exception:
+                            _moments = None
+                        st.session_state['pf_result'] = {
+                            'res': _res, 'log': _log, 'sec_log': _sec_log, 'der_rows': _der_rows,
+                            'name': pf_name, 'bench': _bench,
+                            'missing': [t for t in _fetch if t not in _px.columns],
+                            'moments': _moments, 'moment_tickers': _holdtk,
+                        }
+        except Exception as _e:
+            st.error(f"Couldn't compute: {_e}")
+
+    _PR = st.session_state.get('pf_result')
+    if _PR:
+        _res = _PR['res']
+        if _res['metrics']['n'] == 0:
+            st.warning("Couldn't build a track from these inputs — check the tickers and dates.")
+        else:
+            if _PR['missing']:
+                st.warning("No price data for: " + ", ".join(_PR['missing']) + " — skipped.")
+            _port_full = _res['port_returns']; _bench_full = _res['bench_returns']
+            _fs = _port_full.index[0].date(); _fe = _port_full.index[-1].date()
+            # View range comes from the From/To boxes above the Compute button
+            _vs = st.session_state.get('pf_view_from', _fs)
+            _ve = st.session_state.get('pf_view_to', _fe)
+            if _vs > _ve:
+                _vs, _ve = _ve, _vs
+            _pdates = _port_full.index.date
+            _pv = _port_full[(_pdates >= _vs) & (_pdates <= _ve)]
+            if len(_pv) < 3:
+                _pv = _port_full; _vs, _ve = _fs, _fe
+            _full_view = (_vs <= _fs and _ve >= _fe)
+            _m = _pf.metrics(_pv)
+            _eq = _pf.equity_curve(_pv)
+            _cap = None; _bench_eq = None
+            if _bench_full is not None and len(_bench_full):
+                _bdates = _bench_full.index.date
+                _bv = _bench_full[(_bdates >= _vs) & (_bdates <= _ve)]
+                if len(_bv) > 2:
+                    _bench_eq = _pf.equity_curve(_bv); _cap = _pf.capm(_pv, _bv)
+            # Risk inputs (VaR or ES), seeded from the Risk Profile; drive headline + panel.
+            _rp0 = st.session_state.get('rp_result')
+            _dl0 = max(-60, min(-2, int(_rp0['H_pct']))) if (_rp0 and _rp0.get('H_pct') is not None) else -15
+            _da0 = max(1, min(25, int(_rp0['alpha_pct']))) if (_rp0 and _rp0.get('alpha_pct') is not None) else 5
+            _dL0 = max(-60, min(-2, int(_rp0['L_pct']))) if (_rp0 and _rp0.get('L_pct') is not None) else -20
+            st.session_state.setdefault('pf_risk_lim', _dl0)
+            st.session_state.setdefault('pf_risk_alpha', _da0)
+            st.session_state.setdefault('pf_risk_L', _dL0)
+            st.session_state.setdefault('pf_risk_method', 'VaR')
+            _is_es = str(st.session_state.get('pf_risk_method', 'VaR')) == 'ES'
+            _H = float(st.session_state.get('pf_risk_lim', _dl0))
+            _A = float(st.session_state.get('pf_risk_alpha', _da0))
+            _Lf = float(st.session_state.get('pf_risk_L', _dL0))
+            # ── Time-varying tolerance: step-function (H, α, L) from the editable tolerance timeline ──
+            _rph = st.session_state.get('rp_history', []) or []
+            # Seed the operational timeline from the assessment history the first time we need it.
+            if 'tol_timeline' not in st.session_state and _rph:
+                st.session_state['tol_timeline'] = [
+                    {'date': str(h.get('date')), 'H_pct': h.get('H_pct'),
+                     'alpha_pct': h.get('alpha_pct'), 'L_pct': h.get('L_pct')}
+                    for h in sorted(_rph, key=lambda x: str(x.get('date')))]
+            def _tl_rows():
+                """Valid, sorted tolerance-timeline rows from session (date + H/α/L all present)."""
+                _out = []
+                for _r in (st.session_state.get('tol_timeline') or []):
+                    _d = _r.get('date'); _h = _r.get('H_pct'); _a = _r.get('alpha_pct'); _l = _r.get('L_pct')
+                    if _d in (None, '') or _h is None or _a is None or _l is None:
+                        continue
+                    try:
+                        _out.append((_pd.Timestamp(_d), float(_h), float(_a), float(_l)))
+                    except Exception:
+                        continue
+                return sorted(_out, key=lambda s: s[0])
+            _tlr = _tl_rows()
+            _distinct = {(r[1], r[2], r[3]) for r in _tlr}
+            _tv_avail = (len(_tlr) >= 2 and len(_distinct) >= 2)
+            _tv = bool(st.session_state.get('pf_risk_tv', False)) and _tv_avail
+            def _seg_list():
+                """Sorted tolerance segments (start_ts, H, α, L). Single level when TV off."""
+                if _tv and _tlr:
+                    return _tlr
+                return [(_pd.Timestamp.min, _H, _A, _Lf)]
+            def _thr(index):
+                """Per-date in-force (H, α, L) as aligned Series (most recent assessment on/before)."""
+                _idx = _pd.DatetimeIndex(index)
+                _Hs = _pd.Series(np.nan, index=_idx); _As = _Hs.copy(); _Ls = _Hs.copy()
+                for _ts, _h, _a, _l in _seg_list():
+                    _m = _idx >= _ts
+                    _Hs[_m] = _h; _As[_m] = _a; _Ls[_m] = _l
+                _s0 = _seg_list()[0]
+                return _Hs.fillna(_s0[1]), _As.fillna(_s0[2]), _Ls.fillna(_s0[3])
+            def _seg_stats(_series):
+                """Per-period breach stats over a value series (drawdown / horizon-return)."""
+                _s = _series.dropna(); _segs = _seg_list(); _out = []
+                for _i, (_ts, _h, _a, _l) in enumerate(_segs):
+                    _end = _segs[_i + 1][0] if _i + 1 < len(_segs) else _pd.Timestamp.max
+                    _mask = (_s.index < _end) if _i == 0 else ((_s.index >= _ts) & (_s.index < _end))
+                    _seg = _s[_mask]; _n = int(len(_seg))
+                    if _n == 0:
+                        continue
+                    _nb = int((_seg < _h).sum()); _fr = _nb / _n * 100.0
+                    _tl = float(_seg[_seg < _h].mean()) if _nb else 0.0
+                    _ok = ((_nb == 0) or (_tl >= _l)) if _is_es else (_fr <= _a)
+                    _out.append({'start': _seg.index[0], 'end': _seg.index[-1], 'H': _h, 'a': _a,
+                                 'L': _l, 'n': _n, 'nb': _nb, 'fr': _fr, 'tail': _tl, 'ok': _ok})
+                return _out
+            _dd_all = (_eq / _eq.cummax() - 1.0) * 100.0
+            _Hall, _Aall, _Lall = _thr(_eq.index)
+            _brk_all = (_dd_all < _Hall)                       # per-day breach vs the in-force H
+            _bn_all = int(_brk_all.sum())
+            _bfreq_all = (_bn_all / len(_dd_all) * 100.0) if len(_dd_all) else 0.0
+            _tail_dd = float(_dd_all[_brk_all].mean()) if _bn_all > 0 else 0.0
+            _segst_all = _seg_stats(_dd_all)
+            _all_ok = all(_s['ok'] for _s in _segst_all) if _segst_all else True
+            if _is_es:
+                _bcol = "#fafafa" if _bn_all == 0 else ("#f5b942" if _all_ok else "#f85149")
+                _m2_label = "Tail-avg loss (vs L)" if not _tv else "Tail vs L (worst period)"
+                _m2_value = f"{_tail_dd:.1f}%" if _bn_all > 0 else "—"
+                _m2_tip = ("Average drawdown on the days beyond H — should stay at or above your CVaR floor L."
+                           + (" Evaluated per tolerance period." if _tv else ""))
+            else:
+                _bcol = "#fafafa" if _bn_all == 0 else ("#f5b942" if _all_ok else "#f85149")
+                _m2_label = "Breach frequency"
+                _m2_value = f"{_bfreq_all:.1f}%"
+                _m2_tip = (f"Share of days the drawdown was beyond H — your α caps this."
+                           + (" Each period is checked against its own α." if _tv else f" α = {_A:.0f}%."))
+            def _pf_breach_metric(_label, _value, _color, _tip):
+                # matches st.metric styling: label 14px / value 36px, colour #e7ecf4, weight 400
+                return ("<div title='" + _tip + "'>"
+                        "<div style='color:#e7ecf4;font-size:14px;font-weight:400;line-height:1.6'>" + _label + "</div>"
+                        "<div style='color:" + _color + ";font-size:36px;font-weight:400;"
+                        "line-height:1.15'>" + _value + "</div></div>")
+            _rng_note = "full history" if _full_view else f"{_vs} → {_ve}"
+            with st.container(border=True):
+                st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+                st.markdown(f"<div style='text-align:center;margin:.1rem 0 .95rem'>"
+                            f"<span style='color:#2dd4bf;font-size:1.3rem;font-weight:700'>{_PR['name']}</span>"
+                            f"<span style='color:#8b97a8;font-size:.85rem'> &nbsp;·&nbsp; {_rng_note} "
+                            f"&nbsp;·&nbsp; {_m['n']} trading days</span></div>", unsafe_allow_html=True)
+                _c1, _c2, _c3, _c4, _c5 = st.columns(5)
+                _c1.metric("Return since inception" if _full_view else "Return (range)",
+                           f"{_m['cumulative']*100:.1f}%")
+                _c2.metric("Annualised return", f"{_m['annualised']*100:.1f}%")
+                _c3.metric("Volatility (ann.)", f"{_m['vol']*100:.1f}%")
+                _c4.metric("Sharpe", f"{_m['sharpe']:.2f}" if _m['sharpe'] == _m['sharpe'] else "—")
+                _c5.markdown(_pf_breach_metric(
+                    f"Breaches (vs H = {_H:.0f}%)", f"{_bn_all}", _bcol,
+                    "Number of days the portfolio's drawdown fell past your loss limit H."),
+                    unsafe_allow_html=True)
+                _c6, _c7, _c8, _c9, _c10 = st.columns(5)
+                _c6.metric("Max drawdown", f"{_m['max_drawdown']*100:.1f}%")
+                _aval = _cap['alpha'] if (_cap and _cap['alpha'] == _cap['alpha']) else None
+                _acol = "#f85149" if (_aval is not None and _aval < 0) else "#e7ecf4"
+                _c7.markdown(_pf_breach_metric(
+                    f"Jensen's α vs {_PR['bench'] or 'benchmark'} (ann.)",
+                    (f"{_aval*100:+.2f}%" if _aval is not None else "—"), _acol,
+                    "Annualised Jensen's alpha — return beyond what benchmark exposure (β) explains."),
+                    unsafe_allow_html=True)
+                _c8.metric("Beta (β)", f"{_cap['beta']:.2f}" if _cap and _cap['beta'] == _cap['beta'] else "—")
+                _c9.metric("R²", f"{_cap['r2']:.2f}" if _cap and _cap['r2'] == _cap['r2'] else "—")
+                _c10.markdown(_pf_breach_metric(_m2_label, _m2_value, _bcol, _m2_tip),
+                              unsafe_allow_html=True)
+                st.caption(f"Daily VaR (5%): {_m['var']*100:.2f}%  ·  Daily CVaR (5%): {_m['cvar']*100:.2f}%  "
+                           f"·  risk-free {int(_pf.RF_ANNUAL*100)}% p.a.")
+
+            # synced left (return %) and right (portfolio value €) y-ranges so the value
+            # area's top edge coincides exactly with the return line.
+            _cap0 = float(pf_capital) if pf_capital else 0.0
+            _allret = list((_eq.values - 1.0) * 100)
+            if _bench_eq is not None and len(_bench_eq):
+                _allret += list((_bench_eq.values - 1.0) * 100)
+            _ymin = min(_allret) if _allret else -1.0
+            _ymax = max(_allret) if _allret else 1.0
+            _ypad = max((_ymax - _ymin) * 0.06, 1.0)
+            _ylo, _yhi = _ymin - _ypad, _ymax + _ypad
+            _vlo, _vhi = _cap0 * (1.0 + _ylo / 100.0), _cap0 * (1.0 + _yhi / 100.0)
+
+            _fig = _go.Figure()
+            # portfolio value (€) — faint area on the secondary axis, drawn behind the lines
+            if _cap0 > 0:
+                _fig.add_trace(_go.Scatter(x=_eq.index, y=_cap0 * _eq.values, mode='lines',
+                                           name='Portfolio value (€)', yaxis='y2',
+                                           line=dict(width=0), fill='tozeroy',
+                                           fillcolor='rgba(45,212,191,0.10)',
+                                           hovertemplate='%{x|%Y-%m-%d}<br>value €%{y:,.0f}<extra></extra>'))
+            _fig.add_trace(_go.Scatter(x=_eq.index, y=(_eq.values - 1.0) * 100, mode='lines',
+                                       name=_PR['name'], line=dict(color='#2dd4bf', width=2.2),
+                                       hovertemplate='%{x|%Y-%m-%d}<br>%{y:.1f}%<extra></extra>'))
+            if _bench_eq is not None and len(_bench_eq):
+                _be = _bench_eq
+                _fig.add_trace(_go.Scatter(x=_be.index, y=(_be.values - 1.0) * 100, mode='lines',
+                                           name=_PR['bench'], line=dict(color='#8b949e', width=1.6, dash='dot'),
+                                           hovertemplate='%{x|%Y-%m-%d}<br>%{y:.1f}%<extra></extra>'))
+            # breach-day markers (days the drawdown fell past the in-force loss limit H)
+            _brm = _brk_all
+            if bool(_brm.any()):
+                _bx = _eq.index[_brm.values]; _byv = (_eq.values[_brm.values] - 1.0) * 100
+                _brname = ('Breach day (drawdown past in-force limit)' if _tv
+                           else f'Breach day (drawdown < {_H:.0f}%)')
+                _fig.add_trace(_go.Scatter(x=_bx, y=_byv, mode='markers', name=_brname,
+                                           marker=dict(color='#f85149', size=5, symbol='circle', line=dict(width=0)),
+                                           hovertemplate='%{x|%Y-%m-%d}<br><b>breach</b> — drawdown past H<extra></extra>'))
+            # rebalance markers (skip inception)
+            for _e in _PR['log'][1:]:
+                _rd = _pd.Timestamp(_e['date'])
+                _near = _eq.index[_eq.index >= _rd]
+                if len(_near):
+                    _yy = (_eq.loc[_near[0]] - 1.0) * 100
+                    _fig.add_trace(_go.Scatter(x=[_near[0]], y=[_yy], mode='markers',
+                                               marker=dict(color='#f5b942', size=9, symbol='diamond',
+                                                           line=dict(color='#0d1117', width=1)),
+                                               name='Rebalance', showlegend=False,
+                                               hovertemplate=f'Rebalanced {_e["date"]}<extra></extra>'))
+            _fig.update_layout(template='plotly_dark', paper_bgcolor='#1b2330', plot_bgcolor='#0e1521',
+                               height=420, margin=dict(t=58, b=40, l=64, r=(72 if _cap0 > 0 else 24)),
+                               title=dict(text='Total return vs benchmark<br>'
+                                               '<span style="font-size:11px;color:#8b949e">Growth of €1</span>',
+                                          x=0.5, xanchor='center',
+                                          font=dict(color='#E3C77E', size=14)),
+                               legend=dict(bgcolor='rgba(26,26,46,0.6)', x=0.01, y=0.99,
+                                           font=dict(color='#c9d1d9', size=11)),
+                               yaxis=dict(title='Total return (%)', gridcolor='#27344e', griddash='dot',
+                                          color='#c0c8d8', zerolinecolor='#3a4762', automargin=False,
+                                          range=[_ylo, _yhi], autorange=False),
+                               yaxis2=dict(title='Portfolio value (€)', overlaying='y', side='right',
+                                           range=[_vlo, _vhi], autorange=False, showgrid=False,
+                                           color='#2dd4bf', tickformat=',.0f', automargin=False,
+                                           visible=(_cap0 > 0)),
+                               xaxis=dict(gridcolor='#27344e', griddash='dot', color='#c0c8d8',
+                                          range=([_eq.index[0], _eq.index[-1]] if len(_eq) else None),
+                                          autorange=(False if len(_eq) else True)))
+            st.plotly_chart(_fig, use_container_width=True, config={'displayModeBar': True})
+
+            with st.container(border=True):
+                st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+                # ── Risk vs your tolerance (VaR or ES) ──
+                _from_profile = bool(_rp0 and _rp0.get('H_pct') is not None)
+                st.markdown("<div style='text-align:center;color:#E3C77E;font-size:20px;font-weight:700;"
+                            "margin:1.1rem 0 .2rem'>Risk vs your tolerance</div>", unsafe_allow_html=True)
+                _msel1, _msel2 = st.columns([1.1, 1.9], vertical_alignment="center")
+                with _msel1:
+                    st.radio("Risk measure", ["VaR", "ES"],
+                             format_func=lambda x: "VaR · P(r<H) ≤ α" if x == "VaR"
+                                                   else "Expected Shortfall · E[r|r<H] ≥ L",
+                             horizontal=True, key="pf_risk_method")
+                with _msel2:
+                    if _from_profile:
+                        _sc0 = _rp0.get('score'); _asd = _rp0.get('date')
+                        _sctxt = ((f" &nbsp;·&nbsp; score <b style='color:#E3C77E'>{_sc0}/47</b>"
+                                   + (f" <span style='color:#6b7689'>(assessed {_asd})</span>" if _asd else ""))
+                                  if _sc0 is not None else "")
+                        _scope = (f"From your <b>Risk Profile</b>: <b style='color:#c9d1d9'>{_rp0.get('band','—')}</b>"
+                                  f"{_sctxt} &nbsp;·&nbsp; H = {_rp0.get('H_pct')}%, α = {_rp0.get('alpha_pct')}%, "
+                                  f"L = {_rp0.get('L_pct')}%.")
+                    else:
+                        _scope = "Complete the <b>Risk Profile</b> to seed H, α and L automatically."
+                    # Which profile band do the *current* limits most resemble? (correspondence,
+                    # not a fresh score — the sliders don't produce a psychometric score.)
+                    _band_order = ["Low", "Below-average", "Average / moderate", "Above-average", "High"]
+                    _score_disp = {"Low": "13–18", "Below-average": "19–22", "Average / moderate": "23–28",
+                                   "Above-average": "29–32", "High": "33–47"}
+                    _bb, _bbd = _band_order[0], 1e18
+                    for _bn in _band_order:
+                        _hb, _ab = _rp.BAND_TO_HALPHA[_bn]; _lb = _rp.BAND_TO_L[_bn]
+                        _dd = (((_H - _hb) / 25.0) ** 2 + ((_Lf - _lb) / 30.0) ** 2) if _is_es \
+                              else (((_H - _hb) / 25.0) ** 2 + ((_A - _ab) / 10.0) ** 2)
+                        if _dd < _bbd:
+                            _bbd, _bb = _dd, _bn
+                    _corr = (f"<br>These limits align with the <b style='color:#c9d1d9'>{_bb}</b> band "
+                             f"(scores {_score_disp[_bb]}).")
+                    if _from_profile and _rp0.get('band') in _band_order:
+                        _ci = _band_order.index(_bb); _ai = _band_order.index(_rp0.get('band'))
+                        if _ci < _ai:
+                            _corr += " <span style='color:#e8cd84'>Stricter than your assessed profile.</span>"
+                        elif _ci > _ai:
+                            _corr += " <span style='color:#e8cd84'>Looser than your assessed profile.</span>"
+                        else:
+                            _corr += " <span style='color:#9be9a8'>Matches your assessed profile.</span>"
+                    _lamtxt = ""
+                    if (not _is_es) and (_PR.get('moments') is not None):
+                        _lam = None
+                        try:
+                            _lam = implied_lambda(_H / 100.0, _A / 100.0, _PR['moments'][0], _PR['moments'][1])
+                        except Exception:
+                            _lam = None
+                        if _lam is not None:
+                            _lamtxt = (f"<br>Implied risk-aversion <b style='color:#7fb3e8'>λ ≈ {_lam:.2f}</b> — the "
+                                       "mean-variance risk-aversion your VaR tolerance implies for this universe.")
+                        else:
+                            _lamtxt = ("<br>Implied risk-aversion <b style='color:#7fb3e8'>λ</b>: your VaR tolerance is "
+                                       "<i>non-binding</i> for this universe at this H, α — the portfolio sits comfortably "
+                                       "inside it, so no λ binds.")
+                    st.markdown(f"<div style='color:#8b97a8;font-size:.82rem;line-height:1.5'>{_scope}{_corr}{_lamtxt}</div>",
+                                unsafe_allow_html=True)
+                st.toggle("Evaluate against my tolerance history (time-varying)", key="pf_risk_tv",
+                          disabled=not _tv_avail,
+                          help=("Judge each date against the risk limits that were in force then "
+                                "(from your dated assessment history), instead of one fixed level."
+                                if _tv_avail else
+                                "Take the risk questionnaire more than once (with different results) to "
+                                "unlock this — then each period is checked against the limits in force at the time."))
+                _rl1, _rl2 = st.columns(2)
+                with _rl1:
+                    st.slider("Loss limit / threshold H", min_value=-60, max_value=-2, step=1,
+                              key="pf_risk_lim", format="%d%%", disabled=_tv)
+                with _rl2:
+                    if _is_es:
+                        st.slider("CVaR floor L  (E[r|r<H] ≥ L)", min_value=-60, max_value=-2, step=1,
+                                  key="pf_risk_L", format="%d%%", disabled=_tv)
+                    else:
+                        st.slider("Max breach frequency α", min_value=1, max_value=25, step=1,
+                                  key="pf_risk_alpha", format="%d%%", disabled=_tv)
+                if _tv:
+                    st.caption("⏱ Time-varying mode: limits come from your tolerance timeline, so the "
+                               "sliders are inactive (they set the single-level view). The H (and L) line steps "
+                               "on each effective date, and each period is judged against its own limits.")
+                # ── Editable tolerance timeline (effective dates & levels) ──
+                with st.expander("🗓  Tolerance timeline — effective dates & levels"):
+                    st.caption("Each row is a loss-tolerance level and the date it took effect. Rows are seeded "
+                               "from your risk assessments; you can backdate, edit levels, add or delete rows. "
+                               "Your assessment score stays on the Risk Profile page — edited or added rows are "
+                               "your own policy, marked “manual”. These rows drive the time-varying evaluation above.")
+                    _src_keys = {(str(h.get('date')), h.get('H_pct'), h.get('alpha_pct'), h.get('L_pct')):
+                                 h.get('score') for h in _rph}
+                    _tl_disp = []
+                    for _r in (st.session_state.get('tol_timeline') or []):
+                        _k = (str(_r.get('date')), _r.get('H_pct'), _r.get('alpha_pct'), _r.get('L_pct'))
+                        _sc = _src_keys.get(_k)
+                        try:
+                            _dval = _pd.Timestamp(_r.get('date')).date()
+                        except Exception:
+                            _dval = None
+                        _tl_disp.append({"Effective date": _dval, "H %": _r.get('H_pct'),
+                                         "α %": _r.get('alpha_pct'), "L %": _r.get('L_pct'),
+                                         "Source": (f"assessment · {_sc}/47" if _sc is not None else "manual")})
+                    _tl_df = _pd.DataFrame(_tl_disp, columns=["Effective date", "H %", "α %", "L %", "Source"])
+                    _tl_edited = st.data_editor(
+                        _tl_df, num_rows="dynamic", hide_index=True, use_container_width=True, key="tol_editor",
+                        column_config={
+                            "Effective date": st.column_config.DateColumn("Effective date", format="YYYY-MM-DD"),
+                            "H %": st.column_config.NumberColumn("H %", min_value=-60, max_value=-2, step=1,
+                                                                 help="Loss threshold (negative)."),
+                            "α %": st.column_config.NumberColumn("α %", min_value=1, max_value=25, step=1,
+                                                                 help="Max breach frequency (VaR)."),
+                            "L %": st.column_config.NumberColumn("L %", min_value=-60, max_value=-2, step=1,
+                                                                 help="CVaR floor (ES, negative)."),
+                            "Source": st.column_config.TextColumn("Source", disabled=True,
+                                                                  help="‘assessment · score/47’ when the row matches "
+                                                                       "a questionnaire result; otherwise ‘manual’."),
+                        })
+                    _new_tl = []
+                    for _, _er in _tl_edited.iterrows():
+                        _d = _er.get("Effective date")
+                        if _d is None or (isinstance(_d, float) and _d != _d):
+                            continue
+                        _h = _er.get("H %"); _a = _er.get("α %"); _l = _er.get("L %")
+                        if _pd.isna(_h) or _pd.isna(_a) or _pd.isna(_l):
+                            continue
+                        _new_tl.append({"date": _pd.Timestamp(_d).strftime("%Y-%m-%d"),
+                                        "H_pct": int(round(float(_h))), "alpha_pct": int(round(float(_a))),
+                                        "L_pct": int(round(float(_l)))})
+                    st.session_state['tol_timeline'] = _new_tl
+                    if not _tv_avail:
+                        st.caption("➕ Add at least two rows with different levels to unlock the "
+                                   "time-varying toggle above.")
+                def _grad_area(_x, _y, _hover):
+                    try:
+                        return _go.Scatter(x=_x, y=_y, mode='lines', line=dict(color='#cfd8e3', width=1.3),
+                                           fill='tozeroy', fillgradient=dict(type='vertical',
+                                           colorscale=[[0.0, '#f85149'], [0.5, '#e3c77e'], [1.0, '#2ea043']]),
+                                           hovertemplate=_hover)
+                    except Exception:
+                        return _go.Scatter(x=_x, y=_y, mode='lines', line=dict(color='#2dd4bf', width=1.4),
+                                           fill='tozeroy', fillcolor='rgba(45,212,191,.16)', hovertemplate=_hover)
+
+                # Shared x-axis window so all three charts line up date-for-date, even when a
+                # rolling series (e.g. horizon-return) has no data until its window has elapsed.
+                _xwin = [_eq.index[0], _eq.index[-1]] if len(_eq) else None
+
+                def _limit_overlay(_f, _x, _vals, _color, _dash, _name, _label):
+                    """Draw a loss-limit reference: a flat hline (+annotation) when constant,
+                    or a stepped dashed line when it changes across tolerance periods."""
+                    _v = np.asarray(_vals, float)
+                    if _v.size == 0:
+                        return
+                    if float(np.nanmax(_v)) == float(np.nanmin(_v)):
+                        _f.add_hline(y=float(_v[0]), line=dict(color=_color, width=2.0, dash=_dash),
+                                     annotation_text=f"{_label} = {_v[0]:.0f}%",
+                                     annotation_position=("bottom right" if _dash == 'dash' else "top right"),
+                                     annotation_font_color=_color)
+                    else:
+                        _f.add_trace(_go.Scatter(x=_x, y=_v, mode='lines', name=_name, showlegend=False,
+                                     line=dict(color=_color, width=2.0, dash=_dash, shape='hv'),
+                                     hovertemplate=f'%{{x|%Y-%m-%d}}<br>{_label} = %{{y:.0f}}%<extra></extra>'))
+
+                def _risk_fig(_x, _y, _ytitle, _xrange=None, _Hv=None, _Lv=None):
+                    _f = _go.Figure()
+                    _f.add_trace(_grad_area(_x, _y, '%{x|%Y-%m-%d}<br>%{y:.1f}%<extra></extra>'))
+                    if _Hv is None:
+                        _f.add_hline(y=_H, line=dict(color='#f85149', width=2.2, dash='dash'),
+                                     annotation_text=f"H = {_H:.0f}%", annotation_position="bottom right",
+                                     annotation_font_color="#f85149")
+                    else:
+                        _limit_overlay(_f, _x, _Hv, '#f85149', 'dash', 'H limit', 'H')
+                    if _is_es:
+                        if _Lv is None:
+                            _f.add_hline(y=_Lf, line=dict(color='#f5b942', width=1.8, dash='dot'),
+                                         annotation_text=f"L floor = {_Lf:.0f}%", annotation_position="top right",
+                                         annotation_font_color="#f5b942")
+                        else:
+                            _limit_overlay(_f, _x, _Lv, '#f5b942', 'dot', 'L floor', 'L')
+                    _xaxis = dict(gridcolor='#27344e', griddash='dot', color='#c0c8d8')
+                    if _xrange is not None:
+                        _xaxis.update(range=_xrange, autorange=False)
+                    _f.update_layout(template='plotly_dark', paper_bgcolor='#1b2330', plot_bgcolor='#0e1521',
+                                     height=280, margin=dict(t=16, b=30, l=64, r=24), showlegend=False,
+                                     yaxis=dict(title=_ytitle, gridcolor='#27344e', griddash='dot',
+                                                color='#c0c8d8', zerolinecolor='#3a4762', automargin=False),
+                                     xaxis=_xaxis)
+                    return _f
+
+                def _risk_status(_series, _what):
+                    _s = _series.dropna()
+                    if len(_s) == 0:
+                        return
+                    if _tv:
+                        _rows = []; _any_bad = False
+                        for _sg in _seg_stats(_series):
+                            _lab = f"{_sg['start']:%d %b %Y} → {_sg['end']:%d %b %Y}"
+                            if _sg['nb'] == 0:
+                                _cl = "#9be9a8"; _ic = "&#10003;"
+                                _txt = f"never beyond H = {_sg['H']:.0f}%"
+                            elif _is_es:
+                                if _sg['ok']:
+                                    _cl = "#e8cd84"; _ic = "&#9888;"
+                                    _txt = (f"{_sg['nb']}/{_sg['n']} days beyond H = {_sg['H']:.0f}%; tail avg "
+                                            f"{_sg['tail']:.1f}% ≥ L = {_sg['L']:.0f}% ✓")
+                                else:
+                                    _cl = "#ffb4ae"; _ic = "&#9888;"; _any_bad = True
+                                    _txt = (f"tail avg {_sg['tail']:.1f}% &lt; L = {_sg['L']:.0f}% "
+                                            f"({_sg['nb']}/{_sg['n']} beyond H) — breached")
+                            else:
+                                if _sg['ok']:
+                                    _cl = "#e8cd84"; _ic = "&#9888;"
+                                    _txt = (f"{_sg['nb']}/{_sg['n']} days beyond H = {_sg['H']:.0f}% "
+                                            f"({_sg['fr']:.1f}%) ≤ α = {_sg['a']:.0f}% ✓")
+                                else:
+                                    _cl = "#ffb4ae"; _ic = "&#9888;"; _any_bad = True
+                                    _txt = (f"{_sg['fr']:.1f}% of days beyond H = {_sg['H']:.0f}% "
+                                            f"&gt; α = {_sg['a']:.0f}% — breached")
+                            _rows.append(f"<div style='color:{_cl};font-size:.85rem;margin:.18rem 0'>"
+                                         f"{_ic} <b>{_lab}</b> — {_txt}</div>")
+                        _bg = "rgba(248,81,73,.10)" if _any_bad else "rgba(38,166,65,.08)"
+                        _bd = "#f85149" if _any_bad else "#2ea043"
+                        st.markdown(f"<div style='background:{_bg};border:1px solid {_bd};border-radius:8px;"
+                                    f"padding:.5rem .9rem'><div style='color:#cfd8e3;font-size:.8rem;"
+                                    f"margin-bottom:.15rem'>{_what} — checked against each period's own limits:"
+                                    f"</div>" + "".join(_rows) + "</div>", unsafe_allow_html=True)
+                        return
+                    _nt = int(len(_s)); _nb = int((_s < _H).sum())
+                    _wv = float(_s.min()) if _nt else 0.0
+                    _wd = (_s.idxmin().date() if (_nt and hasattr(_s.idxmin(), 'date')) else "—")
+                    if _nb == 0:
+                        st.markdown("<div style='background:rgba(38,166,65,.10);border:1px solid #2ea043;"
+                                    "border-radius:8px;padding:.55rem 1rem;color:#9be9a8;font-size:.88rem'>"
+                                    f"&#10003; <b>Never beyond H.</b> {_what} never passed your {_H:.0f}% limit — "
+                                    f"worst {_wv:.1f}%.</div>", unsafe_allow_html=True)
+                    elif _is_es:
+                        _tail = float(_s[_s < _H].mean())
+                        if _tail >= _Lf:
+                            st.markdown("<div style='background:rgba(245,185,66,.10);border:1px solid #d6a32e;"
+                                        "border-radius:8px;padding:.55rem 1rem;color:#e8cd84;font-size:.88rem'>"
+                                        f"&#9888; <b>Within your ES floor.</b> {_what} went beyond H on <b>{_nb}</b> of "
+                                        f"{_nt} days; the average loss in that tail is <b>{_tail:.1f}%</b>, at or above "
+                                        f"your floor L = {_Lf:.0f}%. Worst {_wv:.1f}% on {_wd}.</div>",
+                                        unsafe_allow_html=True)
+                        else:
+                            st.markdown("<div style='background:rgba(248,81,73,.13);border:1px solid #f85149;"
+                                        "border-radius:8px;padding:.55rem 1rem;color:#ffb4ae;font-size:.9rem'>"
+                                        f"&#9888; <b>ES floor breached.</b> The average loss in the tail beyond H is "
+                                        f"<b>{_tail:.1f}%</b> — <b>below your floor L = {_Lf:.0f}%</b> ({_nb} of {_nt} "
+                                        f"days beyond H). Worst {_wv:.1f}% on {_wd}. Consider de-risking.</div>",
+                                        unsafe_allow_html=True)
+                    else:
+                        _fr = _nb / _nt
+                        if _fr <= (_A / 100.0):
+                            st.markdown("<div style='background:rgba(245,185,66,.10);border:1px solid #d6a32e;"
+                                        "border-radius:8px;padding:.55rem 1rem;color:#e8cd84;font-size:.88rem'>"
+                                        f"&#9888; <b>Within your α tolerance.</b> {_what} passed the {_H:.0f}% limit on "
+                                        f"<b>{_nb}</b> of {_nt} days (<b>{_fr*100:.1f}%</b>), at or under your "
+                                        f"α = {_A:.0f}%. Worst {_wv:.1f}% on {_wd}.</div>", unsafe_allow_html=True)
+                        else:
+                            st.markdown("<div style='background:rgba(248,81,73,.13);border:1px solid #f85149;"
+                                        "border-radius:8px;padding:.55rem 1rem;color:#ffb4ae;font-size:.9rem'>"
+                                        f"&#9888; <b>Tolerance breached.</b> {_what} passed your {_H:.0f}% limit on "
+                                        f"<b>{_nb}</b> of {_nt} days (<b>{_fr*100:.1f}%</b>) — <b>above your "
+                                        f"α = {_A:.0f}%</b>. Worst {_wv:.1f}% on {_wd}. Consider de-risking or revisiting "
+                                        "your tolerance.</div>", unsafe_allow_html=True)
+
+                # Chart 1 — drawdown breach
+                st.markdown("<div style='color:#cfd8e3;font-weight:600;font-size:.92rem;margin:.6rem 0 0'>"
+                            "1 · Drawdown vs limit <span style='color:#8b97a8;font-weight:400'>— cumulative loss "
+                            "from the running peak</span></div>", unsafe_allow_html=True)
+                st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+                _dd = (_eq / _eq.cummax() - 1.0) * 100.0
+                _ddH, _ddA, _ddL = _thr(_dd.index)
+                st.plotly_chart(_risk_fig(_dd.index, _dd.values, 'Drawdown (%)', _xrange=_xwin,
+                                          _Hv=_ddH.values, _Lv=_ddL.values),
+                                use_container_width=True, config={'displayModeBar': False})
+                _risk_status(_dd, "Drawdown")
+                st.markdown("<div style='height:14px'></div>", unsafe_allow_html=True)
+                st.markdown(
+                    "<details style='background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;"
+                    "padding:.4rem .8rem;margin:.3rem 0 .2rem;font-size:.82rem'>"
+                    "<summary style='cursor:pointer;color:#79b6ff;font-weight:600;list-style:none'>"
+                    "✨ AI-powered: What is a drawdown breach?</summary>"
+                    "<div style='color:#aebccd;margin-top:.4rem;line-height:1.55'>"
+                    "<b>Drawdown</b> is how far the portfolio sits below its own running peak (its high-water mark). "
+                    "A <i>drawdown breach</i> is when that decline passes your loss limit <b>H</b>. It is cumulative "
+                    "and path-dependent — it captures a slow grind lower (many small losses adding up), not just one "
+                    "bad day — so it's the most intuitive &ldquo;am I down more than I can stomach?&rdquo; reading, "
+                    "measured from your best level so far. Keeping the share of breaching days at or under <b>&alpha;</b> "
+                    "is the running-risk check.</div></details>", unsafe_allow_html=True)
+                st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+
+                # Chart 2 — horizon-return breach
+                _HZ = {"1 week (5d)": 5, "2 weeks (10d)": 10, "1 month (21d)": 21,
+                       "3 months (63d)": 63, "6 months (126d)": 126, "1 year (252d)": 252}
+                st.markdown("<div style='color:#cfd8e3;font-weight:600;font-size:.92rem;margin:.8rem 0 0'>"
+                            "2 · Horizon-return vs limit <span style='color:#8b97a8;font-weight:400'>— the "
+                            "rolling-window return the optimiser constrains</span></div>", unsafe_allow_html=True)
+                _hzc1, _hzc2 = st.columns([2, 3])
+                with _hzc1:
+                    _hsel = st.selectbox("Return horizon", list(_HZ.keys()), index=3, key="pf_hz")
+                st.markdown("<div style='height:10px'></div>", unsafe_allow_html=True)
+                _hd = _HZ[_hsel]
+                _hret = (_eq / _eq.shift(_hd) - 1.0) * 100.0
+                _hret = _hret.dropna()
+                if len(_hret) < 5:
+                    st.info(f"Not enough history for a {_hsel} horizon yet — pick a shorter horizon, or come back "
+                            "once the portfolio has more track record.")
+                else:
+                    _hH, _hA, _hL = _thr(_hret.index)
+                    st.plotly_chart(_risk_fig(_hret.index, _hret.values, f'{_hsel} return (%)', _xrange=_xwin,
+                                              _Hv=_hH.values, _Lv=_hL.values),
+                                    use_container_width=True, config={'displayModeBar': False})
+                    _gap0 = _hret.index[0].date() if len(_hret) else None
+                    st.markdown(
+                        f"<div style='color:#8b97a8;font-size:.78rem;line-height:1.5;margin:-.2rem 0 .2rem'>"
+                        f"<b>Why the curve starts later than the others:</b> a {_hsel} horizon-return compares each "
+                        f"day's value with the value <b>{_hd} trading days earlier</b>, so it can't be measured until "
+                        f"one full window has elapsed. The first point is on "
+                        f"<b>{_gap0:%d %b %Y}</b> — about {_hsel} after inception. The x-axis still spans the whole "
+                        f"period (aligned with the charts above), so this opening gap is expected, not missing data."
+                        f"</div>", unsafe_allow_html=True)
+                    _risk_status(_hret, f"The {_hsel} return")
+                st.markdown("<div style='height:30px'></div>", unsafe_allow_html=True)
+                st.markdown(
+                    "<details style='background:rgba(74,158,255,.10);border:1px solid #34527a;border-radius:6px;"
+                    "padding:.4rem .8rem;margin:.3rem 0 .2rem;font-size:.82rem'>"
+                    "<summary style='cursor:pointer;color:#79b6ff;font-weight:600;list-style:none'>"
+                    "✨ AI-powered: What is a horizon-return breach?</summary>"
+                    "<div style='color:#aebccd;margin-top:.4rem;line-height:1.55'>"
+                    "A <b>horizon-return breach</b> looks at the portfolio's return over a rolling window (the "
+                    "<i>horizon</i> you choose) and flags each window whose return fell below your limit <b>H</b>. "
+                    "Keeping the breach frequency at or under <b>&alpha;</b> is exactly the framework's constraint "
+                    "<b>P(r &lt; H) &le; &alpha;</b> — the same rule the Grid/Scalable optimisers enforce. Unlike "
+                    "drawdown it is measured from a fixed start (each window), not the running peak, so a slow grind "
+                    "can read as &lsquo;within limit&rsquo; here while still showing up as a drawdown above. Short "
+                    "horizons trip on single shocks; longer horizons need more history.</div></details>",
+                    unsafe_allow_html=True)
+                st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+
+            if _cap:
+                _av = _cap['alpha'] * 100
+                _acol = '#26a641' if _av >= 0 else '#f85149'
+                st.markdown(
+                    "<div style='background:#0d1a2e;border:1px solid #1a3a5c;border-radius:10px;"
+                    "padding:.7rem 1.1rem;margin:.2rem 0 .4rem;color:#c0c8d8;font-size:.9rem'>"
+                    f"<b style='color:#7fb3e8'>CAPM vs {_PR['bench']}</b> &nbsp;—&nbsp; "
+                    f"realised <b>Jensen's α</b> = <b style='color:{_acol}'>{_av:+.2f}%/yr</b>, "
+                    f"<b>β</b> = {_cap['beta']:.2f}, <b>R²</b> = {_cap['r2']:.2f} "
+                    f"<span style='color:#8b97a8'>(over {_cap['n']} overlapping days)</span>.<br>"
+                    "<span style='color:#8b97a8;font-size:.84rem'>α is the return the portfolio earned "
+                    "beyond what its benchmark exposure (β) explains; β is its sensitivity to the benchmark; "
+                    "R² is how much of its moves the benchmark accounts for.</span></div>",
+                    unsafe_allow_html=True)
+                st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+
+            # ── Stress test (scenarios & shocks) ──
+            st.markdown("<div style='height:24px'></div>", unsafe_allow_html=True)
+            with st.container(border=True):
+                st.markdown('<span class="pf-frame-marker"></span>', unsafe_allow_html=True)
+                _ICON_STRESS = ("<svg width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='#E3C77E' "
+                            "stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round' "
+                            "style='vertical-align:-3px;margin-right:.5rem'><path d='M9 3h6'/>"
+                            "<path d='M10 3v6l-4.6 8.4A2 2 0 0 0 7.2 21h9.6a2 2 0 0 0 1.8-3.6L14 9V3'/>"
+                            "<path d='M7.3 15h9.4'/></svg>")
+                st.markdown("<div style='text-align:center'>" + (_GTITLE % (_ICON_STRESS + "Stress test"))
+                            + "</div>", unsafe_allow_html=True)
+                _curw = (max(_PR['log'], key=lambda e: _pd.Timestamp(e['date']))['weights']
+                         if _PR.get('log') else {})
+                _Hlim = float(st.session_state.get('pf_risk_lim', -15))
+                if not _curw:
+                    st.caption("Compute a portfolio to run stress tests.")
+                else:
+                    _stab = st.tabs(["Historical scenarios", "Custom shock", "Parametric stress"])
+                    with _stab[0]:
+                        st.caption("Takes each past crisis's daily shock sequence and applies it to your "
+                                   "**current** portfolio — i.e. *“what if the same shock hit starting "
+                                   f"today?”* — versus your loss limit H = {_Hlim:.0f}%. The charts below "
+                                   "project the path forward from today (the calendar is illustrative).")
+                        if st.button("Run historical scenarios", type="primary", key="ss_run"):
+                            _stk = list(_curw.keys()); _out = []
+                            with st.spinner("Fetching crisis-period prices…"):
+                                for _sc in _ss.SCENARIOS:
+                                    try:
+                                        _end1 = (_pd.Timestamp(_sc["end"]) + _pd.Timedelta(days=1)).date()
+                                        _spx, _serr = fetch_close_prices(_stk, _sc["start"], _end1)
+                                        _r = _ss.replay(_spx, _curw) if (_spx is not None and not _serr) else None
+                                    except Exception:
+                                        _r = None
+                                    _out.append((_sc, _r))
+                            st.session_state['ss_results'] = _out
+                        for _sc, _r in (st.session_state.get('ss_results') or []):
+                            if _r is None:
+                                st.markdown(f"<div style='color:#8b97a8;font-size:.85rem;margin:.25rem 0'>"
+                                            f"<b style='color:#c9d1d9'>{_sc['name']}</b> — no price history for "
+                                            f"your holdings in this window.</div>", unsafe_allow_html=True)
+                                continue
+                            _breach = (_r['mdd'] * 100.0) < _Hlim
+                            _col = "#f85149" if _breach else "#9be9a8"
+                            _verdict = ("breaches" if _breach else "within") + f" your {_Hlim:.0f}% limit"
+                            _cov = ("" if _r['coverage'] >= 0.999 else
+                                    f" · covers {_r['coverage']*100:.0f}% of weight" +
+                                    (f" (no data: {', '.join(_r['missing'])})" if _r['missing'] else ""))
+                            st.markdown(
+                                f"<div style='border:1px solid #27344e;border-radius:8px;padding:.5rem .85rem;"
+                                f"margin:.3rem 0;background:#0e1521'><b style='color:#c9d1d9'>{_sc['name']}</b> "
+                                f"<span style='color:#8b97a8;font-size:.8rem'>· {_sc['blurb']}</span><br>"
+                                f"Hypothetical return <b style='color:{_col}'>{_r['cum']*100:+.1f}%</b> · "
+                                f"worst drawdown <b style='color:{_col}'>{_r['mdd']*100:.1f}%</b> "
+                                f"<span style='color:{_col}'>({_verdict})</span>"
+                                f"<span style='color:#8b97a8;font-size:.78rem'>{_cov}</span></div>",
+                                unsafe_allow_html=True)
+                        # ── detailed charts for a chosen scenario ──
+                        _done = [(_s, _rr) for _s, _rr in (st.session_state.get('ss_results') or [])
+                                 if _rr is not None and _rr.get('equity') is not None and len(_rr['equity']) > 3]
+                        if _done:
+                            st.markdown("<div style='height:26px'></div>", unsafe_allow_html=True)
+                            _scmap = {_s['name']: (_s, _rr) for _s, _rr in _done}
+                            _selname = st.selectbox("Chart a scenario", list(_scmap.keys()), key="ss_chartsel")
+                            _ssc, _sr = _scmap[_selname]
+                            # re-base the shock path FORWARD from today (apply the past shock to today's portfolio)
+                            _eq0 = _sr['equity']
+                            _fwd = _pd.bdate_range(_pd.Timestamp.today().normalize(), periods=len(_eq0))
+                            _seq = _pd.Series(_eq0.values, index=_fwd)
+                            _swin = [_seq.index[0], _seq.index[-1]] if len(_seq) else None
+                            # ── portfolio value (start = 100) over the stressed window ──
+                            _vbase = _seq.index[0] - _pd.offsets.BDay(1)
+                            _val = _pd.concat([_pd.Series([100.0], index=[_vbase]), 100.0 * _seq])
+                            _endv = float(_val.iloc[-1])
+                            _vcol = "#f85149" if (_endv < 100.0) else "#9be9a8"
+                            # euro value = starting capital × (value / 100), shown on a synced right axis
+                            _scap = float(st.session_state.get('pf_capital_inp', 10000.0))
+                            _eend = _scap * _endv / 100.0
+                            st.markdown("<div style='color:#cfd8e3;font-weight:600;font-size:.9rem;margin:.2rem 0 .2rem'>"
+                                        "Projected portfolio value <span style='color:#8b97a8;font-weight:400'>— "
+                                        f"start = 100, ending near <b style='color:{_vcol}'>{_endv:.1f}</b>"
+                                        + (f" <b style='color:{_vcol}'>(€{_eend:,.0f})</b>" if _scap > 0 else "")
+                                        + " if this shock hit today</span></div>", unsafe_allow_html=True)
+                            _vmin = float(_val.min()); _vmax = float(_val.max())
+                            _vpad = max((_vmax - _vmin) * 0.06, 1.0)
+                            _vlo, _vhi = _vmin - _vpad, _vmax + _vpad
+                            _vfig = _go.Figure()
+                            _vfig.add_trace(_go.Scatter(x=_val.index, y=_val.values, mode='lines',
+                                            line=dict(color='#2dd4bf', width=2.2),
+                                            customdata=(_scap * _val.values / 100.0),
+                                            hovertemplate='%{x|%Y-%m-%d}<br>value %{y:.1f}'
+                                                          + ('<br>€%{customdata:,.0f}' if _scap > 0 else '')
+                                                          + '<extra></extra>'))
+                            if _scap > 0:   # invisible trace so the euro axis renders, synced to the value line
+                                _vfig.add_trace(_go.Scatter(x=_val.index, y=_scap * _val.values / 100.0,
+                                                mode='lines', line=dict(width=0), yaxis='y2',
+                                                hoverinfo='skip', showlegend=False))
+                            _vfig.add_hline(y=100.0, line=dict(color='#5b6675', width=1, dash='dot'))
+                            _vfig.update_layout(template='plotly_dark', paper_bgcolor='#1b2330',
+                                                plot_bgcolor='#0e1521', height=240, showlegend=False,
+                                                margin=dict(t=16, b=30, l=64, r=(70 if _scap > 0 else 24)),
+                                                yaxis=dict(title='Value (start = 100)', gridcolor='#27344e',
+                                                           griddash='dot', color='#c0c8d8', automargin=False,
+                                                           range=[_vlo, _vhi], autorange=False),
+                                                yaxis2=dict(title='Portfolio value (€)', overlaying='y',
+                                                            side='right', range=[_scap * _vlo / 100.0,
+                                                            _scap * _vhi / 100.0], autorange=False, showgrid=False,
+                                                            color='#2dd4bf', tickformat=',.0f', automargin=False,
+                                                            visible=(_scap > 0)),
+                                                xaxis=dict(gridcolor='#27344e', griddash='dot', color='#c0c8d8',
+                                                           range=[_vbase, _seq.index[-1]], autorange=False))
+                            st.plotly_chart(_vfig, use_container_width=True, config={'displayModeBar': False})
+                            st.markdown("<div style='color:#cfd8e3;font-weight:600;font-size:.9rem;margin:.5rem 0 .2rem'>"
+                                        "Projected drawdown vs limit <span style='color:#8b97a8;font-weight:400'>"
+                                        "— if this shock hit your portfolio starting today</span></div>",
+                                        unsafe_allow_html=True)
+                            _sdd = (_seq / _seq.cummax() - 1.0) * 100.0
+                            st.plotly_chart(_risk_fig(_sdd.index, _sdd.values, 'Drawdown (%)', _xrange=_swin),
+                                            use_container_width=True, config={'displayModeBar': False})
+                            _nwin = len(_seq)
+                            _hopt = [_hh for _hh in (5, 10, 21, 63) if _hh < _nwin - 1]
+                            if _hopt:
+                                _hh = _hopt[-1]
+                                _hr = (_seq / _seq.shift(_hh) - 1.0) * 100.0
+                                _hr = _hr.dropna()
+                                if len(_hr) >= 3:
+                                    st.markdown("<div style='color:#cfd8e3;font-weight:600;font-size:.9rem;"
+                                                "margin:.5rem 0 .2rem'>Projected horizon-return vs limit "
+                                                f"<span style='color:#8b97a8;font-weight:400'>— rolling {_hh}-day "
+                                                "window, from today</span></div>", unsafe_allow_html=True)
+                                    st.plotly_chart(_risk_fig(_hr.index, _hr.values, f'{_hh}d return (%)', _xrange=_swin),
+                                                    use_container_width=True, config={'displayModeBar': False})
+                            else:
+                                st.caption("This window is too short for a horizon-return chart.")
+                            st.caption("Dates are projected forward from today for illustration — the shape is "
+                                       "the crisis's actual daily moves applied to your current holdings.")
+                    with _stab[1]:
+                        _beta = (_cap.get('beta') if _cap else None)
+                        st.markdown("**Market shock** — an instantaneous market move, propagated via your β.")
+                        _msh = st.number_input("Market move (%)", min_value=-60, max_value=60, value=-20,
+                                               step=1, key="ss_mkt")
+                        _mi = _ss.market_shock(_beta, _msh)
+                        if _mi is None:
+                            st.caption("Set a benchmark and compute analytics to get β for the market shock.")
+                        else:
+                            _mc = "#f85149" if (_mi * 100) < _Hlim else ("#e8cd84" if _mi < 0 else "#9be9a8")
+                            st.markdown(f"β = {_beta:.2f} → estimated portfolio impact "
+                                        f"<b style='color:{_mc}'>{_mi*100:+.1f}%</b> "
+                                        f"<span style='color:#8b97a8;font-size:.78rem'>(first-order; ignores α "
+                                        f"and stock-specific risk)</span>", unsafe_allow_html=True)
+                        st.markdown("<div style='height:12px'></div>", unsafe_allow_html=True)
+                        st.markdown("**Per-asset shock** — set a % move for each holding.")
+                        _shdf = _pd.DataFrame([{"Ticker": _t, "Shock %": 0.0} for _t in _curw])
+                        _shed = st.data_editor(_shdf, hide_index=True, use_container_width=True, key="ss_assets",
+                                               column_config={
+                                                   "Ticker": st.column_config.TextColumn("Ticker", disabled=True),
+                                                   "Shock %": st.column_config.NumberColumn("Shock %", min_value=-90,
+                                                              max_value=90, step=1, format="%.0f")})
+                        _shocks = {_rr["Ticker"]: _rr["Shock %"] for _, _rr in _shed.iterrows()}
+                        _ai = _ss.asset_shock(_curw, _shocks)
+                        _ac = "#f85149" if (_ai * 100) < _Hlim else ("#e8cd84" if _ai < 0 else "#9be9a8")
+                        st.markdown(f"Weighted portfolio impact <b style='color:{_ac}'>{_ai*100:+.1f}%</b>",
+                                    unsafe_allow_html=True)
+                        # ── Shock path over time (β-projected trajectory) ──
+                        st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+                        st.markdown("**Shock path over time** — a custom market trajectory, projected via β.")
+                        if _beta is None:
+                            st.caption("Set a benchmark and compute analytics to get β for the path projection.")
+                        else:
+                            st.caption("Each leg is a market move that compounds evenly over its days, applied "
+                                       "through your β. The shape is your assumption (unlike the historical "
+                                       "scenarios' real day-by-day sequences).")
+                            if 'ss_path_data' not in st.session_state:
+                                st.session_state['ss_path_data'] = _pd.DataFrame(
+                                    [{"Days": 20, "Market move %": -20.0}, {"Days": 10, "Market move %": 5.0}])
+                            _ped = st.data_editor(
+                                st.session_state['ss_path_data'], num_rows="dynamic", hide_index=True,
+                                use_container_width=True, key="ss_path_ed",
+                                column_config={
+                                    "Days": st.column_config.NumberColumn("Days", min_value=1, max_value=500,
+                                                                          step=1, format="%d", help="Trading days this leg lasts."),
+                                    "Market move %": st.column_config.NumberColumn("Market move %", min_value=-90,
+                                                     max_value=90, step=1, format="%.1f",
+                                                     help="Total market move over the leg (compounds evenly across its days).")})
+                            _mdaily = []
+                            for _, _lr in _ped.iterrows():
+                                _dn = _lr.get("Days"); _mv = _lr.get("Market move %")
+                                if _pd.isna(_dn) or _pd.isna(_mv):
+                                    continue
+                                _dn = int(_dn)
+                                if _dn <= 0:
+                                    continue
+                                _rd = (1.0 + float(_mv) / 100.0) ** (1.0 / _dn) - 1.0
+                                _mdaily += [_rd] * _dn
+                            if len(_mdaily) >= 2:
+                                _peq = np.cumprod(1.0 + np.array(_mdaily) * float(_beta))
+                                _pidx = _pd.bdate_range(_pd.Timestamp.today().normalize(), periods=len(_peq))
+                                _peqs = _pd.Series(_peq, index=_pidx)
+                                _pwin = [_peqs.index[0], _peqs.index[-1]]
+                                _ptot = float(_peq[-1] - 1.0)
+                                _pdd = (_peqs / _peqs.cummax() - 1.0) * 100.0
+                                _pmdd = float(_pdd.min())
+                                _pc = "#f85149" if _pmdd < _Hlim else ("#e8cd84" if _ptot < 0 else "#9be9a8")
+                                st.markdown(f"Projected total impact <b style='color:{_pc}'>{_ptot*100:+.1f}%</b> · "
+                                            f"worst drawdown <b style='color:{_pc}'>{_pmdd:.1f}%</b> "
+                                            f"<span style='color:#8b97a8;font-size:.8rem'>(over {len(_peq)} trading "
+                                            f"days · β = {_beta:.2f})</span>", unsafe_allow_html=True)
+                                st.markdown("<div style='color:#cfd8e3;font-weight:600;font-size:.9rem;margin:.3rem 0 .2rem'>"
+                                            "Projected drawdown vs limit</div>", unsafe_allow_html=True)
+                                st.plotly_chart(_risk_fig(_pdd.index, _pdd.values, 'Drawdown (%)', _xrange=_pwin),
+                                                use_container_width=True, config={'displayModeBar': False})
+                                _pn = len(_peqs); _phopt = [_hh for _hh in (5, 10, 21, 63) if _hh < _pn - 1]
+                                if _phopt:
+                                    _hh2 = _phopt[-1]
+                                    _phr = (_peqs / _peqs.shift(_hh2) - 1.0) * 100.0
+                                    _phr = _phr.dropna()
+                                    if len(_phr) >= 3:
+                                        st.markdown("<div style='color:#cfd8e3;font-weight:600;font-size:.9rem;"
+                                                    "margin:.5rem 0 .2rem'>Projected horizon-return vs limit "
+                                                    f"<span style='color:#8b97a8;font-weight:400'>— rolling {_hh2}-day "
+                                                    "window</span></div>", unsafe_allow_html=True)
+                                        st.plotly_chart(_risk_fig(_phr.index, _phr.values, f'{_hh2}d return (%)', _xrange=_pwin),
+                                                        use_container_width=True, config={'displayModeBar': False})
+                            else:
+                                st.caption("Add at least one leg (days + move) to project a path.")
+                    with _stab[2]:
+                        _mom = _PR.get('moments'); _mtk = _PR.get('moment_tickers')
+                        if not _mom or not _mtk:
+                            st.caption("Compute analytics first — parametric stress uses the holdings' covariance.")
+                        else:
+                            _wv = np.array([float(_curw.get(t, 0.0)) for t in _mtk], float)
+                            if _wv.sum() > 0:
+                                _wv = _wv / _wv.sum()
+                            _pc1, _pc2 = st.columns(2)
+                            with _pc1:
+                                _vm = st.slider("Volatility ×", 1.0, 3.0, 1.5, 0.1, key="ss_vol")
+                            with _pc2:
+                                _cl = st.slider("Correlation → 1 (%)", 0, 100, 50, 5, key="ss_corr") / 100.0
+                            _ps = _ss.parametric(_wv, _mom[1], vol_mult=_vm, corr_lambda=_cl, conf_pct=95.0)
+                            _e1, _e2 = st.columns(2)
+                            _e1.markdown("<div style='color:#9be9a8;font-size:1.05rem;line-height:1.5'>Base &nbsp;— vol "
+                                         f"<b>{_ps['base_sigma']*100:.1f}%</b> · 95% VaR "
+                                         f"<b>{_ps['base_var']*100:.1f}%</b></div>", unsafe_allow_html=True)
+                            _e2.markdown("<div style='color:#ffb4ae;font-size:1.05rem;line-height:1.5'>Stressed — vol "
+                                         f"<b>{_ps['str_sigma']*100:.1f}%</b> · 95% VaR "
+                                         f"<b>{_ps['str_var']*100:.1f}%</b></div>", unsafe_allow_html=True)
+                            st.caption("Annualised. Volatilities scaled and correlations blended toward 1, then "
+                                       "VaR = z·σ re-derived — shows how diversification erodes and tail loss grows "
+                                       "in a stressed regime.")
+                st.markdown("<div style='height:16px'></div>", unsafe_allow_html=True)
+
+            # rebalance-log summary
+            _seg = []
+            for _e in _PR['log']:
+                _parts = " · ".join(f"{_tk} {_w*100:.0f}%" for _tk, _w in _e['weights'].items())
+                _seg.append(f"<b style='color:#c9d1d9'>{_e['date']}</b> — {_parts}")
+            st.markdown("<div style='color:#8b97a8;font-size:.84rem;line-height:1.7;margin:.1rem 0 .2rem'>"
+                        "Rebalance log:<br>" + "<br>".join(_seg) + "</div>", unsafe_allow_html=True)
+
+    st.markdown("<div style='height:18px'></div>", unsafe_allow_html=True)
+    # Gold + dark Browse-files button (matches the other gold action buttons), portfolio view only.
+    st.markdown(
+        "<style>section[data-testid='stMain'] [data-testid='stFileUploaderDropzone'] button,"
+        "section[data-testid='stMain'] [data-testid='stFileUploaderDropzone'] button *"
+        "{background:#E3C77E !important;color:#0d1117 !important;border:none !important}"
+        "section[data-testid='stMain'] [data-testid='stFileUploaderDropzone'] button"
+        "{width:20% !important;min-width:170px !important;flex:none !important}"
+        "section[data-testid='stMain'] [data-testid='stFileUploaderDropzone'] button:hover,"
+        "section[data-testid='stMain'] [data-testid='stFileUploaderDropzone'] button:hover *"
+        "{background:#edd596 !important;color:#0d1117 !important}</style>", unsafe_allow_html=True)
+    st.markdown(
+        "<style>section[data-testid='stMain'] [data-testid='stExpander']:has(.bmv-saveload-mk) summary,"
+        "section[data-testid='stMain'] [data-testid='stExpander']:has(.bmv-saveload-mk) summary *"
+        "{font-size:20px !important;font-weight:600 !important;color:#E3C77E !important}"
+        "section[data-testid='stMain'] [data-testid='stExpander']:has(.bmv-saveload-mk) summary"
+        "{justify-content:center !important}</style>",
+        unsafe_allow_html=True)
+    with st.expander("Save / load this portfolio", expanded=True, icon=":material/save:"):
+        st.markdown("<span class='bmv-saveload-mk'></span>", unsafe_allow_html=True)
+        # Portfolio object used by both the Drive and JSON save paths.
+        _obj_now = None
+        if _PR:
+            _obj_now = {"name": _PR['name'], "benchmark": _PR['bench'],
+                        "starting_capital": float(st.session_state.get('pf_capital_inp', 10000.0)),
+                        "rebalances": _PR.get('sec_log') or _PR['log'],
+                        "derivatives": _PR.get('der_rows', []),
+                        "risk": {"loss_limit_pct": int(st.session_state.get('pf_risk_lim', -15)),
+                                 "alpha_pct": int(st.session_state.get('pf_risk_alpha', 5)),
+                                 "cvar_floor_pct": int(st.session_state.get('pf_risk_L', -20)),
+                                 "method": str(st.session_state.get('pf_risk_method', 'VaR'))},
+                        "risk_profile": st.session_state.get('rp_result'),
+                        "risk_profile_history": st.session_state.get('rp_history', []),
+                        "tolerance_timeline": st.session_state.get('tol_timeline', [])}
+
+        def _apply_portfolio_obj(_obj, _src):
+            _rows2 = []
+            for _e in _obj.get("rebalances", []):
+                for _tk, _w in (_e.get("weights") or {}).items():
+                    _rows2.append({"Date": _pd.Timestamp(_e["date"]).date(),
+                                   "Ticker": _tk, "Weight %": round(float(_w) * 100, 2)})
+            _der2 = _obj.get("derivatives") or []
+            if not _rows2 and not _der2:
+                st.warning("That portfolio has no positions to load.")
+                return
+            st.session_state['pf_table_data'] = _pd.DataFrame(
+                _rows2 if _rows2 else {"Date": [], "Ticker": [], "Weight %": []})
+            # restore the derivatives table (or clear it)
+            if _der2:
+                st.session_state['pf_der_data'] = _pd.DataFrame([
+                    {"Date": _pd.Timestamp(_r.get("Date")).date(), "Underlying": _r.get("Underlying"),
+                     "Type": _r.get("Type"), "Strike 1": _r.get("Strike 1"), "Strike 2": _r.get("Strike 2"),
+                     "Tenor (y)": _r.get("Tenor (y)"), "Weight %": _r.get("Weight %")} for _r in _der2])
+            else:
+                st.session_state['pf_der_data'] = _pd.DataFrame({
+                    "Date": _pd.Series([], dtype="datetime64[ns]"),
+                    "Underlying": _pd.Series([], dtype="object"), "Type": _pd.Series([], dtype="object"),
+                    "Strike 1": _pd.Series([], dtype="float64"), "Strike 2": _pd.Series([], dtype="float64"),
+                    "Tenor (y)": _pd.Series([], dtype="float64"), "Weight %": _pd.Series([], dtype="float64")})
+            st.session_state.pop('pf_der_ed', None)
+            st.session_state['pf_name_inp'] = _obj.get("name", "My portfolio")
+            _capj = _obj.get("starting_capital")
+            if _capj is not None:
+                try:
+                    st.session_state['pf_capital_inp'] = float(_capj)
+                except (TypeError, ValueError):
+                    pass
+            st.session_state['pf_bench_sel'] = "Custom ticker…"
+            st.session_state['pf_bench_custom'] = (_obj.get("benchmark", "SPY") or "SPY")
+            _rk = _obj.get("risk") or {}
+            if _rk.get("loss_limit_pct") is not None:
+                st.session_state['pf_risk_lim'] = int(_rk["loss_limit_pct"])
+            if _rk.get("alpha_pct") is not None:
+                st.session_state['pf_risk_alpha'] = int(_rk["alpha_pct"])
+            if _rk.get("cvar_floor_pct") is not None:
+                st.session_state['pf_risk_L'] = int(_rk["cvar_floor_pct"])
+            if _rk.get("method") in ("VaR", "ES"):
+                st.session_state['pf_risk_method'] = _rk["method"]
+            _rpf = _obj.get("risk_profile")
+            if isinstance(_rpf, dict) and _rpf.get("score") is not None:
+                st.session_state['rp_result'] = _rpf
+            _rph2 = _obj.get("risk_profile_history")
+            if isinstance(_rph2, list) and _rph2:
+                st.session_state['rp_history'] = _rph2
+            _tlj = _obj.get("tolerance_timeline")
+            if isinstance(_tlj, list):
+                st.session_state['tol_timeline'] = _tlj
+            else:
+                st.session_state.pop('tol_timeline', None)
+            for _k in ('tol_editor', 'pf_table_ed', 'pf_result', 'pf_view_range'):
+                st.session_state.pop(_k, None)
+            st.success("Loaded from %s — review the holdings above and click Compute analytics." % _src)
+            st.rerun()
+
+        # ── Google Drive (one-click, saves to the user's own Drive) ──
+        if _gcfg:
+            if st.session_state.get("gd_error"):
+                st.warning(st.session_state.pop("gd_error"))
+            _gtok = _gd_token()
+            if not _gtok:
+                if "gd_authurl" not in st.session_state:
+                    _stt = _gd.new_state(); _ver, _chal = _gd.make_pkce()
+                    _gd.pending_put(_stt, _ver, "portfolio")
+                    st.session_state["gd_authurl"] = _gd.build_auth_url(
+                        _gcfg["client_id"], _gcfg["redirect_uri"], _stt, _chal)
+                st.markdown("**Save to your Google Drive** — sign in once; portfolios are stored in "
+                            "*your own* Drive. The app uses the least-privilege `drive.file` scope, so it "
+                            "can only ever see or change files it created — never the rest of your Drive.")
+                _sgc = st.columns([2, 1, 2])
+                with _sgc[1]:
+                    st.link_button("🔐  Sign in with Google", st.session_state["gd_authurl"],
+                                   type="primary", use_container_width=True)
+                st.caption("Tip: sign in first, then load or build — signing in reloads the page.")
+            else:
+                _guser = st.session_state.get("gd_user") or {}
+                _who = _guser.get("email") or _guser.get("name") or "your Google account"
+                st.markdown("Signed in as **%s** &nbsp;·&nbsp; portfolios save to your Drive." % _who,
+                            unsafe_allow_html=True)
+                if _obj_now is not None:
+                    _gsv = st.columns([2, 1, 2])
+                    with _gsv[1]:
+                        if st.button("⬆  Save to my Drive", use_container_width=True, type="primary",
+                                     key="gd_save"):
+                            try:
+                                _ex = {f["name"]: f["id"] for f in _gd.list_portfolios(_gtok)}
+                                _fid = _ex.get((_PR['name'] or 'portfolio').strip() + ".bmv.json")
+                                _gd.save_portfolio(_gtok, _PR['name'], _obj_now, file_id=_fid)
+                                st.success("Saved to your Drive%s." % (" (updated)" if _fid else ""))
+                            except Exception as _e:
+                                st.error("⚠ Couldn't save to your Drive — %s" % _gd_friendly(_e))
+                else:
+                    st.caption("Compute a portfolio above to enable saving it to your Drive.")
+                _gso = st.columns([2, 1, 2])
+                with _gso[1]:
+                    if st.button("↪  Sign out", use_container_width=True, type="primary", key="gd_signout"):
+                        for _k in ("gd_tokens", "gd_user", "gd_authurl"):
+                            st.session_state.pop(_k, None)
+                        st.rerun()
+                try:
+                    _files = _gd.list_portfolios(_gtok)
+                except Exception as _e:
+                    _files = []
+                    st.caption("⚠ Couldn't list your Drive portfolios — %s" % _gd_friendly(_e))
+                if _files:
+                    _lbl = {("%s  ·  %s" % (f["name"].replace(".bmv.json", ""),
+                                            f.get("modifiedTime", "")[:10])): f["id"] for f in _files}
+                    _sel = st.selectbox("Load from your Drive", list(_lbl.keys()), key="gd_loadsel")
+                    _gld = st.columns([2, 1, 2])
+                    with _gld[1]:
+                        if st.button("⬇  Load selected from Drive", use_container_width=True,
+                                     type="primary", key="gd_load"):
+                            try:
+                                _apply_portfolio_obj(_gd.load_portfolio(_gtok, _lbl[_sel]), "Google Drive")
+                            except Exception as _e:
+                                st.error("⚠ Couldn't load from your Drive — %s" % _gd_friendly(_e))
+                else:
+                    st.caption("No saved portfolios in your Drive yet — compute one, then “Save to my Drive”.")
+            st.markdown("<hr style='border-color:#26303f;margin:.7rem 0 .5rem'>", unsafe_allow_html=True)
+        else:
+            st.caption("☁ Google Drive sync isn't configured on this deployment — use the file "
+                       "download/upload below. (Admin: add a `[google_oauth]` block to Streamlit secrets.)")
+
+        # ── Manual JSON (offline fallback) ──
+        if _obj_now is not None:
+            _dlc = st.columns([2, 1, 2])
+            with _dlc[1]:
+                st.download_button("⬇  Download portfolio (JSON)", _json.dumps(_obj_now, indent=2),
+                                   file_name=(_PR['name'] or 'portfolio').replace(' ', '_') + ".json",
+                                   mime="application/json", type="primary", use_container_width=True)
+        _up = st.file_uploader("Load a portfolio file (JSON)", type=["json"], key="pf_up")
+        if _up is not None:
+            try:
+                _apply_portfolio_obj(_json.load(_up), "file")
+            except Exception as _e:
+                st.error(f"Couldn't read that file: {_e}")
+        st.caption("Each saved portfolio (Drive or file) bundles your holdings, benchmark, risk settings "
+                   "(method, H, α, L), your Risk Profile with its dated assessment history, and your "
+                   "editable tolerance timeline.")
+
+elif _view == "riskprofile":
+    import datetime as _dt
+    with st.container():
+        _bb_l, _bb_mid, _bb_x = st.columns([1, 4.2, 1], vertical_alignment="center")
+        with _bb_l:
+            st.button(":material/home: Back to Main Screen", key="_nav_back", use_container_width=True, on_click=_go_home)
+        with _bb_mid:
+            st.markdown('<style>section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2){position:sticky;top:60px;z-index:1000;background:#0d1117;border-bottom:1px solid #2a3340;box-shadow:0 8px 16px -10px rgba(0,0,0,.75);padding:.3rem 0 .85rem;margin-bottom:.7rem}section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2) div[data-testid="stVerticalBlock"]{gap:.5rem!important}section[data-testid="stMain"] [data-testid="stMainBlockContainer"]{padding-top:3.75rem!important}section[data-testid="stMain"] div[data-testid="stVerticalBlock"]>div[data-testid="stElementContainer"]:has(~ div[data-testid="stVerticalBlockBorderWrapper"] .bmv-banner){display:none}</style><div class="bmv-banner" style="display:flex;align-items:center;justify-content:center;gap:14px;margin:0"><div style="width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#E3C77E,#C9A24B);color:#1a1205;font-weight:700;font-family:Georgia,serif;font-size:1.35rem">&beta;</div><div style="text-align:left"><div style="font-size:.8rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9">Portfolio Optimisation <span style="color:#E3C77E;font-style:italic">with</span> Derivatives &amp; Structured Products</div><div style="font-family:Georgia,serif;font-weight:600;font-size:1.45rem;line-height:1.05;color:#fafafa">Beyond <span style="color:#E3C77E">Mean-Variance</span></div><div style="font-family:Georgia,serif;font-weight:500;font-size:1rem;color:#aeb9c9">Mental Accounting Framework</div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div style="background:#141a23;border:1px solid #C9A24B;border-radius:8px;padding:.12rem 1.2rem;margin:.85rem auto .4rem;max-width:calc(100% - 570px);text-align:center"><h2 style="color:#E3C77E;margin:0;font-family:Georgia,serif;font-size:1.55rem;letter-spacing:.05em">Risk Profile — Grable-Lytton Questionnaire</h2></div>', unsafe_allow_html=True)
+
+    st.markdown(
+        '<div style="display:flex;align-items:flex-start;gap:.6rem;border:1px solid rgba(231,236,244,0.2);'
+        'border-radius:.5rem;padding:.7rem .95rem;margin:.2rem 0 .8rem;color:#c0c8d8;font-size:.9rem;line-height:1.55">'
+        '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:3px">'
+        '<circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>'
+        '<span>Answer 13 short questions from the validated <strong>Grable &amp; Lytton (1999)</strong> financial '
+        'risk-tolerance scale. Your score maps to a tolerance band that <strong>sets your simulation’s risk '
+        'parameters</strong> — the threshold H and shortfall probability &alpha; for the <strong>Grid</strong> '
+        'engine, or the CVaR floor L and &alpha; for the <strong>Scalable</strong> engine (built for many '
+        'assets). Apply the result to either, and you can still adjust the values there.</span></div>',
+        unsafe_allow_html=True)
+
+    st.markdown(
+        '<div style="display:flex;align-items:flex-start;gap:.5rem;background:rgba(245,185,66,.08);'
+        'border:1px solid #8a6d2b;border-radius:6px;padding:.5rem .9rem;margin:0 0 1.2rem;'
+        'color:#d9c79a;font-size:.82rem">'
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e0b84a" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px">'
+        '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>'
+        '<line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+        '<span><b>Ceci ne constitue pas un conseil en investissement.</b> This questionnaire sets your '
+        'simulation’s risk parameters only. It is an educational tool, not a regulated suitability '
+        'assessment and not investment advice.</span></div>', unsafe_allow_html=True)
+
+    st.markdown('<h3 style="color:#E3C77E;scroll-margin-top:90px;margin:.2rem 0 .5rem">'
+                'Risk-Tolerance Assessment</h3>', unsafe_allow_html=True)
+    with st.form("rp_form"):
+        _rp_choices = []
+        for _i, _item in enumerate(_rp.GL_ITEMS):
+            _opts = _item["options"]
+            # Escape '$' so Streamlit's markdown doesn't read paired $...$ as LaTeX math;
+            # score by option index so the displayed (escaped) text never breaks the lookup.
+            _q = _item["q"].replace("$", "\\$")
+            _sel = st.radio(
+                f"**{_i + 1}. {_q}**",
+                options=list(range(len(_opts))),
+                format_func=lambda _k, _o=_opts: _o[_k][0].replace("$", "\\$"),
+                index=None, key=f"rp_q{_i}")
+            _rp_choices.append(_opts[_sel][0] if _sel is not None else None)
+            st.markdown("<div style='height:.2rem'></div>", unsafe_allow_html=True)
+        _rp_submit = st.form_submit_button("Calculate my risk profile", type="primary")
+
+    if _rp_submit:
+        _n_missing = sum(c is None for c in _rp_choices)
+        if _n_missing:
+            st.error(f"Please answer all 13 questions — {_n_missing} still unanswered.")
+            st.session_state.pop("rp_result", None)
+        else:
+            _rpres = _rp.profile(_rp_choices)
+            _rpres["date"] = _dt.date.today().strftime("%Y-%m-%d")
+            st.session_state["rp_result"] = _rpres
+            # Dated risk-tolerance history (newest = active). A retake makes the new
+            # result active but keeps prior assessments timestamped (nothing overwritten).
+            _entry = {k: _rpres[k] for k in ("date", "score", "band", "H_pct", "alpha_pct", "L_pct")}
+            _hist = list(st.session_state.get("rp_history", []))
+            _last = _hist[-1] if _hist else None
+            if (_last is None) or any(_last.get(_k) != _entry[_k]
+                                      for _k in ("score", "H_pct", "alpha_pct", "L_pct")):
+                _hist.append(_entry)
+            else:
+                _hist[-1] = _entry  # same result retaken — just refresh the date
+            st.session_state["rp_history"] = _hist
+            # Sync the operational tolerance timeline: add this assessment's level (de-duped).
+            _tl = list(st.session_state.get("tol_timeline", []))
+            _trow = {"date": _entry["date"], "H_pct": _entry["H_pct"],
+                     "alpha_pct": _entry["alpha_pct"], "L_pct": _entry["L_pct"]}
+            if not any((str(r.get("date")) == _trow["date"] and r.get("H_pct") == _trow["H_pct"]
+                        and r.get("alpha_pct") == _trow["alpha_pct"] and r.get("L_pct") == _trow["L_pct"])
+                       for r in _tl):
+                _tl.append(_trow)
+                st.session_state["tol_timeline"] = _tl
+                st.session_state.pop("tol_editor", None)  # let the editor re-seed with the new row
+
+    _rp_res = st.session_state.get("rp_result")
+    if _rp_res:
+        _chip = ("background:#0e1521;border:1px solid #C9A24B;border-radius:999px;"
+                 "padding:.3rem .9rem;font-size:.85rem;color:#c0c8d8")
+        _chipb = ("background:#0e1521;border:1px solid #34527a;border-radius:999px;"
+                  "padding:.3rem .9rem;font-size:.82rem;color:#c0c8d8")
+        _gauge = _rp_gauge_svg(_rp_res["score"], _rp_res["band"])
+        # Put the frame AND the buttons in one shared middle column so the frame's
+        # left/right edges line up exactly with the two buttons below it.
+        _rp_csl, _rp_card, _rp_csr = st.columns([5, 8, 5])
+        with _rp_card:
+            st.markdown(
+                '<div style="background:#1b2330;border:1px solid #C9A24B;border-radius:10px;'
+                'padding:1rem 1.3rem;margin:.5rem 0 .3rem">'
+                '<div style="color:#E3C77E;font-weight:700;font-size:1.05rem;margin-bottom:.4rem;text-align:center">'
+                'Your risk profile</div>'
+                + _gauge +
+                '<div style="display:flex;flex-wrap:wrap;gap:.55rem;justify-content:center;margin-top:.5rem">'
+                f'<span style="{_chip}">Score <b style="color:#E3C77E">{_rp_res["score"]}</b> / 47</span>'
+                f'<span style="{_chip}">Tolerance: <b style="color:#E3C77E">{_rp_res["band"]}</b></span>'
+                f'<span style="{_chip}">Shortfall &alpha; <b style="color:#E3C77E">{_rp_res["alpha_pct"]}%</b></span>'
+                '</div>'
+                '<div style="display:flex;flex-wrap:wrap;gap:.55rem;justify-content:center;margin-top:.55rem">'
+                f'<span style="{_chipb}">Grid optimiser — Threshold H <b style="color:#4a9eff">{_rp_res["H_pct"]}%</b></span>'
+                f'<span style="{_chipb}">Scalable optimiser — CVaR floor L <b style="color:#4a9eff">{_rp_res["L_pct"]}%</b></span>'
+                '</div>'
+                f'<div style="color:#c0c8d8;font-size:.88rem;margin-top:.75rem;text-align:center;line-height:1.55">'
+                f'{_rp_res["blurb"]}</div></div>', unsafe_allow_html=True)
+
+            # ── Plain-language meaning (mental accounting) — collapsible, under the gauge ──
+            _Hn = abs(float(_rp_res["H_pct"])); _an = float(_rp_res["alpha_pct"]); _Ln = abs(float(_rp_res["L_pct"]))
+            _band_l = str(_rp_res["band"]).lower()
+            st.markdown("<div style='height:.55rem'></div>", unsafe_allow_html=True)
+            with st.expander("💬 What your profile means — in plain language", expanded=False):
+                st.markdown(
+                    '<div style="color:#c0c8d8;font-size:.9rem;line-height:1.62">'
+                    '<p style="margin:.1rem 0 .7rem"><b style="color:#E3C77E">Mental accounting</b> is the idea that '
+                    'you don\'t treat your wealth as one undifferentiated pot — you set aside a layer you are '
+                    'determined to protect, and your <b>risk tolerance</b> decides how strict that protection is. '
+                    f'Your answers placed you in the <b style="color:#E3C77E">{_band_l}</b> band, which the app turns '
+                    'into two concrete rules the optimisers must obey:</p>'
+                    '<p style="margin:.1rem 0 .6rem"><b style="color:#4a9eff">In the Grid optimiser</b> — threshold '
+                    f'<b style="color:#4a9eff">H = {_rp_res["H_pct"]}%</b>, shortfall <b style="color:#4a9eff">&alpha; = {_an:.0f}%</b>.<br>'
+                    'In plain words: <i>&ldquo;Build me the highest-returning portfolio you can, but keep the chance of '
+                    f'losing more than {_Hn:.0f}% over the horizon at or below {_an:.0f}%.&rdquo;</i> A more cautious '
+                    'profile uses a shallower H or a smaller &alpha; (you protect more of the layer); a bolder profile '
+                    'uses a deeper H or a larger &alpha; (you accept more downside in exchange for reaching for return).</p>'
+                    '<p style="margin:.1rem 0 .6rem"><b style="color:#f5b942">In the Scalable optimiser</b> — CVaR floor '
+                    f'<b style="color:#f5b942">L = {_rp_res["L_pct"]}%</b>.<br>'
+                    'In plain words: <i>&ldquo;In the worst outcomes, hold the <u>average</u> loss no deeper than '
+                    f'{_Ln:.0f}%.&rdquo;</i> Where &alpha; limits how <i>often</i> you cross the line, L limits how '
+                    '<i>bad</i> the tail gets when you do — it controls the severity of the rare, painful scenarios.</p>'
+                    '<p style="margin:.1rem 0 0;color:#8b97a8;font-size:.84rem">Both rules describe the same protected '
+                    'layer from two angles — the <i>probability</i> of a shortfall (Grid) and the <i>depth</i> of a '
+                    'shortfall (Scalable). The optimiser then earns the most it can <i>without</i> breaking the rule '
+                    'your profile set.</p>'
+                    '</div>', unsafe_allow_html=True)
+
+            # ── Score → parameters mapping table (golden About-style), under the gauge ──
+            st.markdown("<div style='height:1.7rem'></div>", unsafe_allow_html=True)
+            st.markdown('<div style="text-align:center;color:#E3C77E;font-size:.9rem;font-weight:700;'
+                        'margin:.1rem 0 .3rem">How your score maps to the simulation parameters</div>',
+                        unsafe_allow_html=True)
+            _rp_tbl = [("13–18", "Low", "Low"), ("19–22", "Below-avg", "Below-average"),
+                       ("23–28", "Average", "Average / moderate"), ("29–32", "Above-avg", "Above-average"),
+                       ("33–47", "High", "High")]
+            _hc = "background:#141a23;color:#E3C77E;font-weight:700;text-align:center;padding:.4rem .5rem;border:1px solid #C9A24B"
+            _dc = "background:#0d1117;color:#c9d1d9;padding:.36rem .5rem;border:1px solid #30363d;text-align:center"
+            _ac = "background:#2a2410;color:#E3C77E;font-weight:700;padding:.36rem .5rem;border:1px solid #C9A24B;text-align:center"
+            _hdr = "".join(f'<td style="{_hc}">{h}</td>' for h in
+                           ["Score", "Tolerance", "Threshold H", "Shortfall &alpha;", "CVaR floor L"])
+            _bodyr = ""
+            for _sc, _shrt, _full in _rp_tbl:
+                _Hh, _aa = _rp.BAND_TO_HALPHA[_full]
+                _Ll = _rp.BAND_TO_L[_full]
+                _cc = _ac if _full == _rp_res["band"] else _dc
+                _bodyr += "<tr>" + "".join(f'<td style="{_cc}">{v}</td>'
+                                           for v in [_sc, _shrt, f"{_Hh}%", f"{_aa}%", f"{_Ll}%"]) + "</tr>"
+            st.html(f'<table style="width:100%;border-collapse:collapse;font-size:.8rem;margin:.1rem 0">'
+                    f'<tbody><tr>{_hdr}</tr>{_bodyr}</tbody></table>')
+            st.markdown('<div style="text-align:center;color:#8b97a8;font-size:.78rem;margin:.4rem 0 0;'
+                        'line-height:1.5">Each band also implies a risk-aversion &lambda; (the mean-variance '
+                        'equivalent). Because it depends on your data, it\'s shown live in the Grid optimiser; '
+                        'the Scalable engine optimises CVaR directly via a linear program, so no &lambda; '
+                        'applies there.</div>', unsafe_allow_html=True)
+
+            # ── Dated assessment history (newest = active; retakes are kept, not overwritten) ──
+            _rp_hist = st.session_state.get("rp_history", [])
+            if len(_rp_hist) > 1:
+                st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
+                with st.expander(f"🕓 Your assessment history ({len(_rp_hist)} taken)", expanded=False):
+                    _hh = "".join(f'<td style="{_hc}">{h}</td>'
+                                  for h in ["Date", "Score", "Tolerance", "H", "&alpha;", "L"])
+                    _rows = ""
+                    for _i, _h in enumerate(reversed(_rp_hist)):
+                        _lab = (" &nbsp;<span style='color:#9be9a8;font-weight:700'>active</span>"
+                                if _i == 0 else "")
+                        _cc2 = _ac if _i == 0 else _dc
+                        _rows += ("<tr>" + f'<td style="{_cc2}">{_h.get("date","—")}{_lab}</td>'
+                                  + "".join(f'<td style="{_cc2}">{v}</td>' for v in
+                                            [f'{_h.get("score","—")}/47', _h.get("band", "—"),
+                                             f'{_h.get("H_pct","—")}%', f'{_h.get("alpha_pct","—")}%',
+                                             f'{_h.get("L_pct","—")}%']) + "</tr>")
+                    st.html(f'<table style="width:100%;border-collapse:collapse;font-size:.8rem;margin:.1rem 0">'
+                            f'<tbody><tr>{_hh}</tr>{_rows}</tbody></table>')
+                    st.caption("Your newest assessment is active and seeds the optimisers and Live Portfolio. "
+                               "Retaking the questionnaire adds a new dated row — earlier ones are kept, "
+                               "not overwritten.")
+
+            st.markdown("<div style='height:2.4rem'></div>", unsafe_allow_html=True)  # space above the buttons
+            # Buttons nested [3,2,3] inside the same column → outer edges match the frame.
+            _rp_b1, _rp_gap, _rp_b2 = st.columns([3, 2, 3])
+            with _rp_b1:
+                st.button("Open in Grid optimiser  →", type="primary", use_container_width=True,
+                          key="rp_apply_grid", on_click=_apply_risk_profile,
+                          args=("grid", _rp_res["H_pct"], _rp_res["alpha_pct"], _rp_res["L_pct"]))
+            with _rp_b2:
+                st.button("Open in Scalable optimiser  →", type="primary", use_container_width=True,
+                          key="rp_apply_scalable", on_click=_apply_risk_profile,
+                          args=("scalable", _rp_res["H_pct"], _rp_res["alpha_pct"], _rp_res["L_pct"]))
+            st.markdown("<div style='height:1.7rem'></div>", unsafe_allow_html=True)  # space below the buttons
+            st.caption("Each button pre-fills that engine’s sliders — you can still change them there. "
+                       "The Grid engine is exact but suits small portfolios; the Scalable (Monte-Carlo + CVaR) "
+                       "engine scales to larger portfolios with many assets.")
+
+    st.markdown(
+        '<div style="color:#6b7686;font-size:.74rem;margin-top:1.4rem;line-height:1.5">'
+        'Source: Grable, J. E., &amp; Lytton, R. H. (1999). Financial risk tolerance revisited: the development '
+        'of a risk assessment instrument. <i>Financial Services Review</i>, 8, 163–181.</div>',
+        unsafe_allow_html=True)
+
+elif _view == "ticker":
+    with st.container():
+        _tk_l, _tk_mid, _tk_x = st.columns([1, 4.2, 1], vertical_alignment="center")
+        with _tk_l:
+            st.button(":material/home: Back to Main Screen", key="_nav_back", use_container_width=True, on_click=_go_home)
+        with _tk_mid:
+            st.markdown('<style>section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2){position:sticky;top:60px;z-index:1000;background:#0d1117;border-bottom:1px solid #2a3340;box-shadow:0 8px 16px -10px rgba(0,0,0,.75);padding:.3rem 0 .85rem;margin-bottom:.7rem}section[data-testid="stMain"] div[data-testid="stVerticalBlockBorderWrapper"]:has(.bmv-banner):has(h2) div[data-testid="stVerticalBlock"]{gap:.5rem!important}section[data-testid="stMain"] [data-testid="stMainBlockContainer"]{padding-top:3.75rem!important}section[data-testid="stMain"] div[data-testid="stVerticalBlock"]>div[data-testid="stElementContainer"]:has(~ div[data-testid="stVerticalBlockBorderWrapper"] .bmv-banner){display:none}</style><div class="bmv-banner" style="display:flex;align-items:center;justify-content:center;gap:14px;margin:0"><div style="width:40px;height:40px;border-radius:10px;display:grid;place-items:center;background:linear-gradient(135deg,#E3C77E,#C9A24B);color:#1a1205;font-weight:700;font-family:Georgia,serif;font-size:1.35rem">&beta;</div><div style="text-align:left"><div style="font-size:.8rem;font-weight:600;letter-spacing:.01em;color:#c9d1d9">Portfolio Optimisation <span style="color:#E3C77E;font-style:italic">with</span> Derivatives &amp; Structured Products</div><div style="font-family:Georgia,serif;font-weight:600;font-size:1.45rem;line-height:1.05;color:#fafafa">Beyond <span style="color:#E3C77E">Mean-Variance</span></div><div style="font-family:Georgia,serif;font-weight:500;font-size:1rem;color:#aeb9c9">Mental Accounting Framework</div></div></div>', unsafe_allow_html=True)
+        st.markdown('<div style="background:#141a23;border:1px solid #C9A24B;border-radius:8px;padding:.12rem 1.2rem;margin:.85rem auto .4rem;max-width:calc(100% - 570px);text-align:center"><h2 style="color:#E3C77E;margin:0;font-family:Georgia,serif;font-size:1.55rem;letter-spacing:.05em">Ticker Analytics</h2></div>', unsafe_allow_html=True)
+
+    st.markdown(
+        '<div style="display:flex;align-items:flex-start;gap:.6rem;border:1px solid rgba(231,236,244,0.2);'
+        'border-radius:.5rem;padding:.7rem .95rem;margin:.2rem 0 .8rem;color:#c0c8d8;font-size:.9rem;line-height:1.55">'
+        '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:3px"><circle cx="12" cy="12" r="10"/>'
+        '<line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>'
+        '<span>Enter any stock, ETF or index ticker to see its key figures and CFA-style ratios — '
+        '<strong>valuation, profitability, leverage and risk</strong> — each with a plain-language explanation. '
+        'These are educational characteristics only: the tool never scores, ranks or recommends an instrument.</span></div>',
+        unsafe_allow_html=True)
+
+    st.markdown(
+        '<div style="display:flex;align-items:flex-start;gap:.5rem;background:rgba(245,185,66,.08);'
+        'border:1px solid #8a6d2b;border-radius:6px;padding:.5rem .9rem;margin:0 0 1rem;color:#d9c79a;font-size:.82rem">'
+        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#e0b84a" stroke-width="2" '
+        'stroke-linecap="round" stroke-linejoin="round" style="flex:none;margin-top:1px">'
+        '<path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>'
+        '<line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>'
+        '<span><b>Ceci ne constitue pas un conseil en investissement.</b> Figures come from public data and are '
+        'shown for education and analysis only — not a recommendation, valuation opinion or solicitation to buy '
+        'or sell any instrument.</span></div>', unsafe_allow_html=True)
+
+    _tc1, _tc2 = st.columns([4, 1], vertical_alignment="bottom")
+    with _tc1:
+        _sym = st.text_input("Ticker symbol", value="AAPL", key="tk_symbol",
+                             placeholder="e.g. AAPL, MSFT, MC.PA, BTC-USD").strip().upper()
+    with _tc2:
+        st.button("Fetch", type="primary", use_container_width=True, key="tk_fetch")
+
+    if _sym:
+        with st.spinner(f"Fetching {_sym}…"):
+            _info, _err = _cached_ticker_info(_sym)
+        if _err:
+            st.error(_err)
+        elif _info:
+            _hdr = _rt.company_header(_sym, _info)
+            _meta = " · ".join([x for x in [_hdr["sector"], _hdr["industry"], _hdr["exchange"]] if x])
+            _asof_lbl = (f"as of {_hdr['price_asof']}" if _hdr["asof_is_market"]
+                         else f"retrieved {_hdr['price_asof']}")
+            st.markdown(
+                '<div style="background:#1b2330;border:1px solid #30363d;border-radius:10px;'
+                'padding:.8rem 1.1rem;margin:.2rem 0 1rem">'
+                '<div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;align-items:baseline">'
+                f'<div><span style="color:#E3C77E;font-weight:700;font-size:1.15rem">{_hdr["name"]}</span>'
+                f'<span style="color:#8b97a8;font-weight:600;margin-left:.45rem">{_hdr["ticker"]}</span>'
+                f'<div style="color:#9aa7bd;font-size:.82rem;margin-top:.15rem">{_meta}</div>'
+                f'<div style="color:#9aa7bd;font-size:.8rem;margin-top:.3rem">52-week range: '
+                f'{_hdr["low52"]} – {_hdr["high52"]}</div></div>'
+                f'<div style="text-align:right"><div style="color:#fafafa;font-size:1.1rem;font-weight:700">{_hdr["price"]}</div>'
+                f'<div style="color:#9aa7bd;font-size:.8rem">Market cap {_hdr["market_cap"]}</div>'
+                f'<div style="color:#6b7686;font-size:.74rem;margin-top:.12rem">{_asof_lbl}</div></div>'
+                '</div></div>', unsafe_allow_html=True)
+
+            # ── 52-week range bar ──
+            _rpos = _hdr.get("range_pos")
+            if _rpos is not None:
+                _p = max(0.0, min(1.0, _rpos)) * 100
+                st.markdown(
+                    '<div style="margin:.1rem 0 1.1rem">'
+                    f'<div style="position:relative;height:18px"><div style="position:absolute;left:{_p:.1f}%;'
+                    'transform:translateX(-50%);font-size:.74rem;color:#E3C77E;font-weight:600;white-space:nowrap">'
+                    f'{_hdr["price"]}</div></div>'
+                    '<div style="position:relative;height:9px;background:linear-gradient(90deg,#26415f,#3a5a82);'
+                    'border-radius:5px">'
+                    f'<div style="position:absolute;left:{_p:.1f}%;top:-3.5px;transform:translateX(-50%);width:4px;'
+                    'height:16px;background:#E3C77E;border-radius:2px;box-shadow:0 0 0 2px #0d1117"></div></div>'
+                    '<div style="display:flex;justify-content:space-between;font-size:.74rem;color:#9aa7bd;margin-top:4px">'
+                    f'<span>52-wk low {_hdr["low52"]}</span><span>52-week range</span>'
+                    f'<span>52-wk high {_hdr["high52"]}</span></div></div>', unsafe_allow_html=True)
+
+            # ── Price-history chart: period + chart-type selectors ──
+            _pmap = {"6M": "6mo", "1Y": "1y", "5Y": "5y", "Max": "max"}
+            _selc1, _selc2, _selc3 = st.columns([2, 2, 4])
+            with _selc1:
+                _per = st.radio("Period", list(_pmap.keys()), index=1, horizontal=True,
+                                key="tk_period", label_visibility="collapsed")
+            with _selc2:
+                _ctype = st.radio("Chart type", ["Line", "Candlestick"], index=0, horizontal=True,
+                                  key="tk_chart", label_visibility="collapsed")
+            with st.spinner("Loading price history…"):
+                _hist, _herr = _cached_ticker_history(_sym, _pmap[_per])
+            if _hist is not None and len(_hist):
+                _can_candle = all(_c in _hist.columns for _c in ("Open", "High", "Low", "Close"))
+                if _ctype == "Candlestick" and _can_candle:
+                    _pfig = _tk_candle_fig(_hist, _hdr["name"])
+                else:
+                    _pfig = _tk_price_fig(_hist, _hdr["name"])
+                st.plotly_chart(_pfig, use_container_width=True,
+                                config={"responsive": True, "displayModeBar": False}, key="tk_price_chart")
+                # ── Performance & risk summary (over the selected period) ──
+                try:
+                    _close = _hist["Close"].dropna()
+                    _pret = float(_close.iloc[-1] / _close.iloc[0] - 1.0) if len(_close) > 1 else float("nan")
+                    _dret = _close.pct_change().dropna()
+                    _vol = float(_dret.std() * (252 ** 0.5)) if len(_dret) > 2 else float("nan")
+                    _mdd = float((_close / _close.cummax() - 1.0).min()) if len(_close) > 1 else float("nan")
+                    _beta = _info.get("beta")
+                    _beta = float(_beta) if isinstance(_beta, (int, float)) and _beta == _beta else None
+                    if _vol == _vol:
+                        if _vol < 0.15:   _rb, _rbc = "Low", "#2dd4bf"
+                        elif _vol < 0.25: _rb, _rbc = "Moderate", "#E3C77E"
+                        elif _vol < 0.40: _rb, _rbc = "High", "#f0a23f"
+                        else:             _rb, _rbc = "Very high", "#f85149"
+                    else:
+                        _rb, _rbc = "—", "#6b7686"
+
+                    def _tk_card(_lab, _val, _col="#fafafa"):
+                        return ('<div style="flex:1;min-width:118px;background:#1b2330;border:1px solid #30363d;'
+                                'border-radius:9px;padding:.5rem .7rem;text-align:center">'
+                                f'<div style="color:#94a3ba;font-size:.7rem;text-transform:uppercase;'
+                                f'letter-spacing:.05em">{_lab}</div>'
+                                f'<div style="color:{_col};font-size:1.15rem;font-weight:700;'
+                                f'margin-top:.15rem">{_val}</div></div>')
+
+                    _pc = "#9be9a8" if (_pret == _pret and _pret >= 0) else "#f85149"
+                    _strip = '<div style="display:flex;gap:.55rem;flex-wrap:wrap;margin:.5rem 0 .6rem">'
+                    _strip += _tk_card(f"{_per} return", f"{_pret*100:+.1f}%" if _pret == _pret else "—", _pc)
+                    _strip += _tk_card("Volatility (ann.)", f"{_vol*100:.1f}%" if _vol == _vol else "—")
+                    _strip += _tk_card("Max drawdown",
+                                       f"{_mdd*100:.1f}%" if _mdd == _mdd else "—",
+                                       "#f85149" if (_mdd == _mdd and _mdd < 0) else "#fafafa")
+                    if _beta is not None:
+                        _strip += _tk_card("Beta (β)", f"{_beta:.2f}")
+                    _strip += ('<div style="flex:1;min-width:118px;background:#1b2330;border:1px solid #30363d;'
+                               'border-radius:9px;padding:.5rem .7rem;text-align:center">'
+                               '<div style="color:#94a3ba;font-size:.7rem;text-transform:uppercase;'
+                               'letter-spacing:.05em">Risk level</div>'
+                               f'<div style="margin-top:.25rem"><span style="background:{_rbc};color:#10151f;'
+                               f'font-weight:700;font-size:.95rem;border-radius:6px;padding:.12rem .6rem">{_rb}</span>'
+                               '</div></div>')
+                    _strip += '</div>'
+                    st.markdown(_strip, unsafe_allow_html=True)
+                    # Volatility-band table — explains the risk level and highlights the current band.
+                    _vbands = [("Low", "&lt; 15%", "#2dd4bf"), ("Moderate", "15–25%", "#E3C77E"),
+                               ("High", "25–40%", "#f0a23f"), ("Very high", "&ge; 40%", "#f85149")]
+                    _vrows = ""
+                    for _bn, _brange, _bc in _vbands:
+                        _hl = (_bn == _rb)
+                        _bg = "background:#16233a;" if _hl else ""
+                        _mk = '<span style="color:#E3C77E;font-weight:700">&#9664; this ticker</span>' if _hl else ""
+                        _vrows += (f'<tr style="{_bg}">'
+                                   f'<td style="padding:2px 12px;border:1px solid #2a3340;color:{_bc};font-weight:600">{_bn}</td>'
+                                   f'<td style="padding:2px 12px;border:1px solid #2a3340;color:#c0c8d8">{_brange}</td>'
+                                   f'<td style="padding:2px 12px;border:1px solid #2a3340">{_mk}</td></tr>')
+                    _voltxt = (f"{_vol*100:.1f}%" if _vol == _vol else "—")
+                    st.markdown(
+                        '<div style="color:#9aa7bd;font-size:.82rem;margin:.55rem 0 .35rem">'
+                        'The <b style="color:#c0c8d8">risk level is volatility-based</b> — '
+                        f'{_sym}&rsquo;s annualised volatility of <b style="color:#fff">{_voltxt}</b> places it in the '
+                        f'<b style="color:{_rbc}">{_rb}</b> band:</div>'
+                        '<table style="border-collapse:collapse;font-size:.8rem;margin-bottom:.5rem">'
+                        '<tr style="color:#E3C77E;font-weight:600">'
+                        '<td style="padding:2px 12px;border:1px solid #2a3340">Risk level</td>'
+                        '<td style="padding:2px 12px;border:1px solid #2a3340">Annualised volatility</td>'
+                        '<td style="padding:2px 12px;border:1px solid #2a3340"></td></tr>'
+                        + _vrows + '</table>', unsafe_allow_html=True)
+                    st.caption("Return and max drawdown are over the selected period; volatility is annualised "
+                               "from daily moves. An educational characteristic, not a rating or recommendation.")
+                except Exception:
+                    pass
+            else:
+                st.caption("Price history isn't available for this instrument.")
+
+            _data = _rt.build_ratios(_sym, _info)
+            _hc = ("background:#141a23;color:#E3C77E;font-weight:700;text-align:center;"
+                   "padding:.35rem .5rem;border:1px solid #C9A24B;font-size:.8rem")
+            _dl = "background:#0d1117;color:#c9d1d9;padding:.3rem .55rem;border:1px solid #30363d;text-align:left"
+            _dg = ("background:#0d1117;color:#9aa7bd;padding:.3rem .55rem;border:1px solid #30363d;"
+                   "text-align:left;font-size:.8rem")
+
+            def _vcell(_v):
+                _col = "#E3C77E" if _v != "—" else "#6b7686"
+                return (f"background:#0d1117;color:{_col};font-weight:600;padding:.3rem .55rem;"
+                        f"border:1px solid #30363d;text-align:center")
+
+            # Render two categories per row, each row in its OWN st.columns(2) so the
+            # second-row titles align even when the first-row tables differ in height.
+            for _ri in range(0, len(_rt.CATEGORIES), 2):
+                _rowcols = st.columns(2)
+                for _k, _cat in enumerate(_rt.CATEGORIES[_ri:_ri + 2]):
+                    with _rowcols[_k]:
+                        _rows_html = "".join(
+                            f'<tr><td style="{_dl}">{_r["label"]}</td>'
+                            f'<td style="{_vcell(_r["value"])}">{_r["value"]}</td>'
+                            f'<td style="{_dg}">{_r["gauge"]}</td></tr>' for _r in _data[_cat])
+                        st.markdown(f'<div style="color:#E3C77E;font-weight:700;font-size:.95rem;'
+                                    f'text-align:center;margin:.3rem 0 .7rem">{_cat}</div>', unsafe_allow_html=True)
+                        st.html(f'<table style="width:100%;border-collapse:collapse;font-size:.84rem;margin-bottom:.4rem">'
+                                f'<tbody><tr><td style="{_hc}">Ratio</td><td style="{_hc}">Value</td>'
+                                f'<td style="{_hc}">What it gauges</td></tr>{_rows_html}</tbody></table>')
+
+            # ── Financials section: trends + balance-sheet snapshot + company profile ──
+            _fin, _ = _cached_ticker_financials(_sym)
+            _cf, _ = _cached_ticker_cashflow(_sym)
+            _bal, _ = _cached_ticker_balance(_sym)
+            _has_rev = bool(_fin) and any((_r.get("revenue") is not None or _r.get("net_income") is not None) for _r in _fin)
+            _has_margin = bool(_fin) and any((_r.get("revenue") and (_r.get("gross_profit") is not None or _r.get("operating_income") is not None)) for _r in _fin)
+            _has_cf = bool(_cf) and any((_r.get("ocf") is not None or _r.get("fcf") is not None) for _r in _cf)
+            _has_bal = bool(_bal) and any(_bal.get(_k) is not None for _k in ("total_assets", "total_debt", "cash", "equity"))
+
+            def _ctitle(_t):
+                st.markdown(f'<div style="color:#E3C77E;font-weight:700;font-size:.95rem;'
+                            f'text-align:center;margin:.3rem 0 .3rem">{_t}</div>', unsafe_allow_html=True)
+
+            _cfg = {"responsive": True, "displayModeBar": False}
+            if _has_rev or _has_margin or _has_cf or _has_bal:
+                st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)
+            # Row 1 — Revenue & net income | Margins
+            if _has_rev or _has_margin:
+                _fr1, _fr2 = st.columns(2)
+                with _fr1:
+                    if _has_rev:
+                        _ctitle("Revenue &amp; net income (annual)")
+                        st.plotly_chart(_tk_revenue_fig(_fin, _hdr["currency"]), use_container_width=True,
+                                        config=_cfg, key="tk_rev_chart")
+                with _fr2:
+                    if _has_margin:
+                        _ctitle("Margins (gross / operating / net)")
+                        st.plotly_chart(_tk_margins_fig(_fin), use_container_width=True,
+                                        config=_cfg, key="tk_margin_chart")
+            # Row 2 — Cash flow | Balance-sheet snapshot
+            if _has_cf or _has_bal:
+                st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)  # space above row 2
+                _fr3, _fr4 = st.columns(2)
+                with _fr3:
+                    if _has_cf:
+                        _ctitle("Cash flow (operating &amp; free)")
+                        st.plotly_chart(_tk_cashflow_fig(_cf, _hdr["currency"]), use_container_width=True,
+                                        config=_cfg, key="tk_cf_chart")
+                with _fr4:
+                    if _has_bal:
+                        _ctitle(f"Balance sheet ({_bal.get('year', 'latest')})")
+                        st.plotly_chart(_tk_balance_fig(_bal, _hdr["currency"]), use_container_width=True,
+                                        config=_cfg, key="tk_bal_chart")
+
+            # Company profile (full width)
+            _summary = (_info.get("longBusinessSummary") or "").strip()
+            _facts = []
+            if _hdr["sector"]:
+                _facts.append(("Sector", _hdr["sector"]))
+            if _hdr["industry"]:
+                _facts.append(("Industry", _hdr["industry"]))
+            if _info.get("fullTimeEmployees"):
+                _facts.append(("Employees", f"{int(_info['fullTimeEmployees']):,}"))
+            _loc = ", ".join([x for x in [_info.get("city"), _info.get("country")] if x])
+            if _loc:
+                _facts.append(("Headquarters", _loc))
+            if _hdr["exchange"]:
+                _facts.append(("Exchange", _hdr["exchange"]))
+            _web = _info.get("website")
+            if _summary or _facts:
+                st.markdown("<div style='height:1.4rem'></div>", unsafe_allow_html=True)  # space above title
+                _ctitle("Company profile")
+                st.markdown("<div style='height:1.2rem'></div>", unsafe_allow_html=True)  # space below title
+                _facts_html = "".join(
+                    '<span style="background:#0e1521;border:1px solid #30363d;border-radius:999px;'
+                    'padding:.25rem .7rem;font-size:.8rem;color:#c0c8d8;margin:.15rem .3rem .15rem 0;'
+                    f'display:inline-block"><span style="color:#9aa7bd">{_k}:</span> <b>{_v}</b></span>'
+                    for _k, _v in _facts)
+                _parts = ['<div style="background:#1b2330;border:1px solid #30363d;border-radius:10px;'
+                          'padding:.9rem 1.1rem">']
+                if _facts:
+                    _parts.append('<div style="margin-bottom:.55rem">' + _facts_html + '</div>')
+                if _summary:
+                    _parts.append('<div style="color:#c0c8d8;font-size:.9rem;line-height:1.6">' + _summary + '</div>')
+                if _web:
+                    _parts.append('<div style="margin-top:.55rem;font-size:.82rem">'
+                                  f'<a href="{_web}" target="_blank" style="color:#79b6ff;text-decoration:none">{_web}</a></div>')
+                _parts.append('</div>')
+                st.markdown("".join(_parts), unsafe_allow_html=True)
+                st.markdown("<div style='height:1.3rem'></div>", unsafe_allow_html=True)  # space below profile
+
+            st.markdown('<h3 style="color:#E3C77E;margin:1rem 0 .3rem">Explain a ratio or figure</h3>', unsafe_allow_html=True)
+            _opts = {}  # label -> (explanation_html, value_for_ai)
+            for _cat in _rt.CATEGORIES:
+                for _r in _data[_cat]:
+                    if _r["available"]:
+                        _opts[_r["label"]] = (_r["explain"], _r["value"])
+            _terms = getattr(_rt, "CHART_TERMS", {})
+            _extra = []
+            if _has_rev:
+                _extra += ["Revenue", "Net income"]
+            if _has_cf:
+                _extra += ["Operating cash flow", "Free cash flow"]
+            if _has_bal:
+                _extra += ["Total assets", "Total debt", "Cash", "Shareholders' equity"]
+            for _t in _extra:
+                if _t in _terms and _t not in _opts:
+                    _opts[_t] = (_terms[_t], "")
+            if _opts:
+                _elabels = list(_opts.keys())
+                _esel = st.selectbox("Pick a ratio or figure", _elabels,
+                                     key="tk_explain_sel", label_visibility="collapsed")
+                if st.button("Explain", type="primary", icon=":material/smart_toy:", key="tk_explain_btn"):
+                    _ehtml, _eval = _opts.get(_esel, ("", ""))
+                    with st.spinner(f"Explaining {_esel}…"):
+                        _eresp = get_ai_chat_response(
+                            f"Explain '{_esel}' for {_sym} in plain language for a non-specialist investor.",
+                            portfolio_context=(f"{_sym}: {_esel} = {_eval}" if _eval else f"{_sym}"))
+                    _ebody = _eresp or _ehtml or "No explanation is available for this item right now."
+                    st.markdown(
+                        '<div style="background:#1b2330;border:1px solid #30363d;border-radius:10px;'
+                        'padding:.9rem 1.1rem;margin-top:.6rem;color:#c0c8d8;font-size:.9rem;line-height:1.6">'
+                        f'<b style="color:#E3C77E">{_esel}</b>'
+                        + (f' <span style="color:#9aa7bd">— {_eval}</span>' if _eval else '')
+                        + f'<div style="margin-top:.4rem">{_ebody}</div></div>',
+                        unsafe_allow_html=True)
+
+            st.markdown(
+                '<div style="color:#6b7686;font-size:.74rem;margin-top:1.4rem;line-height:1.5">'
+                'Figures come from public data and are shown for education and analysis only — not a '
+                'recommendation, valuation opinion or solicitation to buy or sell any instrument.</div>',
+                unsafe_allow_html=True)
