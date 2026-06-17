@@ -61,7 +61,7 @@ The optimiser runs in three steps:
 - *Grid search*: All weight combinations are evaluated. Those satisfying the mental-account constraint (VaR or ES) are kept as eligible. The highest-return eligible portfolio is selected as the starting point.
 - *Gradient refinement*: A COBYLA nonlinear optimiser refines the solution from that starting point, with the constraint embedded as a penalty term.
 
-A second, scalable engine (Monte-Carlo scenarios + an α-CVaR linear program) complements the exact grid for large, multi-derivative portfolios; see the technical paper for the formulation.
+A second, scalable engine (Monte-Carlo scenarios + an α-CVaR linear program) complements the exact grid for large, multi-derivative portfolios; see the research paper for the formulation.
 
 ---
 
@@ -189,7 +189,7 @@ behavioral-portfolio-optimizer/
 │
 ├── requirements.txt                    # Streamlit app dependencies
 │
-├── Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf        # technical paper (framework + maths)
+├── Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf        # research paper (framework + maths)
 ├── Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf   # step-by-step app guide
 ├── profile.jpeg
 └── README.md
@@ -256,7 +256,7 @@ The Streamlit dashboard is a suite of tools:
 
 📄 **[User Guide (PDF)](https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_User_Guide.pdf)** — step-by-step guide to using the app
 
-📄 **[Technical paper (PDF)](https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf)** — the work, the approaches and the mathematical framework
+📄 **[Research paper (SSRN)](https://papers.ssrn.com/sol3/papers.cfm?abstract_id=6915241)** — the framework, the approaches and the mathematics (also available as a [PDF in this repo](https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/main/Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf))
 
 🔐 **[Enable Google Drive sign-in](GOOGLE_DRIVE_SETUP.md)** — optional ~10-minute OAuth setup so users can save portfolios to their **own** Google Drive (least-privilege `drive.file` scope). Without it, the Live Portfolio falls back to JSON download/upload.
 

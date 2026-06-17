@@ -7091,7 +7091,7 @@ elif _view == "about":
                 _pcol_l, _pcol_c, _pcol_r = st.columns([3, 2, 3])
                 with _pcol_c:
                     st.download_button(
-                        "Download the technical paper (PDF)", icon=":material/picture_as_pdf:",
+                        "Download the research paper (PDF)", icon=":material/picture_as_pdf:",
                         data=_paper_bytes, file_name=_paper_file,
                         mime="application/pdf", type="primary",
                         key="paper_dl", use_container_width=True)
@@ -7099,13 +7099,13 @@ elif _view == "about":
                            "framework and the validation.")
             except Exception:
                 st.markdown(
-                    "📄 **[Download the technical paper (PDF)]"
+                    "📄 **[Download the research paper (PDF)]"
                     "(https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/"
                     "main/Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf)** — the work, the "
                     "approaches and the mathematical framework", unsafe_allow_html=False)
         else:
             st.markdown(
-                "📄 **[Download the technical paper (PDF)]"
+                "📄 **[Download the research paper (PDF)]"
                 "(https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/"
                 "main/Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf)** — the work, the "
                 "approaches and the mathematical framework", unsafe_allow_html=False)
