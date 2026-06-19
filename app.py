@@ -7091,24 +7091,47 @@ elif _view == "about":
                 _pcol_l, _pcol_c, _pcol_r = st.columns([3, 2, 3])
                 with _pcol_c:
                     st.download_button(
-                        "Download the research paper (PDF)", icon=":material/picture_as_pdf:",
+                        "Download the optimiser note (PDF)", icon=":material/picture_as_pdf:",
                         data=_paper_bytes, file_name=_paper_file,
                         mime="application/pdf", type="primary",
                         key="paper_dl", use_container_width=True)
-                st.caption("A short companion note — the work, the approaches, the mathematical "
-                           "framework and the validation.")
+                st.caption("A short companion note on the optimiser — the approaches, the "
+                           "mathematical framework and the validation.")
             except Exception:
                 st.markdown(
-                    "📄 **[Download the research paper (PDF)]"
+                    "📄 **[Download the optimiser note (PDF)]"
                     "(https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/"
-                    "main/Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf)** — the work, the "
+                    "main/Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf)** — the optimiser, the "
                     "approaches and the mathematical framework", unsafe_allow_html=False)
         else:
             st.markdown(
-                "📄 **[Download the research paper (PDF)]"
+                "📄 **[Download the optimiser note (PDF)]"
                 "(https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/"
-                "main/Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf)** — the work, the "
+                "main/Beyond_Mean_Variance_Portfolio_Optimiser_Paper.pdf)** — the optimiser, the "
                 "approaches and the mathematical framework", unsafe_allow_html=False)
+        st.markdown("<div style='height:.7rem'></div>", unsafe_allow_html=True)
+        _acad_file = "paper/Downside_Floors_OOS_v2_6.pdf"
+        _acad_url = ("https://raw.githubusercontent.com/SamiJeddou/behavioral-portfolio-optimizer/"
+                     "main/paper/Downside_Floors_OOS_v2_6.pdf")
+        _acad_link_md = ("📄 **[Download the research paper (PDF)]"
+                         f"({_acad_url})** — the peer-reviewed academic paper")
+        if _os.path.exists(_acad_file):
+            try:
+                with open(_acad_file, "rb") as _acf:
+                    _acad_bytes = _acf.read()
+                _acol_l, _acol_c, _acol_r = st.columns([3, 2, 3])
+                with _acol_c:
+                    st.download_button(
+                        "Download the research paper (PDF)", icon=":material/picture_as_pdf:",
+                        data=_acad_bytes, file_name="Downside_Floors_OOS_v2_6.pdf",
+                        mime="application/pdf", type="primary",
+                        key="acad_paper_dl", use_container_width=True)
+                st.caption("“Do Downside Floors Hold Out of Sample?” — the academic paper: "
+                           "an out-of-sample study of CVaR/ES downside floors (also on SSRN).")
+            except Exception:
+                st.markdown(_acad_link_md, unsafe_allow_html=False)
+        else:
+            st.markdown(_acad_link_md, unsafe_allow_html=False)
 
     # ═══ 2 · WHAT IT DOES, IN PLAIN TERMS ═══════════════════════════════════
     with st.container(border=True):
