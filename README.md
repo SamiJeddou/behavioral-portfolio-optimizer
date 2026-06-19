@@ -32,6 +32,29 @@ The threshold H ranges from -40% to -1%, making the framework applicable to high
 
 ---
 
+## Reproducing the research paper
+
+This repository accompanies the working paper **"Do Downside Floors Hold Out of Sample? CVaR-Constrained Optimisation of Derivative-Bearing Portfolios"** (on SSRN). Its central finding: across **225 rolling out-of-sample windows** spanning US and international markets (2006–2025), an in-sample CVaR/Expected-Shortfall floor is breached **16.4%** of the time against a 5% target (*p* < 10⁻⁵) — and *tightening* the floor does not help. Realised tail control comes from portfolio **structure** (position caps, cross-asset diversification, convex option overlays), not from a stricter threshold.
+
+**Every table and figure regenerates from public Yahoo Finance data — no API keys, no proprietary datasets.**
+
+```bash
+git clone https://github.com/SamiJeddou/behavioral-portfolio-optimizer
+cd behavioral-portfolio-optimizer
+pip install -r requirements.txt
+
+# example: the rolling out-of-sample backtest
+python rolling_backtest.py --tickers AAPL MSFT JPM --benchmark SPY --start 2005-01-01
+```
+
+- **Full command list → [`REPRODUCE.md`](REPRODUCE.md)** — one copy-paste command per table/figure (rolling validation, cap sweep, floor calibration, hierarchical hybrid, naive 1/N, scenario generation, convex-overlay & VIX robustness, international validation, multi-period).
+- **Pre-computed outputs:** the per-window result CSVs are in [`results/`](results/).
+- **Manuscript:** [`paper/Downside_Floors_OOS_v2_6.pdf`](paper/Downside_Floors_OOS_v2_6.pdf).
+
+Paper scripts: `rolling_backtest.py`, `hybrid_backtest.py`, `naive_benchmarks.py`, `floor_calibration.py`, `scengen_experiment.py`, `multiperiod_backtest.py`, `demo_ml_scenarios.py`, `make_rolling_figs.py`.
+
+---
+
 ## Theoretical Background
 
 This work is based on the mental-accounting portfolio theory introduced in:
