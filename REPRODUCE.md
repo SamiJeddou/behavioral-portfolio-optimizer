@@ -1,6 +1,6 @@
 # Reproducing the paper's results
 
-Every table and figure in *Beyond Mean-Variance* (v2.6) regenerates from this repo and **public Yahoo
+Every table and figure in *Do Downside Floors Hold Out of Sample?* (v2.6) regenerates from this repo and **public Yahoo
 Finance data** — no API keys, no proprietary datasets. Each command below is self-contained.
 
 ## 1. One-time setup
